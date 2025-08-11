@@ -1,30 +1,34 @@
+import os
+
 from setuptools import find_packages, setup
 
 # Read README file
 with open("README.md", encoding="utf-8") as fh:
     long_description = fh.read()
 
-# Read requirements file
-with open("requirements.txt", encoding="utf-8") as fh:
-    requirements = [
-        line.strip() for line in fh if line.strip() and not line.startswith("#")
-    ]
+# Read requirements file (optional to avoid errors if missing)
+requirements = []
+requirements_path = "requirements.txt"
+if os.path.exists(requirements_path):
+    with open(requirements_path, encoding="utf-8") as fh:
+        requirements = [
+            line.strip() for line in fh if line.strip() and not line.startswith("#")
+        ]
 
 setup(
     name="qkdpy",
-    version="0.1.0",
-    author="QKDpy Development Team",
-    author_email="contact@qkdpy.org",
+    version="0.1.1",
+    author="Pranava-Kumar",
+    author_email="pranavakumar.it@gmail.com",
     description="A Python Package for Quantum Key Distribution",
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/yourusername/qkdpy",
+    url="https://github.com/Pranava-Kumar/qkdpy",
     packages=find_packages(),
     classifiers=[
         "Development Status :: 3 - Alpha",
         "Intended Audience :: Developers",
         "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.10",
@@ -46,6 +50,8 @@ setup(
             "pre-commit>=3.0.0",
             "sphinx>=6.0.0",
             "sphinx-rtd-theme>=1.2.0",
+            "twine>=4.0.0",
+            "build>=0.10.0",
         ],
         "docs": [
             "sphinx>=6.0.0",
