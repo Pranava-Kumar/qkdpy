@@ -17,7 +17,7 @@ if os.path.exists(requirements_path):
 
 setup(
     name="qkdpy",
-    version="0.1.1",
+    version="0.1.3",
     author="Pranava-Kumar",
     author_email="pranavakumar.it@gmail.com",
     description="A Python Package for Quantum Key Distribution",
