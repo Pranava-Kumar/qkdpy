@@ -26,7 +26,7 @@ def bb84_example():
     print(f"Final key length: {len(results['final_key'])}")
     print(f"QBER: {results['qber']:.4f}")
     print(f"Is secure: {results['is_secure']}")
-    print(f"Final key: {results['final_key']}")
+    print(f"Final key: {[int(bit) for bit in results['final_key']]}")
 
     # Print channel statistics
     stats = results["channel_stats"]
@@ -36,8 +36,24 @@ def bb84_example():
     print(f"Errors: {stats['errors']} ({stats['error_rate']:.2%})")
 
     # Visualize the protocol
+    # Filter out None values from bob_results and corresponding entries from other lists
+    filtered_alice_bits = []
+    filtered_alice_bases = []
+    filtered_bob_bases = []
+    filtered_bob_results = []
+
+    for i in range(len(bb84.bob_results)):
+        if bb84.bob_results[i] is not None:
+            filtered_alice_bits.append(bb84.alice_bits[i])
+            filtered_alice_bases.append(bb84.alice_bases[i])
+            filtered_bob_bases.append(bb84.bob_bases[i])
+            filtered_bob_results.append(bb84.bob_results[i])
+
     ProtocolVisualizer.plot_bb84_protocol(
-        bb84.alice_bits, bb84.alice_bases, bb84.bob_bases, bb84.bob_results
+        filtered_alice_bits,
+        filtered_alice_bases,
+        filtered_bob_bases,
+        filtered_bob_results,
     )
     plt.show()
 
