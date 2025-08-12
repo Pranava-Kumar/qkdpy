@@ -4,9 +4,9 @@ QKDpy is a comprehensive library for Quantum Key Distribution (QKD) simulations,
 implementing various QKD protocols, quantum simulators, and cryptographic tools.
 """
 
-__version__ = "0.1.0"
-__author__ = "QKDpy Development Team"
-__email__ = "contact@qkdpy.org"
+__version__ = "0.1.4"
+__author__ = "Pranava-Kumar"
+__email__ = "pranavakumar.it@gmail.com"
 
 # Import core components
 from .core import Measurement, QuantumChannel, QuantumGate, Qubit

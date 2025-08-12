@@ -2,15 +2,12 @@
 requires = ["setuptools>=61.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
-[tool.hatch.version]
-source = "vcs"
-
 [project]
 name = "qkdpy"
-version = "0.1.3"
+version = "0.1.4"
 description = "A Python Package for Quantum Key Distribution"
 readme = "README.md"
-license = "Apache-2.0"
+license = {text = "Apache-2.0"}
 authors = [
     {name = "Pranava-Kumar", email = "pranavakumar.it@gmail.com"},
 ]
@@ -35,20 +32,18 @@ dependencies = [
     "numpy>=1.24.0",
     "matplotlib>=3.7.0",
     "scipy>=1.10.0",
-    "black>=25.1.0",
-    "bandit>=1.8.6",
-    "mypy>=1.17.1",
-    "ruff>=0.12.8",
-    "isort>=6.0.1",
-    "hatchling>=1.27.0",
 ]
 
 [project.optional-dependencies]
 dev = [
     "pytest>=7.0.0",
     "pytest-cov>=4.0.0",
-    "ruff>=0.1.0",
-    "mypy>=1.0.0",
+    "black>=25.1.0",
+    "bandit>=1.8.6",
+    "mypy>=1.17.1",
+    "ruff>=0.12.8",
+    "isort>=6.0.1",
+    "hatchling>=1.27.0",
     "pre-commit>=3.0.0",
     "sphinx>=6.0.0",
     "sphinx-rtd-theme>=1.2.0",
@@ -66,12 +61,13 @@ Homepage = "https://github.com/Pranava-Kumar/qkdpy"
 Repository = "https://github.com/Pranava-Kumar/qkdpy"
 "Bug Tracker" = "https://github.com/Pranava-Kumar/qkdpy/issues"
 
-[project.scripts]
-qkdpy = "qkdpy.cli:main"
-
+# This is the KEY fix - explicitly specify that only qkdpy should be packaged
 [tool.setuptools.packages.find]
-exclude = ["docs", "tests", "examples"]
+where = ["src"]  # Look in the src directory
+include = ["qkdpy*"]  # Include qkdpy and all its subpackages
+exclude = ["docs*", "tests*", "examples*"]  # Exclude these from packaging
 
+# Rest of your tool configurations...
 [tool.ruff]
 line-length = 88
 target-version = "py310"
@@ -133,10 +129,6 @@ python_functions = ["test_*"]
 addopts = [
     "--strict-markers",
     "--strict-config",
-    "--cov=qkdpy",
-    "--cov-report=term-missing",
-    "--cov-report=html",
-    "--cov-report=xml",
 ]
 markers = [
     "slow: marks tests as slow (deselect with '-m \"not slow\"')",
@@ -163,10 +155,4 @@ exclude_lines = [
     "if __name__ == .__main__.:",
     "class .*\\bProtocol\\):",
     "@(abc\\.)?abstractmethod",
-]
-
-[dependency-groups]
-dev = [
-    "build>=1.3.0",
-    "twine>=6.1.0",
 ]
