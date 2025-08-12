@@ -29,7 +29,7 @@ def full_qkd_scenario() -> None:
     print(f"Original message: {message}")
 
     ciphertext, key_after_encryption = OneTimePad.encrypt(message, final_key)
-    print(f"Ciphertext: {ciphertext}")
+    print(f"Ciphertext: {[int(bit) for bit in ciphertext]}")
 
     decrypted_message = OneTimePadDecrypt.decrypt(ciphertext, final_key)
     print(f"Decrypted message: {decrypted_message}")

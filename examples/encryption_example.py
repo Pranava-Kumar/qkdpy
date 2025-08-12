@@ -1,6 +1,7 @@
 """Example of using quantum keys for encryption."""
 
-from qkdpy import BB84, OneTimePad, OneTimePadDecrypt, QuantumChannel
+from qkdpy import BB84, OneTimePad, QuantumChannel
+from qkdpy.crypto.decryption import OneTimePadDecrypt
 
 
 def encryption_example():
@@ -12,7 +13,23 @@ def encryption_example():
     channel = QuantumChannel(loss=0.1, noise_model="depolarizing", noise_level=0.05)
 
     # Create a BB84 protocol instance
-    bb84 = BB84(channel, key_length=256)  # Generate a longer key for encryption
+    # Calculate required key length
+    message_bit_length = (
+        len("This is a secret message encrypted with a quantum key!") * 8
+    )
+    file_content_string = (
+        "This is a test file for quantum encryption.\n"
+        "It contains multiple lines of text.\n"
+        "The content will be encrypted using a quantum key.\n"
+    )
+    file_content_bit_length = len(file_content_string) * 8
+    total_required_bits = message_bit_length + file_content_bit_length
+
+    # Create a BB84 protocol instance with a dynamically calculated key length
+    # Multiplier (e.g., 4) is used to account for QBER and sifting losses
+    bb84 = BB84(
+        channel, key_length=total_required_bits * 4
+    )  # Generate a longer key for encryption
 
     # Execute the protocol
     results = bb84.execute()
@@ -33,6 +50,8 @@ def encryption_example():
     message = "This is a secret message encrypted with a quantum key!"
 
     print(f"\nOriginal message: {message}")
+
+    remaining_key = key  # Initialize remaining_key with the full key
 
     # Encrypt the message
     try:

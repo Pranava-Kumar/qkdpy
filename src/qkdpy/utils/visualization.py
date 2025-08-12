@@ -134,6 +134,23 @@ class ProtocolVisualizer:
     """Visualization tools for QKD protocols."""
 
     @staticmethod
+    def _filter_protocol_data(*args):
+        """Filters out None values from protocol data lists."""
+        if not args:
+            return ()
+
+        valid_indices = [i for i, res in enumerate(args[0]) if res is not None]
+
+        filtered_data = []
+        for arg in args:
+            if arg is not None:
+                filtered_data.append([arg[i] for i in valid_indices])
+            else:
+                filtered_data.append(None)
+
+        return tuple(filtered_data)
+
+    @staticmethod
     def plot_bb84_protocol(
         alice_bits: list[int],
         alice_bases: list[str],
@@ -156,22 +173,23 @@ class ProtocolVisualizer:
         """
         fig, ax = plt.subplots(figsize=(12, 6))
 
-        # Determine the length of the protocol
-        length = min(
-            len(alice_bits), len(alice_bases), len(bob_bases), len(bob_results)
+        # Filter out lost qubits
+        alice_bits, alice_bases, bob_bases, bob_results = (
+            ProtocolVisualizer._filter_protocol_data(
+                alice_bits, alice_bases, bob_bases, bob_results
+            )
         )
+        length = len(alice_bits)
 
         # Create arrays for plotting
         x = np.arange(length)
 
         # Plot Alice's bits
-        ax.scatter(
-            x, alice_bits[:length], color="blue", label="Alice's Bits", marker="o"
-        )
+        ax.scatter(x, alice_bits, color="blue", label="Alice's Bits", marker="o")
 
         # Plot Alice's bases
         alice_basis_values = [
-            0 if basis == "computational" else 1 for basis in alice_bases[:length]
+            0 if basis == "computational" else 1 for basis in alice_bases
         ]
         ax.scatter(
             x,
@@ -182,9 +200,7 @@ class ProtocolVisualizer:
         )
 
         # Plot Bob's bases
-        bob_basis_values = [
-            0 if basis == "computational" else 1 for basis in bob_bases[:length]
-        ]
+        bob_basis_values = [0 if basis == "computational" else 1 for basis in bob_bases]
         ax.scatter(
             x,
             [b - 0.1 for b in bob_basis_values],
@@ -196,7 +212,7 @@ class ProtocolVisualizer:
         # Plot Bob's results
         ax.scatter(
             x,
-            [r - 0.2 for r in bob_results[:length]],
+            [r - 0.2 for r in bob_results],
             color="red",
             label="Bob's Results",
             marker="x",
@@ -242,21 +258,22 @@ class ProtocolVisualizer:
         """
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(12, 10))
 
-        # Determine the length of the protocol
-        length = min(
-            len(alice_choices), len(alice_results), len(bob_choices), len(bob_results)
+        # Filter out lost qubits
+        alice_choices, alice_results, bob_choices, bob_results = (
+            ProtocolVisualizer._filter_protocol_data(
+                alice_choices, alice_results, bob_choices, bob_results
+            )
         )
+        length = len(alice_choices)
 
         # Create arrays for plotting
         x = np.arange(length)
 
         # Plot Alice's choices and results
-        ax1.scatter(
-            x, alice_choices[:length], color="blue", label="Alice's Choices", marker="o"
-        )
+        ax1.scatter(x, alice_choices, color="blue", label="Alice's Choices", marker="o")
         ax1.scatter(
             x,
-            [r + 0.1 for r in alice_results[:length]],
+            [r + 0.1 for r in alice_results],
             color="cyan",
             label="Alice's Results",
             marker="x",
@@ -273,14 +290,14 @@ class ProtocolVisualizer:
         # Plot Bob's choices and results
         ax2.scatter(
             x,
-            [c + 1 for c in bob_choices[:length]],
+            [c + 1 for c in bob_choices],
             color="green",
             label="Bob's Choices",
             marker="o",
         )
         ax2.scatter(
             x,
-            [r + 0.9 for r in bob_results[:length]],
+            [r + 0.9 for r in bob_results],
             color="red",
             label="Bob's Results",
             marker="x",
@@ -324,26 +341,23 @@ class ProtocolVisualizer:
         """
         fig, ax = plt.subplots(figsize=(12, 6))
 
-        # Determine the length of the protocol
-        length = min(
-            len(alice_bits),
-            len(alice_bases),
-            len(bob_bases),
-            len(bob_results),
-            len(bob_guesses),
+        # Filter out lost qubits
+        alice_bits, alice_bases, bob_bases, bob_results, bob_guesses = (
+            ProtocolVisualizer._filter_protocol_data(
+                alice_bits, alice_bases, bob_bases, bob_results, bob_guesses
+            )
         )
+        length = len(alice_bits)
 
         # Create arrays for plotting
         x = np.arange(length)
 
         # Plot Alice's bits
-        ax.scatter(
-            x, alice_bits[:length], color="blue", label="Alice's Bits", marker="o"
-        )
+        ax.scatter(x, alice_bits, color="blue", label="Alice's Bits", marker="o")
 
         # Plot Alice's bases
         alice_basis_values = [
-            0 if basis == "computational" else 1 for basis in alice_bases[:length]
+            0 if basis == "computational" else 1 for basis in alice_bases
         ]
         ax.scatter(
             x,
@@ -354,9 +368,7 @@ class ProtocolVisualizer:
         )
 
         # Plot Bob's bases
-        bob_basis_values = [
-            0 if basis == "computational" else 1 for basis in bob_bases[:length]
-        ]
+        bob_basis_values = [0 if basis == "computational" else 1 for basis in bob_bases]
         ax.scatter(
             x,
             [b - 0.1 for b in bob_basis_values],
@@ -368,7 +380,7 @@ class ProtocolVisualizer:
         # Plot Bob's results
         ax.scatter(
             x,
-            [r - 0.2 for r in bob_results[:length]],
+            [r - 0.2 for r in bob_results],
             color="red",
             label="Bob's Results",
             marker="x",
@@ -377,7 +389,7 @@ class ProtocolVisualizer:
         # Plot Bob's guesses
         ax.scatter(
             x,
-            [g - 0.3 for g in bob_guesses[:length]],
+            [g - 0.3 for g in bob_guesses],
             color="purple",
             label="Bob's Guesses",
             marker="^",

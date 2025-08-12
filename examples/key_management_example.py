@@ -37,7 +37,7 @@ def key_management_example() -> None:
 
     short_key = PrivacyAmplification.universal_hashing(long_key, output_length=128)
     print(f"Amplified key length: {len(short_key)}")
-    print(f"Amplified key: {short_key}")
+    print(f"Amplified key: {[int(bit) for bit in short_key]}")
 
 
 if __name__ == "__main__":

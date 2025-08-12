@@ -32,8 +32,8 @@ def protocols_example() -> None:
     bell_results = e91.test_bell_inequality()
     print(f"  - E91 complete: {e91.is_complete}")
     print(f"  - E91 secure: {e91.is_secure}")
-    print(f"  - E91 Bell violation: {bell_results['violation']}")
-    print(f"  - E91 S-value: {bell_results['S_value']:.4f}")
+    print(f"  - E91 Bell violation: {bell_results['is_violated']}")
+    print(f"  - E91 S-value: {bell_results['s_value']:.4f}")
     print(f"  - E91 final key length: {len(e91_results['final_key'])}")
 
     # 3. SARG04 Protocol

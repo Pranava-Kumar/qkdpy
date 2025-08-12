@@ -80,7 +80,8 @@ class ErrorCorrection:
 
             # In subsequent iterations, also check blocks that contain previously corrected bits
             if iteration > 0:
-                for bit_pos in corrected_bits:
+                newly_corrected_bits = set()
+                for bit_pos in corrected_bits.copy():
                     # Create a block around the corrected bit
                     block_start = max(0, bit_pos - block_size // 2)
                     block_end = min(len(alice_corrected), block_start + block_size)
@@ -109,7 +110,8 @@ class ErrorCorrection:
                         # Correct the error if it's a new position
                         if left not in corrected_bits:
                             bob_corrected[left] = 1 - bob_corrected[left]
-                            corrected_bits.add(left)
+                            newly_corrected_bits.add(left)
+                corrected_bits.update(newly_corrected_bits)
 
         return alice_corrected, bob_corrected
 

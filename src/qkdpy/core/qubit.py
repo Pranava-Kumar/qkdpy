@@ -177,7 +177,7 @@ class Qubit:
     def __repr__(self) -> str:
         """String representation of the qubit."""
         alpha, beta = self._state
-        return f"Qubit({alpha:.3f}|0⟩ + {beta:.3f}|1⟩)"
+        return f"Qubit({alpha:.3f}|0> + {beta:.3f}|1>)"
 
     def __eq__(self, other: "Qubit") -> bool:
         """Check if two qubits have the same state."""
