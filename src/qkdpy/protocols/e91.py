@@ -174,8 +174,8 @@ class E91(BaseProtocol):
             # For key generation, we use specific combinations of bases
             # In E91, we typically use the cases where Alice and Bob chose the same basis index
             if self.alice_choices[i] == self.bob_choices[i]:
-                alice_sifted.append(self.alice_results[i])
-                bob_sifted.append(self.bob_results[i])
+                alice_sifted.append(int(self.alice_results[i]))
+                bob_sifted.append(int(self.bob_results[i]))
 
         return alice_sifted, bob_sifted
 

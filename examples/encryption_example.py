@@ -56,7 +56,7 @@ def encryption_example():
     # Encrypt the message
     try:
         ciphertext, remaining_key = OneTimePad.encrypt(message, key)
-        print(f"Encrypted message: {ciphertext}")
+        print(f"Encrypted message: {[int(bit) for bit in ciphertext]}")
         print(f"Remaining key length: {len(remaining_key)}")
 
         # Decrypt the message
