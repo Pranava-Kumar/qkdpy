@@ -60,7 +60,7 @@ class BB84(BaseProtocol):
 
         for _ in range(self.num_qubits):
             # Alice randomly chooses a bit (0 or 1)
-            bit = np.random.randint(0, 2)
+            bit = int(np.random.randint(0, 2))
             self.alice_bits.append(bit)
 
             # Alice randomly chooses a basis
@@ -131,8 +131,8 @@ class BB84(BaseProtocol):
 
             # Check if Alice and Bob used the same basis
             if self.alice_bases[i] == self.bob_bases[i]:
-                sifted_alice_key.append(int(self.alice_bits[i]))
-                sifted_bob_key.append(int(self.bob_results[i]))
+                alice_sifted.append(int(self.alice_bits[i]))
+                bob_sifted.append(int(self.bob_results[i]))
 
         return alice_sifted, bob_sifted
 

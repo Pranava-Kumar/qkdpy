@@ -13,7 +13,7 @@ def random_bit_string(length: int) -> list[int]:
         List of random bits
 
     """
-    return [np.random.randint(0, 2) for _ in range(length)]
+    return [int(np.random.randint(0, 2)) for _ in range(length)]
 
 
 def bits_to_bytes(bits: list[int]) -> bytes:

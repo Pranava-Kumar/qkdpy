@@ -57,7 +57,7 @@ class SARG04(BaseProtocol):
 
         for _ in range(self.num_qubits):
             # Alice randomly chooses a bit (0 or 1)
-            bit = np.random.randint(0, 2)
+            bit = int(np.random.randint(0, 2))
             self.alice_bits.append(bit)
 
             # Alice randomly chooses a basis
@@ -116,7 +116,7 @@ class SARG04(BaseProtocol):
             # If Bob measured in the Hadamard basis and got 1, he guesses Alice sent |1> or |->
 
             # Bob randomly chooses one of the two possible states
-            guess = np.random.randint(0, 2)
+            guess = int(np.random.randint(0, 2))
             self.bob_guesses.append(guess)
 
         return self.bob_results

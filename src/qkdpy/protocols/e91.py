@@ -133,8 +133,8 @@ class E91(BaseProtocol):
             self.bob_choices.append(bob_choice)
 
             # Simulate measurement of a Bell state
-            # Alice's result is random
-            alice_result = np.random.randint(0, 2)
+            # Alice randomly chooses a result (0 or 1)
+            alice_result = int(np.random.randint(0, 2))
             self.alice_results.append(alice_result)
 
             # Bob's result is correlated with Alice's
