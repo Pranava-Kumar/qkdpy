@@ -131,8 +131,8 @@ class BB84(BaseProtocol):
 
             # Check if Alice and Bob used the same basis
             if self.alice_bases[i] == self.bob_bases[i]:
-                alice_sifted.append(self.alice_bits[i])
-                bob_sifted.append(self.bob_results[i])
+                sifted_alice_key.append(int(self.alice_bits[i]))
+                sifted_bob_key.append(int(self.bob_results[i]))
 
         return alice_sifted, bob_sifted
 

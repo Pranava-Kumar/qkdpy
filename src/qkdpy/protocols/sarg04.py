@@ -151,10 +151,10 @@ class SARG04(BaseProtocol):
             bob_guess_basis = 1 - (0 if self.bob_bases[i] == "computational" else 1)
 
             if alice_basis_index == bob_guess_basis:
-                alice_sifted.append(self.alice_bits[i])
+                alice_sifted.append(int(self.alice_bits[i]))
 
                 # Bob's bit is determined by his guess
-                bob_sifted.append(self.bob_guesses[i])
+                bob_sifted.append(int(self.bob_guesses[i]))
 
         return alice_sifted, bob_sifted
 
