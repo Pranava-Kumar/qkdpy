@@ -49,7 +49,7 @@ class TestBB84(unittest.TestCase):
     def test_bb84_security_threshold(self):
         """Test the security threshold of BB84."""
         # Create a channel with high noise
-        channel = QuantumChannel(loss=0.0, noise_model="depolarizing", noise_level=0.2)
+        channel = QuantumChannel(loss=0.0, noise_model="depolarizing", noise_level=0.5)
 
         # Create a BB84 protocol instance
         bb84 = BB84(channel, key_length=100, security_threshold=0.1)

@@ -10,11 +10,12 @@ QKDpy is a comprehensive Python library for Quantum Key Distribution (QKD) simul
 
 ## Features
 
-- **Quantum Simulation**: Simulate qubits, quantum gates, and measurements
-- **QKD Protocols**: Implementations of BB84, E91, SARG04, and more
-- **Key Management**: Error correction and privacy amplification algorithms
-- **Cryptographic Tools**: One-time pad encryption and authentication using quantum keys
-- **Visualization**: Tools to visualize quantum states and protocol execution
+- **Quantum Simulation**: Simulate qubits, quantum gates, multi-qubit states, and measurements
+- **QKD Protocols**: Implementations of BB84, E92, E91, SARG04, CV-QKD, Device-Independent QKD, and more
+- **Key Management**: Advanced error correction and privacy amplification algorithms
+- **Quantum Cryptography**: Quantum authentication, key exchange, and random number generation
+- **Visualization**: Advanced tools to visualize quantum states and protocol execution
+- **Quantum Network Analysis**: Tools for analyzing quantum networks and multi-party QKD
 - **Extensible Design**: Easy to add new protocols and features
 - **Performance**: Efficient implementations for simulations
 
@@ -32,9 +33,9 @@ cd qkdpy
 
 # Install in development mode
 uv pip install -e .
-
 ```
-# Quick Start
+
+## Quick Start
 
 Here's a simple example of using the BB84 protocol to generate a secure key:
 
@@ -55,7 +56,28 @@ print(f"Generated key: {results['final_key']}")
 print(f"QBER: {results['qber']:.4f}")
 print(f"Is secure: {results['is_secure']}")
 ```
+
 For more examples, see the examples directory.
+
+## Advanced Usage
+
+QKDpy also supports advanced protocols and features:
+
+```python
+from qkdpy import DeviceIndependentQKD, QuantumKeyManager, QuantumRandomNumberGenerator
+
+# Device-independent QKD
+di_qkd = DeviceIndependentQKD(channel, key_length=100)
+results = di_qkd.execute()
+
+# Quantum key management
+key_manager = QuantumKeyManager(channel)
+key_id = key_manager.generate_key("secure_session", key_length=128)
+
+# Quantum random number generation
+qrng = QuantumRandomNumberGenerator(channel)
+random_bits = qrng.generate_random_bits(100)
+```
 
 ## Contributing
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
