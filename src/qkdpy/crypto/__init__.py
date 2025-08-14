@@ -1,7 +1,14 @@
-"""Cryptographic utilities for QKD protocols."""
+"""Cryptographic utilities for quantum keys."""
 
 from .authentication import QuantumAuth
 from .decryption import OneTimePadDecrypt
 from .encryption import OneTimePad
+from .key_exchange import QuantumKeyExchange
+from .quantum_auth import QuantumAuthenticator
+from .quantum_rng import QuantumRandomNumberGenerator
 
-__all__ = ["OneTimePad", "OneTimePadDecrypt", "QuantumAuth"]
+# For backward compatibility
+OneTimePad.decrypt = OneTimePadDecrypt.decrypt
+OneTimePad.decrypt_file = OneTimePadDecrypt.decrypt_file
+
+__all__ = ["OneTimePad", "QuantumAuth", "QuantumAuthenticator", "QuantumKeyExchange", "QuantumRandomNumberGenerator"]
