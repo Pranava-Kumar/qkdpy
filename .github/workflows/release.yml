@@ -37,14 +37,3 @@ jobs:
         with:
           print-hash: true  # Optional: Prints file hashes
           verbose: true     # Optional: Detailed output
-          # repository-url: https://test.pypi.org/legacy/  # Uncomment for TestPyPI testing
-
-      - name: Create GitHub Release  # Optional: Recreates your current release step
-        uses: actions/create-release@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          tag_name: ${{ github.ref }}
-          release_name: Release ${{ github.ref }}
-          draft: false
-          prerelease: false
