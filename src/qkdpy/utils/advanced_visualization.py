@@ -354,9 +354,15 @@ class AdvancedKeyRateAnalyzer:
         distances = [data.get("distance", 0) for data in protocols_data.values()]
 
         # Create 3D scatter plot
-        _ = ax.scatter(key_rates, qber_values, distances, 
-                      c=range(len(protocols)), cmap='tab10', 
-                      s=100, alpha=0.7)
+        _ = ax.scatter(
+            key_rates,
+            qber_values,
+            distances,
+            c=range(len(protocols)),
+            cmap="tab10",
+            s=100,
+            alpha=0.7,
+        )
 
         # Add protocol labels
         for i, protocol in enumerate(protocols):

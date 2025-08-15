@@ -3,13 +3,11 @@
 import hashlib
 import hmac
 import time
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
 from ..core import QuantumChannel
 from ..protocols import BB84
-from ..utils import random_bit_string
 
 
 class QuantumAuthenticator:
@@ -22,8 +20,8 @@ class QuantumAuthenticator:
             channel: Quantum channel for authentication protocol
         """
         self.channel = channel
-        self.authenticated_parties: Dict[str, Dict] = {}
-        self.auth_tokens: Dict[str, Dict] = {}
+        self.authenticated_parties: dict[str, dict] = {}
+        self.auth_tokens: dict[str, dict] = {}
 
     def register_party(self, party_id: str, shared_key_length: int = 128) -> bool:
         """Register a party for quantum authentication.
@@ -55,7 +53,9 @@ class QuantumAuthenticator:
             print(f"Error registering party: {e}")
             return False
 
-    def authenticate_party(self, party_id: str, challenge: Optional[str] = None) -> Optional[str]:
+    def authenticate_party(
+        self, party_id: str, challenge: str | None = None
+    ) -> str | None:
         """Authenticate a registered party.
 
         Args:
@@ -102,7 +102,9 @@ class QuantumAuthenticator:
 
         return token_id
 
-    def verify_authentication(self, party_id: str, token_id: str, challenge: str) -> bool:
+    def verify_authentication(
+        self, party_id: str, token_id: str, challenge: str
+    ) -> bool:
         """Verify an authentication token.
 
         Args:
@@ -149,7 +151,9 @@ class QuantumAuthenticator:
         challenge_bytes = challenge.encode("utf-8")
 
         # Generate the expected authentication token
-        expected_token = hmac.new(key_bytes, challenge_bytes, hashlib.sha256).hexdigest()
+        expected_token = hmac.new(
+            key_bytes, challenge_bytes, hashlib.sha256
+        ).hexdigest()
 
         # Compare with the provided token
         is_valid = hmac.compare_digest(
@@ -160,7 +164,7 @@ class QuantumAuthenticator:
 
     def generate_quantum_signature(
         self, party_id: str, message: str
-    ) -> Optional[Tuple[str, str]]:
+    ) -> tuple[str, str] | None:
         """Generate a quantum digital signature for a message.
 
         Args:
@@ -232,12 +236,14 @@ class QuantumAuthenticator:
         message_bytes = message.encode("utf-8")
 
         # Generate the expected signature
-        expected_signature = hmac.new(key_bytes, message_bytes, hashlib.sha256).hexdigest()
+        expected_signature = hmac.new(
+            key_bytes, message_bytes, hashlib.sha256
+        ).hexdigest()
 
         # Compare with the provided signature
         return hmac.compare_digest(expected_signature, signature)
 
-    def get_party_info(self, party_id: str) -> Optional[Dict]:
+    def get_party_info(self, party_id: str) -> dict | None:
         """Get information about an authenticated party.
 
         Args:
@@ -264,14 +270,15 @@ class QuantumAuthenticator:
         """
         if party_id in self.authenticated_parties:
             del self.authenticated_parties[party_id]
-            
+
             # Remove any tokens associated with this party
             tokens_to_remove = [
-                token_id for token_id, token_info in self.auth_tokens.items()
+                token_id
+                for token_id, token_info in self.auth_tokens.items()
                 if token_info["party_id"] == party_id
             ]
             for token_id in tokens_to_remove:
                 del self.auth_tokens[token_id]
-                
+
             return True
         return False

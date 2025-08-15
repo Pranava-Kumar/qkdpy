@@ -1,7 +1,5 @@
 """Example of using advanced protocols."""
 
-import numpy as np
-
 from qkdpy.core import QuantumChannel
 from qkdpy.protocols import B92, CVQKD, DeviceIndependentQKD, TwistedPairQKD
 
@@ -26,9 +24,7 @@ def advanced_protocols_example():
     # 2. Device-Independent QKD
     print("\n2. Device-Independent QKD")
     # For DI-QKD, we use a less noisy channel to ensure Bell's inequality can be violated
-    di_channel = QuantumChannel(
-        loss=0.05, noise_model="depolarizing", noise_level=0.02
-    )
+    di_channel = QuantumChannel(loss=0.05, noise_model="depolarizing", noise_level=0.02)
     di_qkd = DeviceIndependentQKD(di_channel, key_length=50)
     di_results = di_qkd.execute()
     bell_results = di_qkd.test_bell_inequality()

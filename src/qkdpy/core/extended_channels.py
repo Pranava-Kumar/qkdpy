@@ -19,10 +19,10 @@ class ExtendedQuantumChannel:
         eavesdropper=None,
     ):
         """Initialize an extended quantum channel.
-        
+
         Args:
             loss: Probability of losing a qubit in the channel (0.0 to 1.0)
-            noise_model: Type of noise ('depolarizing', 'bit_flip', 'phase_flip', 
+            noise_model: Type of noise ('depolarizing', 'bit_flip', 'phase_flip',
                          'amplitude_damping', 'phase_damping', 'generalized_amplitude_damping')
             noise_level: Intensity of the noise (0.0 to 1.0)
             eavesdropper: Optional function representing an eavesdropping attack
@@ -41,10 +41,10 @@ class ExtendedQuantumChannel:
 
     def transmit(self, qubit: Qubit) -> Qubit | None:
         """Transmit a qubit through the channel.
-        
+
         Args:
             qubit: The qubit to transmit
-            
+
         Returns:
             The received qubit or None if it was lost
         """
@@ -149,7 +149,7 @@ class ExtendedQuantumChannel:
 
     def get_statistics(self) -> dict:
         """Get transmission statistics.
-        
+
         Returns:
             Dictionary containing transmission statistics
         """
@@ -176,7 +176,7 @@ class ExtendedQuantumChannel:
 
     def set_eavesdropper(self, eavesdropper) -> None:
         """Set or remove an eavesdropper on the channel.
-        
+
         Args:
             eavesdropper: Function representing an eavesdropping attack or None to remove
         """

@@ -2,13 +2,11 @@
 
 import json
 import time
-from typing import Dict, List, Optional
 
 import numpy as np
 
 from ..core import QuantumChannel
 from ..protocols import BB84
-from .key_distillation import KeyDistillation
 
 
 class QuantumKeyManager:
@@ -21,17 +19,14 @@ class QuantumKeyManager:
             channel: Quantum channel for key generation
         """
         self.channel = channel
-        self.key_store: Dict[str, Dict] = {}
-        self.active_sessions: Dict[str, Dict] = {}
+        self.key_store: dict[str, dict] = {}
+        self.active_sessions: dict[str, dict] = {}
         self.key_generation_rate = 0.0
         self.total_keys_generated = 0
 
     def generate_key(
-        self, 
-        session_id: str, 
-        key_length: int = 128,
-        protocol: str = "BB84"
-    ) -> Optional[str]:
+        self, session_id: str, key_length: int = 128, protocol: str = "BB84"
+    ) -> str | None:
         """Generate a quantum key for a session.
 
         Args:
@@ -83,7 +78,8 @@ class QuantumKeyManager:
             # Update statistics
             self.total_keys_generated += 1
             self.key_generation_rate = (
-                self.total_keys_generated / (time.time() - self.active_sessions[session_id]["created"])
+                self.total_keys_generated
+                / (time.time() - self.active_sessions[session_id]["created"])
                 if time.time() - self.active_sessions[session_id]["created"] > 0
                 else 0
             )
@@ -94,7 +90,7 @@ class QuantumKeyManager:
             print(f"Error generating key: {e}")
             return None
 
-    def get_key(self, key_id: str) -> Optional[List[int]]:
+    def get_key(self, key_id: str) -> list[int] | None:
         """Retrieve a key by its identifier.
 
         Args:
@@ -128,7 +124,7 @@ class QuantumKeyManager:
             return True
         return False
 
-    def get_session_keys(self, session_id: str) -> List[str]:
+    def get_session_keys(self, session_id: str) -> list[str]:
         """Get all key identifiers for a session.
 
         Args:
@@ -141,7 +137,7 @@ class QuantumKeyManager:
             return self.active_sessions[session_id]["keys"]
         return []
 
-    def rotate_session_key(self, session_id: str, key_length: int = 128) -> Optional[str]:
+    def rotate_session_key(self, session_id: str, key_length: int = 128) -> str | None:
         """Generate a new key for a session (key rotation).
 
         Args:
@@ -153,7 +149,7 @@ class QuantumKeyManager:
         """
         return self.generate_key(session_id, key_length)
 
-    def get_key_statistics(self) -> Dict:
+    def get_key_statistics(self) -> dict:
         """Get statistics about key generation and storage.
 
         Returns:
@@ -206,7 +202,7 @@ class QuantumKeyManager:
             True if successful, False otherwise
         """
         try:
-            with open(filename, "r") as f:
+            with open(filename) as f:
                 import_data = json.load(f)
 
             # Update the key store

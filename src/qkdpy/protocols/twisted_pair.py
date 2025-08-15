@@ -79,9 +79,9 @@ class TwistedPairQKD(BaseProtocol):
             else:  # circular basis
                 # Circular basis: |+i> or |-i>
                 if bit == 0:
-                    qubit = Qubit(1/np.sqrt(2), 1j/np.sqrt(2))
+                    qubit = Qubit(1 / np.sqrt(2), 1j / np.sqrt(2))
                 else:
-                    qubit = Qubit(1/np.sqrt(2), -1j/np.sqrt(2))
+                    qubit = Qubit(1 / np.sqrt(2), -1j / np.sqrt(2))
 
             qubits.append(qubit)
 
@@ -118,6 +118,7 @@ class TwistedPairQKD(BaseProtocol):
 
             # Measure in the chosen basis
             from ..core import Measurement
+
             result = Measurement.measure_in_basis(qubit, basis)
             self.bob_results.append(result)
 

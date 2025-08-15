@@ -1,7 +1,5 @@
 """Example of using quantum cryptography features."""
 
-import numpy as np
-
 from qkdpy.core import QuantumChannel
 from qkdpy.crypto import (
     QuantumAuthenticator,
@@ -107,7 +105,9 @@ def quantum_cryptography_example():
         shared_key = key_exchange.get_shared_key(session_id)
         if shared_key:
             print(f"Shared key length: {len(shared_key)}")
-            print(f"First 10 bits of shared key: {[int(bit) for bit in shared_key[:10]]}")
+            print(
+                f"First 10 bits of shared key: {[int(bit) for bit in shared_key[:10]]}"
+            )
 
         # Verify key exchange
         auth_token = key_exchange.verify_key_exchange(session_id, party_a, challenge)

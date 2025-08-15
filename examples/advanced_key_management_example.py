@@ -57,11 +57,13 @@ def advanced_key_management_example():
 
     print(f"Initial Alice key: {alice_key[:10]}...")
     print(f"Initial Bob key:   {bob_key[:10]}...")
-    print(f"Initial error rate: {sum(a != b for a, b in zip(alice_key, bob_key)) / len(alice_key):.4f}")
+    print(
+        f"Initial error rate: {sum(a != b for a, b in zip(alice_key, bob_key, strict=False)) / len(alice_key):.4f}"
+    )
 
     # Apply LDPC error correction
-    corrected_alice, corrected_bob, success = AdvancedErrorCorrection.low_density_parity_check(
-        alice_key, bob_key
+    corrected_alice, corrected_bob, success = (
+        AdvancedErrorCorrection.low_density_parity_check(alice_key, bob_key)
     )
     print(f"LDPC correction success: {success}")
     print(f"Corrected Alice key: {corrected_alice[:10]}...")

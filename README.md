@@ -11,13 +11,33 @@ QKDpy is a comprehensive Python library for Quantum Key Distribution (QKD) simul
 ## Features
 
 - **Quantum Simulation**: Simulate qubits, quantum gates, multi-qubit states, and measurements
-- **QKD Protocols**: Implementations of BB84, E92, E91, SARG04, CV-QKD, Device-Independent QKD, and more
+- **QKD Protocols**: Implementations of BB84, E92, E91, SARG04, CV-QKD, Device-Independent QKD, HD-QKD, and more
+- **High-Dimensional QKD**: Support for qudit-based protocols with enhanced security and key rates
 - **Key Management**: Advanced error correction and privacy amplification algorithms
 - **Quantum Cryptography**: Quantum authentication, key exchange, and random number generation
+- **Enhanced Security**: Message authentication, key validation, and side-channel protection
+- **Machine Learning Integration**: Optimization and anomaly detection for QKD systems
+- **Quantum Networks**: Multi-party QKD and network simulation capabilities
 - **Visualization**: Advanced tools to visualize quantum states and protocol execution
 - **Quantum Network Analysis**: Tools for analyzing quantum networks and multi-party QKD
 - **Extensible Design**: Easy to add new protocols and features
 - **Performance**: Efficient implementations for simulations
+
+## Installation
+
+QKDpy requires Python 3.10 or higher. We recommend using [uv](https://github.com/astral-sh/uv) for package management:
+
+```bash
+# Install uv
+curl -LsSf https://astral.sh/uv/install.sh | sh
+
+# Clone the repository
+git clone https://github.com/yourusername/qkdpy.git
+cd qkdpy
+
+# Install in development mode
+uv pip install -e .
+```
 
 ## Installation
 
@@ -57,6 +77,27 @@ print(f"QBER: {results['qber']:.4f}")
 print(f"Is secure: {results['is_secure']}")
 ```
 
+For High-Dimensional QKD:
+
+```python
+from qkdpy import HDQKD, QuantumChannel
+
+# Create a quantum channel with some noise
+channel = QuantumChannel(loss=0.1, noise_model='depolarizing', noise_level=0.05)
+
+# Create an HD-QKD protocol instance with 4-dimensional qudits
+hd_qkd = HDQKD(channel, key_length=100, dimension=4)
+
+# Execute the protocol
+results = hd_qkd.execute()
+
+# Print the results
+print(f"Generated key: {results['final_key']}")
+print(f"QBER: {results['qber']:.4f}")
+print(f"Is secure: {results['is_secure']}")
+print(f"Dimensional efficiency gain: {hd_qkd.get_dimension_efficiency():.2f}x")
+```
+
 For more examples, see the examples directory.
 
 ## Advanced Usage
@@ -64,7 +105,14 @@ For more examples, see the examples directory.
 QKDpy also supports advanced protocols and features:
 
 ```python
-from qkdpy import DeviceIndependentQKD, QuantumKeyManager, QuantumRandomNumberGenerator
+from qkdpy import (
+    DeviceIndependentQKD,
+    QuantumKeyManager,
+    QuantumRandomNumberGenerator,
+    QuantumNetwork,
+    HDQKD,
+    QKDOptimizer
+)
 
 # Device-independent QKD
 di_qkd = DeviceIndependentQKD(channel, key_length=100)
@@ -77,6 +125,29 @@ key_id = key_manager.generate_key("secure_session", key_length=128)
 # Quantum random number generation
 qrng = QuantumRandomNumberGenerator(channel)
 random_bits = qrng.generate_random_bits(100)
+
+# Quantum network simulation
+network = QuantumNetwork("Research Network")
+network.add_node("Alice")
+network.add_node("Bob")
+network.add_connection("Alice", "Bob", channel)
+key = network.establish_key_between_nodes("Alice", "Bob", 128)
+
+# High-dimensional QKD
+hd_qkd = HDQKD(channel, key_length=100, dimension=4)
+hd_results = hd_qkd.execute()
+
+# ML-based QKD optimization
+optimizer = QKDOptimizer("BB84")
+parameter_space = {
+    "loss": (0.0, 0.5),
+    "noise_level": (0.0, 0.1)
+}
+# optimization_results = optimizer.optimize_channel_parameters(
+#     parameter_space,
+#     lambda params: simulate_protocol_performance(params),
+#     num_iterations=50
+# )
 ```
 
 ## Contributing
