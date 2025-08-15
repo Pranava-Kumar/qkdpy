@@ -12,7 +12,7 @@ def b92_example():
     print("===================")
 
     # Create a quantum channel with some noise and loss
-    channel = QuantumChannel(loss=0.1, noise_model='depolarizing', noise_level=0.05)
+    channel = QuantumChannel(loss=0.1, noise_model="depolarizing", noise_level=0.05)
 
     # Create a B92 protocol instance
     b92 = B92(channel, key_length=100)

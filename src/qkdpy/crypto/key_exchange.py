@@ -2,7 +2,6 @@
 
 import json
 import time
-from typing import Dict, List, Optional, Tuple
 
 import numpy as np
 
@@ -21,7 +20,7 @@ class QuantumKeyExchange:
             channel: Quantum channel for key exchange
         """
         self.channel = channel
-        self.exchange_sessions: Dict[str, Dict] = {}
+        self.exchange_sessions: dict[str, dict] = {}
         self.authenticator = QuantumAuthenticator(channel)
         self.successful_exchanges = 0
         self.failed_exchanges = 0
@@ -32,8 +31,8 @@ class QuantumKeyExchange:
         party_b: str,
         key_length: int = 128,
         protocol: str = "BB84",
-        timeout: float = 30.0
-    ) -> Optional[str]:
+        timeout: float = 30.0,
+    ) -> str | None:
         """Initiate a quantum key exchange between two parties.
 
         Args:
@@ -86,7 +85,7 @@ class QuantumKeyExchange:
             return False
 
         session = self.exchange_sessions[session_id]
-        
+
         # Check if session has timed out
         if time.time() - session["start_time"] > session["timeout"]:
             session["status"] = "timeout"
@@ -116,7 +115,7 @@ class QuantumKeyExchange:
             session["qber"] = results["qber"]
             session["status"] = "completed"
             session["end_time"] = time.time()
-            
+
             self.successful_exchanges += 1
             return True
 
@@ -127,7 +126,7 @@ class QuantumKeyExchange:
             self.failed_exchanges += 1
             return False
 
-    def get_shared_key(self, session_id: str) -> Optional[List[int]]:
+    def get_shared_key(self, session_id: str) -> list[int] | None:
         """Get the shared key from a completed exchange.
 
         Args:
@@ -145,8 +144,8 @@ class QuantumKeyExchange:
         return None
 
     def verify_key_exchange(
-        self, session_id: str, party: str, challenge: Optional[str] = None
-    ) -> Optional[str]:
+        self, session_id: str, party: str, challenge: str | None = None
+    ) -> str | None:
         """Verify a party's participation in a key exchange.
 
         Args:
@@ -161,7 +160,7 @@ class QuantumKeyExchange:
             return None
 
         session = self.exchange_sessions[session_id]
-        
+
         # Check if party is part of this exchange
         if party not in [session["party_a"], session["party_b"]]:
             return None
@@ -173,7 +172,7 @@ class QuantumKeyExchange:
         # Authenticate the party
         return self.authenticator.authenticate_party(party, challenge)
 
-    def get_session_info(self, session_id: str) -> Optional[Dict]:
+    def get_session_info(self, session_id: str) -> dict | None:
         """Get information about a key exchange session.
 
         Args:
@@ -187,14 +186,14 @@ class QuantumKeyExchange:
 
         # Return a copy of the session information
         session_info = self.exchange_sessions[session_id].copy()
-        
+
         # Remove sensitive information
         if "shared_key" in session_info:
             del session_info["shared_key"]
-            
+
         return session_info
 
-    def get_exchange_statistics(self) -> Dict:
+    def get_exchange_statistics(self) -> dict:
         """Get statistics about key exchanges.
 
         Returns:
@@ -202,8 +201,7 @@ class QuantumKeyExchange:
         """
         total_exchanges = self.successful_exchanges + self.failed_exchanges
         success_rate = (
-            self.successful_exchanges / total_exchanges 
-            if total_exchanges > 0 else 0.0
+            self.successful_exchanges / total_exchanges if total_exchanges > 0 else 0.0
         )
 
         return {
@@ -253,11 +251,11 @@ class QuantumKeyExchange:
             for session_id, session_info in self.exchange_sessions.items():
                 # Copy session info
                 safe_info = session_info.copy()
-                
+
                 # Remove sensitive information
                 if "shared_key" in safe_info:
                     del safe_info["shared_key"]
-                    
+
                 export_data[session_id] = safe_info
 
             # Write to file

@@ -2,8 +2,6 @@
 
 import numpy as np
 
-from .error_correction import ErrorCorrection
-
 
 class AdvancedErrorCorrection:
     """Provides advanced error correction methods for QKD protocols."""

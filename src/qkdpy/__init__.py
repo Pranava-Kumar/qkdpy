@@ -4,7 +4,7 @@ QKDpy is a comprehensive library for Quantum Key Distribution (QKD) simulations,
 implementing various QKD protocols, quantum simulators, and cryptographic tools.
 """
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __author__ = "Pranava-Kumar"
 __email__ = "pranavakumar.it@gmail.com"
 
@@ -15,6 +15,11 @@ from .core.multiqubit import MultiQubitState
 
 # Import crypto utilities
 from .crypto import OneTimePad, QuantumAuth
+from .crypto.enhanced_security import (
+    QuantumAuthentication,
+    QuantumKeyValidation,
+    QuantumSideChannelProtection,
+)
 from .crypto.key_exchange import QuantumKeyExchange
 from .crypto.quantum_auth import QuantumAuthenticator
 from .crypto.quantum_rng import QuantumRandomNumberGenerator
@@ -25,8 +30,14 @@ from .key_management.advanced_error_correction import AdvancedErrorCorrection
 from .key_management.advanced_privacy_amplification import AdvancedPrivacyAmplification
 from .key_management.key_manager import QuantumKeyManager
 
+# Import ML tools
+from .ml import QKDAnomalyDetector, QKDOptimizer
+
+# Import network tools
+from .network import MultiPartyQKD, QuantumNetwork, QuantumNode
+
 # Import protocols
-from .protocols import BB84, E91, SARG04
+from .protocols import BB84, E91, HDQKD, SARG04
 from .protocols.b92 import B92
 from .protocols.cv_qkd import CVQKD
 from .protocols.di_qkd import DeviceIndependentQKD
@@ -56,6 +67,7 @@ __all__ = [
     "CVQKD",
     "DeviceIndependentQKD",
     "TwistedPairQKD",
+    "HDQKD",
     # Key management
     "ErrorCorrection",
     "AdvancedErrorCorrection",
@@ -69,6 +81,9 @@ __all__ = [
     "QuantumAuthenticator",
     "QuantumKeyExchange",
     "QuantumRandomNumberGenerator",
+    "QuantumAuthentication",
+    "QuantumKeyValidation",
+    "QuantumSideChannelProtection",
     # Utilities
     "BlochSphere",
     "ProtocolVisualizer",
@@ -77,4 +92,11 @@ __all__ = [
     "AdvancedKeyRateAnalyzer",
     "QuantumSimulator",
     "QuantumNetworkAnalyzer",
+    # ML tools
+    "QKDOptimizer",
+    "QKDAnomalyDetector",
+    # Network tools
+    "QuantumNetwork",
+    "QuantumNode",
+    "MultiPartyQKD",
 ]

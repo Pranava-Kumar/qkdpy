@@ -72,7 +72,7 @@ class CVQKD(BaseProtocol):
                 qubit = Qubit.zero()
             else:
                 qubit = Qubit.one()
-                
+
             qubits.append(qubit)
 
         return qubits
@@ -102,15 +102,15 @@ class CVQKD(BaseProtocol):
 
             # Bob measures the qubit in the computational basis
             measurement = qubit.measure("computational")
-            
+
             # Add noise to simulate continuous variable measurement
             # In a real implementation, this would be more complex
             noise = np.random.normal(0, np.sqrt(self.channel.noise_level))
-            
+
             # Store both the discrete measurement (for protocol compatibility)
             # and the continuous measurement (for CV-QKD specific calculations)
             self.bob_results.append(measurement)
-            
+
             # Create a noisy continuous measurement based on Alice's original modulation
             if i < len(self.alice_modulations):
                 original_modulation = self.alice_modulations[i]
@@ -119,7 +119,7 @@ class CVQKD(BaseProtocol):
             else:
                 # Fallback if we don't have the original modulation
                 noisy_measurement = float(measurement) + noise
-                
+
             self.bob_measurements.append(noisy_measurement)
 
         return self.bob_results
@@ -181,18 +181,19 @@ class CVQKD(BaseProtocol):
             Estimated excess noise level
         """
         # Calculate the correlation between Alice's modulations and Bob's measurements
-        valid_indices = [i for i in range(self.num_signals) 
-                        if self.bob_measurements[i] is not None]
-        
+        valid_indices = [
+            i for i in range(self.num_signals) if self.bob_measurements[i] is not None
+        ]
+
         if len(valid_indices) < 10:
             return 1.0
 
         alice_mods = [self.alice_modulations[i] for i in valid_indices]
         bob_measurements = [self.bob_measurements[i] for i in valid_indices]
-        
+
         # Calculate the correlation
         correlation = np.corrcoef(alice_mods, bob_measurements)[0, 1]
-        
+
         # Convert correlation to an excess noise estimate
         excess_noise = max(0.0, min(1.0, 1.0 - correlation))
 
@@ -209,7 +210,7 @@ class CVQKD(BaseProtocol):
 
         # Simplified key rate calculation
         alice_sifted, _ = self.sift_keys()
-        
+
         if len(alice_sifted) == 0:
             return 0.0
 
