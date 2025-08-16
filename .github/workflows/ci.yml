@@ -76,7 +76,7 @@ jobs:
 
     - name: Run mypy
       run: |
-        mypy src/qkdpy
+        uv run mypy src/qkdpy
 
   docs:
     runs-on: ubuntu-latest
