@@ -227,6 +227,9 @@ class MultiQubitState:
         # Perform the measurement
         result = 0 if np.random.random() < prob_0 else 1
 
+        # Convert numpy integer to Python int to avoid returning np.int32
+        result = int(result)
+
         # If this is the last qubit, return None for the collapsed state
         if self._num_qubits == 1:
             return result, None

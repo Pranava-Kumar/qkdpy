@@ -47,7 +47,9 @@ class PrivacyAmplification:
         result = []
         for i in range(output_length):
             # Compute the dot product modulo 2
-            bit = sum(hash_matrix[i][j] * int(key_str[j]) for j in range(len(key))) % 2
+            bit = int(
+                sum(hash_matrix[i][j] * int(key_str[j]) for j in range(len(key))) % 2
+            )
             result.append(int(bit))
 
         return result
@@ -99,7 +101,9 @@ class PrivacyAmplification:
         result = []
         for i in range(output_length):
             # Compute the dot product modulo 2
-            bit = sum(toeplitz[i][j] * int(key_str[j]) for j in range(len(key))) % 2
+            bit = int(
+                sum(toeplitz[i][j] * int(key_str[j]) for j in range(len(key))) % 2
+            )
             result.append(int(bit))
 
         return result
