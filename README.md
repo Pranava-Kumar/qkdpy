@@ -35,8 +35,22 @@ curl -LsSf https://astral.sh/uv/install.sh | sh
 git clone https://github.com/yourusername/qkdpy.git
 cd qkdpy
 
+# Create a virtual environment
+uv venv
+
 # Install in development mode
 uv pip install -e .
+```
+
+Or using pip with a virtual environment:
+
+```bash
+# Create a virtual environment
+python -m venv .venv
+source .venv/bin/activate  # On Windows: .venv\Scripts\activate
+
+# Install in development mode
+pip install -e .
 ```
 
 ## Quick Start

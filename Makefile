@@ -19,6 +19,7 @@ install:
 	uv pip install .
 
 install-dev:
+	uv venv
 	uv sync --all-extras --dev
 
 test:

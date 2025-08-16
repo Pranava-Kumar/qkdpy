@@ -4,7 +4,7 @@ QKDpy is a comprehensive library for Quantum Key Distribution (QKD) simulations,
 implementing various QKD protocols, quantum simulators, and cryptographic tools.
 """
 
-__version__ = "0.2.2"
+__version__ = "0.2.3"
 __author__ = "Pranava-Kumar"
 __email__ = "pranavakumar.it@gmail.com"
 
@@ -54,7 +54,7 @@ from .key_management.key_manager import QuantumKeyManager
 from .ml import QKDAnomalyDetector, QKDOptimizer
 
 # Import network tools
-from .network import MultiPartyQKD, QuantumNetwork, QuantumNode
+from .network import MultiPartyQKD, MultiPartyQKDNetwork, QuantumNetwork, QuantumNode
 
 # Import protocols
 from .protocols import BB84, E91, SARG04
@@ -135,4 +135,5 @@ __all__ = [
     "QuantumNetwork",
     "QuantumNode",
     "MultiPartyQKD",
+    "MultiPartyQKDNetwork",
 ]
