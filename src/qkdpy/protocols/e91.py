@@ -4,7 +4,7 @@ import math
 
 import numpy as np
 
-from ..core import QuantumChannel, QuantumGate, Qubit
+from ..core import Hadamard, QuantumChannel, Qubit
 from .base import BaseProtocol
 
 
@@ -74,7 +74,7 @@ class E91(BaseProtocol):
             bob_qubit = Qubit.zero()
 
             # Apply Hadamard to Alice's qubit
-            alice_qubit.apply_gate(QuantumGate.H())
+            alice_qubit.apply_gate(Hadamard().matrix)
 
             # Apply CNOT (in practice, this would be done before separating the qubits)
             # Since we can't directly apply CNOT to separate qubits in our simulation,

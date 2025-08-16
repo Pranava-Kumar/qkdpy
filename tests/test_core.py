@@ -4,7 +4,24 @@ import unittest
 
 import numpy as np
 
-from qkdpy.core import Measurement, QuantumChannel, QuantumGate, Qubit
+from qkdpy.core import (
+    CNOT,
+    CZ,
+    SWAP,
+    GateUtils,
+    Hadamard,
+    Measurement,
+    PauliX,
+    PauliY,
+    PauliZ,
+    QuantumChannel,
+    Qubit,
+    Rx,
+    Ry,
+    Rz,
+    S,
+    T,
+)
 
 
 class TestQubit(unittest.TestCase):
@@ -36,19 +53,19 @@ class TestQubit(unittest.TestCase):
         """Test applying quantum gates to qubits."""
         # Test Pauli-X gate
         q = Qubit.zero()
-        q.apply_gate(QuantumGate.X())
+        q.apply_gate(PauliX().matrix)
         self.assertAlmostEqual(q.probabilities[0], 0.0)
         self.assertAlmostEqual(q.probabilities[1], 1.0)
 
         # Test Hadamard gate
         q = Qubit.zero()
-        q.apply_gate(QuantumGate.H())
+        q.apply_gate(Hadamard().matrix)
         self.assertAlmostEqual(q.probabilities[0], 0.5)
         self.assertAlmostEqual(q.probabilities[1], 0.5)
 
         # Test Pauli-Z gate
         q = Qubit.plus()
-        q.apply_gate(QuantumGate.Z())
+        q.apply_gate(PauliZ().matrix)
         self.assertAlmostEqual(q.probabilities[0], 0.5)
         self.assertAlmostEqual(q.probabilities[1], 0.5)
 
@@ -58,19 +75,23 @@ class TestQubit(unittest.TestCase):
         q = Qubit.zero()
         result = q.measure("computational")
         self.assertEqual(result, 0)
+        q.collapse_state(result, "computational")
 
         q = Qubit.one()
         result = q.measure("computational")
         self.assertEqual(result, 1)
+        q.collapse_state(result, "computational")
 
         # Test Hadamard basis measurement
         q = Qubit.plus()
         result = q.measure("hadamard")
         self.assertEqual(result, 0)
+        q.collapse_state(result, "hadamard")
 
         q = Qubit.minus()
         result = q.measure("hadamard")
         self.assertEqual(result, 1)
+        q.collapse_state(result, "hadamard")
 
     def test_qubit_bloch_vector(self):
         """Test Bloch vector calculation."""
@@ -103,77 +124,77 @@ class TestQubit(unittest.TestCase):
         self.assertAlmostEqual(z, 0.0)
 
 
-class TestQuantumGate(unittest.TestCase):
-    """Test cases for the QuantumGate class."""
+class TestGateClasses(unittest.TestCase):
+    """Test cases for the individual QuantumGate classes."""
 
     def test_pauli_gates(self):
         """Test Pauli gates."""
         # Test Pauli-X gate
-        x_gate = QuantumGate.X()
-        self.assertTrue(QuantumGate.is_unitary(x_gate))
+        x_gate = PauliX().matrix
+        self.assertTrue(GateUtils.is_unitary(x_gate))
 
         # Test Pauli-Y gate
-        y_gate = QuantumGate.Y()
-        self.assertTrue(QuantumGate.is_unitary(y_gate))
+        y_gate = PauliY().matrix
+        self.assertTrue(GateUtils.is_unitary(y_gate))
 
         # Test Pauli-Z gate
-        z_gate = QuantumGate.Z()
-        self.assertTrue(QuantumGate.is_unitary(z_gate))
+        z_gate = PauliZ().matrix
+        self.assertTrue(GateUtils.is_unitary(z_gate))
 
     def test_clifford_gates(self):
         """Test Clifford gates."""
         # Test Hadamard gate
-        h_gate = QuantumGate.H()
-        self.assertTrue(QuantumGate.is_unitary(h_gate))
+        h_gate = Hadamard().matrix
+        self.assertTrue(GateUtils.is_unitary(h_gate))
 
         # Test Phase gate
-        s_gate = QuantumGate.S()
-        self.assertTrue(QuantumGate.is_unitary(s_gate))
+        s_gate = S().matrix
+        self.assertTrue(GateUtils.is_unitary(s_gate))
 
         # Test π/8 gate
-        t_gate = QuantumGate.T()
-        self.assertTrue(QuantumGate.is_unitary(t_gate))
+        t_gate = T().matrix
+        self.assertTrue(GateUtils.is_unitary(t_gate))
 
     def test_rotation_gates(self):
         """Test rotation gates."""
         # Test X rotation
-        rx_gate = QuantumGate.Rx(np.pi / 4)
-        self.assertTrue(QuantumGate.is_unitary(rx_gate))
+        rx_gate = Rx(np.pi / 4).matrix
+        self.assertTrue(GateUtils.is_unitary(rx_gate))
 
         # Test Y rotation
-        ry_gate = QuantumGate.Ry(np.pi / 4)
-        self.assertTrue(QuantumGate.is_unitary(ry_gate))
+        ry_gate = Ry(np.pi / 4).matrix
+        self.assertTrue(GateUtils.is_unitary(ry_gate))
 
         # Test Z rotation
-        rz_gate = QuantumGate.Rz(np.pi / 4)
-        self.assertTrue(QuantumGate.is_unitary(rz_gate))
+        rz_gate = Rz(np.pi / 4).matrix
+        self.assertTrue(GateUtils.is_unitary(rz_gate))
 
     def test_two_qubit_gates(self):
         """Test two-qubit gates."""
         # Test CNOT gate
-        cnot_gate = QuantumGate.CNOT()
-        self.assertTrue(QuantumGate.is_unitary(cnot_gate))
+        cnot_gate = CNOT().matrix
+        self.assertTrue(GateUtils.is_unitary(cnot_gate))
 
         # Test CZ gate
-        cz_gate = QuantumGate.CZ()
-        self.assertTrue(QuantumGate.is_unitary(cz_gate))
+        cz_gate = CZ().matrix
+        self.assertTrue(GateUtils.is_unitary(cz_gate))
 
         # Test SWAP gate
-        swap_gate = QuantumGate.SWAP()
-        self.assertTrue(QuantumGate.is_unitary(swap_gate))
+        swap_gate = SWAP().matrix
+        self.assertTrue(GateUtils.is_unitary(swap_gate))
 
     def test_gate_composition(self):
         """Test gate composition."""
         # Test sequence composition
-        h_gate = QuantumGate.H()
-        x_gate = QuantumGate.X()
-        sequence = QuantumGate.sequence(h_gate, x_gate)
-        self.assertTrue(QuantumGate.is_unitary(sequence))
+        h_gate = Hadamard().matrix
+        x_gate = PauliX().matrix
+        sequence = GateUtils.sequence(h_gate, x_gate)
+        self.assertTrue(GateUtils.is_unitary(sequence))
 
         # Test tensor product
-        tensor = QuantumGate.tensor_product(h_gate, x_gate)
+        tensor = GateUtils.tensor_product(h_gate, x_gate)
         self.assertEqual(tensor.shape, (4, 4))
-        self.assertTrue(QuantumGate.is_unitary(tensor))
+        self.assertTrue(GateUtils.is_unitary(tensor))
 
 
 class TestQuantumChannel(unittest.TestCase):
@@ -265,16 +286,19 @@ class TestMeasurement(unittest.TestCase):
         q = Qubit.zero()
         result = Measurement.measure_in_basis(q, "computational")
         self.assertEqual(result, 0)
+        q.collapse_state(result, "computational")
 
         # Test Hadamard basis
         q = Qubit.plus()
         result = Measurement.measure_in_basis(q, "hadamard")
         self.assertEqual(result, 0)
+        q.collapse_state(result, "hadamard")
 
         # Test circular basis
         q = Qubit(1 / np.sqrt(2), 1j / np.sqrt(2))
         result = Measurement.measure_in_basis(q, "circular")
         self.assertEqual(result, 0)
+        q.collapse_state(result, "circular")
 
     def test_measurement_in_random_basis(self):
         """Test measurement in random bases."""
@@ -282,6 +306,7 @@ class TestMeasurement(unittest.TestCase):
         result, basis = Measurement.measure_in_random_basis(q)
         self.assertIn(result, [0, 1])
         self.assertIn(basis, ["computational", "hadamard"])
+        q.collapse_state(result, basis)
 
     def test_state_fidelity(self):
         """Test state fidelity calculation."""
@@ -320,7 +345,7 @@ class TestMeasurement(unittest.TestCase):
 
         # Test mixed state (by applying a random gate)
         q = Qubit.zero()
-        q.apply_gate(QuantumGate.random_unitary())
+        q.apply_gate(GateUtils.random_unitary())
         purity = Measurement.measure_purity(q)
         self.assertAlmostEqual(purity, 1.0)
 
@@ -333,7 +358,7 @@ class TestMeasurement(unittest.TestCase):
 
         # Test mixed state (by applying a random gate)
         q = Qubit.zero()
-        q.apply_gate(QuantumGate.random_unitary())
+        q.apply_gate(GateUtils.random_unitary())
         entropy = Measurement.measure_von_neumann_entropy(q)
         self.assertAlmostEqual(entropy, 0.0)
 

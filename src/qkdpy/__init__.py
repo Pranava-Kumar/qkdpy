@@ -4,12 +4,32 @@ QKDpy is a comprehensive library for Quantum Key Distribution (QKD) simulations,
 implementing various QKD protocols, quantum simulators, and cryptographic tools.
 """
 
-__version__ = "0.3.0"
+__version__ = "0.2.2"
 __author__ = "Pranava-Kumar"
 __email__ = "pranavakumar.it@gmail.com"
 
 # Import core components
-from .core import Measurement, QuantumChannel, QuantumGate, Qubit
+from .core import (
+    CNOT,
+    CZ,
+    SWAP,
+    GateUtils,
+    Hadamard,
+    Identity,
+    Measurement,
+    PauliX,
+    PauliY,
+    PauliZ,
+    QuantumChannel,
+    Qubit,
+    Rx,
+    Ry,
+    Rz,
+    S,
+    SDag,
+    T,
+    TDag,
+)
 from .core.extended_channels import ExtendedQuantumChannel
 from .core.multiqubit import MultiQubitState
 
@@ -37,10 +57,11 @@ from .ml import QKDAnomalyDetector, QKDOptimizer
 from .network import MultiPartyQKD, QuantumNetwork, QuantumNode
 
 # Import protocols
-from .protocols import BB84, E91, HDQKD, SARG04
+from .protocols import BB84, E91, SARG04
 from .protocols.b92 import B92
 from .protocols.cv_qkd import CVQKD
 from .protocols.di_qkd import DeviceIndependentQKD
+from .protocols.hd_qkd import HDQKD
 from .protocols.twisted_pair import TwistedPairQKD
 
 # Import utilities
@@ -54,11 +75,26 @@ from .utils.quantum_simulator import QuantumNetworkAnalyzer, QuantumSimulator
 __all__ = [
     # Core components
     "Qubit",
-    "QuantumGate",
     "QuantumChannel",
     "ExtendedQuantumChannel",
     "MultiQubitState",
     "Measurement",
+    "Identity",
+    "PauliX",
+    "PauliY",
+    "PauliZ",
+    "Hadamard",
+    "S",
+    "SDag",
+    "T",
+    "TDag",
+    "Rx",
+    "Ry",
+    "Rz",
+    "CNOT",
+    "CZ",
+    "SWAP",
+    "GateUtils",
     # Protocols
     "BB84",
     "E91",

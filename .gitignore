@@ -14,6 +14,11 @@ wheels/
 
 tests/
 
+GEMINI.md
 QWEN.md
 test_file.txt
 test_file.txt.enc
+
+QKDpy_Research.md
+
+pyproject.toml.backup

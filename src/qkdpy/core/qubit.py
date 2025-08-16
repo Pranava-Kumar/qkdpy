@@ -103,45 +103,56 @@ class Qubit:
             prob_0, prob_1 = self.probabilities
             result = 0 if np.random.random() < prob_0 else 1
 
-            # Collapse the state
-            if result == 0:
-                self._state = np.array([1, 0], dtype=complex)
-            else:
-                self._state = np.array([0, 1], dtype=complex)
-
         elif basis == "hadamard":
             # Hadamard basis measurement
             # Transform to Hadamard basis, measure, then transform back
             h_gate = np.array([[1, 1], [1, -1]], dtype=complex) / math.sqrt(2)
-            original_state = self._state.copy()
-            self.apply_gate(h_gate)
-            result = self.measure("computational")
-            self._state = original_state
-
-            # Collapse the state in the Hadamard basis
-            if result == 0:
-                self._state = np.array([1, 1], dtype=complex) / math.sqrt(2)
-            else:
-                self._state = np.array([1, -1], dtype=complex) / math.sqrt(2)
+            temp_qubit = Qubit(
+                self._state[0], self._state[1]
+            )  # Create a temporary qubit for measurement
+            temp_qubit.apply_gate(h_gate)
+            prob_0, prob_1 = temp_qubit.probabilities
+            result = 0 if np.random.random() < prob_0 else 1
 
         elif basis == "circular":
             # Circular basis measurement
             # Transform to circular basis, measure, then transform back
             circ_gate = np.array([[1, -1j], [1, 1j]], dtype=complex) / math.sqrt(2)
-            original_state = self._state.copy()
-            self.apply_gate(circ_gate)
-            result = self.measure("computational")
-            self._state = original_state
+            temp_qubit = Qubit(
+                self._state[0], self._state[1]
+            )  # Create a temporary qubit for measurement
+            temp_qubit.apply_gate(circ_gate)
+            prob_0, prob_1 = temp_qubit.probabilities
+            result = 0 if np.random.random() < prob_0 else 1
+        else:
+            raise ValueError("Basis must be 'computational', 'hadamard', or 'circular'")
 
-            # Collapse the state in the circular basis
+        return result
+
+    def collapse_state(self, result: int, basis: str = "computational") -> None:
+        """Collapse the qubit's state to the measured result in the specified basis.
+
+        Args:
+            result: The classical measurement result (0 or 1).
+            basis: 'computational' (Z), 'hadamard' (X), or 'circular' (Y).
+        """
+        if basis == "computational":
+            if result == 0:
+                self._state = np.array([1, 0], dtype=complex)
+            else:
+                self._state = np.array([0, 1], dtype=complex)
+        elif basis == "hadamard":
+            if result == 0:
+                self._state = np.array([1, 1], dtype=complex) / math.sqrt(2)
+            else:
+                self._state = np.array([1, -1], dtype=complex) / math.sqrt(2)
+        elif basis == "circular":
             if result == 0:
                 self._state = np.array([1, 1j], dtype=complex) / math.sqrt(2)
             else:
                 self._state = np.array([1, -1j], dtype=complex) / math.sqrt(2)
         else:
             raise ValueError("Basis must be 'computational', 'hadamard', or 'circular'")
-
-        return result
 
     def density_matrix(self) -> np.ndarray:
         """Calculate the density matrix of the qubit.

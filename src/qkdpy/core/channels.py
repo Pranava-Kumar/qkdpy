@@ -6,7 +6,8 @@ from collections.abc import Callable
 
 import numpy as np
 
-from .gates import QuantumGate
+from .gate_utils import GateUtils
+from .gates import Identity, PauliX, PauliY, PauliZ
 from .qubit import Qubit
 
 
@@ -101,13 +102,13 @@ class QuantumChannel:
             # Apply a random Pauli operator
             gate = random.choice(
                 [
-                    QuantumGate.Identity(),
-                    QuantumGate.X(),
-                    QuantumGate.Y(),
-                    QuantumGate.Z(),
+                    Identity().matrix,
+                    PauliX().matrix,
+                    PauliY().matrix,
+                    PauliZ().matrix,
                 ]
             )
-            if not np.array_equal(gate, QuantumGate.Identity()):
+            if not np.array_equal(gate, Identity().matrix):
                 self.error_count += 1
             qubit.apply_gate(gate)
         return qubit
@@ -115,14 +116,14 @@ class QuantumChannel:
     def _bit_flip_noise(self, qubit: Qubit) -> Qubit:
         """Apply bit flip noise to a qubit."""
         if np.random.random() < self.noise_level:
-            qubit.apply_gate(QuantumGate.X())
+            qubit.apply_gate(PauliX().matrix)
             self.error_count += 1
         return qubit
 
     def _phase_flip_noise(self, qubit: Qubit) -> Qubit:
         """Apply phase flip noise to a qubit."""
         if np.random.random() < self.noise_level:
-            qubit.apply_gate(QuantumGate.Z())
+            qubit.apply_gate(PauliZ().matrix)
             self.error_count += 1
         return qubit
 
@@ -234,7 +235,7 @@ class QuantumChannel:
             # Apply a random rotation to simulate the effect of entanglement
             theta = np.random.random() * np.pi
             phi = np.random.random() * 2 * np.pi
-            gate = QuantumGate.unitary_from_angles(theta, phi, 0)
+            gate = GateUtils.unitary_from_angles(theta, phi, 0)
             qubit.apply_gate(gate)
 
             # In this simplified model, we'll say the attack is detected 50% of the time

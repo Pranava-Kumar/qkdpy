@@ -102,6 +102,7 @@ class CVQKD(BaseProtocol):
 
             # Bob measures the qubit in the computational basis
             measurement = qubit.measure("computational")
+            qubit.collapse_state(measurement, "computational")
 
             # Add noise to simulate continuous variable measurement
             # In a real implementation, this would be more complex

@@ -10,7 +10,7 @@ QKDpy is a comprehensive Python library for Quantum Key Distribution (QKD) simul
 
 ## Features
 
-- **Quantum Simulation**: Simulate qubits, quantum gates, multi-qubit states, and measurements
+- **Quantum Simulation**: Simulate qubits, quantum gates (now with individual gate classes for better modularity), multi-qubit states, and measurements (with flexible state collapse for research and visualization)
 - **QKD Protocols**: Implementations of BB84, E92, E91, SARG04, CV-QKD, Device-Independent QKD, HD-QKD, and more
 - **High-Dimensional QKD**: Support for qudit-based protocols with enhanced security and key rates
 - **Key Management**: Advanced error correction and privacy amplification algorithms
@@ -39,28 +39,13 @@ cd qkdpy
 uv pip install -e .
 ```
 
-## Installation
-
-QKDpy requires Python 3.10 or higher. We recommend using [uv](https://github.com/astral-sh/uv) for package management:
-
-```bash
-# Install uv
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Clone the repository
-git clone https://github.com/yourusername/qkdpy.git
-cd qkdpy
-
-# Install in development mode
-uv pip install -e .
-```
-
 ## Quick Start
 
 Here's a simple example of using the BB84 protocol to generate a secure key:
 
 ```python
-from qkdpy import BB84, QuantumChannel
+from qkdpy import BB84, QuantumChannel, Qubit
+from qkdpy.core import PauliX, Hadamard # Import individual gate classes
 
 # Create a quantum channel with some noise
 channel = QuantumChannel(loss=0.1, noise_model='depolarizing', noise_level=0.05)
@@ -75,6 +60,21 @@ results = bb84.execute()
 print(f"Generated key: {results['final_key']}")
 print(f"QBER: {results['qber']:.4f}")
 print(f"Is secure: {results['is_secure']}")
+
+# Example of flexible qubit measurement and collapse
+q = Qubit.plus() # Qubit in superposition
+print(f"Qubit state before measurement: {q.state}")
+measurement_result = q.measure("hadamard") # Measure without collapsing internal state
+print(f"Measurement result: {measurement_result}")
+print(f"Qubit state after measurement (still in superposition): {q.state}")
+q.collapse_state(measurement_result, "hadamard") # Explicitly collapse the state
+print(f"Qubit state after explicit collapse: {q.state}")
+
+# Example of applying a gate
+q_zero = Qubit.zero()
+print(f"Qubit state before X gate: {q_zero.state}")
+q_zero.apply_gate(PauliX().matrix) # Apply Pauli-X gate
+print(f"Qubit state after X gate: {q_zero.state}")
 ```
 
 For High-Dimensional QKD:

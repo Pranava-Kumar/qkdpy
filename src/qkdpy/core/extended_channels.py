@@ -4,7 +4,7 @@ import random
 
 import numpy as np
 
-from .gates import QuantumGate
+from .gates import Identity, PauliX, PauliY, PauliZ
 from .qubit import Qubit
 
 
@@ -85,13 +85,13 @@ class ExtendedQuantumChannel:
         if np.random.random() < self.noise_level:
             # Apply a random Pauli operator
             gates = [
-                QuantumGate.Identity(),
-                QuantumGate.X(),
-                QuantumGate.Y(),
-                QuantumGate.Z(),
+                Identity().matrix,
+                PauliX().matrix,
+                PauliY().matrix,
+                PauliZ().matrix,
             ]
             gate = random.choice(gates)
-            if not np.array_equal(gate, QuantumGate.Identity()):
+            if not np.array_equal(gate, Identity().matrix):
                 self.error_count += 1
             qubit.apply_gate(gate)
         return qubit
@@ -99,14 +99,14 @@ class ExtendedQuantumChannel:
     def _bit_flip_noise(self, qubit: Qubit) -> Qubit:
         """Apply bit flip noise to a qubit."""
         if np.random.random() < self.noise_level:
-            qubit.apply_gate(QuantumGate.X())
+            qubit.apply_gate(PauliX().matrix)
             self.error_count += 1
         return qubit
 
     def _phase_flip_noise(self, qubit: Qubit) -> Qubit:
         """Apply phase flip noise to a qubit."""
         if np.random.random() < self.noise_level:
-            qubit.apply_gate(QuantumGate.Z())
+            qubit.apply_gate(PauliZ().matrix)
             self.error_count += 1
         return qubit
 
@@ -126,7 +126,7 @@ class ExtendedQuantumChannel:
             # Phase damping affects only the off-diagonal elements of the density matrix
             # This is a simplified model where we apply a phase flip with probability noise_level/2
             if np.random.random() < self.noise_level / 2:
-                qubit.apply_gate(QuantumGate.Z())
+                qubit.apply_gate(PauliZ().matrix)
                 self.error_count += 1
         return qubit
 
@@ -143,7 +143,7 @@ class ExtendedQuantumChannel:
                     self.error_count += 1
             else:
                 # Apply bit flip
-                qubit.apply_gate(QuantumGate.X())
+                qubit.apply_gate(PauliX().matrix)
                 self.error_count += 1
         return qubit
 
