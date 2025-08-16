@@ -26,6 +26,10 @@ jobs:
         with:
           python-version: "3.11"  # Consistent with your current setup
 
+      - name: Create virtual environment
+        run: |
+          uv venv
+
       - name: Install dependencies
         run: uv sync --all-extras --dev  # Installs from pyproject.toml
 

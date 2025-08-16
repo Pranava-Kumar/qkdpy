@@ -1,3 +1,0 @@
-This is a test file for quantum encryption.
-It contains multiple lines of text.
-The content will be encrypted using a quantum key.
