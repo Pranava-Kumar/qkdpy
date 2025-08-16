@@ -151,6 +151,10 @@ class BaseProtocol(ABC):
         # Step 6: Error correction
         alice_corrected, bob_corrected = self.error_correction(alice_sifted, bob_sifted)
 
+        # Convert to Python integers to avoid numpy.int32 issues
+        alice_corrected = [int(bit) for bit in alice_corrected]
+        bob_corrected = [int(bit) for bit in bob_corrected]
+
         # Step 7: Privacy amplification
         # Estimate information leak based on QBER
         leak = int(len(alice_corrected) * self._estimate_eve_information(qber))
@@ -275,8 +279,8 @@ class BaseProtocol(ABC):
         result = []
         for i in range(r):
             # Compute the dot product modulo 2
-            bit = sum(seed[i][j] * int(key_str[j]) for j in range(n)) % 2
-            result.append(bit)
+            bit = int(sum(seed[i][j] * int(key_str[j]) for j in range(n)) % 2)
+            result.append(int(bit))
 
         return result
 

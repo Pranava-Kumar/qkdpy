@@ -54,8 +54,8 @@ class ErrorCorrection:
                 end = start + block_size
 
                 # Calculate parity for the block
-                alice_parity = sum(alice_corrected[start:end]) % 2
-                bob_parity = sum(bob_corrected[start:end]) % 2
+                alice_parity = int(sum(alice_corrected[start:end]) % 2)
+                bob_parity = int(sum(bob_corrected[start:end]) % 2)
 
                 # If parities don't match, find and correct the error
                 if alice_parity != bob_parity:
@@ -66,8 +66,8 @@ class ErrorCorrection:
                     while right - left > 1:
                         mid = (left + right) // 2
 
-                        alice_parity_left = sum(alice_corrected[left:mid]) % 2
-                        bob_parity_left = sum(bob_corrected[left:mid]) % 2
+                        alice_parity_left = int(sum(alice_corrected[left:mid]) % 2)
+                        bob_parity_left = int(sum(bob_corrected[left:mid]) % 2)
 
                         if alice_parity_left != bob_parity_left:
                             right = mid
@@ -87,8 +87,8 @@ class ErrorCorrection:
                     block_end = min(len(alice_corrected), block_start + block_size)
 
                     # Calculate parity for the block
-                    alice_parity = sum(alice_corrected[block_start:block_end]) % 2
-                    bob_parity = sum(bob_corrected[block_start:block_end]) % 2
+                    alice_parity = int(sum(alice_corrected[block_start:block_end]) % 2)
+                    bob_parity = int(sum(bob_corrected[block_start:block_end]) % 2)
 
                     # If parities don't match, find and correct the error
                     if alice_parity != bob_parity:
@@ -99,8 +99,8 @@ class ErrorCorrection:
                         while right - left > 1:
                             mid = (left + right) // 2
 
-                            alice_parity_left = sum(alice_corrected[left:mid]) % 2
-                            bob_parity_left = sum(bob_corrected[left:mid]) % 2
+                            alice_parity_left = int(sum(alice_corrected[left:mid]) % 2)
+                            bob_parity_left = int(sum(bob_corrected[left:mid]) % 2)
 
                             if alice_parity_left != bob_parity_left:
                                 right = mid
@@ -157,8 +157,8 @@ class ErrorCorrection:
                     continue
 
                 # Calculate parity for the block
-                alice_parity = sum(alice_corrected[start:end]) % 2
-                bob_parity = sum(bob_corrected[start:end]) % 2
+                alice_parity = int(sum(alice_corrected[start:end]) % 2)
+                bob_parity = int(sum(bob_corrected[start:end]) % 2)
 
                 # If parities don't match, find and correct the error
                 if alice_parity != bob_parity:
@@ -169,8 +169,8 @@ class ErrorCorrection:
                     while right - left > 1:
                         mid = (left + right) // 2
 
-                        alice_parity_left = sum(alice_corrected[left:mid]) % 2
-                        bob_parity_left = sum(bob_corrected[left:mid]) % 2
+                        alice_parity_left = int(sum(alice_corrected[left:mid]) % 2)
+                        bob_parity_left = int(sum(bob_corrected[left:mid]) % 2)
 
                         if alice_parity_left != bob_parity_left:
                             right = mid
@@ -308,11 +308,11 @@ class ErrorCorrection:
             # Check if the syndrome is now all zeros
             new_syndrome = np.dot(parity_check_matrix, corrected_bob) % 2
             if np.all(new_syndrome == 0):
-                return alice_key, corrected_bob.tolist()
+                return alice_key, [int(bit) for bit in corrected_bob.tolist()]
 
         # If we reach the maximum number of iterations without converging,
         # return the best estimate we have
-        return alice_key, corrected_bob.tolist()
+        return alice_key, [int(bit) for bit in corrected_bob.tolist()]
 
     @staticmethod
     def hamming_distance(key1: list[int], key2: list[int]) -> int:

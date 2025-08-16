@@ -127,7 +127,8 @@ class Qubit:
         else:
             raise ValueError("Basis must be 'computational', 'hadamard', or 'circular'")
 
-        return result
+        # Convert numpy integer to Python int to avoid returning np.int32
+        return int(result)
 
     def collapse_state(self, result: int, basis: str = "computational") -> None:
         """Collapse the qubit's state to the measured result in the specified basis.
