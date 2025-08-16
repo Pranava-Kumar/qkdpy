@@ -4,6 +4,7 @@ import math
 
 import numpy as np
 
+from .gate_utils import GateUtils
 from .gates import QuantumGate
 from .qubit import Qubit
 
@@ -188,7 +189,7 @@ class Measurement:
             ValueError: If the observable is not Hermitian
 
         """
-        if not QuantumGate.is_hermitian(observable):
+        if not GateUtils.is_hermitian(observable):
             raise ValueError("Observable must be Hermitian")
 
         rho = qubit.density_matrix()
@@ -260,17 +261,23 @@ class Measurement:
 
             # Measure in X basis (Hadamard)
             qubit_copy.apply_gate(QuantumGate.H())
-            results_x.append(qubit_copy.measure("computational"))
+            result_x = qubit_copy.measure("computational")
+            qubit_copy.collapse_state(result_x, "computational")
+            results_x.append(result_x)
 
             # Reset and measure in Y basis
             qubit_copy._state = qubit.state.copy()
             qubit_copy.apply_gate(QuantumGate.H())
             qubit_copy.apply_gate(QuantumGate.S())
-            results_y.append(qubit_copy.measure("computational"))
+            result_y = qubit_copy.measure("computational")
+            qubit_copy.collapse_state(result_y, "computational")
+            results_y.append(result_y)
 
             # Reset and measure in Z basis
             qubit_copy._state = qubit.state.copy()
-            results_z.append(qubit_copy.measure("computational"))
+            result_z = qubit_copy.measure("computational")
+            qubit_copy.collapse_state(result_z, "computational")
+            results_z.append(result_z)
 
         # Calculate expectation values
         exp_x = 1 - 2 * np.mean(results_x)  # Convert from 0/1 to +1/-1

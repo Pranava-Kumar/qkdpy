@@ -107,6 +107,7 @@ class BB84(BaseProtocol):
 
             # Measure in the chosen basis
             result = Measurement.measure_in_basis(qubit, basis)
+            qubit.collapse_state(result, basis)
             self.bob_results.append(result)
 
         return self.bob_results
