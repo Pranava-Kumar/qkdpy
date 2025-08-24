@@ -1,5 +1,6 @@
 """Helper functions for QKDpy."""
 
+
 import numpy as np
 
 
@@ -128,7 +129,7 @@ def binary_entropy(p: float) -> float:
     if p == 0 or p == 1:
         return 0
 
-    return -p * np.log2(p) - (1 - p) * np.log2(1 - p)
+    return float(-p * np.log2(p) - (1 - p) * np.log2(1 - p))
 
 
 def calculate_qber(alice_bits: list[int], bob_bits: list[int]) -> float:
@@ -173,9 +174,9 @@ def mutual_information(x: list[int], y: list[int]) -> float:
         raise ValueError("Lists must have the same length")
 
     # Calculate joint and marginal probabilities
-    joint_prob = {}
-    marginal_x = {}
-    marginal_y = {}
+    joint_prob: dict[tuple[int, int], float] = {}
+    marginal_x: dict[int, float] = {}
+    marginal_y: dict[int, float] = {}
 
     for i, j in zip(x, y, strict=False):
         key = (i, j)
@@ -185,12 +186,12 @@ def mutual_information(x: list[int], y: list[int]) -> float:
 
     # Normalize probabilities
     total = len(x)
-    for key in joint_prob:
-        joint_prob[key] /= total
-    for key in marginal_x:
-        marginal_x[key] /= total
-    for key in marginal_y:
-        marginal_y[key] /= total
+    for joint_key in joint_prob:
+        joint_prob[joint_key] /= total
+    for x_key in marginal_x:
+        marginal_x[x_key] /= total
+    for y_key in marginal_y:
+        marginal_y[y_key] /= total
 
     # Calculate entropies
     h_x = -sum(p * np.log2(p) for p in marginal_x.values())
@@ -198,7 +199,7 @@ def mutual_information(x: list[int], y: list[int]) -> float:
     h_xy = -sum(p * np.log2(p) for p in joint_prob.values())
 
     # Calculate mutual information
-    mi = h_x + h_y - h_xy
+    mi = float(h_x + h_y - h_xy)
 
     return mi
 

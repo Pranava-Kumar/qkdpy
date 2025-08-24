@@ -17,7 +17,7 @@ class ExtendedQuantumChannel:
         loss: float = 0.0,
         noise_model: str = "depolarizing",
         noise_level: float = 0.0,
-        eavesdropper=None,
+        eavesdropper: Callable | None = None,
     ) -> None:
         """Initialize an extended quantum channel.
 

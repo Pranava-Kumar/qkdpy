@@ -64,6 +64,7 @@ class QuantumKeyValidation:
     """Validation mechanisms for quantum keys."""
 
     @staticmethod
+    @staticmethod
     def statistical_randomness_test(key: list[int]) -> dict:
         """Perform statistical randomness tests on a quantum key.
 
@@ -112,6 +113,7 @@ class QuantumKeyValidation:
             "ones_proportion": ones_count / len(bits),
         }
 
+    @staticmethod
     def entropy_test(key: list[int]) -> float:
         """Calculate the entropy of a quantum key.
 
@@ -144,6 +146,7 @@ class QuantumKeyValidation:
         # Normalize to 0-1 range
         return entropy / 1.0  # Maximum entropy for binary is 1
 
+    @staticmethod
     @staticmethod
     def correlation_test(key: list[int], lag: int = 1) -> float:
         """Test for correlations in the key at a specific lag.

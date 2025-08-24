@@ -12,6 +12,7 @@ class PrivacyAmplification:
     to reduce Eve's information about the final key.
     """
 
+    @staticmethod
     def universal_hashing(
         key: list[int], output_length: int, seed: int | None = None
     ) -> list[int]:
@@ -53,6 +54,7 @@ class PrivacyAmplification:
 
         return result
 
+    @staticmethod
     def toeplitz_hashing(
         key: list[int], output_length: int, seed: int | None = None
     ) -> list[int]:

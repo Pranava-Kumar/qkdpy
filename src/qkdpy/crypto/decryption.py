@@ -1,6 +1,7 @@
 """Decryption utilities using quantum keys."""
 
 
+
 class OneTimePadDecrypt:
     """One-time pad decryption using quantum keys.
 

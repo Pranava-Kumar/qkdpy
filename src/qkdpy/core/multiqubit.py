@@ -4,7 +4,6 @@ from typing import Optional
 
 import numpy as np
 
-from .gates import QuantumGate
 from .qubit import Qubit
 
 
@@ -168,7 +167,7 @@ class MultiQubitState:
             )
 
         # Check if gate is unitary
-        if not QuantumGate.is_unitary(gate):
+        if not GateUtils.is_unitary(gate):
             raise ValueError("Gate must be unitary")
 
         # Create the full operator by tensoring with identity matrices
@@ -179,7 +178,7 @@ class MultiQubitState:
         if len(target_qubits) == 1:
             target = target_qubits[0]
             # Create a list of operators for each qubit
-            ops = [QuantumGate.Identity() for _ in range(self._num_qubits)]
+            ops = [Identity() for _ in range(self._num_qubits)]
             ops[target] = gate
 
             # Compute the tensor product
@@ -304,7 +303,7 @@ class MultiQubitState:
 
         # Fidelity = |<ψ|φ>|^2
         inner_product = np.vdot(self._state, other._state)
-        return np.abs(inner_product) ** 2
+        return float(np.abs(inner_product) ** 2)
 
     def __repr__(self) -> str:
         """String representation of the multi-qubit state."""

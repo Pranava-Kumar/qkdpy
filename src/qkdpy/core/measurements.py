@@ -5,7 +5,6 @@ import math
 import numpy as np
 
 from .gate_utils import GateUtils
-from .gates import QuantumGate
 from .qubit import Qubit
 
 
@@ -109,7 +108,7 @@ class Measurement:
         """
         state = qubit.state
         # Fidelity = |<ψ|φ>|^2
-        fidelity = abs(np.vdot(state, target_state)) ** 2
+        fidelity = float(abs(np.vdot(state, target_state)) ** 2)
         return fidelity
 
     @staticmethod
@@ -150,7 +149,7 @@ class Measurement:
 
         """
         rho = qubit.density_matrix()
-        purity = np.real(np.trace(rho @ rho))
+        purity = float(np.real(np.trace(rho @ rho)))
         return purity
 
     @staticmethod
@@ -171,7 +170,7 @@ class Measurement:
         eigenvalues = eigenvalues[eigenvalues > 1e-10]
 
         # Calculate entropy: S = -∑(λ * log2(λ))
-        entropy = -np.sum(eigenvalues * np.log2(eigenvalues))
+        entropy = float(-np.sum(eigenvalues * np.log2(eigenvalues)))
         return entropy
 
     @staticmethod
@@ -193,7 +192,7 @@ class Measurement:
             raise ValueError("Observable must be Hermitian")
 
         rho = qubit.density_matrix()
-        expectation = np.real(np.trace(rho @ observable))
+        expectation = float(np.real(np.trace(rho @ observable)))
         return expectation
 
     @staticmethod
@@ -231,7 +230,7 @@ class Measurement:
             "Ψ-": fid_psi_minus,
         }
 
-        return max(fidelities, key=fidelities.get)
+        return max(fidelities, key=lambda k: fidelities[k])
 
     @staticmethod
     def quantum_state_tomography(
@@ -260,15 +259,15 @@ class Measurement:
             qubit_copy._state = qubit.state.copy()
 
             # Measure in X basis (Hadamard)
-            qubit_copy.apply_gate(QuantumGate.H())
+            qubit_copy.apply_gate(PauliX().matrix)
             result_x = qubit_copy.measure("computational")
             qubit_copy.collapse_state(result_x, "computational")
             results_x.append(result_x)
 
             # Reset and measure in Y basis
             qubit_copy._state = qubit.state.copy()
-            qubit_copy.apply_gate(QuantumGate.H())
-            qubit_copy.apply_gate(QuantumGate.S())
+            qubit_copy.apply_gate(PauliX().matrix)
+            qubit_copy.apply_gate(PauliY().matrix)
             result_y = qubit_copy.measure("computational")
             qubit_copy.collapse_state(result_y, "computational")
             results_y.append(result_y)
@@ -280,9 +279,9 @@ class Measurement:
             results_z.append(result_z)
 
         # Calculate expectation values
-        exp_x = 1 - 2 * np.mean(results_x)  # Convert from 0/1 to +1/-1
-        exp_y = 1 - 2 * np.mean(results_y)
-        exp_z = 1 - 2 * np.mean(results_z)
+        exp_x = float(1 - 2 * np.mean(results_x))  # Convert from 0/1 to +1/-1
+        exp_y = float(1 - 2 * np.mean(results_y))
+        exp_z = float(1 - 2 * np.mean(results_z))
 
         # Reconstruct density matrix from expectation values
         # ρ = (I + <X>X + <Y>Y + <Z>Z) / 2
@@ -295,10 +294,10 @@ class Measurement:
 
         # Return the density matrix elements
         return {
-            "rho_00": rho[0, 0],
-            "rho_01": rho[0, 1],
-            "rho_10": rho[1, 0],
-            "rho_11": rho[1, 1],
+            "rho_00": complex(rho[0, 0]),
+            "rho_01": complex(rho[0, 1]),
+            "rho_10": complex(rho[1, 0]),
+            "rho_11": complex(rho[1, 1]),
             "exp_x": exp_x,
             "exp_y": exp_y,
             "exp_z": exp_z,

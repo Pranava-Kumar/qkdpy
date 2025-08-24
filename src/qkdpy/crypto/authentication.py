@@ -167,6 +167,7 @@ class QuantumAuth:
 
         return fingerprint
 
+    @staticmethod
     def generate_commitment(
         value: str, key: list[int], nonce: int | None = None
     ) -> dict[str, str]:
@@ -185,6 +186,27 @@ class QuantumAuth:
         if nonce is None:
             nonce = np.random.randint(0, 2**32)
 
+        # Convert the key to bytes
+        key_bytes = bytes(
+            int("".join(map(str, key)), 2).to_bytes(
+                (len(key) + 7) // 8, byteorder="big"
+            )
+        )
+
+        # Convert the value and nonce to bytes
+        value_bytes = value.encode("utf-8")
+        nonce_bytes = str(nonce).encode("utf-8")
+
+        # Generate the commitment using HMAC-SHA256
+        commitment = hmac.new(
+            key_bytes, value_bytes + nonce_bytes, hashlib.sha256
+        ).hexdigest()
+
+        return {"commitment": commitment, "nonce": str(nonce)}
+
+        # Compare the commitments using a constant-time comparison
+        return hmac.compare_digest(commitment, computed_commitment)
+
     @staticmethod
     def verify_commitment(
         value: str, commitment: str, key: list[int], nonce: str
@@ -201,17 +223,21 @@ class QuantumAuth:
             True if the commitment is valid, False otherwise
 
         """
-        # Convert the nonce to an integer
-        try:
-            nonce_int = int(nonce)
-        except ValueError:
-            return False
+        # Convert the key to bytes
+        key_bytes = bytes(
+            int("".join(map(str, key)), 2).to_bytes(
+                (len(key) + 7) // 8, byteorder="big"
+            )
+        )
 
-        # Generate the commitment for the value
-        generated_commitment = QuantumAuth.generate_commitment(value, key, nonce_int)[
-            "commitment"
-        ]
+        # Convert the value and nonce to bytes
+        value_bytes = value.encode("utf-8")
+        nonce_bytes = nonce.encode("utf-8")
 
-        # Compare the generated commitment with the provided commitment
-        # Use hmac.compare_digest to prevent timing attacks
-        return hmac.compare_digest(generated_commitment, commitment)
+        # Generate the commitment using HMAC-SHA256
+        computed_commitment = hmac.new(
+            key_bytes, value_bytes + nonce_bytes, hashlib.sha256
+        ).hexdigest()
+
+        # Compare the commitments using a constant-time comparison
+        return hmac.compare_digest(commitment, computed_commitment)
