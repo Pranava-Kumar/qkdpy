@@ -5,6 +5,7 @@ import math
 import numpy as np
 
 from .gate_utils import GateUtils
+from .gates import PauliX, PauliY
 from .qubit import Qubit
 
 
@@ -294,10 +295,10 @@ class Measurement:
 
         # Return the density matrix elements
         return {
-            "rho_00": complex(rho[0, 0]),
-            "rho_01": complex(rho[0, 1]),
-            "rho_10": complex(rho[1, 0]),
-            "rho_11": complex(rho[1, 1]),
+            "rho_00": float(rho[0, 0].real),
+            "rho_01": float(rho[0, 1].real),
+            "rho_10": float(rho[1, 0].real),
+            "rho_11": float(rho[1, 1].real),
             "exp_x": exp_x,
             "exp_y": exp_y,
             "exp_z": exp_z,

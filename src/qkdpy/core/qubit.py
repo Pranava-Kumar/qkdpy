@@ -9,16 +9,16 @@ class Qubit:
     """Represents a single qubit with state manipulation capabilities.
 
     A qubit state is represented as a complex vector [alpha, beta] where:
-    |psi> = alpha|0> + beta|1>
-    and |alpha|^2 + |beta|^2 = 1
+    ``|psi> = alpha|0> + beta|1>``
+    and ``|alpha|^2 + |beta|^2 = 1``
     """
 
     def __init__(self, alpha: complex = 1 + 0j, beta: complex = 0 + 0j):
         """Initialize a qubit with given amplitudes.
 
         Args:
-            alpha: Amplitude for |0> state
-            beta: Amplitude for |1> state
+            alpha: Amplitude for ``|0>`` state
+            beta: Amplitude for ``|1>`` state
 
         Raises:
             ValueError: If the state is not normalized
@@ -33,22 +33,22 @@ class Qubit:
 
     @classmethod
     def zero(cls) -> "Qubit":
-        """Create a qubit in the |0> state."""
+        """Create a qubit in the ``|0>`` state."""
         return cls(1, 0)
 
     @classmethod
     def one(cls) -> "Qubit":
-        """Create a qubit in the |1> state."""
+        """Create a qubit in the ``|1>`` state."""
         return cls(0, 1)
 
     @classmethod
     def plus(cls) -> "Qubit":
-        """Create a qubit in the |+> state (Hadamard applied to |0>)."""
+        """Create a qubit in the ``|+>`` state (Hadamard applied to ``|0>``)."""
         return cls(1 / math.sqrt(2), 1 / math.sqrt(2))
 
     @classmethod
     def minus(cls) -> "Qubit":
-        """Create a qubit in the |-> state (Hadamard applied to |1>)."""
+        """Create a qubit in the ``|->`` state (Hadamard applied to ``|1>``)."""
         return cls(1 / math.sqrt(2), -1 / math.sqrt(2))
 
     @property
@@ -58,7 +58,7 @@ class Qubit:
 
     @property
     def probabilities(self) -> tuple[float, float]:
-        """Get the probabilities of measuring |0> and |1>.
+        """Get the probabilities of measuring ``|0>`` and ``|1>``.
 
         Returns:
             Tuple of (prob_0, prob_1)

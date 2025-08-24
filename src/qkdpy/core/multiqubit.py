@@ -4,6 +4,8 @@ from typing import Optional
 
 import numpy as np
 
+from .gate_utils import GateUtils
+from .gates import Identity
 from .qubit import Qubit
 
 
@@ -128,7 +130,7 @@ class MultiQubitState:
     @property
     def state(self) -> np.ndarray:
         """Get the state vector."""
-        return self._state.copy()
+        return np.asarray(self._state.copy())
 
     @property
     def probabilities(self) -> np.ndarray:
@@ -137,7 +139,7 @@ class MultiQubitState:
         Returns:
             Array of probabilities for each of the 2^n basis states
         """
-        return np.abs(self._state) ** 2
+        return np.asarray(np.abs(self._state) ** 2)
 
     def apply_gate(self, gate: np.ndarray, target_qubits: int | list[int]) -> None:
         """Apply a quantum gate to specific qubits.
@@ -178,7 +180,7 @@ class MultiQubitState:
         if len(target_qubits) == 1:
             target = target_qubits[0]
             # Create a list of operators for each qubit
-            ops = [Identity() for _ in range(self._num_qubits)]
+            ops = [Identity().matrix for _ in range(self._num_qubits)]
             ops[target] = gate
 
             # Compute the tensor product

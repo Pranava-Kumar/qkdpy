@@ -13,8 +13,11 @@ from .quantum_auth import QuantumAuthenticator
 from .quantum_rng import QuantumRandomNumberGenerator
 
 # For backward compatibility
-OneTimePad.decrypt = OneTimePadDecrypt.decrypt
-OneTimePad.decrypt_file = OneTimePadDecrypt.decrypt_file
+# We use type: ignore to avoid mypy errors
+if not hasattr(OneTimePad, "decrypt"):
+    OneTimePad.decrypt = staticmethod(OneTimePadDecrypt.decrypt)  # type: ignore
+if not hasattr(OneTimePad, "decrypt_file"):
+    OneTimePad.decrypt_file = staticmethod(OneTimePadDecrypt.decrypt_file)  # type: ignore
 
 __all__ = [
     "OneTimePad",

@@ -40,7 +40,7 @@ class BB84(BaseProtocol):
 
         # Alice's random bits and bases
         self.alice_bits: list[int] = []
-        self.alice_bases: list[str] = []
+        self.alice_bases: list[str | None] = []
 
         # Bob's measurement results and bases
         self.bob_results: list[int | None] = []
@@ -81,7 +81,7 @@ class BB84(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit]) -> list[int]:
+    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
         """Measure received quantum states.
 
         In BB84, Bob randomly chooses bases to measure in.
@@ -112,7 +112,8 @@ class BB84(BaseProtocol):
             qubit.collapse_state(result, basis)
             self.bob_results.append(result)
 
-        return self.bob_results
+        # Filter out None values to return only int results
+        return [result for result in self.bob_results if result is not None]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
         """Sift the raw keys to keep only measurements in matching bases.
@@ -129,13 +130,21 @@ class BB84(BaseProtocol):
 
         for i in range(self.num_qubits):
             # Skip if Bob didn't receive the qubit
-            if self.bob_bases[i] is None:
+            if self.bob_bases[i] is None or self.bob_results[i] is None:
                 continue
 
             # Check if Alice and Bob used the same basis
-            if self.alice_bases[i] == self.bob_bases[i]:
-                alice_sifted.append(int(self.alice_bits[i]))
-                bob_sifted.append(int(self.bob_results[i]))
+            if (
+                self.alice_bases[i] is not None
+                and self.bob_bases[i] is not None
+                and self.alice_bases[i] == self.bob_bases[i]
+            ):
+                alice_sifted.append(self.alice_bits[i])
+                # We already checked that self.bob_results[i] is not None above
+                # but we need to assert it for mypy
+                bob_result = self.bob_results[i]
+                if bob_result is not None:
+                    bob_sifted.append(bob_result)
 
         return alice_sifted, bob_sifted
 

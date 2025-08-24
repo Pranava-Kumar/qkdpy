@@ -1,6 +1,7 @@
 """Advanced quantum network simulation for multi-party QKD."""
 
 import time
+from typing import Any
 
 import numpy as np
 
@@ -21,8 +22,8 @@ class QuantumNetwork:
         self.name = name
         self.nodes: dict[str, QuantumNode] = {}
         self.connections: dict[tuple[str, str], QuantumChannel] = {}
-        self.network_topology = {}
-        self.routing_table = {}
+        self.network_topology: dict[str, list[str]] = {}
+        self.routing_table: dict[str, dict[str, list[str]]] = {}
 
     def add_node(self, node_id: str, protocol: BaseProtocol | None = None) -> None:
         """Add a node to the quantum network.
@@ -134,15 +135,16 @@ class QuantumNetwork:
 
         # Reconstruct path
         path = []
-        current = destination
-        while current is not None:
-            path.append(current)
-            current = previous[current]
+        current_node: str | None = destination
+        while current_node is not None:
+            path.append(current_node)
+            prev = previous.get(current_node)
+            current_node = prev if isinstance(prev, str | type(None)) else None
 
         path.reverse()
 
-        # Return empty list if no path exists
-        return path if path[0] == source else []
+        # Return empty list if no path exists or path is empty
+        return path if path and path[0] == source else []
 
     def establish_key_between_nodes(
         self, node1_id: str, node2_id: str, key_length: int = 128
@@ -180,7 +182,10 @@ class QuantumNetwork:
                 try:
                     results = self.nodes[node1_id].protocol.execute()
                     if results.get("is_secure", False):
-                        return results.get("final_key", [])
+                        final_key = results.get("final_key", [])
+                        # Ensure we return a list of integers
+                        if isinstance(final_key, list):
+                            return [int(bit) for bit in final_key]
                 except Exception:
                     pass
 
@@ -188,7 +193,7 @@ class QuantumNetwork:
         # This is a simplified implementation that just returns None for multi-hop
         return None
 
-    def get_network_statistics(self) -> dict:
+    def get_network_statistics(self) -> dict[str, Any]:
         """Get statistics about the quantum network.
 
         Returns:
@@ -200,7 +205,7 @@ class QuantumNetwork:
 
         # Calculate average degree
         total_degree = sum(len(node.neighbors) for node in self.nodes.values())
-        avg_degree = total_degree / num_nodes if num_nodes > 0 else 0
+        avg_degree = total_degree / num_nodes if num_nodes > 0 else 0.0
 
         # Find network diameter (longest shortest path)
         diameter = 0
@@ -216,12 +221,12 @@ class QuantumNetwork:
             "num_nodes": num_nodes,
             "num_connections": num_connections,
             "average_degree": avg_degree,
-            "network_diameter": diameter,
+            "network_diameter": float(diameter),
             "node_list": list(self.nodes.keys()),
             "connection_list": list(self.connections.keys()),
         }
 
-    def simulate_network_performance(self, num_trials: int = 100) -> dict:
+    def simulate_network_performance(self, num_trials: int = 100) -> dict[str, Any]:
         """Simulate the performance of the quantum network.
 
         Args:
@@ -233,8 +238,8 @@ class QuantumNetwork:
         # Track performance metrics
         successful_key_exchanges = 0
         total_key_bits = 0
-        qber_values = []
-        execution_times = []
+        qber_values: list[float] = []
+        execution_times: list[float] = []
 
         # Get all pairs of connected nodes
         node_pairs = []
@@ -265,20 +270,20 @@ class QuantumNetwork:
 
                     # For a more realistic simulation, we would track QBER
                     # This is a placeholder value
-                    qber_values.append(np.random.uniform(0.01, 0.05))
+                    qber_values.append(float(np.random.uniform(0.01, 0.05)))
             except Exception:
                 execution_times.append(time.time() - start_time)
                 qber_values.append(1.0)  # High QBER for failed attempts
 
         # Calculate statistics
-        success_rate = successful_key_exchanges / num_trials if num_trials > 0 else 0
+        success_rate = successful_key_exchanges / num_trials if num_trials > 0 else 0.0
         avg_key_length = (
             total_key_bits / successful_key_exchanges
             if successful_key_exchanges > 0
-            else 0
+            else 0.0
         )
-        avg_qber = np.mean(qber_values) if qber_values else 0
-        avg_execution_time = np.mean(execution_times) if execution_times else 0
+        avg_qber = float(np.mean(qber_values)) if qber_values else 0.0
+        avg_execution_time = float(np.mean(execution_times)) if execution_times else 0.0
 
         return {
             "num_trials": num_trials,
@@ -287,8 +292,10 @@ class QuantumNetwork:
             "average_key_length": avg_key_length,
             "average_qber": avg_qber,
             "average_execution_time": avg_execution_time,
-            "qber_std": np.std(qber_values) if qber_values else 0,
-            "execution_time_std": np.std(execution_times) if execution_times else 0,
+            "qber_std": float(np.std(qber_values)) if qber_values else 0.0,
+            "execution_time_std": (
+                float(np.std(execution_times)) if execution_times else 0.0
+            ),
         }
 
 

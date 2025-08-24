@@ -20,9 +20,9 @@ class MultiPartyQKDNetwork:
         self.nodes = nodes
         self.channels: dict[tuple[str, str], QuantumChannel] = {}
         self.keys: dict[tuple[str, str], list[int]] = {}
-        self.network_topology = {}
-        self.routing_table = {}
-        self.security_log = []
+        self.network_topology: dict[str, list[str]] = {}
+        self.routing_table: dict[str, dict[str, list[str]]] = {}
+        self.security_log: list[dict[str, str | float]] = []
 
     def add_channel(self, node1: str, node2: str, channel: QuantumChannel) -> bool:
         """Add a quantum channel between two nodes.
@@ -105,17 +105,23 @@ class MultiPartyQKDNetwork:
             results = protocol.execute()
 
             # Check if key generation was successful
-            if results["is_secure"] and len(results["final_key"]) > 0:
-                key = results["final_key"]
+            final_key = results["final_key"]
+            if (
+                results["is_secure"]
+                and isinstance(final_key, list)
+                and len(final_key) > 0
+            ):
+                key = final_key
 
                 # Store the key
-                self.keys[(node1, node2)] = key.copy()
-                if (node2, node1) in self.keys:
-                    # Update reverse direction key (should be same in real implementation)
-                    self.keys[(node2, node1)] = key.copy()
+                if isinstance(key, list):
+                    self.keys[(node1, node2)] = key.copy()
+                    if (node2, node1) in self.keys:
+                        # Update reverse direction key (should be same in real implementation)
+                        self.keys[(node2, node1)] = key.copy()
 
                 self._log_security_event("KEY_ESTABLISHMENT", "SUCCESS", node1, node2)
-                return key
+                return key if isinstance(key, list) else None
             else:
                 self._log_security_event("KEY_ESTABLISHMENT", "INSECURE", node1, node2)
                 return None
@@ -212,9 +218,11 @@ class MultiPartyQKDNetwork:
 
         # Calculate average channel quality
         if self.channels:
-            avg_loss = np.mean([channel.loss for channel in self.channels.values()])
-            avg_noise = np.mean(
-                [channel.noise_level for channel in self.channels.values()]
+            avg_loss = float(
+                np.mean([channel.loss for channel in self.channels.values()])
+            )
+            avg_noise = float(
+                np.mean([channel.noise_level for channel in self.channels.values()])
             )
         else:
             avg_loss = 0.0
@@ -247,7 +255,7 @@ class MultiPartyQKDNetwork:
                 "timestamp": time.time(),
                 "event_type": event_type,
                 "status": status,
-                "nodes": (node1, node2),
+                "nodes": str((node1, node2)),
                 "details": details,
             }
         )
@@ -272,16 +280,16 @@ class MultiPartyQKDNetwork:
         Returns:
             Dictionary with attack simulation results
         """
-        results = {
+        results: dict[str, str | float | list[tuple[str, str]]] = {
             "attack_type": attack_type,
-            "target_nodes": target_nodes,
+            "target_nodes": str(target_nodes),
             "affected_channels": [],
             "detection_status": "unknown",
         }
 
         if attack_type == "eavesdropping":
             # Simulate eavesdropping on channels connected to target nodes
-            affected_channels = []
+            affected_channels: list[tuple[str, str]] = []
             for node1, node2 in self.channels:
                 if node1 in target_nodes or node2 in target_nodes:
                     affected_channels.append((node1, node2))
@@ -300,7 +308,7 @@ class MultiPartyQKDNetwork:
             results["detection_status"] = "high"  # QKD protocols should detect this
 
         elif attack_type == "denial_of_service":
-            # Simulate channel disruption
+            # Simulate DoS by increasing loss on channels
             affected_channels = []
             for node1, node2 in self.channels:
                 if node1 in target_nodes or node2 in target_nodes:

@@ -23,7 +23,11 @@ test_file.txt.enc
 
 QKDpy_Research.md
 
-pyproject.toml.backup
+project.toml.backup
 
 issues.txt
-.env 
+.env
+
+# Build artifacts
+docs/_build/
+node_modules/

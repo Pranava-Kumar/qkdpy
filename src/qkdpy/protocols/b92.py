@@ -39,6 +39,10 @@ class B92(BaseProtocol):
 
         # Bob's measurement results
         self.bob_results: list[int | None] = []
+        self.bob_bases: list[str | None] = []
+
+        # B92 uses two non-orthogonal states
+        self.bases = ["computational", "hadamard"]
 
     def prepare_states(self) -> list[Qubit]:
         """Prepare quantum states for transmission.
@@ -70,48 +74,43 @@ class B92(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit]) -> list[int]:
+    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
         """Measure received quantum states.
 
-        In B92, Bob randomly chooses measurement bases for his qubits.
+        In B92, Bob measures in the Hadamard basis and interprets the results.
 
         Args:
-            qubits: List of received qubits
+            qubits: List of received qubits (may contain None for lost qubits)
 
         Returns:
-            List of measurement results (0, 1, or None for inconclusive)
+            List of measurement results
         """
         self.bob_results = []
+        self.bob_bases = []
 
         for qubit in qubits:
             if qubit is None:
                 # Qubit was lost in the channel
                 self.bob_results.append(None)
+                self.bob_bases.append(None)
                 continue
 
-            # Bob randomly chooses a measurement basis
-            # In B92, Bob measures in either the computational or Hadamard basis
-            basis = np.random.choice(["computational", "hadamard"])
+            # Bob measures in the Hadamard basis
+            basis = "hadamard"
+            self.bob_bases.append(basis)
 
-            # For B92, some measurements are inconclusive
-            # If Alice sent |0> and Bob measures in computational basis, he gets 0
-            # If Alice sent |+> and Bob measures in Hadamard basis, he gets 0
-            # If Alice sent |0> and Bob measures in Hadamard basis, he gets 0 or 1 with 50% probability
-            # If Alice sent |+> and Bob measures in computational basis, he gets 0 or 1 with 50% probability
-
-            # For simplicity, we'll make a measurement and then decide if it's conclusive
+            # Measure in the chosen basis
             result = Measurement.measure_in_basis(qubit, basis)
-
-            # In a real B92 implementation, we would need to handle the inconclusive results
-            # For this simulation, we'll treat all results as conclusive
+            qubit.collapse_state(result, basis)
             self.bob_results.append(result)
 
-        return self.bob_results
+        # Filter out None values to return only int results
+        return [result for result in self.bob_results if result is not None]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
         """Sift the raw keys to keep only conclusive measurements.
 
-        In B92, Alice and Bob keep only the bits where Bob's measurement was conclusive.
+        In B92, only certain measurement outcomes are kept for key generation.
 
         Returns:
             Tuple of (alice_sifted_key, bob_sifted_key)
@@ -128,9 +127,13 @@ class B92(BaseProtocol):
             # For B92, we only keep bits where Bob's measurement gives a specific result
             # In our simplified model, we'll keep all bits where Bob got result 1
             # This is because in B92, when Bob gets result 1, he knows Alice must have sent |+>
-            if self.bob_results[i] == 1:
-                alice_sifted.append(int(self.alice_bits[i]))
-                bob_sifted.append(int(self.bob_results[i]))
+            if self.bob_results[i] is not None and self.bob_results[i] == 1:
+                alice_sifted.append(self.alice_bits[i])
+                # We already checked that self.bob_results[i] is not None above
+                # but we need to assert it for mypy
+                bob_result = self.bob_results[i]
+                if bob_result is not None:
+                    bob_sifted.append(bob_result)
 
         return alice_sifted, bob_sifted
 

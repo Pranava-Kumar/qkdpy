@@ -2,6 +2,7 @@
 
 import json
 import time
+from typing import Any
 
 import numpy as np
 
@@ -20,7 +21,7 @@ class QuantumKeyExchange:
             channel: Quantum channel for key exchange
         """
         self.channel = channel
-        self.exchange_sessions: dict[str, dict] = {}
+        self.exchange_sessions: dict[str, dict[str, Any]] = {}
         self.authenticator = QuantumAuthenticator(channel)
         self.successful_exchanges = 0
         self.failed_exchanges = 0
@@ -94,6 +95,9 @@ class QuantumKeyExchange:
 
         try:
             # Execute the QKD protocol
+            from ..protocols import BaseProtocol
+
+            qkd: BaseProtocol
             if session["protocol"] == "BB84":
                 qkd = BB84(self.channel, key_length=session["key_length"])
             elif session["protocol"] == "E91":
@@ -105,14 +109,24 @@ class QuantumKeyExchange:
             results = qkd.execute()
 
             # Check if the exchange was successful
-            if not results["is_secure"] or len(results["final_key"]) == 0:
+            final_key = results["final_key"]
+            if (
+                not results["is_secure"]
+                or not isinstance(final_key, list)
+                or len(final_key) == 0
+            ):
                 session["status"] = "failed"
                 self.failed_exchanges += 1
                 return False
 
             # Store the shared key
             session["shared_key"] = results["final_key"]
-            session["qber"] = results["qber"]
+            qber_val = results["qber"]
+            session["qber"] = (
+                float(qber_val)
+                if isinstance(qber_val, int | float) and not isinstance(qber_val, bool)
+                else 1.0
+            )
             session["status"] = "completed"
             session["end_time"] = time.time()
 
@@ -140,7 +154,10 @@ class QuantumKeyExchange:
 
         session = self.exchange_sessions[session_id]
         if session["status"] == "completed":
-            return session["shared_key"]
+            shared_key = session["shared_key"]
+            # Ensure we return a list of integers
+            if isinstance(shared_key, list):
+                return [int(bit) for bit in shared_key]
         return None
 
     def verify_key_exchange(
@@ -172,7 +189,7 @@ class QuantumKeyExchange:
         # Authenticate the party
         return self.authenticator.authenticate_party(party, challenge)
 
-    def get_session_info(self, session_id: str) -> dict | None:
+    def get_session_info(self, session_id: str) -> dict[str, Any] | None:
         """Get information about a key exchange session.
 
         Args:
@@ -193,7 +210,7 @@ class QuantumKeyExchange:
 
         return session_info
 
-    def get_exchange_statistics(self) -> dict:
+    def get_exchange_statistics(self) -> dict[str, Any]:
         """Get statistics about key exchanges.
 
         Returns:
@@ -247,7 +264,7 @@ class QuantumKeyExchange:
         """
         try:
             # Prepare session data for export (without sensitive information)
-            export_data = {}
+            export_data: dict[str, Any] = {}
             for session_id, session_info in self.exchange_sessions.items():
                 # Copy session info
                 safe_info = session_info.copy()

@@ -3,6 +3,7 @@
 import hashlib
 import secrets
 import time
+from typing import Any
 
 import numpy as np
 
@@ -242,10 +243,14 @@ class QuantumCommitment:
         # Reconstruct and verify the commitment
         commitment_data = f"{value}:{salt}:{opening_key}".encode()
         reconstructed_commitment = hashlib.sha256(commitment_data).hexdigest()
+        stored_commitment = commitment_info["commitment"]
+        return (
+            bool(reconstructed_commitment == stored_commitment)
+            if isinstance(stored_commitment, str)
+            else False
+        )
 
-        return reconstructed_commitment == commitment_info["commitment"]
-
-    def get_commitment_info(self, commitment_id: str) -> dict | None:
+    def get_commitment_info(self, commitment_id: str) -> dict[str, Any] | None:
         """Get information about a commitment.
 
         Args:

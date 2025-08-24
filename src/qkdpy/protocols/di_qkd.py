@@ -3,6 +3,7 @@
 import numpy as np
 
 from ..core import QuantumChannel, Qubit
+from ..core.measurements import Measurement
 from .base import BaseProtocol
 
 
@@ -39,10 +40,10 @@ class DeviceIndependentQKD(BaseProtocol):
         self.bob_settings = [np.pi / 8, 3 * np.pi / 8]  # Bob's measurement angles
 
         # Alice's and Bob's measurement choices and results
-        self.alice_choices = []
-        self.alice_results = []
-        self.bob_choices = []
-        self.bob_results = []
+        self.alice_choices: list[int] = []
+        self.alice_results: list[int] = []
+        self.bob_choices: list[int | None] = []
+        self.bob_results: list[int | None] = []
 
     def prepare_states(self) -> list[Qubit]:
         """Prepare entangled quantum states for transmission.
@@ -67,73 +68,50 @@ class DeviceIndependentQKD(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit]) -> list[int]:
+    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
         """Measure received quantum states.
 
-        In DI-QKD, both Alice and Bob perform measurements with randomly
-        chosen settings.
+        In DI-QKD, Bob randomly chooses measurement settings.
 
         Args:
-            qubits: List of received qubits
+            qubits: List of received qubits (may contain None for lost qubits)
 
         Returns:
             List of measurement results
         """
-        self.alice_choices = []
-        self.alice_results = []
         self.bob_choices = []
         self.bob_results = []
 
-        for _, bob_qubit in enumerate(qubits):
-            if bob_qubit is None:
+        # Alice's random choices (in a real implementation, Alice would also make choices)
+        self.alice_choices = [int(np.random.choice([0, 1])) for _ in range(len(qubits))]
+        self.alice_results = [int(np.random.choice([0, 1])) for _ in range(len(qubits))]
+
+        for qubit in qubits:
+            if qubit is None:
                 # Qubit was lost in the channel
-                self.alice_choices.append(None)
-                self.alice_results.append(None)
                 self.bob_choices.append(None)
                 self.bob_results.append(None)
                 continue
 
-            # Alice randomly chooses a measurement setting
-            alice_choice = np.random.randint(0, len(self.alice_settings))
-            alice_angle = self.alice_settings[alice_choice]
-            self.alice_choices.append(alice_choice)
-
             # Bob randomly chooses a measurement setting
-            bob_choice = np.random.randint(0, len(self.bob_settings))
-            bob_angle = self.bob_settings[bob_choice]
+            bob_choice = int(np.random.choice([0, 1]))
             self.bob_choices.append(bob_choice)
 
-            # Simulate measurement of entangled qubits
-            # In a real implementation, this would involve actual quantum measurements
-            # on entangled states. For this simulation, we'll generate correlated results.
+            # Measure the qubit
+            # In a real implementation, we would apply the appropriate rotation based on the setting
+            result = Measurement.measure_in_basis(qubit, "computational")
 
-            # Generate Alice's result randomly
-            alice_result = int(np.random.randint(0, 2))
-            self.alice_results.append(alice_result)
-
-            # Bob's result is correlated with Alice's based on the measurement angles
-            angle_diff = abs(alice_angle - bob_angle)
-            # Probability that Bob gets the same result as Alice
-            prob_same = np.cos(angle_diff) ** 2
-
-            if np.random.random() < prob_same:
-                bob_result = alice_result
-            else:
-                bob_result = 1 - alice_result
-
-            # Apply channel noise effect
+            # Add noise effect
             if np.random.random() < self.channel.noise_level:
-                bob_result = 1 - bob_result
+                result = 1 - result
 
-            self.bob_results.append(bob_result)
+            self.bob_results.append(result)
 
-        return self.bob_results
+        # Filter out None values to return only int results
+        return [result for result in self.bob_results if result is not None]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
-        """Sift the raw keys to keep only measurements with specific settings.
-
-        In DI-QKD, Alice and Bob use specific combinations of measurement
-        settings for key generation.
+        """Sift the raw keys to keep only measurements in certain setting combinations.
 
         Returns:
             Tuple of (alice_sifted_key, bob_sifted_key)
@@ -143,15 +121,22 @@ class DeviceIndependentQKD(BaseProtocol):
 
         for i in range(self.num_pairs):
             # Skip if Bob didn't receive the qubit
-            if self.bob_choices[i] is None:
+            if self.bob_choices[i] is None or self.bob_results[i] is None:
                 continue
 
-            # For key generation, we typically use specific combinations of settings
-            # In this simplified implementation, we'll use the case where both
-            # Alice and Bob used their first setting
-            if self.alice_choices[i] == 0 and self.bob_choices[i] == 0:
-                alice_sifted.append(int(self.alice_results[i]))
-                bob_sifted.append(int(self.bob_results[i]))
+            # For key generation, we use specific combinations of measurement settings
+            # In this simplified implementation, we'll use matching settings
+            if (
+                self.alice_choices[i] is not None
+                and self.bob_choices[i] is not None
+                and self.alice_choices[i] == self.bob_choices[i]
+            ):
+                alice_sifted.append(self.alice_results[i])
+                # We already checked that self.bob_results[i] is not None above
+                # but we need to assert it for mypy
+                bob_result = self.bob_results[i]
+                if bob_result is not None:
+                    bob_sifted.append(bob_result)
 
         return alice_sifted, bob_sifted
 

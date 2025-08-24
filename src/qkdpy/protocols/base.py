@@ -31,8 +31,8 @@ class BaseProtocol(ABC):
         self.qber: float = 0.0
 
         # Basis information
-        self.alice_bases: list[str] = []
-        self.bob_bases: list[str] = []
+        self.alice_bases: list[str | None] = []
+        self.bob_bases: list[str | None] = []
 
         # Error correction and privacy amplification parameters
         self.error_correction_method: str = "cascade"
@@ -53,11 +53,11 @@ class BaseProtocol(ABC):
         pass
 
     @abstractmethod
-    def measure_states(self, qubits: list[Qubit]) -> list[int]:
+    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
         """Measure received quantum states.
 
         Args:
-            qubits: List of received qubits
+            qubits: List of received qubits (may contain None for lost qubits)
 
         Returns:
             List of measurement results
@@ -123,7 +123,9 @@ class BaseProtocol(ABC):
                 f"Unknown privacy amplification method: {self.privacy_amplification_method}"
             )
 
-    def execute(self) -> dict[str, list[int] | float | bool]:
+    def execute(
+        self,
+    ) -> dict[str, list[int] | float | bool | dict[str, int | float | bool]]:
         """Execute the full QKD protocol.
 
         Returns:

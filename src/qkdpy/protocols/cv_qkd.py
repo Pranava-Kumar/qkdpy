@@ -2,7 +2,7 @@
 
 import numpy as np
 
-from ..core import QuantumChannel, Qubit
+from ..core import Measurement, QuantumChannel, Qubit
 from .base import BaseProtocol
 
 
@@ -40,10 +40,10 @@ class CVQKD(BaseProtocol):
         self.excess_noise = 0.01  # Excess noise in the channel
 
         # Alice's and Bob's data
-        self.alice_bits = []
-        self.alice_modulations = []
-        self.bob_results = []
-        self.bob_measurements = []
+        self.alice_bits: list[int] = []
+        self.alice_modulations: list[float] = []
+        self.bob_results: list[int | None] = []
+        self.bob_measurements: list[float] = []
 
     def prepare_states(self) -> list[Qubit]:
         """Prepare quantum states for transmission (using qubits as a proxy).
@@ -77,15 +77,13 @@ class CVQKD(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit]) -> list[int]:
+    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
         """Measure received quantum states.
 
-        In CV-QKD, Bob performs homodyne detection. For this simulation,
-        we'll measure the qubits and add noise to simulate the continuous
-        variable measurement.
+        In CV-QKD, Bob performs homodyne or heterodyne measurements on the received signals.
 
         Args:
-            qubits: List of received qubits
+            qubits: List of received qubits (may contain None for lost signals)
 
         Returns:
             List of measurement results (0 or 1)
@@ -95,18 +93,20 @@ class CVQKD(BaseProtocol):
 
         for i, qubit in enumerate(qubits):
             if qubit is None:
-                # Qubit was lost in the channel
+                # Signal was lost in the channel
                 self.bob_results.append(None)
-                self.bob_measurements.append(None)
+                self.bob_measurements.append(0.0)  # Use 0.0 as default for lost signals
                 continue
 
-            # Bob measures the qubit in the computational basis
-            measurement = qubit.measure("computational")
-            qubit.collapse_state(measurement, "computational")
+            # Bob randomly chooses a measurement basis
+            # In CV-QKD, this is typically homodyne or heterodyne detection
 
-            # Add noise to simulate continuous variable measurement
-            # In a real implementation, this would be more complex
-            noise = np.random.normal(0, np.sqrt(self.channel.noise_level))
+            # For simulation purposes, we'll measure in the computational basis
+            # and then map to continuous values
+            measurement = Measurement.measure_in_basis(qubit, "computational")
+
+            # Add noise to simulate realistic conditions
+            noise = np.random.normal(0, self.excess_noise)
 
             # Store both the discrete measurement (for protocol compatibility)
             # and the continuous measurement (for CV-QKD specific calculations)
@@ -116,14 +116,16 @@ class CVQKD(BaseProtocol):
             if i < len(self.alice_modulations):
                 original_modulation = self.alice_modulations[i]
                 # Add noise to the original modulation
-                noisy_measurement = original_modulation + noise
+                continuous_measurement = (
+                    original_modulation * self.homodyne_efficiency + noise
+                )
+                self.bob_measurements.append(continuous_measurement)
             else:
-                # Fallback if we don't have the original modulation
-                noisy_measurement = float(measurement) + noise
+                # Fallback if we don't have Alice's original modulation
+                self.bob_measurements.append(float(measurement) + noise)
 
-            self.bob_measurements.append(noisy_measurement)
-
-        return self.bob_results
+        # Filter out None values to return only int results
+        return [result for result in self.bob_results if result is not None]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
         """Sift the raw keys to keep only valid measurements.
@@ -139,8 +141,15 @@ class CVQKD(BaseProtocol):
             if self.bob_results[i] is None:
                 continue
 
-            alice_sifted.append(int(self.alice_bits[i]))
-            bob_sifted.append(int(self.bob_results[i]))
+            # In CV-QKD, we typically don't sift based on bases (unlike discrete protocols)
+            # but we'll keep all valid measurements for compatibility
+            if self.bob_results[i] is not None:
+                alice_sifted.append(self.alice_bits[i])
+                # We already checked that self.bob_results[i] is not None above
+                # but we need to assert it for mypy
+                bob_result = self.bob_results[i]
+                if bob_result is not None:
+                    bob_sifted.append(bob_result)
 
         return alice_sifted, bob_sifted
 

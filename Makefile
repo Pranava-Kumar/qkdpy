@@ -43,7 +43,7 @@ type-check:
 	uv run mypy src/qkdpy
 
 docs:
-	cd docs && make html
+	uv run sphinx-build -b html docs docs/_build
 
 clean:
 	if exist build rmdir /s /q build

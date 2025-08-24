@@ -47,8 +47,8 @@ class E91(BaseProtocol):
         # Alice's and Bob's measurement choices and results
         self.alice_choices: list[int] = []
         self.alice_results: list[int] = []
-        self.bob_choices: list[int] = []
-        self.bob_results: list[int] = []
+        self.bob_choices: list[int | None] = []
+        self.bob_results: list[int | None] = []
 
         # Entangled pairs
         self.entangled_pairs: list[tuple[Qubit, Qubit]] = []
@@ -64,6 +64,8 @@ class E91(BaseProtocol):
         """
         qubits = []
         self.entangled_pairs = []
+        self.alice_choices = []
+        self.alice_results = []
 
         for _ in range(self.num_pairs):
             # Create a Bell state (Φ+ = (|00> + |11>) / sqrt(2))
@@ -87,12 +89,27 @@ class E91(BaseProtocol):
             # Store the entangled pair
             self.entangled_pairs.append((alice_qubit, bob_qubit))
 
+            # Alice measures her qubit
+            alice_choice = np.random.choice([0, 1])
+            self.alice_choices.append(alice_choice)
+
+            # alice_angle = alice_choice * np.pi / 4
+            # For simplicity, we'll just measure in computational basis and then
+            # adjust the result based on the angle
+            alice_result = alice_qubit.measure("computational")
+            # Apply rotation effect for non-zero angles
+            # if alice_choice == 1:  # π/4 basis
+            # This is a simplified model - in reality, we'd apply a rotation gate
+            # and then measure, but we're just adjusting the result here
+            # pass
+            self.alice_results.append(alice_result)
+
             # Alice keeps her qubit and sends Bob's qubit through the channel
             qubits.append(bob_qubit)
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit]) -> list[int]:
+    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
         """Measure received quantum states.
 
         In E91, Bob randomly chooses measurement bases for his qubits,
@@ -105,39 +122,29 @@ class E91(BaseProtocol):
             List of measurement results
 
         """
-        self.alice_choices = []
-        self.alice_results = []
         self.bob_choices = []
         self.bob_results = []
 
-        for i, bob_qubit in enumerate(qubits):
-            if bob_qubit is None:
+        for i in range(len(qubits)):
+            qubit = qubits[i]
+            if qubit is None:
                 # Qubit was lost in the channel
-                self.alice_choices.append(None)
-                self.alice_results.append(None)
                 self.bob_choices.append(None)
                 self.bob_results.append(None)
                 continue
 
-            # Get Alice's qubit from the entangled pair
-            self.entangled_pairs[i][0]
-
-            # Alice randomly chooses a measurement basis
-            alice_choice = np.random.randint(0, len(self.alice_measurement_bases))
-            alice_angle = self.alice_measurement_bases[alice_choice]
-            self.alice_choices.append(alice_choice)
-
-            # Bob randomly chooses a measurement basis
-            bob_choice = np.random.randint(0, len(self.bob_measurement_bases))
-            bob_angle = self.bob_measurement_bases[bob_choice]
+            # Bob randomly chooses a measurement setting
+            bob_choice = np.random.choice([0, 1])
             self.bob_choices.append(bob_choice)
 
-            # Simulate measurement of a Bell state
-            # Alice randomly chooses a result (0 or 1)
-            alice_result = int(np.random.randint(0, 2))
-            self.alice_results.append(alice_result)
+            # Get Alice's choice and result for this pair
+            alice_choice = self.alice_choices[i]
+            alice_result = self.alice_results[i]
 
-            # Bob's result is correlated with Alice's
+            # Calculate Bob's measurement result based on Alice's result and their choices
+            # In E91, the measurement outcomes are correlated based on the angle difference
+            alice_angle = alice_choice * np.pi / 4
+            bob_angle = bob_choice * np.pi / 4
             angle_diff = alice_angle - bob_angle
             prob_same_result = np.cos(angle_diff) ** 2
             if np.random.random() < prob_same_result:
@@ -151,7 +158,8 @@ class E91(BaseProtocol):
 
             self.bob_results.append(bob_result)
 
-        return self.bob_results
+        # Filter out None values to return only int results
+        return [result for result in self.bob_results if result is not None]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
         """Sift the raw keys to keep only measurements in certain basis combinations.
@@ -168,14 +176,22 @@ class E91(BaseProtocol):
 
         for i in range(self.num_pairs):
             # Skip if Bob didn't receive the qubit
-            if self.bob_choices[i] is None:
+            if self.bob_choices[i] is None or self.bob_results[i] is None:
                 continue
 
-            # For key generation, we use specific combinations of bases
-            # In E91, we typically use the cases where Alice and Bob chose the same basis index
-            if self.alice_choices[i] == self.bob_choices[i]:
-                alice_sifted.append(int(self.alice_results[i]))
-                bob_sifted.append(int(self.bob_results[i]))
+            # For key generation, we use specific basis combinations
+            # In this implementation, we'll use matching bases (both choose same angle)
+            if (
+                self.alice_choices[i] is not None
+                and self.bob_choices[i] is not None
+                and self.alice_choices[i] == self.bob_choices[i]
+            ):
+                alice_sifted.append(self.alice_results[i])
+                # We already checked that self.bob_results[i] is not None above
+                # but we need to assert it for mypy
+                bob_result = self.bob_results[i]
+                if bob_result is not None:
+                    bob_sifted.append(bob_result)
 
         return alice_sifted, bob_sifted
 

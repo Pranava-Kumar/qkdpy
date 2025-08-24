@@ -2,6 +2,7 @@
 
 import json
 import time
+from typing import Any
 
 import numpy as np
 
@@ -19,8 +20,8 @@ class QuantumKeyManager:
             channel: Quantum channel for key generation
         """
         self.channel = channel
-        self.key_store: dict[str, dict] = {}
-        self.active_sessions: dict[str, dict] = {}
+        self.key_store: dict[str, dict[str, Any]] = {}
+        self.active_sessions: dict[str, dict[str, Any]] = {}
         self.key_generation_rate = 0.0
         self.total_keys_generated = 0
 
@@ -48,7 +49,12 @@ class QuantumKeyManager:
             results = qkd.execute()
 
             # Check if the key generation was successful
-            if not results["is_secure"] or len(results["final_key"]) == 0:
+            final_key = results["final_key"]
+            if (
+                not results["is_secure"]
+                or not isinstance(final_key, list)
+                or len(final_key) == 0
+            ):
                 return None
 
             # Generate a unique key identifier
@@ -58,9 +64,18 @@ class QuantumKeyManager:
             self.key_store[key_id] = {
                 "session_id": session_id,
                 "key": results["final_key"],
-                "length": len(results["final_key"]),
+                "length": (
+                    len(results["final_key"])
+                    if isinstance(results["final_key"], list)
+                    else 0
+                ),
                 "timestamp": time.time(),
-                "qber": results["qber"],
+                "qber": (
+                    float(results["qber"])
+                    if isinstance(results["qber"], int | float)
+                    and not isinstance(results["qber"], bool)
+                    else 1.0
+                ),
                 "protocol": protocol,
             }
 
@@ -81,7 +96,7 @@ class QuantumKeyManager:
                 self.total_keys_generated
                 / (time.time() - self.active_sessions[session_id]["created"])
                 if time.time() - self.active_sessions[session_id]["created"] > 0
-                else 0
+                else 0.0
             )
 
             return key_id
@@ -100,7 +115,10 @@ class QuantumKeyManager:
             The key if found, None otherwise
         """
         if key_id in self.key_store:
-            return self.key_store[key_id]["key"]
+            key_data = self.key_store[key_id]["key"]
+            # Ensure we return a list of integers
+            if isinstance(key_data, list):
+                return [int(bit) for bit in key_data]
         return None
 
     def delete_key(self, key_id: str) -> bool:
@@ -134,7 +152,9 @@ class QuantumKeyManager:
             List of key identifiers
         """
         if session_id in self.active_sessions:
-            return self.active_sessions[session_id]["keys"]
+            keys = self.active_sessions[session_id]["keys"]
+            if isinstance(keys, list):
+                return [str(key) for key in keys]
         return []
 
     def rotate_session_key(self, session_id: str, key_length: int = 128) -> str | None:
@@ -149,7 +169,7 @@ class QuantumKeyManager:
         """
         return self.generate_key(session_id, key_length)
 
-    def get_key_statistics(self) -> dict:
+    def get_key_statistics(self) -> dict[str, Any]:
         """Get statistics about key generation and storage.
 
         Returns:
@@ -158,7 +178,7 @@ class QuantumKeyManager:
         return {
             "total_keys": len(self.key_store),
             "total_sessions": len(self.active_sessions),
-            "key_generation_rate": self.key_generation_rate,
+            "key_generation_rate": float(self.key_generation_rate),
             "total_keys_generated": self.total_keys_generated,
         }
 

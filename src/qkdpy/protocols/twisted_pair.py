@@ -39,11 +39,11 @@ class TwistedPairQKD(BaseProtocol):
         self.twist_factor = 2  # Number of twists in the protocol
 
         # Alice's and Bob's data
-        self.alice_bits = []
-        self.alice_bases = []
-        self.bob_results = []
-        self.bob_bases = []
-        self.twist_indices = []
+        self.alice_bits: list[int] = []
+        self.alice_bases: list[str | None] = []
+        self.bob_results: list[int | None] = []
+        self.bob_bases: list[str | None] = []
+        self.twist_indices: list[int] = []
 
     def prepare_states(self) -> list[Qubit]:
         """Prepare quantum states for transmission with twisted encoding.
@@ -87,11 +87,11 @@ class TwistedPairQKD(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit]) -> list[int]:
+    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
         """Measure received quantum states with twisted decoding.
 
         Args:
-            qubits: List of received qubits
+            qubits: List of received qubits (may contain None for lost qubits)
 
         Returns:
             List of measurement results
@@ -122,7 +122,8 @@ class TwistedPairQKD(BaseProtocol):
             result = Measurement.measure_in_basis(qubit, basis)
             self.bob_results.append(result)
 
-        return self.bob_results
+        # Filter out None values to return only int results
+        return [result for result in self.bob_results if result is not None]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
         """Sift the raw keys to keep only measurements in matching bases.
@@ -135,13 +136,21 @@ class TwistedPairQKD(BaseProtocol):
 
         for i in range(self.num_qubits):
             # Skip if Bob didn't receive the qubit
-            if self.bob_bases[i] is None:
+            if self.bob_bases[i] is None or self.bob_results[i] is None:
                 continue
 
             # Check if Alice and Bob used the same basis
-            if self.alice_bases[i] == self.bob_bases[i]:
-                alice_sifted.append(int(self.alice_bits[i]))
-                bob_sifted.append(int(self.bob_results[i]))
+            if (
+                self.alice_bases[i] is not None
+                and self.bob_bases[i] is not None
+                and self.alice_bases[i] == self.bob_bases[i]
+            ):
+                alice_sifted.append(self.alice_bits[i])
+                # We already checked that self.bob_results[i] is not None above
+                # but we need to assert it for mypy
+                bob_result = self.bob_results[i]
+                if bob_result is not None:
+                    bob_sifted.append(bob_result)
 
         return alice_sifted, bob_sifted
 
@@ -189,8 +198,8 @@ class TwistedPairQKD(BaseProtocol):
         Returns:
             Dictionary with basis distribution statistics
         """
-        alice_basis_counts = {}
-        bob_basis_counts = {}
+        alice_basis_counts: dict[str, int] = {}
+        bob_basis_counts: dict[str, int] = {}
 
         # Count Alice's basis choices
         for basis in self.alice_bases:

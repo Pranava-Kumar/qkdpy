@@ -1,7 +1,6 @@
 """Error correction methods for QKD protocols."""
 
 import numpy as np
-from typing import Optional
 
 
 class ErrorCorrection:
@@ -15,7 +14,7 @@ class ErrorCorrection:
     def cascade(
         alice_key: list[int],
         bob_key: list[int],
-        block_sizes: Optional[list[int]] = None,
+        block_sizes: list[int] | None = None,
         iterations: int = 4,
     ) -> tuple[list[int], list[int]]:
         """Cascade error correction protocol.
@@ -153,7 +152,7 @@ class ErrorCorrection:
     def ldpc(
         alice_key: list[int],
         bob_key: list[int],
-        parity_check_matrix: Optional[np.ndarray] = None,
+        parity_check_matrix: np.ndarray | None = None,
         max_iterations: int = 100,
     ) -> tuple[list[int], list[int]]:
         """LDPC (Low-Density Parity-Check) error correction.

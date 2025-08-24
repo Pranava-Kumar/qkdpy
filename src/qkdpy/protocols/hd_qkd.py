@@ -3,6 +3,7 @@
 import numpy as np
 
 from ..core import QuantumChannel, Qubit
+from ..core.measurements import Measurement
 from .base import BaseProtocol
 
 
@@ -38,12 +39,12 @@ class HDQKD(BaseProtocol):
         self.num_qudits = key_length * 3
 
         # Alice's random symbols and bases
-        self.alice_symbols = []
-        self.alice_bases = []
+        self.alice_symbols: list[int] = []
+        self.alice_bases: list[str | None] = []
 
         # Bob's measurement results and bases
-        self.bob_results = []
-        self.bob_bases = []
+        self.bob_results: list[int | None] = []
+        self.bob_bases: list[str | None] = []
 
         # MUBs (Mutually Unbiased Bases) for the dimension
         self.mubs = self._generate_mubs(dimension)
@@ -95,7 +96,7 @@ class HDQKD(BaseProtocol):
 
             # Alice randomly chooses a basis (0 to d)
             basis_idx = np.random.randint(0, len(self.mubs))
-            self.alice_bases.append(basis_idx)
+            self.alice_bases.append(str(basis_idx))
 
             # For simulation purposes, we'll encode the symbol in the computational basis
             # This is a simplified representation - a full HD-QKD implementation
@@ -108,20 +109,20 @@ class HDQKD(BaseProtocol):
                 # For higher dimensions, we'll use superposition states
                 # This is a simplification for the current qubit-based framework
                 alpha = np.cos(np.pi * symbol / self.dimension)
-                beta = np.sin(np.pi * symbol / self.dimension) * np.exp(
-                    1j * np.pi * symbol / self.dimension
-                )
+                beta = np.sin(np.pi * symbol / self.dimension)
                 qubit = Qubit(alpha, beta)
 
             qubits.append(qubit)
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit]) -> list[int]:
-        """Measure received quantum states in HD-QKD.
+    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+        """Measure received quantum states.
+
+        In HD-QKD, Bob randomly chooses bases from the MUBs to measure in.
 
         Args:
-            qubits: List of received qubits
+            qubits: List of received qubits (may contain None for lost qubits)
 
         Returns:
             List of measurement results
@@ -136,25 +137,17 @@ class HDQKD(BaseProtocol):
                 self.bob_bases.append(None)
                 continue
 
-            # Bob randomly chooses a basis
-            basis_idx = np.random.randint(0, len(self.mubs))
-            self.bob_bases.append(basis_idx)
+            # Bob randomly chooses a basis from the MUBs
+            basis_name = np.random.choice(["computational", "hadamard", "circular"])
+            self.bob_bases.append(basis_name)
 
-            # For simulation, we'll measure in computational basis and map to symbols
-            # A full implementation would use the appropriate measurement operators
-            prob_0, prob_1 = qubit.probabilities
-            if prob_0 > prob_1:
-                result = 0
-            else:
-                result = 1
-
-            # Map to higher dimensions probabilistically
-            if self.dimension > 2:
-                result = int(np.random.randint(0, self.dimension))
-
+            # Measure in the chosen basis
+            result = Measurement.measure_in_basis(qubit, basis_name)
+            qubit.collapse_state(result, basis_name)
             self.bob_results.append(result)
 
-        return self.bob_results
+        # Filter out None values to return only int results
+        return [result for result in self.bob_results if result is not None]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
         """Sift the raw keys to keep only measurements in matching bases.
@@ -167,13 +160,21 @@ class HDQKD(BaseProtocol):
 
         for i in range(self.num_qudits):
             # Skip if Bob didn't receive the qubit
-            if self.bob_bases[i] is None:
+            if self.bob_bases[i] is None or self.bob_results[i] is None:
                 continue
 
             # Check if Alice and Bob used the same basis
-            if self.alice_bases[i] == self.bob_bases[i]:
+            if (
+                self.alice_bases[i] is not None
+                and self.bob_bases[i] is not None
+                and self.alice_bases[i] == self.bob_bases[i]
+            ):
                 alice_sifted.append(int(self.alice_symbols[i]))
-                bob_sifted.append(int(self.bob_results[i]))
+                # We already checked that self.bob_results[i] is not None above
+                # but we need to assert it for mypy
+                bob_result = self.bob_results[i]
+                if bob_result is not None:
+                    bob_sifted.append(int(bob_result))
 
         return alice_sifted, bob_sifted
 
@@ -214,7 +215,7 @@ class HDQKD(BaseProtocol):
             Efficiency factor compared to qubit-based protocols
         """
         # In HD-QKD, we can encode log2(d) bits per photon instead of 1
-        return np.log2(self.dimension)
+        return float(np.log2(self.dimension))
 
     def get_basis_distribution(self) -> dict:
         """Analyze the distribution of measurement bases.
@@ -222,17 +223,17 @@ class HDQKD(BaseProtocol):
         Returns:
             Dictionary with basis distribution statistics
         """
-        alice_basis_counts = {}
-        bob_basis_counts = {}
+        alice_basis_counts: dict[str, int] = {}
+        bob_basis_counts: dict[str, int] = {}
 
         # Count Alice's basis choices
         for basis in self.alice_bases:
-            if basis is not None:
+            if basis is not None and basis != "":
                 alice_basis_counts[basis] = alice_basis_counts.get(basis, 0) + 1
 
         # Count Bob's basis choices
         for basis in self.bob_bases:
-            if basis is not None:
+            if basis is not None and basis != "":
                 bob_basis_counts[basis] = bob_basis_counts.get(basis, 0) + 1
 
         return {

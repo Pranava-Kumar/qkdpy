@@ -43,9 +43,14 @@ class QuantumRandomNumberGenerator:
                 qkd = BB84(self.channel, key_length=min(128, num_bits))
                 results = qkd.execute()
 
-                if results["is_secure"] and len(results["final_key"]) > 0:
+                final_key = results["final_key"]
+                if (
+                    results["is_secure"]
+                    and isinstance(final_key, list)
+                    and len(final_key) > 0
+                ):
                     # Add the quantum-generated key to our entropy pool
-                    self.entropy_pool.extend(results["final_key"])
+                    self.entropy_pool.extend(final_key)
             except Exception:
                 # If QKD fails, continue with other methods
                 pass

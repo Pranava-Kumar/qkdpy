@@ -1,6 +1,7 @@
 """Advanced quantum simulation and analysis tools."""
 
 import time
+from typing import Any
 
 import numpy as np
 import scipy.stats as stats
@@ -14,15 +15,15 @@ class QuantumSimulator:
 
     def __init__(self) -> None:
         """Initialize the quantum simulator."""
-        self.simulation_history = []
-        self.performance_stats = {}
+        self.simulation_history: list[dict[str, Any]] = []
+        self.performance_stats: dict[str, Any] = {}
 
     def simulate_channel_performance(
         self,
         channel: QuantumChannel,
         num_trials: int = 1000,
         initial_state: Qubit | None = None,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Simulate the performance of a quantum channel.
 
         Args:
@@ -40,8 +41,8 @@ class QuantumSimulator:
         channel.reset_statistics()
 
         # Track fidelity and other metrics
-        fidelities = []
-        received_states = []
+        fidelities: list[float] = []
+        received_states: list[Qubit] = []
 
         # Run simulation trials
         for _ in range(num_trials):
@@ -58,12 +59,12 @@ class QuantumSimulator:
                 received_states.append(received)
 
         # Calculate statistics
-        stats_result = {
+        stats_result: dict[str, Any] = {
             "transmission_rate": channel.get_statistics()["received"] / num_trials,
-            "average_fidelity": np.mean(fidelities) if fidelities else 0,
-            "fidelity_std": np.std(fidelities) if fidelities else 0,
-            "min_fidelity": np.min(fidelities) if fidelities else 0,
-            "max_fidelity": np.max(fidelities) if fidelities else 0,
+            "average_fidelity": float(np.mean(fidelities)) if fidelities else 0.0,
+            "fidelity_std": float(np.std(fidelities)) if fidelities else 0.0,
+            "min_fidelity": float(np.min(fidelities)) if fidelities else 0.0,
+            "max_fidelity": float(np.max(fidelities)) if fidelities else 0.0,
             "channel_stats": channel.get_statistics(),
         }
 
@@ -87,7 +88,7 @@ class QuantumSimulator:
         protocol: BaseProtocol,
         num_simulations: int = 100,
         eavesdropping_probability: float = 0.5,
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Analyze the security of a QKD protocol under eavesdropping.
 
         Args:
@@ -104,8 +105,8 @@ class QuantumSimulator:
         # Results tracking
         secure_executions = 0
         insecure_executions = 0
-        qber_values = []
-        key_rates = []
+        qber_values: list[float] = []
+        key_rates: list[float] = []
 
         # Run security analysis simulations
         for _ in range(num_simulations):
@@ -134,11 +135,20 @@ class QuantumSimulator:
                     insecure_executions += 1
 
                 # Collect metrics
-                qber_values.append(results.get("qber", 1.0))
-                key_rates.append(
-                    len(results.get("final_key", []))
-                    / max(1, len(results.get("raw_key", [0])))
+                qber_val = results.get("qber", 1.0)
+                qber_values.append(
+                    float(qber_val)
+                    if isinstance(qber_val, int | float)
+                    and not isinstance(qber_val, bool)
+                    else 1.0
                 )
+
+                final_key = results.get("final_key", [])
+                raw_key = results.get("raw_key", [0])
+                key_rate = (len(final_key) if isinstance(final_key, list) else 0) / max(
+                    1, len(raw_key) if isinstance(raw_key, list) else 1
+                )
+                key_rates.append(float(key_rate))
 
             except Exception:
                 # Count failed executions
@@ -151,14 +161,14 @@ class QuantumSimulator:
 
         # Calculate security metrics
         security_rate = secure_executions / num_simulations
-        avg_qber = np.mean(qber_values)
-        avg_key_rate = np.mean(key_rates)
+        avg_qber = float(np.mean(qber_values))
+        avg_key_rate = float(np.mean(key_rates))
 
         # Statistical analysis
-        qber_std = np.std(qber_values)
-        key_rate_std = np.std(key_rates)
+        qber_std = float(np.std(qber_values))
+        key_rate_std = float(np.std(key_rates))
 
-        results = {
+        security_results: dict[str, Any] = {
             "security_rate": security_rate,
             "insecure_rate": insecure_executions / num_simulations,
             "average_qber": avg_qber,
@@ -179,11 +189,11 @@ class QuantumSimulator:
                     "num_simulations": num_simulations,
                     "eavesdropping_probability": eavesdropping_probability,
                 },
-                "results": results,
+                "results": security_results,
             }
         )
 
-        return results
+        return security_results
 
     def _calculate_confidence_interval(
         self, data: list[float], confidence: float = 0.95
@@ -200,15 +210,15 @@ class QuantumSimulator:
         if len(data) < 2:
             return (0.0, 0.0)
 
-        mean = np.mean(data)
-        std_err = stats.sem(data)
+        mean = float(np.mean(data))
+        std_err = float(stats.sem(data))
         ci = stats.t.interval(confidence, len(data) - 1, loc=mean, scale=std_err)
 
-        return (ci[0], ci[1])
+        return (float(ci[0]), float(ci[1]))
 
     def benchmark_protocols(
         self, protocols: list[BaseProtocol], num_trials: int = 50
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Benchmark multiple QKD protocols.
 
         Args:
@@ -218,13 +228,13 @@ class QuantumSimulator:
         Returns:
             Dictionary with benchmark results
         """
-        benchmark_results = {}
+        benchmark_results: dict[str, Any] = {}
 
         for i, protocol in enumerate(protocols):
             # Track execution times
-            execution_times = []
-            key_lengths = []
-            qber_values = []
+            execution_times: list[float] = []
+            key_lengths: list[int] = []
+            qber_values: list[float] = []
 
             # Run benchmark trials
             for _ in range(num_trials):
@@ -235,8 +245,17 @@ class QuantumSimulator:
                     end_time = time.time()
 
                     execution_times.append(end_time - start_time)
-                    key_lengths.append(len(results.get("final_key", [])))
-                    qber_values.append(results.get("qber", 1.0))
+                    final_key = results.get("final_key", [])
+                    key_lengths.append(
+                        len(final_key) if isinstance(final_key, list) else 0
+                    )
+                    qber_val = results.get("qber", 1.0)
+                    qber_values.append(
+                        float(qber_val)
+                        if isinstance(qber_val, int | float)
+                        and not isinstance(qber_val, bool)
+                        else 1.0
+                    )
 
                 except Exception:
                     # Failed execution
@@ -247,12 +266,12 @@ class QuantumSimulator:
             # Calculate statistics
             benchmark_results[f"protocol_{i}"] = {
                 "name": protocol.__class__.__name__,
-                "avg_execution_time": np.mean(execution_times),
-                "execution_time_std": np.std(execution_times),
-                "avg_key_length": np.mean(key_lengths),
-                "key_length_std": np.std(key_lengths),
-                "avg_qber": np.mean(qber_values),
-                "qber_std": np.std(qber_values),
+                "avg_execution_time": float(np.mean(execution_times)),
+                "execution_time_std": float(np.std(execution_times)),
+                "avg_key_length": float(np.mean(key_lengths)),
+                "key_length_std": float(np.std(key_lengths)),
+                "avg_qber": float(np.mean(qber_values)),
+                "qber_std": float(np.std(qber_values)),
                 "success_rate": sum(1 for kl in key_lengths if kl > 0) / num_trials,
             }
 
@@ -283,7 +302,7 @@ class QuantumSimulator:
         """Clear the simulation history."""
         self.simulation_history = []
 
-    def get_performance_statistics(self) -> dict:
+    def get_performance_statistics(self) -> dict[str, Any]:
         """Get overall performance statistics.
 
         Returns:
@@ -313,12 +332,12 @@ class QuantumNetworkAnalyzer:
 
     def __init__(self) -> None:
         """Initialize the quantum network analyzer."""
-        self.network_topology = {}
-        self.node_performance = {}
+        self.network_topology: dict[str, Any] = {}
+        self.node_performance: dict[str, Any] = {}
 
     def analyze_network_topology(
         self, nodes: list[str], connections: list[tuple[str, str, float]]
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Analyze a quantum network topology.
 
         Args:
@@ -336,20 +355,24 @@ class QuantumNetworkAnalyzer:
         num_connections = len(connections)
 
         # Calculate average distance
-        avg_distance = np.mean([conn[2] for conn in connections]) if connections else 0
+        avg_distance = (
+            float(np.mean([conn[2] for conn in connections])) if connections else 0.0
+        )
 
         # Find maximum distance
-        max_distance = max([conn[2] for conn in connections]) if connections else 0
+        max_distance = (
+            float(max([conn[2] for conn in connections])) if connections else 0.0
+        )
 
         # Calculate network density
         max_possible_connections = num_nodes * (num_nodes - 1) / 2
         network_density = (
             num_connections / max_possible_connections
             if max_possible_connections > 0
-            else 0
+            else 0.0
         )
 
-        results = {
+        results: dict[str, Any] = {
             "num_nodes": num_nodes,
             "num_connections": num_connections,
             "average_distance": avg_distance,
@@ -399,7 +422,9 @@ class QuantumNetworkAnalyzer:
 
         return len(visited) == len(nodes)
 
-    def simulate_network_performance(self, node_performance: dict) -> dict:
+    def simulate_network_performance(
+        self, node_performance: dict[str, Any]
+    ) -> dict[str, Any]:
         """Simulate network performance based on node performance.
 
         Args:
@@ -415,29 +440,35 @@ class QuantumNetworkAnalyzer:
             return {}
 
         # Extract key metrics
-        key_rates = [perf.get("key_rate", 0) for perf in node_performance.values()]
-        qber_values = [perf.get("qber", 1.0) for perf in node_performance.values()]
-        distances = [perf.get("distance", 0) for perf in node_performance.values()]
+        key_rates = [
+            float(perf.get("key_rate", 0)) for perf in node_performance.values()
+        ]
+        qber_values = [
+            float(perf.get("qber", 1.0)) for perf in node_performance.values()
+        ]
+        distances = [
+            float(perf.get("distance", 0)) for perf in node_performance.values()
+        ]
 
-        results = {
-            "network_avg_key_rate": np.mean(key_rates),
-            "network_key_rate_std": np.std(key_rates),
-            "network_avg_qber": np.mean(qber_values),
-            "network_qber_std": np.std(qber_values),
-            "network_avg_distance": np.mean(distances),
+        results: dict[str, Any] = {
+            "network_avg_key_rate": float(np.mean(key_rates)),
+            "network_key_rate_std": float(np.std(key_rates)),
+            "network_avg_qber": float(np.mean(qber_values)),
+            "network_qber_std": float(np.std(qber_values)),
+            "network_avg_distance": float(np.mean(distances)),
             "best_performing_node": max(
                 node_performance.keys(),
-                key=lambda k: node_performance[k].get("key_rate", 0),
+                key=lambda k: float(node_performance[k].get("key_rate", 0)),
             ),
             "worst_performing_node": min(
                 node_performance.keys(),
-                key=lambda k: node_performance[k].get("key_rate", 0),
+                key=lambda k: float(node_performance[k].get("key_rate", 0)),
             ),
         }
 
         return results
 
-    def get_network_statistics(self) -> dict:
+    def get_network_statistics(self) -> dict[str, Any]:
         """Get overall network statistics.
 
         Returns:

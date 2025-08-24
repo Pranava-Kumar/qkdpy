@@ -204,9 +204,6 @@ class QuantumAuth:
 
         return {"commitment": commitment, "nonce": str(nonce)}
 
-        # Compare the commitments using a constant-time comparison
-        return hmac.compare_digest(commitment, computed_commitment)
-
     @staticmethod
     def verify_commitment(
         value: str, commitment: str, key: list[int], nonce: str

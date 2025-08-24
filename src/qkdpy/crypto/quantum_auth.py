@@ -38,7 +38,12 @@ class QuantumAuthenticator:
             qkd = BB84(self.channel, key_length=shared_key_length)
             results = qkd.execute()
 
-            if not results["is_secure"] or len(results["final_key"]) == 0:
+            final_key = results["final_key"]
+            if (
+                not results["is_secure"]
+                or not isinstance(final_key, list)
+                or len(final_key) == 0
+            ):
                 return False
 
             # Store the shared key

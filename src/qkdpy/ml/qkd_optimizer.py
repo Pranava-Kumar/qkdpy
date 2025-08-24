@@ -124,9 +124,13 @@ class QKDOptimizer:
                         mean_val = np.mean(good_values)
                         std_val = np.std(good_values)
                         # Sample from a distribution centered on good values
-                        params[param_name] = float(np.clip(
-                            np.random.normal(mean_val, std_val * 0.2), min_val, max_val
-                        ))
+                        params[param_name] = float(
+                            np.clip(
+                                np.random.normal(mean_val, std_val * 0.2),
+                                min_val,
+                                max_val,
+                            )
+                        )
                     else:
                         params[param_name] = np.random.uniform(min_val, max_val)
                 else:
@@ -354,7 +358,7 @@ class QKDAnomalyDetector:
         """Initialize the anomaly detector."""
         self.baseline_statistics: dict[str, dict[str, float]] = {}
         self.anomaly_threshold: float = 0.05  # 5% threshold
-        self.detection_history: list[dict[str, float]] = []
+        self.detection_history: list[dict[str, Any]] = []
 
     def establish_baseline(self, metrics_history: list[dict[str, float]]) -> None:
         """Establish baseline statistics from historical data.
@@ -377,10 +381,10 @@ class QKDAnomalyDetector:
             ]
             if values:
                 self.baseline_statistics[metric] = {
-                    "mean": np.mean(values),
-                    "std": np.std(values),
-                    "min": np.min(values),
-                    "max": np.max(values),
+                    "mean": float(np.mean(values)),
+                    "std": float(np.std(values)),
+                    "min": float(np.min(values)),
+                    "max": float(np.max(values)),
                 }
 
     def detect_anomalies(self, current_metrics: dict[str, float]) -> dict[str, bool]:
@@ -449,11 +453,13 @@ class QKDAnomalyDetector:
         # Calculate anomaly rates
         anomaly_rates = {}
         for metric, count in anomaly_counts.items():
-            anomaly_rates[metric] = count / total_detections
+            anomaly_rates[metric] = float(count / total_detections)
 
         return {
-            "total_detections": total_detections,
-            "anomaly_counts": anomaly_counts,
+            "total_detections": float(total_detections),
+            "anomaly_counts": {
+                metric: float(count) for metric, count in anomaly_counts.items()
+            },
             "anomaly_rates": anomaly_rates,
             "baseline_metrics": list(self.baseline_statistics.keys()),
         }
