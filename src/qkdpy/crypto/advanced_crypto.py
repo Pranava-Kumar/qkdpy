@@ -135,7 +135,7 @@ class QuantumHash:
 class QuantumCommitment:
     """Quantum cryptographic commitment schemes."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the quantum commitment scheme."""
         self.commitments: dict[str, dict] = {}
 

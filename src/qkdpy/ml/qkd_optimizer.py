@@ -1,5 +1,6 @@
 """Machine learning tools for QKD optimization and analysis."""
 
+from collections.abc import Callable
 from typing import Any
 
 import numpy as np
@@ -15,14 +16,14 @@ class QKDOptimizer:
             protocol_name: Name of the QKD protocol to optimize
         """
         self.protocol_name = protocol_name
-        self.optimization_history = []
-        self.best_parameters = {}
+        self.optimization_history: list[dict[str, Any]] = []
+        self.best_parameters: dict[str, float] = {}
         self.best_performance = 0.0
 
     def optimize_channel_parameters(
         self,
         parameter_space: dict[str, tuple[float, float]],
-        objective_function,
+        objective_function: Callable[[dict[str, float]], float],
         num_iterations: int = 100,
         method: str = "bayesian",
     ) -> dict[str, Any]:
@@ -51,7 +52,7 @@ class QKDOptimizer:
     def _bayesian_optimization(
         self,
         parameter_space: dict[str, tuple[float, float]],
-        objective_function,
+        objective_function: Callable[[dict[str, float]], float],
         num_iterations: int,
     ) -> dict[str, Any]:
         """Bayesian optimization for QKD parameters.
@@ -69,7 +70,7 @@ class QKDOptimizer:
 
         # Initialize with random samples
         best_params = {}
-        best_value = float("-inf")
+        best_value: Any = float("-inf")
 
         # Track parameter values and objective values
         param_history = []
@@ -123,9 +124,9 @@ class QKDOptimizer:
                         mean_val = np.mean(good_values)
                         std_val = np.std(good_values)
                         # Sample from a distribution centered on good values
-                        params[param_name] = np.clip(
+                        params[param_name] = float(np.clip(
                             np.random.normal(mean_val, std_val * 0.2), min_val, max_val
-                        )
+                        ))
                     else:
                         params[param_name] = np.random.uniform(min_val, max_val)
                 else:
@@ -165,7 +166,7 @@ class QKDOptimizer:
     def _genetic_algorithm_optimization(
         self,
         parameter_space: dict[str, tuple[float, float]],
-        objective_function,
+        objective_function: Callable[[dict[str, float]], float],
         num_iterations: int,
     ) -> dict[str, Any]:
         """Genetic algorithm optimization for QKD parameters.
@@ -285,7 +286,7 @@ class QKDOptimizer:
             if fitness_scores[idx] > fitness_scores[best_idx]:
                 best_idx = idx
 
-        return population[best_idx].copy()
+        return dict(population[best_idx].copy())
 
     def _uniform_crossover(
         self, parent1: dict[str, float], parent2: dict[str, float]
@@ -309,7 +310,7 @@ class QKDOptimizer:
         individual: dict[str, float],
         parameter_space: dict[str, tuple[float, float]],
         mutation_rate: float,
-    ):
+    ) -> None:
         """Mutation operator for genetic algorithm."""
         for param_name, (min_val, max_val) in parameter_space.items():
             if np.random.random() < mutation_rate:
@@ -349,13 +350,13 @@ class QKDOptimizer:
 class QKDAnomalyDetector:
     """Anomaly detection for QKD systems using machine learning."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the anomaly detector."""
-        self.baseline_statistics = {}
-        self.anomaly_threshold = 0.05  # 5% threshold
-        self.detection_history = []
+        self.baseline_statistics: dict[str, dict[str, float]] = {}
+        self.anomaly_threshold: float = 0.05  # 5% threshold
+        self.detection_history: list[dict[str, float]] = []
 
-    def establish_baseline(self, metrics_history: list[dict[str, float]]):
+    def establish_baseline(self, metrics_history: list[dict[str, float]]) -> None:
         """Establish baseline statistics from historical data.
 
         Args:
@@ -365,7 +366,7 @@ class QKDAnomalyDetector:
             return
 
         # Calculate statistics for each metric
-        all_metrics = set()
+        all_metrics: set[str] = set()
         for metrics in metrics_history:
             all_metrics.update(metrics.keys())
 
@@ -419,7 +420,7 @@ class QKDAnomalyDetector:
 
         return anomalies
 
-    def update_anomaly_threshold(self, new_threshold: float):
+    def update_anomaly_threshold(self, new_threshold: float) -> None:
         """Update the anomaly detection threshold.
 
         Args:
@@ -437,7 +438,7 @@ class QKDAnomalyDetector:
             return {"error": "No detection history"}
 
         # Count anomalies by metric
-        anomaly_counts = {}
+        anomaly_counts: dict[str, int] = {}
         total_detections = len(self.detection_history)
 
         for detection in self.detection_history:

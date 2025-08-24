@@ -29,16 +29,16 @@ class B92(BaseProtocol):
         super().__init__(channel, key_length)
 
         # B92-specific parameters
-        self.security_threshold = security_threshold
+        self.security_threshold: float = security_threshold
 
         # Number of qubits to send (we'll send more than needed to account for sifting)
-        self.num_qubits = key_length * 4  # Send 4x more qubits than needed
+        self.num_qubits: int = key_length * 4  # Send 4x more qubits than needed
 
         # Alice's random bits
-        self.alice_bits = []
+        self.alice_bits: list[int] = []
 
         # Bob's measurement results
-        self.bob_results = []
+        self.bob_results: list[int | None] = []
 
     def prepare_states(self) -> list[Qubit]:
         """Prepare quantum states for transmission.

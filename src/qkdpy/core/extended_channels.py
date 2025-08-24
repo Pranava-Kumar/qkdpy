@@ -1,6 +1,7 @@
-"""Extended quantum channel models with additional noise types."""
+"""Extended quantum channels with additional noise models."""
 
 import random
+from collections.abc import Callable
 
 import numpy as np
 
@@ -17,7 +18,7 @@ class ExtendedQuantumChannel:
         noise_model: str = "depolarizing",
         noise_level: float = 0.0,
         eavesdropper=None,
-    ):
+    ) -> None:
         """Initialize an extended quantum channel.
 
         Args:
@@ -174,7 +175,7 @@ class ExtendedQuantumChannel:
         self.eavesdropped_count = 0
         self.eavesdropper_detected = False
 
-    def set_eavesdropper(self, eavesdropper) -> None:
+    def set_eavesdropper(self, eavesdropper: Callable | None) -> None:
         """Set or remove an eavesdropper on the channel.
 
         Args:

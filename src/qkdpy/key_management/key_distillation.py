@@ -15,7 +15,7 @@ class KeyDistillation:
         self,
         error_correction_method: str = "cascade",
         privacy_amplification_method: str = "universal_hashing",
-    ):
+    ) -> None:
         """Initialize the key distillation process.
 
         Args:
@@ -38,7 +38,7 @@ class KeyDistillation:
         alice_key: list[int],
         bob_key: list[int],
         qber: float = 0.0,
-        final_key_length: int = None,
+        final_key_length: int | None = None,
     ) -> dict[str, list[int] | float]:
         """Perform key distillation.
 

@@ -97,7 +97,7 @@ def multiparty_qkd_example():
     shares = MultiPartyQKD.quantum_secret_sharing(secret, 4, 3)
     print("\nSecret shares for 4 parties (threshold=3):")
     for i, share in enumerate(shares):
-        print(f"  Party {i+1}: {share}")
+        print(f"  Party {i + 1}: {share}")
 
     # Reconstruct the secret with different subsets
     print("\nReconstruction tests:")

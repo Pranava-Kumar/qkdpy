@@ -29,7 +29,7 @@ def advanced_protocols_example():
     di_results = di_qkd.execute()
     bell_results = di_qkd.test_bell_inequality()
     print(f"  - DI-QKD complete: {di_qkd.is_complete}")
-    print(f"  - DI-QKD secure: {di_qkd.is_secure()}")
+    print(f"  - DI-QKD secure: {di_qkd.is_secure}")
     print(f"  - DI-QKD Bell violation: {bell_results['is_violated']}")
     print(f"  - DI-QKD S-value: {bell_results['s_value']:.4f}")
     print(f"  - DI-QKD final key length: {len(di_results['final_key'])}")

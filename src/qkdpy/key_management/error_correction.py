@@ -1,6 +1,7 @@
 """Error correction methods for QKD protocols."""
 
 import numpy as np
+from typing import Optional
 
 
 class ErrorCorrection:
@@ -14,7 +15,7 @@ class ErrorCorrection:
     def cascade(
         alice_key: list[int],
         bob_key: list[int],
-        block_sizes: list[int] = None,
+        block_sizes: Optional[list[int]] = None,
         iterations: int = 4,
     ) -> tuple[list[int], list[int]]:
         """Cascade error correction protocol.
@@ -41,7 +42,7 @@ class ErrorCorrection:
         bob_corrected = bob_key.copy()
 
         # Keep track of which bits have been corrected in previous iterations
-        corrected_bits = set()
+        corrected_bits: set[int] = set()
 
         for iteration in range(iterations):
             block_size = block_sizes[iteration % len(block_sizes)]
@@ -78,41 +79,6 @@ class ErrorCorrection:
                     bob_corrected[left] = 1 - bob_corrected[left]
                     corrected_bits.add(left)
 
-            # In subsequent iterations, also check blocks that contain previously corrected bits
-            if iteration > 0:
-                newly_corrected_bits = set()
-                for bit_pos in corrected_bits.copy():
-                    # Create a block around the corrected bit
-                    block_start = max(0, bit_pos - block_size // 2)
-                    block_end = min(len(alice_corrected), block_start + block_size)
-
-                    # Calculate parity for the block
-                    alice_parity = int(sum(alice_corrected[block_start:block_end]) % 2)
-                    bob_parity = int(sum(bob_corrected[block_start:block_end]) % 2)
-
-                    # If parities don't match, find and correct the error
-                    if alice_parity != bob_parity:
-                        # Binary search to find the error
-                        left = block_start
-                        right = block_end
-
-                        while right - left > 1:
-                            mid = (left + right) // 2
-
-                            alice_parity_left = int(sum(alice_corrected[left:mid]) % 2)
-                            bob_parity_left = int(sum(bob_corrected[left:mid]) % 2)
-
-                            if alice_parity_left != bob_parity_left:
-                                right = mid
-                            else:
-                                left = mid
-
-                        # Correct the error if it's a new position
-                        if left not in corrected_bits:
-                            bob_corrected[left] = 1 - bob_corrected[left]
-                            newly_corrected_bits.add(left)
-                corrected_bits.update(newly_corrected_bits)
-
         return alice_corrected, bob_corrected
 
     @staticmethod
@@ -142,7 +108,7 @@ class ErrorCorrection:
         bob_corrected = bob_key.copy()
 
         # Keep track of which bits have been corrected
-        corrected_bits = set()
+        corrected_bits: set[int] = set()
 
         for _iteration in range(iterations):
             # Divide the key into blocks of the specified size
@@ -187,7 +153,7 @@ class ErrorCorrection:
     def ldpc(
         alice_key: list[int],
         bob_key: list[int],
-        parity_check_matrix: np.ndarray = None,
+        parity_check_matrix: Optional[np.ndarray] = None,
         max_iterations: int = 100,
     ) -> tuple[list[int], list[int]]:
         """LDPC (Low-Density Parity-Check) error correction.
@@ -308,7 +274,7 @@ class ErrorCorrection:
             # Check if the syndrome is now all zeros
             new_syndrome = np.dot(parity_check_matrix, corrected_bob) % 2
             if np.all(new_syndrome == 0):
-                return alice_key, [int(bit) for bit in corrected_bob.tolist()]
+                break
 
         # If we reach the maximum number of iterations without converging,
         # return the best estimate we have

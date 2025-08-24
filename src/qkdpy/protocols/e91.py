@@ -31,27 +31,27 @@ class E91(BaseProtocol):
         super().__init__(channel, key_length)
 
         # E91-specific parameters
-        self.alice_measurement_bases = [
+        self.alice_measurement_bases: list[float] = [
             0,
             np.pi / 4,
         ]  # Alice's measurement angles
-        self.bob_measurement_bases = [
+        self.bob_measurement_bases: list[float] = [
             np.pi / 8,
             3 * np.pi / 8,
         ]  # Bob's measurement angles
-        self.security_threshold = security_threshold
+        self.security_threshold: float = security_threshold
 
         # Number of entangled pairs to generate
-        self.num_pairs = key_length * 3  # Generate 3x more pairs than needed
+        self.num_pairs: int = key_length * 3  # Generate 3x more pairs than needed
 
         # Alice's and Bob's measurement choices and results
-        self.alice_choices = []
-        self.alice_results = []
-        self.bob_choices = []
-        self.bob_results = []
+        self.alice_choices: list[int] = []
+        self.alice_results: list[int] = []
+        self.bob_choices: list[int] = []
+        self.bob_results: list[int] = []
 
         # Entangled pairs
-        self.entangled_pairs = []
+        self.entangled_pairs: list[tuple[Qubit, Qubit]] = []
 
     def prepare_states(self) -> list[Qubit]:
         """Prepare entangled quantum states for transmission.
@@ -289,19 +289,3 @@ class E91(BaseProtocol):
 
         """
         return self.security_threshold
-
-    def is_secure(self) -> bool:
-        """Check if the protocol is secure based on Bell's inequality test.
-
-        Returns:
-            True if the protocol is secure, False otherwise
-
-        """
-        if not self.is_complete:
-            return False
-
-        # Perform Bell's inequality test
-        bell_results = self.test_bell_inequality()
-
-        # Check if Bell's inequality is violated
-        return bell_results["is_violated"]

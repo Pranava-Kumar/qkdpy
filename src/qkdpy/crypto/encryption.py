@@ -42,7 +42,7 @@ class OneTimePad:
 
     @staticmethod
     def encrypt_file(
-        file_path: str, key: list[int], output_path: str = None
+        file_path: str, key: list[int], output_path: str | None = None
     ) -> tuple[str, list[int]]:
         """Encrypt a file using the one-time pad.
 

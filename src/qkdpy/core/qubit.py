@@ -191,8 +191,8 @@ class Qubit:
         alpha, beta = self._state
         return f"Qubit({alpha:.3f}|0> + {beta:.3f}|1>)"
 
-    def __eq__(self, other: "Qubit") -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if two qubits have the same state."""
         if not isinstance(other, Qubit):
-            return False
+            return NotImplemented
         return np.allclose(self._state, other._state)

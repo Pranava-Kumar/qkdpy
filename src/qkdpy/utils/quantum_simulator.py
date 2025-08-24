@@ -12,7 +12,7 @@ from ..protocols import BaseProtocol
 class QuantumSimulator:
     """Advanced quantum system simulator for QKD analysis."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the quantum simulator."""
         self.simulation_history = []
         self.performance_stats = {}
@@ -113,7 +113,7 @@ class QuantumSimulator:
             channel = QuantumChannel(
                 loss=original_channel.loss,
                 noise_model=original_channel.noise_model,
-                noise_level=original_channel.noise_level
+                noise_level=original_channel.noise_level,
             )
 
             # Set eavesdropper with specified probability
@@ -293,7 +293,7 @@ class QuantumSimulator:
             return {}
 
         total_simulations = len(self.simulation_history)
-        simulation_types = {}
+        simulation_types: dict[str, int] = {}
 
         # Count simulations by type
         for sim in self.simulation_history:
@@ -311,7 +311,7 @@ class QuantumSimulator:
 class QuantumNetworkAnalyzer:
     """Analyzer for quantum networks and multi-party QKD."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the quantum network analyzer."""
         self.network_topology = {}
         self.node_performance = {}
@@ -379,7 +379,7 @@ class QuantumNetworkAnalyzer:
             return len(nodes) <= 1
 
         # Build adjacency list
-        adj_list = {node: [] for node in nodes}
+        adj_list: dict[str, list[str]] = {node: [] for node in nodes}
         for node1, node2, _ in connections:
             if node1 in adj_list and node2 in adj_list:
                 adj_list[node1].append(node2)

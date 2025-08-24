@@ -68,7 +68,7 @@ def bits_to_int(bits: list[int]) -> int:
     return sum(bit << i for i, bit in enumerate(reversed(bits)))
 
 
-def int_to_bits(n: int, length: int = None) -> list[int]:
+def int_to_bits(n: int, length: int | None = None) -> list[int]:
     """Convert an integer to a list of bits.
 
     Args:

@@ -232,7 +232,7 @@ class MultiPartyQKDNetwork:
 
     def _log_security_event(
         self, event_type: str, status: str, node1: str, node2: str, details: str = ""
-    ):
+    ) -> None:
         """Log a security event.
 
         Args:

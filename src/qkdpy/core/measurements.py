@@ -48,7 +48,7 @@ class Measurement:
 
     @staticmethod
     def measure_in_random_basis(
-        qubit: Qubit, bases: list[str] = None
+        qubit: Qubit, bases: list[str] | None = None
     ) -> tuple[int, str]:
         """Measure a qubit in a randomly chosen basis.
 
@@ -69,7 +69,7 @@ class Measurement:
 
     @staticmethod
     def measure_batch_in_random_bases(
-        qubits: list[Qubit], bases: list[str] = None
+        qubits: list[Qubit], bases: list[str] | None = None
     ) -> tuple[list[int], list[str]]:
         """Measure a batch of qubits in randomly chosen bases.
 

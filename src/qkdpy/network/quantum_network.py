@@ -24,7 +24,7 @@ class QuantumNetwork:
         self.network_topology = {}
         self.routing_table = {}
 
-    def add_node(self, node_id: str, protocol: BaseProtocol | None = None):
+    def add_node(self, node_id: str, protocol: BaseProtocol | None = None) -> None:
         """Add a node to the quantum network.
 
         Args:
@@ -43,7 +43,7 @@ class QuantumNetwork:
 
     def add_connection(
         self, node1_id: str, node2_id: str, channel: QuantumChannel | None = None
-    ):
+    ) -> None:
         """Add a quantum connection between two nodes.
 
         Args:
@@ -67,7 +67,7 @@ class QuantumNetwork:
         self.nodes[node1_id].add_neighbor(node2_id, channel)
         self.nodes[node2_id].add_neighbor(node1_id, channel)
 
-    def remove_node(self, node_id: str):
+    def remove_node(self, node_id: str) -> None:
         """Remove a node from the quantum network.
 
         Args:
@@ -308,7 +308,7 @@ class QuantumNode:
         self.keys: dict[str, list[int]] = {}  # Shared keys with other nodes
         self.key_manager = None  # For key management
 
-    def add_neighbor(self, neighbor_id: str, channel: QuantumChannel):
+    def add_neighbor(self, neighbor_id: str, channel: QuantumChannel) -> None:
         """Add a neighbor to this node.
 
         Args:
@@ -317,7 +317,7 @@ class QuantumNode:
         """
         self.neighbors[neighbor_id] = channel
 
-    def remove_neighbor(self, neighbor_id: str):
+    def remove_neighbor(self, neighbor_id: str) -> None:
         """Remove a neighbor from this node.
 
         Args:
@@ -334,7 +334,7 @@ class QuantumNode:
         """
         return list(self.neighbors.keys())
 
-    def store_key(self, partner_id: str, key: list[int]):
+    def store_key(self, partner_id: str, key: list[int]) -> None:
         """Store a shared key with a partner node.
 
         Args:
@@ -354,7 +354,7 @@ class QuantumNode:
         """
         return self.keys.get(partner_id)
 
-    def remove_key(self, partner_id: str):
+    def remove_key(self, partner_id: str) -> None:
         """Remove a shared key with a partner node.
 
         Args:

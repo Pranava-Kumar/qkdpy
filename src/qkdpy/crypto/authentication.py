@@ -79,7 +79,7 @@ class QuantumAuth:
         return hmac.compare_digest(generated_mac, mac)
 
     @staticmethod
-    def generate_authenticator(key: list[int], challenge: str = None) -> str:
+    def generate_authenticator(key: list[int], challenge: str | None = None) -> str:
         """Generate an authenticator for challenge-response authentication.
 
         Args:
@@ -167,9 +167,8 @@ class QuantumAuth:
 
         return fingerprint
 
-    @staticmethod
     def generate_commitment(
-        value: str, key: list[int], nonce: int = None
+        value: str, key: list[int], nonce: int | None = None
     ) -> dict[str, str]:
         """Generate a cryptographic commitment for a value.
 
@@ -185,24 +184,6 @@ class QuantumAuth:
         # If no nonce is provided, generate a random one
         if nonce is None:
             nonce = np.random.randint(0, 2**32)
-
-        # Convert the key to bytes
-        key_bytes = bytes(
-            int("".join(map(str, key)), 2).to_bytes(
-                (len(key) + 7) // 8, byteorder="big"
-            )
-        )
-
-        # Convert the value and nonce to bytes
-        value_bytes = value.encode("utf-8")
-        nonce_bytes = nonce.to_bytes(4, byteorder="big")
-
-        # Generate the commitment using HMAC-SHA256
-        commitment = hmac.new(
-            key_bytes, value_bytes + nonce_bytes, hashlib.sha256
-        ).hexdigest()
-
-        return {"commitment": commitment, "nonce": str(nonce)}
 
     @staticmethod
     def verify_commitment(

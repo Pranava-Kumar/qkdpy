@@ -59,7 +59,7 @@ class DeviceIndependentQKD(BaseProtocol):
             # Create a Bell state (Φ+ = (|00> + |11>) / sqrt(2))
             # Alice keeps the first qubit and sends the second to Bob
             # alice_qubit = Qubit(1/np.sqrt(2), 0)  # Simplified representation (not used)
-            bob_qubit = Qubit(1/np.sqrt(2), 0)    # Simplified representation
+            bob_qubit = Qubit(1 / np.sqrt(2), 0)  # Simplified representation
 
             # In a real implementation, we would create proper entangled states
             # For this simulation, we'll just send one qubit of each pair
@@ -212,7 +212,9 @@ class DeviceIndependentQKD(BaseProtocol):
                     bob_pm = [1 if x == 1 else -1 for x in bob_vals]
 
                     # Calculate expectation value
-                    e_val = sum(a * b for a, b in zip(alice_pm, bob_pm, strict=False)) / len(alice_pm)
+                    e_val = sum(
+                        a * b for a, b in zip(alice_pm, bob_pm, strict=False)
+                    ) / len(alice_pm)
                     correlations[f"E({a},{b})"] = e_val
 
         # CHSH inequality: S = |E(a,b) - E(a,b')| + |E(a',b) + E(a',b')| <= 2
@@ -246,22 +248,11 @@ class DeviceIndependentQKD(BaseProtocol):
     def _get_security_threshold(self) -> float:
         """Get the security threshold for the DI-QKD protocol.
 
+        In device-independent QKD, security is determined by the violation
+        of Bell's inequality beyond a certain threshold.
+
         Returns:
             Minimum Bell inequality violation for security
+
         """
         return self.security_threshold
-
-    def is_secure(self) -> bool:
-        """Check if the protocol is secure based on Bell's inequality test.
-
-        Returns:
-            True if the protocol is secure, False otherwise
-        """
-        if not self.is_complete:
-            return False
-
-        # Perform Bell's inequality test
-        bell_results = self.test_bell_inequality()
-
-        # Check if Bell's inequality is violated beyond the security threshold
-        return bell_results["s_value"] > self.security_threshold

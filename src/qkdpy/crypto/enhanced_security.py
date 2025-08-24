@@ -112,7 +112,6 @@ class QuantumKeyValidation:
             "ones_proportion": ones_count / len(bits),
         }
 
-    @staticmethod
     def entropy_test(key: list[int]) -> float:
         """Calculate the entropy of a quantum key.
 
@@ -137,7 +136,7 @@ class QuantumKeyValidation:
         p1 = ones_count / len(key_str)
 
         # Calculate entropy
-        def entropy_term(p):
+        def entropy_term(p: float) -> float:
             return -p * np.log2(p) if p > 0 else 0
 
         entropy = entropy_term(p0) + entropy_term(p1)

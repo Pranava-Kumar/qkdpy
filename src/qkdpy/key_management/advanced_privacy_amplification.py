@@ -12,7 +12,7 @@ class AdvancedPrivacyAmplification:
     """Provides advanced privacy amplification methods for QKD protocols."""
 
     @staticmethod
-    def xor_extract(key: list[int], seed: int = None) -> list[int]:
+    def xor_extract(key: list[int], seed: int | None = None) -> list[int]:
         """Privacy amplification using XOR extraction with a seed.
 
         Args:

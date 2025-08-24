@@ -80,7 +80,7 @@ def enhanced_security_example():
     parts = QuantumSideChannelProtection.secure_key_splitting(original_key, 3)
     print(f"Key split into {len(parts)} parts:")
     for i, part in enumerate(parts):
-        print(f"  Part {i+1}: {part}")
+        print(f"  Part {i + 1}: {part}")
 
     # Reconstruct the key
     reconstructed = QuantumSideChannelProtection.reconstruct_key(parts)

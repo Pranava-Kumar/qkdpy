@@ -30,19 +30,21 @@ class BB84(BaseProtocol):
         super().__init__(channel, key_length)
 
         # BB84-specific parameters
-        self.bases = ["computational", "hadamard"]
-        self.security_threshold = security_threshold  # 11% QBER threshold for BB84
+        self.bases: list[str] = ["computational", "hadamard"]
+        self.security_threshold: float = (
+            security_threshold  # 11% QBER threshold for BB84
+        )
 
         # Number of qubits to send (we'll send more than needed to account for sifting)
-        self.num_qubits = key_length * 3  # Send 3x more qubits than needed
+        self.num_qubits: int = key_length * 3  # Send 3x more qubits than needed
 
         # Alice's random bits and bases
-        self.alice_bits = []
-        self.alice_bases = []
+        self.alice_bits: list[int] = []
+        self.alice_bases: list[str] = []
 
         # Bob's measurement results and bases
-        self.bob_results = []
-        self.bob_bases = []
+        self.bob_results: list[int | None] = []
+        self.bob_bases: list[str | None] = []
 
     def prepare_states(self) -> list[Qubit]:
         """Prepare quantum states for transmission.

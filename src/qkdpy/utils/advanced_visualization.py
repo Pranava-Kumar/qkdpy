@@ -112,7 +112,9 @@ class AdvancedProtocolVisualizer:
 
         # Create bar chart
         bars = ax.bar(
-            protocols, values, color=plt.cm.tab10(np.linspace(0, 1, len(protocols)))
+            protocols,
+            values,
+            color=plt.get_cmap("tab10")(np.linspace(0, 1, len(protocols))),
         )
 
         # Add value labels on bars

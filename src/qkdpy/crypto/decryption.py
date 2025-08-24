@@ -40,7 +40,9 @@ class OneTimePadDecrypt:
         return message
 
     @staticmethod
-    def decrypt_file(file_path: str, key: list[int], output_path: str = None) -> str:
+    def decrypt_file(
+        file_path: str, key: list[int], output_path: str | None = None
+    ) -> str:
         """Decrypt a file using the one-time pad.
 
         Args:

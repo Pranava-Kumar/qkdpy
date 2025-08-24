@@ -310,10 +310,10 @@ class MultiQubitState:
         """String representation of the multi-qubit state."""
         return f"MultiQubitState(num_qubits={self._num_qubits})"
 
-    def __eq__(self, other: "MultiQubitState") -> bool:
+    def __eq__(self, other: object) -> bool:
         """Check if two multi-qubit states are equal."""
         if not isinstance(other, MultiQubitState):
-            return False
+            return NotImplemented
         return self._num_qubits == other._num_qubits and np.allclose(
             self._state, other._state
         )

@@ -25,22 +25,22 @@ class BaseProtocol(ABC):
         self.key_length = key_length
 
         # Protocol statistics
-        self.raw_key = []
-        self.sifted_key = []
-        self.final_key = []
-        self.qber = 0.0
+        self.raw_key: list[int] = []
+        self.sifted_key: list[int] = []
+        self.final_key: list[int] = []
+        self.qber: float = 0.0
 
         # Basis information
-        self.alice_bases = []
-        self.bob_bases = []
+        self.alice_bases: list[str] = []
+        self.bob_bases: list[str] = []
 
         # Error correction and privacy amplification parameters
-        self.error_correction_method = "cascade"
-        self.privacy_amplification_method = "universal_hashing"
+        self.error_correction_method: str = "cascade"
+        self.privacy_amplification_method: str = "universal_hashing"
 
         # Protocol status
-        self.is_complete = False
-        self.is_secure = False
+        self.is_complete: bool = False
+        self.is_secure: bool = False
 
     @abstractmethod
     def prepare_states(self) -> list[Qubit]:

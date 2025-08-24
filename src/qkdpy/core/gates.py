@@ -22,72 +22,72 @@ class QuantumGate:
 class Identity(QuantumGate):
     """Identity gate."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(np.array([[1, 0], [0, 1]], dtype=complex))
 
 
 class PauliX(QuantumGate):
     """Pauli-X gate (bit flip)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(np.array([[0, 1], [1, 0]], dtype=complex))
 
 
 class PauliY(QuantumGate):
     """Pauli-Y gate."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(np.array([[0, -1j], [1j, 0]], dtype=complex))
 
 
 class PauliZ(QuantumGate):
     """Pauli-Z gate (phase flip)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(np.array([[1, 0], [0, -1]], dtype=complex))
 
 
 class Hadamard(QuantumGate):
     """Hadamard gate."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(np.array([[1, 1], [1, -1]], dtype=complex) / math.sqrt(2))
 
 
 class S(QuantumGate):
-    """Phase gate (sqrt(Z))."""
+    """Phase gate (S gate)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(np.array([[1, 0], [0, 1j]], dtype=complex))
 
 
 class SDag(QuantumGate):
-    """Adjoint of phase gate."""
+    """Adjoint phase gate (S† gate)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(np.array([[1, 0], [0, -1j]], dtype=complex))
 
 
 class T(QuantumGate):
-    """π/8 gate (sqrt(S))."""
+    """π/8 gate (T gate)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]], dtype=complex))
 
 
 class TDag(QuantumGate):
-    """Adjoint of π/8 gate."""
+    """Adjoint π/8 gate (T† gate)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             np.array([[1, 0], [0, np.exp(-1j * np.pi / 4)]], dtype=complex)
         )
 
 
 class Rx(QuantumGate):
-    """Rotation around X-axis."""
+    """Rotation-X gate."""
 
-    def __init__(self, theta: float):
+    def __init__(self, theta: float) -> None:
         super().__init__(
             np.array(
                 [
@@ -100,9 +100,9 @@ class Rx(QuantumGate):
 
 
 class Ry(QuantumGate):
-    """Rotation around Y-axis."""
+    """Rotation-Y gate."""
 
-    def __init__(self, theta: float):
+    def __init__(self, theta: float) -> None:
         super().__init__(
             np.array(
                 [
@@ -115,12 +115,15 @@ class Ry(QuantumGate):
 
 
 class Rz(QuantumGate):
-    """Rotation around Z-axis."""
+    """Rotation-Z gate."""
 
-    def __init__(self, theta: float):
+    def __init__(self, theta: float) -> None:
         super().__init__(
             np.array(
-                [[np.exp(-1j * theta / 2), 0], [0, np.exp(1j * theta / 2)]],
+                [
+                    [np.exp(-1j * theta / 2), 0],
+                    [0, np.exp(1j * theta / 2)],
+                ],
                 dtype=complex,
             )
         )
@@ -129,7 +132,7 @@ class Rz(QuantumGate):
 class CNOT(QuantumGate):
     """Controlled-NOT gate."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(
             np.array(
                 [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex
@@ -140,7 +143,12 @@ class CNOT(QuantumGate):
 class CZ(QuantumGate):
     """Controlled-Z gate."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        super().__init__(
+            np.array(
+                [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex
+            )
+        )
         super().__init__(
             np.array(
                 [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex
@@ -151,7 +159,12 @@ class CZ(QuantumGate):
 class SWAP(QuantumGate):
     """SWAP gate."""
 
-    def __init__(self):
+    def __init__(self) -> None:
+        super().__init__(
+            np.array(
+                [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex
+            )
+        )
         super().__init__(
             np.array(
                 [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex
