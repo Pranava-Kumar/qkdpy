@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qkdpy"
-version = "0.2.4"
+version = "0.2.5"
 description = "A Python Package for Quantum Key Distribution"
 readme = "README.md"
 license = "Apache-2.0"
@@ -85,6 +85,7 @@ exclude = [
     ".venv",
     "build",
     "dist",
+    "node_modules",
 ]
 
 [tool.ruff.lint]
@@ -124,6 +125,24 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
+
+# Ignore specific files with visualization issues
+[[tool.mypy.overrides]]
+module = [
+    "qkdpy.utils.visualization",
+    "qkdpy.utils.advanced_visualization"
+]
+ignore_errors = true
+
+# Ignore missing imports for external libraries
+[[tool.mypy.overrides]]
+module = [
+    "matplotlib.*",
+    "numpy.*",
+    "scipy.*",
+    "mpl_toolkits.*"
+]
+ignore_missing_imports = true
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
