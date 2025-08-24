@@ -1548,7 +1548,7 @@ wheels = [
 
 [[package]]
 name = "qkdpy"
-version = "0.2.5"
+version = "0.2.7"
 source = { editable = "." }
 dependencies = [
     { name = "matplotlib" },

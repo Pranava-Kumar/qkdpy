@@ -2,15 +2,18 @@
 
 Welcome to the documentation for QKDpy, a Python library for Quantum Key Distribution simulations.
 
-## Contents
+```{toctree}
+:maxdepth: 2
+:caption: Contents:
 
-* [API Reference](api.md)
-* [Installation](installation.md)
-* [Quick Start](quickstart.md)
-* [Examples](examples.md)
+installation
+quickstart
+api
+examples
+```
 
 ## Indices and tables
 
-* [Index](genindex.md)
-* [Module Index](modindex.md)
-* [Search Page](search.md)
+* {ref}`genindex`
+* {ref}`modindex`
+* {ref}`search`
