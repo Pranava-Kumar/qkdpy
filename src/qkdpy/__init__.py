@@ -5,7 +5,7 @@ implementing various QKD protocols, quantum simulators, and cryptographic tools.
 """
 
 __version__ = "0.2.6"
-__author__ = "Pranava-Kumar"
+__author__ = "Pranava Kumar"
 __email__ = "pranavakumar.it@gmail.com"
 
 # Import core components
