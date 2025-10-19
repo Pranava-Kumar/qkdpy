@@ -6,6 +6,7 @@ from .error_correction import ErrorCorrection
 from .key_distillation import KeyDistillation
 from .key_manager import QuantumKeyManager
 from .privacy_amplification import PrivacyAmplification
+from .quantum_error_correction import QuantumErrorCorrection
 
 __all__ = [
     "ErrorCorrection",
@@ -14,4 +15,5 @@ __all__ = [
     "AdvancedPrivacyAmplification",
     "KeyDistillation",
     "QuantumKeyManager",
+    "QuantumErrorCorrection",
 ]

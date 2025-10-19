@@ -81,18 +81,20 @@ class BB84(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+    def measure_states(self, states: list) -> list[int]:
         """Measure received quantum states.
 
         In BB84, Bob randomly chooses bases to measure in.
 
         Args:
-            qubits: List of received qubits
+            states: List of received qubits (may contain None for lost qubits)
 
         Returns:
             List of measurement results
 
         """
+        # In BB84, states should be qubits
+        qubits = states  # type: List[Union[Qubit, None]]
         self.bob_results = []
         self.bob_bases = []
 

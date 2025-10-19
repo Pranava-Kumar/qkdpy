@@ -20,24 +20,43 @@ class QuantumChannel:
 
     def __init__(
         self,
-        loss: float = 0.0,
-        noise_model: str = "depolarizing",
-        noise_level: float = 0.0,
+        distance: float = 1.0,  # in km
+        loss_coefficient: float = 0.2,  # dB/km
+        dark_count_rate: float = 1e-6,  # Hz
+        detector_efficiency: float = 0.1,  # 10%
+        misalignment_error: float = 0.01,  # 1%
+        phase_fluctuation_rate: float = 0.05,  # 5%
+        polarization_drift_rate: float = 0.02,  # 2%
+        temperature: float = 20.0,  # Celsius
         eavesdropper: Callable | None = None,
     ):
-        """Initialize a quantum channel.
+        """Initialize a quantum channel with realistic physical properties.
 
         Args:
-            loss: Probability of losing a qubit in the channel (0.0 to 1.0)
-            noise_model: Type of noise ('depolarizing', 'bit_flip', 'phase_flip', 'amplitude_damping')
-            noise_level: Intensity of the noise (0.0 to 1.0)
+            distance: Physical distance of the channel in km
+            loss_coefficient: Fiber loss coefficient in dB/km
+            dark_count_rate: Detector dark count rate in Hz
+            detector_efficiency: Photon detector efficiency (0.0 to 1.0)
+            misalignment_error: Probability of basis misalignment
+            phase_fluctuation_rate: Rate of phase fluctuations in the channel
+            polarization_drift_rate: Rate of polarization drift
+            temperature: Temperature in Celsius (affects noise)
             eavesdropper: Optional function representing an eavesdropping attack
 
         """
-        self.loss = max(0.0, min(1.0, loss))
-        self.noise_model = noise_model
-        self.noise_level = max(0.0, min(1.0, noise_level))
+        self.distance = max(0.0, distance)
+        self.loss_coefficient = max(0.0, loss_coefficient)
+        self.dark_count_rate = max(0.0, dark_count_rate)
+        self.detector_efficiency = max(0.0, min(1.0, detector_efficiency))
+        self.misalignment_error = max(0.0, min(1.0, misalignment_error))
+        self.phase_fluctuation_rate = max(0.0, phase_fluctuation_rate)
+        self.polarization_drift_rate = max(0.0, polarization_drift_rate)
+        self.temperature = temperature
         self.eavesdropper = eavesdropper
+
+        # Calculate initial loss based on distance and loss coefficient
+        self.loss = self._calculate_loss_from_distance()
+
         self.transmitted_count = 0
         self.lost_count = 0
         self.error_count = 0
@@ -46,11 +65,42 @@ class QuantumChannel:
         self.eavesdropped_count = 0
         self.eavesdropper_detected = False
 
-    def transmit(self, qubit: Qubit) -> Qubit | None:
-        """Transmit a qubit through the channel.
+        # Thermal noise contribution based on temperature
+        self.thermal_noise_factor = self._calculate_thermal_noise()
+
+    def _calculate_loss_from_distance(self) -> float:
+        """Calculate photon loss based on distance and loss coefficient.
+
+        Returns:
+            Loss probability based on distance and loss coefficient
+
+        """
+        # Convert dB/km to linear loss coefficient
+        alpha_linear = 10 ** (-self.loss_coefficient / 10.0)
+        # Calculate loss based on Beer-Lambert law: I = I0 * exp(-alpha * distance)
+        # Convert to probability of survival
+        loss_probability = 1.0 - (alpha_linear**self.distance)
+        return min(1.0, max(0.0, loss_probability))
+
+    def _calculate_thermal_noise(self) -> float:
+        """Calculate thermal noise contribution based on temperature.
+
+        Returns:
+            Thermal noise factor
+
+        """
+        # Simplified thermal noise model based on temperature
+        # In real systems, thermal noise increases with temperature
+        base_thermal_noise = 1e-4  # Base thermal noise at 20°C
+        temp_factor = max(0.1, (self.temperature - 20.0) / 20.0 + 1.0)
+        return base_thermal_noise * temp_factor
+
+    def transmit(self, qubit: Qubit, timestamp: float = 0.0) -> Qubit | None:
+        """Transmit a qubit through the channel with realistic effects.
 
         Args:
             qubit: The qubit to transmit
+            timestamp: Time of transmission (used for temporal effects)
 
         Returns:
             The received qubit or None if it was lost
@@ -58,7 +108,7 @@ class QuantumChannel:
         """
         self.transmitted_count += 1
 
-        # Check if the qubit is lost
+        # Check if the qubit is lost due to channel loss
         if np.random.random() < self.loss:
             self.lost_count += 1
             return None
@@ -72,29 +122,33 @@ class QuantumChannel:
                     self.eavesdropper_detected = True
             self.eavesdropped_count += 1
 
-        # Apply noise based on the noise model
-        if self.noise_model == "depolarizing":
-            qubit = self._depolarizing_noise(qubit)
-        elif self.noise_model == "bit_flip":
-            qubit = self._bit_flip_noise(qubit)
-        elif self.noise_model == "phase_flip":
-            qubit = self._phase_flip_noise(qubit)
-        elif self.noise_model == "amplitude_damping":
-            qubit = self._amplitude_damping_noise(qubit)
+        # Apply various realistic noise effects
+        qubit = self._apply_polarization_drift(qubit, timestamp)
+        qubit = self._apply_phase_fluctuations(qubit, timestamp)
+        qubit = self._apply_misalignment_errors(qubit)
+        qubit = self._apply_thermal_noise(qubit)
 
         return qubit
 
-    def transmit_batch(self, qubits: list[Qubit]) -> list[Qubit | None]:
+    def transmit_batch(
+        self, qubits: list[Qubit], start_time: float = 0.0, pulse_interval: float = 1e-9
+    ) -> list[Qubit | None]:
         """Transmit a batch of qubits through the channel.
 
         Args:
             qubits: List of qubits to transmit
+            start_time: Starting time for the first qubit
+            pulse_interval: Time interval between qubits (in seconds)
 
         Returns:
             List of received qubits (None for lost qubits)
 
         """
-        return [self.transmit(qubit) for qubit in qubits]
+        results = []
+        for i, qubit in enumerate(qubits):
+            timestamp = start_time + i * pulse_interval
+            results.append(self.transmit(qubit, timestamp))
+        return results
 
     def _depolarizing_noise(self, qubit: Qubit) -> Qubit:
         """Apply depolarizing noise to a qubit."""
@@ -244,3 +298,101 @@ class QuantumChannel:
             detected = False
 
         return qubit, detected
+
+    def _apply_polarization_drift(self, qubit: Qubit, timestamp: float) -> Qubit:
+        """Apply polarization drift over time to the qubit.
+
+        Args:
+            qubit: The qubit to apply polarization drift to
+            timestamp: Current time for drift calculation
+
+        Returns:
+            The qubit with applied polarization drift
+
+        """
+        # Calculate drift based on time and drift rate
+        drift_angle = (
+            np.random.normal(0, self.polarization_drift_rate) * timestamp
+        ) % (2 * np.pi)
+
+        # Apply rotation to simulate polarization drift
+        rotation_matrix = np.array(
+            [
+                [np.cos(drift_angle), -np.sin(drift_angle)],
+                [np.sin(drift_angle), np.cos(drift_angle)],
+            ],
+            dtype=complex,
+        )
+
+        qubit.apply_gate(rotation_matrix)
+        return qubit
+
+    def _apply_phase_fluctuations(self, qubit: Qubit, timestamp: float) -> Qubit:
+        """Apply phase fluctuations to the qubit.
+
+        Args:
+            qubit: The qubit to apply phase fluctuations to
+            timestamp: Current time for fluctuation calculation
+
+        Returns:
+            The qubit with applied phase fluctuations
+
+        """
+        # Calculate phase fluctuation based on time and rate
+        phase_shift = np.random.normal(0, self.phase_fluctuation_rate) * timestamp
+
+        # Apply phase shift gate (Z rotation)
+        phase_matrix = np.array([[1, 0], [0, np.exp(1j * phase_shift)]], dtype=complex)
+
+        qubit.apply_gate(phase_matrix)
+        return qubit
+
+    def _apply_misalignment_errors(self, qubit: Qubit) -> Qubit:
+        """Apply basis misalignment errors to the qubit.
+
+        Args:
+            qubit: The qubit to apply misalignment to
+
+        Returns:
+            The qubit with applied misalignment
+
+        """
+        if np.random.random() < self.misalignment_error:
+            # Apply small random rotation to simulate basis misalignment
+            angle = np.random.uniform(-0.1, 0.1)  # Small angle in radians
+            misalignment_matrix = np.array(
+                [[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]],
+                dtype=complex,
+            )
+
+            qubit.apply_gate(misalignment_matrix)
+
+        return qubit
+
+    def _apply_thermal_noise(self, qubit: Qubit) -> Qubit:
+        """Apply thermal noise to the qubit.
+
+        Args:
+            qubit: The qubit to apply thermal noise to
+
+        Returns:
+            The qubit with applied thermal noise
+
+        """
+        if np.random.random() < self.thermal_noise_factor:
+            # Apply random Pauli operator to simulate thermal noise
+            gate = random.choice(
+                [
+                    Identity().matrix,
+                    PauliX().matrix,
+                    PauliY().matrix,
+                    PauliZ().matrix,
+                ]
+            )
+
+            # Only count as error if it's not identity
+            if not np.array_equal(gate, Identity().matrix):
+                self.error_count += 1
+            qubit.apply_gate(gate)
+
+        return qubit

@@ -149,22 +149,12 @@ class CZ(QuantumGate):
                 [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex
             )
         )
-        super().__init__(
-            np.array(
-                [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 1, 0], [0, 0, 0, -1]], dtype=complex
-            )
-        )
 
 
 class SWAP(QuantumGate):
     """SWAP gate."""
 
     def __init__(self) -> None:
-        super().__init__(
-            np.array(
-                [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex
-            )
-        )
         super().__init__(
             np.array(
                 [[1, 0, 0, 0], [0, 0, 1, 0], [0, 1, 0, 0], [0, 0, 0, 1]], dtype=complex

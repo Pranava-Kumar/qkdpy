@@ -4,7 +4,7 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
-from ..core import QuantumChannel, Qubit
+from ..core import QuantumChannel, Qubit, Qudit
 
 
 class BaseProtocol(ABC):
@@ -43,21 +43,21 @@ class BaseProtocol(ABC):
         self.is_secure: bool = False
 
     @abstractmethod
-    def prepare_states(self) -> list[Qubit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare quantum states for transmission.
 
         Returns:
-            List of qubits to be sent through the quantum channel
+            List of quantum states (qubits or qudits) to be sent through the channel
 
         """
         pass
 
     @abstractmethod
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+    def measure_states(self, states: list[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         Args:
-            qubits: List of received qubits (may contain None for lost qubits)
+            states: List of received quantum states (may contain None for lost states)
 
         Returns:
             List of measurement results

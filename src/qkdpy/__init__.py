@@ -13,22 +13,38 @@ from .core import (
     CNOT,
     CZ,
     SWAP,
+    AttackType,
+    DecoyStateSource,
+    DetectorArray,
     GateUtils,
     Hadamard,
     Identity,
     Measurement,
+    ParametricDownConversionSource,
     PauliX,
     PauliY,
     PauliZ,
+    PhotonSource,
+    PhotonSourceManager,
+    PhotonTimingModel,
+    ProtocolTimingManager,
+    QBERAnalysis,
+    QBERTimingAnalysis,
     QuantumChannel,
+    QuantumDetector,
     Qubit,
+    Qudit,
     Rx,
     Ry,
     Rz,
     S,
     SDag,
+    SecurityAnalyzer,
+    SideChannelAnalyzer,
     T,
     TDag,
+    TimingSynchronizer,
+    WeakCoherentSource,
 )
 from .core.extended_channels import ExtendedQuantumChannel
 from .core.multiqubit import MultiQubitState
@@ -45,7 +61,12 @@ from .crypto.quantum_auth import QuantumAuthenticator
 from .crypto.quantum_rng import QuantumRandomNumberGenerator
 
 # Import key management
-from .key_management import ErrorCorrection, KeyDistillation, PrivacyAmplification
+from .key_management import (
+    ErrorCorrection,
+    KeyDistillation,
+    PrivacyAmplification,
+    QuantumErrorCorrection,
+)
 from .key_management.advanced_error_correction import AdvancedErrorCorrection
 from .key_management.advanced_privacy_amplification import AdvancedPrivacyAmplification
 from .key_management.key_manager import QuantumKeyManager
@@ -54,13 +75,21 @@ from .key_management.key_manager import QuantumKeyManager
 from .ml import QKDAnomalyDetector, QKDOptimizer
 
 # Import network tools
-from .network import MultiPartyQKD, MultiPartyQKDNetwork, QuantumNetwork, QuantumNode
+from .network import (
+    MultiPartyQKD,
+    MultiPartyQKDNetwork,
+    QuantumNetwork,
+    QuantumNode,
+    RealisticQuantumNetwork,
+    RealisticQuantumNode,
+)
 
 # Import protocols
-from .protocols import BB84, E91, SARG04
+from .protocols import BB84, E91, SARG04, DecoyStateBB84
 from .protocols.b92 import B92
 from .protocols.cv_qkd import CVQKD
 from .protocols.di_qkd import DeviceIndependentQKD
+from .protocols.enhanced_cv_qkd import EnhancedCVQKD
 from .protocols.hd_qkd import HDQKD
 from .protocols.twisted_pair import TwistedPairQKD
 
@@ -75,7 +104,23 @@ from .utils.quantum_simulator import QuantumNetworkAnalyzer, QuantumSimulator
 __all__ = [
     # Core components
     "Qubit",
+    "Qudit",
     "QuantumChannel",
+    "QuantumDetector",
+    "DetectorArray",
+    "TimingSynchronizer",
+    "PhotonTimingModel",
+    "QBERTimingAnalysis",
+    "ProtocolTimingManager",
+    "PhotonSource",
+    "WeakCoherentSource",
+    "DecoyStateSource",
+    "ParametricDownConversionSource",
+    "PhotonSourceManager",
+    "SecurityAnalyzer",
+    "QBERAnalysis",
+    "SideChannelAnalyzer",
+    "AttackType",
     "ExtendedQuantumChannel",
     "MultiQubitState",
     "Measurement",
@@ -97,10 +142,12 @@ __all__ = [
     "GateUtils",
     # Protocols
     "BB84",
+    "DecoyStateBB84",
     "E91",
     "SARG04",
     "B92",
     "CVQKD",
+    "EnhancedCVQKD",
     "DeviceIndependentQKD",
     "TwistedPairQKD",
     "HDQKD",
@@ -111,6 +158,7 @@ __all__ = [
     "AdvancedPrivacyAmplification",
     "KeyDistillation",
     "QuantumKeyManager",
+    "QuantumErrorCorrection",
     # Crypto utilities
     "OneTimePad",
     "QuantumAuth",
@@ -126,6 +174,9 @@ __all__ = [
     "KeyRateAnalyzer",
     "AdvancedProtocolVisualizer",
     "AdvancedKeyRateAnalyzer",
+    "QuantumStateVisualizer",
+    "ProtocolExecutionVisualizer",
+    "InteractiveQuantumVisualizer",
     "QuantumSimulator",
     "QuantumNetworkAnalyzer",
     # ML tools
@@ -134,6 +185,12 @@ __all__ = [
     # Network tools
     "QuantumNetwork",
     "QuantumNode",
+    "RealisticQuantumNetwork",
+    "RealisticQuantumNode",
     "MultiPartyQKD",
     "MultiPartyQKDNetwork",
+    # Integrations
+    "QiskitIntegration",
+    "CirqIntegration",
+    "PennyLaneIntegration",
 ]

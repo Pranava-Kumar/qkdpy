@@ -1,5 +1,10 @@
 """Utility functions and visualization tools for QKDpy."""
 
+from .advanced_quantum_visualization import (
+    InteractiveQuantumVisualizer,
+    ProtocolExecutionVisualizer,
+    QuantumStateVisualizer,
+)
 from .advanced_visualization import AdvancedKeyRateAnalyzer, AdvancedProtocolVisualizer
 from .helpers import (
     apply_permutation,
@@ -23,6 +28,9 @@ __all__ = [
     "KeyRateAnalyzer",
     "AdvancedProtocolVisualizer",
     "AdvancedKeyRateAnalyzer",
+    "QuantumStateVisualizer",
+    "ProtocolExecutionVisualizer",
+    "InteractiveQuantumVisualizer",
     "QuantumSimulator",
     "QuantumNetworkAnalyzer",
     "random_bit_string",

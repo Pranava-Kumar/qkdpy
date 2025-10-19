@@ -2,8 +2,7 @@
 
 import numpy as np
 
-from ..core import QuantumChannel, Qubit
-from ..core.measurements import Measurement
+from ..core import QuantumChannel, Qudit
 from .base import BaseProtocol
 
 
@@ -40,11 +39,11 @@ class HDQKD(BaseProtocol):
 
         # Alice's random symbols and bases
         self.alice_symbols: list[int] = []
-        self.alice_bases: list[str | None] = []
+        self.alice_bases: list[int | None] = []
 
         # Bob's measurement results and bases
         self.bob_results: list[int | None] = []
-        self.bob_bases: list[str | None] = []
+        self.bob_bases: list[int | None] = []
 
         # MUBs (Mutually Unbiased Bases) for the dimension
         self.mubs = self._generate_mubs(dimension)
@@ -65,27 +64,147 @@ class HDQKD(BaseProtocol):
                 np.array([[1, 1], [1, -1]]) / np.sqrt(2),  # Hadamard basis
                 np.array([[1, -1j], [1, 1j]]) / np.sqrt(2),  # Circular basis
             ]
+        elif self._is_prime_power(d):
+            # For prime power dimensions, construct MUBs using the standard construction
+            return self._construct_mubs_prime_power(d)
         else:
-            # For higher dimensions, we would need a more complex implementation
-            # This is a simplified placeholder
-            mubs = []
-            for _i in range(d + 1):
-                # Generate a random unitary matrix for each basis
-                # In a real implementation, these would be mathematically constructed MUBs
-                H = np.random.randn(d, d) + 1j * np.random.randn(d, d)
-                Q, R = np.linalg.qr(H)
-                mubs.append(Q)
+            # For non-prime-power dimensions, use approximate construction or return identity
+            # Note: Complete MUBs are only known for prime power dimensions
+            mubs = [np.eye(d, dtype=complex)]  # Start with computational basis
+            # Add a few more bases using Fourier transform and other methods
+            # This is an approximation for non-prime-power dimensions
+            for k in range(1, min(d + 1, 4)):  # Limit to 4 bases for non-prime powers
+                # Create a generalized Fourier matrix
+                fourier_matrix = np.zeros((d, d), dtype=complex)
+                for i in range(d):
+                    for j in range(d):
+                        fourier_matrix[i, j] = np.exp(
+                            1j * 2 * np.pi * i * j / d
+                        ) / np.sqrt(d)
+
+                # Apply some transformation to generate different basis
+                shift_matrix = np.roll(np.eye(d), k, axis=1)
+                mubs.append(fourier_matrix @ shift_matrix)
+
             return mubs
 
-    def prepare_states(self) -> list[Qubit]:
+    def _is_prime_power(self, n: int) -> bool:
+        """Check if a number is a prime power.
+
+        Args:
+            n: Number to check
+
+        Returns:
+            True if n is a prime power, False otherwise
+        """
+        if n <= 1:
+            return False
+
+        # Find the smallest prime factor
+        for p in range(2, int(np.sqrt(n)) + 1):
+            if n % p == 0:
+                # Check if p^k = n for some k
+                temp = n
+                while temp % p == 0:
+                    temp //= p
+                if temp == 1:
+                    return True
+                else:
+                    return False
+        # If no factor found, n is prime (a prime power with exponent 1)
+        return True
+
+    def _construct_mubs_prime_power(self, d: int) -> list[np.ndarray]:
+        """Construct MUBs for prime power dimension d.
+
+        Args:
+            d: Prime power dimension
+
+        Returns:
+            List of d+1 MUBs
+        """
+        # For simplicity, implement construction for prime dimensions
+        # For prime powers, we would need finite field arithmetic which is more complex
+
+        if self._is_prime(d):
+            return self._construct_mubs_prime(d)
+        else:
+            # For prime powers, we'll use an approximation
+            mubs = [np.eye(d, dtype=complex)]
+            for k in range(1, d):
+                # Create a generalized Fourier matrix with shift
+                fourier_matrix = np.zeros((d, d), dtype=complex)
+                for i in range(d):
+                    for j in range(d):
+                        fourier_matrix[i, j] = np.exp(
+                            1j * 2 * np.pi * i * j / d
+                        ) / np.sqrt(d)
+
+                # Apply shift transformation
+                shift_matrix = np.roll(np.eye(d), k, axis=1)
+                mubs.append(fourier_matrix @ shift_matrix)
+
+            return mubs
+
+    def _is_prime(self, n: int) -> bool:
+        """Check if a number is prime.
+
+        Args:
+            n: Number to check
+
+        Returns:
+            True if n is prime, False otherwise
+        """
+        if n <= 1:
+            return False
+        if n <= 3:
+            return True
+        if n % 2 == 0 or n % 3 == 0:
+            return False
+
+        i = 5
+        while i * i <= n:
+            if n % i == 0 or n % (i + 2) == 0:
+                return False
+            i += 6
+        return True
+
+    def _construct_mubs_prime(self, p: int) -> list[np.ndarray]:
+        """Construct MUBs for prime dimension p using the standard construction.
+
+        Args:
+            p: Prime dimension
+
+        Returns:
+            List of p+1 MUBs
+        """
+        mubs = []
+
+        # Computational basis (standard basis)
+        computational_basis = np.eye(p, dtype=complex)
+        mubs.append(computational_basis)
+
+        # Remaining p bases
+        for a in range(p):  # a = 0, 1, ..., p-1
+            basis_matrix = np.zeros((p, p), dtype=complex)
+            for m in range(p):
+                for n in range(p):
+                    # Element |m+a*n> in the a-th basis, where arithmetic is mod p
+                    idx = (m + a * n) % p
+                    basis_matrix[m, n] = np.exp(2j * np.pi * idx / p) / np.sqrt(p)
+            mubs.append(basis_matrix)
+
+        return mubs
+
+    def prepare_states(self) -> list[Qudit]:
         """Prepare quantum states for transmission in HD-QKD.
 
         In HD-QKD, Alice randomly chooses symbols from {0, 1, ..., d-1} and bases.
 
         Returns:
-            List of qubits encoded with HD information
+            List of qudits encoded with HD information
         """
-        qubits = []
+        qudits = []
         self.alice_symbols = []
         self.alice_bases = []
 
@@ -96,33 +215,28 @@ class HDQKD(BaseProtocol):
 
             # Alice randomly chooses a basis (0 to d)
             basis_idx = np.random.randint(0, len(self.mubs))
-            self.alice_bases.append(str(basis_idx))
+            self.alice_bases.append(basis_idx)
 
-            # For simulation purposes, we'll encode the symbol in the computational basis
-            # This is a simplified representation - a full HD-QKD implementation
-            # would require qudit simulation capabilities
-            if symbol == 0:
-                qubit = Qubit.zero()
-            elif symbol == 1:
-                qubit = Qubit.one()
-            else:
-                # For higher dimensions, we'll use superposition states
-                # This is a simplification for the current qubit-based framework
-                alpha = np.cos(np.pi * symbol / self.dimension)
-                beta = np.sin(np.pi * symbol / self.dimension)
-                qubit = Qubit(alpha, beta)
+            # Prepare the qudit in the appropriate basis state
+            # We first prepare in the computational basis then transform to the chosen basis
+            computational_state = Qudit.computational_basis(symbol, self.dimension)
 
-            qubits.append(qubit)
+            # Transform to the chosen basis by applying the inverse of the basis transformation
+            # Since MUBs are defined as transformation matrices, we apply the conjugate transpose
+            basis_transformation = self.mubs[basis_idx].conj().T
+            computational_state.apply_unitary(basis_transformation)
 
-        return qubits
+            qudits.append(computational_state)
 
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+        return qudits
+
+    def measure_states(self, qudits: list[Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         In HD-QKD, Bob randomly chooses bases from the MUBs to measure in.
 
         Args:
-            qubits: List of received qubits (may contain None for lost qubits)
+            qudits: List of received qudits (may contain None for lost qudits)
 
         Returns:
             List of measurement results
@@ -130,20 +244,24 @@ class HDQKD(BaseProtocol):
         self.bob_results = []
         self.bob_bases = []
 
-        for qubit in qubits:
-            if qubit is None:
-                # Qubit was lost in the channel
+        for qudit in qudits:
+            if qudit is None:
+                # Qudit was lost in the channel
                 self.bob_results.append(None)
                 self.bob_bases.append(None)
                 continue
 
             # Bob randomly chooses a basis from the MUBs
-            basis_name = np.random.choice(["computational", "hadamard", "circular"])
-            self.bob_bases.append(basis_name)
+            basis_idx = np.random.randint(0, len(self.mubs))
+            self.bob_bases.append(basis_idx)
 
             # Measure in the chosen basis
-            result = Measurement.measure_in_basis(qubit, basis_name)
-            qubit.collapse_state(result, basis_name)
+            # The measurement basis is the conjugate transpose of the MUB matrix
+            measurement_basis = self.mubs[basis_idx].conj().T
+            result = qudit.measure(measurement_basis)
+
+            # Collapse the state to the measurement result in the measurement basis
+            qudit.collapse_state(result, measurement_basis)
             self.bob_results.append(result)
 
         # Filter out None values to return only int results
@@ -159,7 +277,7 @@ class HDQKD(BaseProtocol):
         bob_sifted = []
 
         for i in range(self.num_qudits):
-            # Skip if Bob didn't receive the qubit
+            # Skip if Bob didn't receive the qudit
             if self.bob_bases[i] is None or self.bob_results[i] is None:
                 continue
 

@@ -59,6 +59,9 @@ docs = [
     "sphinx-rtd-theme>=1.2.0",
     "myst-parser>=1.0.0",
 ]
+viz = [
+    "seaborn>=0.12.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/Pranava-Kumar/qkdpy"

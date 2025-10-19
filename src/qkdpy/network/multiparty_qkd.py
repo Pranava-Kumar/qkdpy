@@ -405,10 +405,20 @@ class TrustedRelayNetwork(MultiPartyQKDNetwork):
 
         # Combine hop keys using XOR (simplified approach)
         # In a real implementation, this would be more sophisticated
+        if not hop_keys:
+            return None
+
         final_key = hop_keys[0].copy()
         for i in range(1, len(hop_keys)):
-            for j in range(len(final_key)):
-                final_key[j] ^= hop_keys[i][j]
+            # Ensure keys are of the same length by truncating to the minimum length
+            min_length = min(len(final_key), len(hop_keys[i]))
+            # Truncate both keys to the minimum length
+            final_key = final_key[:min_length]
+            current_key = hop_keys[i][:min_length]
+
+            # XOR the keys
+            for j in range(min_length):
+                final_key[j] ^= current_key[j]
 
         # Store the end-to-end key
         self.keys[(source, destination)] = final_key
