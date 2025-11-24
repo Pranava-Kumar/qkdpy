@@ -2,23 +2,26 @@
 
 import numpy as np
 
-from ..core import QuantumChannel, Qubit
-from ..core.measurements import Measurement
+from ..core import QuantumChannel
+from ..core.gates import Ry
+from ..core.multiqubit import MultiQubitState
+from ..core.secure_random import secure_randint, secure_random
 from .base import BaseProtocol
 
 
 class DeviceIndependentQKD(BaseProtocol):
-    """Implementation of a device-independent QKD protocol.
+    """Implementation of a device-independent QKD protocol (based on CHSH).
 
-    This is a simplified simulation of device-independent QKD, which aims to
-    provide security even against attacks on the devices used in the protocol.
+    This implementation simulates a true entanglement-based protocol using
+    MultiQubitState to represent Bell pairs. It verifies security through
+    the violation of the CHSH inequality.
     """
 
     def __init__(
         self,
         channel: QuantumChannel,
         key_length: int = 100,
-        security_threshold: float = 0.8,
+        security_threshold: float = 2.0,  # CHSH value > 2.0 implies quantum correlations
     ):
         """Initialize the device-independent QKD protocol.
 
@@ -29,215 +32,221 @@ class DeviceIndependentQKD(BaseProtocol):
         """
         super().__init__(channel, key_length)
 
-        # DI-QKD-specific parameters
         self.security_threshold = security_threshold
 
-        # Number of entangled pairs to generate
-        self.num_pairs = key_length * 4  # Generate 4x more pairs than needed
+        # We need a significant number of pairs for statistical significance in CHSH test
+        self.num_pairs = max(key_length * 20, 2000)
 
-        # Measurement settings for Alice and Bob
-        self.alice_settings = [0, np.pi / 4]  # Alice's measurement angles
-        self.bob_settings = [np.pi / 8, 3 * np.pi / 8]  # Bob's measurement angles
+        # Measurement settings (angles for Ry rotations)
+        # We use 3 settings to allow for both Key Generation and CHSH Test
+        # Index 0: Key Generation (Aligned bases)
+        # Index 1, 2: CHSH Test Bases
 
-        # Alice's and Bob's measurement choices and results
-        self.alice_choices: list[int] = []
+        # Alice:
+        # 0: 0 (Key)
+        # 1: 0 (CHSH A0)
+        # 2: pi/2 (CHSH A1)
+        self.alice_angles = [0.0, 0.0, np.pi / 2]
+
+        # Bob:
+        # 0: 0 (Key)
+        # 1: pi/4 (CHSH B0)
+        # 2: -pi/4 (CHSH B1)
+        self.bob_angles = [0.0, np.pi / 4, -np.pi / 4]
+
+        # Data storage
+        self.alice_settings: list[int] = []
+        self.bob_settings: list[int] = []
         self.alice_results: list[int] = []
-        self.bob_choices: list[int | None] = []
-        self.bob_results: list[int | None] = []
+        self.bob_results: list[int] = []
 
-    def prepare_states(self) -> list[Qubit]:
-        """Prepare entangled quantum states for transmission.
+    def prepare_states(self) -> list[None]:
+        """Prepare quantum states.
 
-        In DI-QKD, Alice prepares one half of each entangled pair and keeps
-        the other half.
-
-        Returns:
-            List of qubits to be sent to Bob through the quantum channel
+        In this entanglement-based protocol, we generate pairs on demand
+        during the 'measure' phase to simulate the source distributing them.
+        We return placeholders to satisfy the interface.
         """
-        qubits = []
+        return [None] * self.num_pairs
 
-        for _ in range(self.num_pairs):
-            # Create a Bell state (Φ+ = (|00> + |11>) / sqrt(2))
-            # Alice keeps the first qubit and sends the second to Bob
-            # alice_qubit = Qubit(1/np.sqrt(2), 0)  # Simplified representation (not used)
-            bob_qubit = Qubit(1 / np.sqrt(2), 0)  # Simplified representation
-
-            # In a real implementation, we would create proper entangled states
-            # For this simulation, we'll just send one qubit of each pair
-            qubits.append(bob_qubit)
-
-        return qubits
-
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
-        """Measure received quantum states.
-
-        In DI-QKD, Bob randomly chooses measurement settings.
+    def measure_states(self, states: list[None]) -> list[int]:
+        """Distribute and measure entangled states.
 
         Args:
-            qubits: List of received qubits (may contain None for lost qubits)
+            states: Placeholders
 
         Returns:
-            List of measurement results
+            List of Bob's measurement results
         """
-        self.bob_choices = []
+        self.alice_settings = []
+        self.bob_settings = []
+        self.alice_results = []
         self.bob_results = []
 
-        # Alice's random choices (in a real implementation, Alice would also make choices)
-        self.alice_choices = [int(np.random.choice([0, 1])) for _ in range(len(qubits))]
-        self.alice_results = [int(np.random.choice([0, 1])) for _ in range(len(qubits))]
+        # Pre-generate settings for efficiency (using secure random)
+        # 0, 1, or 2 for setting choice
+        self.alice_settings = [secure_randint(0, 3) for _ in range(self.num_pairs)]
+        self.bob_settings = [secure_randint(0, 3) for _ in range(self.num_pairs)]
 
-        for qubit in qubits:
-            if qubit is None:
-                # Qubit was lost in the channel
-                self.bob_choices.append(None)
-                self.bob_results.append(None)
+        for i in range(self.num_pairs):
+            # 1. Create a Bell pair (|00> + |11>) / sqrt(2)
+            bell_pair = MultiQubitState.ghz(2)
+
+            # 2. Simulate Channel Transmission (Loss and Noise)
+            if secure_random() < self.channel.loss:
+                self.alice_results.append(-1)
+                self.bob_results.append(-1)
                 continue
 
-            # Bob randomly chooses a measurement setting
-            bob_choice = int(np.random.choice([0, 1]))
-            self.bob_choices.append(bob_choice)
+            if (
+                self.channel.noise_model == "depolarizing"
+                and secure_random() < self.channel.noise_level
+            ):
+                gate_idx = secure_randint(0, 4)
+                if gate_idx == 1:  # X
+                    bell_pair.apply_gate(np.array([[0, 1], [1, 0]], dtype=complex), 1)
+                elif gate_idx == 2:  # Y
+                    bell_pair.apply_gate(
+                        np.array([[0, -1j], [1j, 0]], dtype=complex), 1
+                    )
+                elif gate_idx == 3:  # Z
+                    bell_pair.apply_gate(np.array([[1, 0], [0, -1]], dtype=complex), 1)
 
-            # Measure the qubit
-            # In a real implementation, we would apply the appropriate rotation based on the setting
-            result = Measurement.measure_in_basis(qubit, "computational")
+            # 3. Alice Measures
+            a_setting = self.alice_settings[i]
+            angle_a = self.alice_angles[a_setting]
 
-            # Add noise effect
-            if np.random.random() < self.channel.noise_level:
-                result = 1 - result
+            if angle_a != 0:
+                rot_gate_a = Ry(-angle_a).matrix
+                bell_pair.apply_gate(rot_gate_a, 0)
 
-            self.bob_results.append(result)
+            res_a, collapsed_state = bell_pair.measure(0)
+            self.alice_results.append(res_a)
 
-        # Filter out None values to return only int results
-        return [result for result in self.bob_results if result is not None]
+            # 4. Bob Measures
+            if collapsed_state is None:
+                self.bob_results.append(-1)
+                continue
+
+            b_setting = self.bob_settings[i]
+            angle_b = self.bob_angles[b_setting]
+
+            if angle_b != 0:
+                rot_gate_b = Ry(-angle_b).matrix
+                collapsed_state.apply_gate(rot_gate_b, 0)
+
+            res_b, _ = collapsed_state.measure(0)
+            self.bob_results.append(res_b)
+
+        return [r if r != -1 else 0 for r in self.bob_results]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
-        """Sift the raw keys to keep only measurements in certain setting combinations.
+        """Sift keys for key generation.
 
-        Returns:
-            Tuple of (alice_sifted_key, bob_sifted_key)
+        We only use results where both Alice and Bob chose setting 0 (Key Generation).
         """
         alice_sifted = []
         bob_sifted = []
 
-        for i in range(self.num_pairs):
-            # Skip if Bob didn't receive the qubit
-            if self.bob_choices[i] is None or self.bob_results[i] is None:
-                continue
-
-            # For key generation, we use specific combinations of measurement settings
-            # In this simplified implementation, we'll use matching settings
-            if (
-                self.alice_choices[i] is not None
-                and self.bob_choices[i] is not None
-                and self.alice_choices[i] == self.bob_choices[i]
-            ):
-                alice_sifted.append(self.alice_results[i])
-                # We already checked that self.bob_results[i] is not None above
-                # but we need to assert it for mypy
-                bob_result = self.bob_results[i]
-                if bob_result is not None:
-                    bob_sifted.append(bob_result)
+        for i in range(len(self.alice_results)):
+            if self.alice_results[i] != -1 and self.bob_results[i] != -1:
+                # Check for Key Generation match (Setting 0 for both)
+                if self.alice_settings[i] == 0 and self.bob_settings[i] == 0:
+                    alice_sifted.append(self.alice_results[i])
+                    bob_sifted.append(self.bob_results[i])
 
         return alice_sifted, bob_sifted
 
+    def test_bell_inequality(self) -> dict[str, float]:
+        """Calculate CHSH statistic S using settings 1 and 2."""
+        # We use indices 1 and 2 for the CHSH test
+        # Alice 1 -> 0 (A0), Alice 2 -> pi/2 (A1)
+        # Bob 1 -> pi/4 (B0), Bob 2 -> -pi/4 (B1)
+
+        counts = {}
+
+        for i in range(len(self.alice_results)):
+            if self.alice_results[i] == -1:
+                continue
+
+            a_idx = self.alice_settings[i]
+            b_idx = self.bob_settings[i]
+
+            # Only consider CHSH settings (1 and 2)
+            if a_idx == 0 or b_idx == 0:
+                continue
+
+            # Map 1->0, 2->1 for easier logic
+            a = a_idx - 1
+            b = b_idx - 1
+
+            res_a = self.alice_results[i]
+            res_b = self.bob_results[i]
+
+            key = (a, b)
+            if key not in counts:
+                counts[key] = {"match": 0, "total": 0}
+
+            counts[key]["total"] += 1
+            if res_a == res_b:
+                counts[key]["match"] += 1
+
+        correlations = {}
+        for a in [0, 1]:
+            for b in [0, 1]:
+                if (a, b) in counts and counts[(a, b)]["total"] > 0:
+                    match_prob = counts[(a, b)]["match"] / counts[(a, b)]["total"]
+                    correlations[(a, b)] = 2 * match_prob - 1
+                else:
+                    correlations[(a, b)] = 0.0
+
+        # Calculate S
+        # S = E(0,0) + E(0,1) + E(1,0) - E(1,1)
+        e00 = correlations.get((0, 0), 0)
+        e01 = correlations.get((0, 1), 0)
+        e10 = correlations.get((1, 0), 0)
+        e11 = correlations.get((1, 1), 0)
+
+        s_value = e00 + e01 + e10 - e11
+
+        return {"s_value": s_value, "e00": e00, "e01": e01, "e10": e10, "e11": e11}
+
     def estimate_qber(self) -> float:
-        """Estimate the Quantum Bit Error Rate (QBER).
-
-        In DI-QKD, Alice and Bob can estimate the QBER by comparing a subset
-        of their sifted keys.
-
-        Returns:
-            Estimated QBER value
-        """
-        alice_sifted, bob_sifted = self.sift_keys()
-
-        # If we don't have enough bits for estimation, return a high QBER
-        if len(alice_sifted) < 10:
+        """Estimate QBER."""
+        # For DI-QKD, QBER is less relevant than S-value, but we can calculate
+        # the raw mismatch rate of the sifted key.
+        alice, bob = self.sift_keys()
+        if not alice:
             return 1.0
 
-        # Count errors in the sifted key
-        errors = 0
-        for i in range(len(alice_sifted)):
-            if alice_sifted[i] != bob_sifted[i]:
-                errors += 1
-
-        # Calculate QBER
-        qber = errors / len(alice_sifted) if len(alice_sifted) > 0 else 1.0
-        return qber
-
-    def test_bell_inequality(self) -> dict:
-        """Test Bell's inequality to verify entanglement and device independence.
-
-        Returns:
-            Dictionary containing Bell test results
-        """
-        # Calculate correlation values for different setting combinations
-        correlations = {}
-
-        # For each combination of Alice and Bob's settings
-        for a in range(len(self.alice_settings)):
-            for b in range(len(self.bob_settings)):
-                # Find all measurements where Alice used setting a and Bob used setting b
-                alice_vals = []
-                bob_vals = []
-
-                for i in range(self.num_pairs):
-                    if (
-                        self.alice_choices[i] == a
-                        and self.bob_choices[i] == b
-                        and self.alice_results[i] is not None
-                    ):
-                        alice_vals.append(self.alice_results[i])
-                        bob_vals.append(self.bob_results[i])
-
-                # Calculate correlation value E(a,b)
-                if len(alice_vals) > 0:
-                    # Convert 0/1 to +1/-1
-                    alice_pm = [1 if x == 1 else -1 for x in alice_vals]
-                    bob_pm = [1 if x == 1 else -1 for x in bob_vals]
-
-                    # Calculate expectation value
-                    e_val = sum(
-                        a * b for a, b in zip(alice_pm, bob_pm, strict=False)
-                    ) / len(alice_pm)
-                    correlations[f"E({a},{b})"] = e_val
-
-        # CHSH inequality: S = |E(a,b) - E(a,b')| + |E(a',b) + E(a',b')| <= 2
-        # For quantum mechanics, |S| <= 2*sqrt(2) ≈ 2.828
-        # For local realism, |S| <= 2
-
-        # Extract correlation values (use 0 if not available)
-        e00 = correlations.get("E(0,0)", 0.0)
-        e01 = correlations.get("E(0,1)", 0.0)
-        e10 = correlations.get("E(1,0)", 0.0)
-        e11 = correlations.get("E(1,1)", 0.0)
-
-        # Calculate S value
-        s_value = abs(e00 - e01) + abs(e10 + e11)
-
-        # Check if Bell's inequality is violated
-        is_violated = s_value > 2.0
-
-        # Estimate QBER from Bell test
-        # In DI-QKD, the QBER can be estimated from the Bell violation
-        # This is a simplified estimation
-        estimated_qber = max(0.0, min(1.0, 0.5 * (1 - s_value / (2 * np.sqrt(2)))))
-
-        return {
-            "s_value": s_value,
-            "is_violated": is_violated,
-            "correlations": correlations,
-            "estimated_qber": estimated_qber,
-        }
+        mismatches = sum(1 for a, b in zip(alice, bob, strict=False) if a != b)
+        return mismatches / len(alice)
 
     def _get_security_threshold(self) -> float:
-        """Get the security threshold for the DI-QKD protocol.
-
-        In device-independent QKD, security is determined by the violation
-        of Bell's inequality beyond a certain threshold.
-
-        Returns:
-            Minimum Bell inequality violation for security
-
-        """
         return self.security_threshold
+
+    def execute(self) -> dict:
+        self.reset()
+
+        # 1. Prepare & Measure (simulated together)
+        self.measure_states([])
+
+        # 2. Bell Test
+        bell_stats = self.test_bell_inequality()
+        self.is_secure = abs(bell_stats["s_value"]) > self.security_threshold
+
+        # 3. Sift
+        alice_key, bob_key = self.sift_keys()
+
+        # 4. Finalize
+        self.final_key = alice_key[: self.key_length]
+        self.qber = self.estimate_qber()
+        self.is_complete = True
+
+        return {
+            "final_key": self.final_key,
+            "qber": self.qber,
+            "is_secure": self.is_secure,
+            "bell_test": bell_stats,
+            "raw_key_length": len(alice_key),
+        }

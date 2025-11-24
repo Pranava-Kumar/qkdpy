@@ -2,9 +2,8 @@
 
 from abc import ABC, abstractmethod
 
-import numpy as np
-
 from ..core import QuantumChannel, Qubit, Qudit
+from ..core.secure_random import secure_bits
 
 
 class BaseProtocol(ABC):
@@ -21,6 +20,10 @@ class BaseProtocol(ABC):
             key_length: Desired length of the final key
 
         """
+        if not isinstance(channel, QuantumChannel):
+            raise TypeError(
+                f"channel must be an instance of QuantumChannel, got {type(channel)}"
+            )
         self.channel = channel
         self.key_length = key_length
 
@@ -162,6 +165,10 @@ class BaseProtocol(ABC):
         leak = int(len(alice_corrected) * self._estimate_eve_information(qber))
         final_key = self.privacy_amplification(alice_corrected, leak)
 
+        # Truncate to requested key length if necessary
+        if len(final_key) > self.key_length:
+            final_key = final_key[: self.key_length]
+
         # Update protocol status
         self.raw_key = measurement_results
         self.sifted_key = alice_sifted
@@ -274,8 +281,10 @@ class BaseProtocol(ABC):
         # In a real implementation, we would use a cryptographically secure hash function
 
         # Generate a random seed for the hash function
-        np.random.seed(42)  # Fixed seed for reproducibility
-        seed = np.random.randint(0, 2, size=(r, n))
+        # Generate a random seed for the hash function using CSPRNG
+        seed = []
+        for _ in range(r):
+            seed.append(secure_bits(n))
 
         # Apply the hash function
         result = []

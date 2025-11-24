@@ -2,16 +2,13 @@
 
 import numpy as np
 
-from ..core import QuantumChannel, Qubit
+from ..core import Measurement, QuantumChannel, Qubit
+from ..core.secure_random import secure_choice, secure_randint
 from .base import BaseProtocol
 
 
 class TwistedPairQKD(BaseProtocol):
-    """Implementation of a twisted pair QKD protocol.
-
-    This is a conceptual protocol that combines multiple QKD techniques
-    for enhanced security and robustness.
-    """
+    """Twisted Pair QKD protocol implementation."""
 
     def __init__(
         self,
@@ -57,12 +54,12 @@ class TwistedPairQKD(BaseProtocol):
         self.twist_indices = []
 
         for i in range(self.num_qubits):
-            # Alice randomly chooses a bit (0 or 1)
-            bit = int(np.random.randint(0, 2))
+            # Alice randomly chooses a bit (0 or 1) - secure random
+            bit = secure_randint(0, 2)
             self.alice_bits.append(bit)
 
-            # Alice randomly chooses a basis
-            basis = np.random.choice(self.bases)
+            # Alice randomly chooses a basis - secure random
+            basis = secure_choice(self.bases)
             self.alice_bases.append(basis)
 
             # Apply twisting - every twist_factor qubits, we apply a twist
@@ -106,8 +103,8 @@ class TwistedPairQKD(BaseProtocol):
                 self.bob_bases.append(None)
                 continue
 
-            # Bob randomly chooses a basis
-            basis = np.random.choice(self.bases)
+            # Bob randomly chooses a basis - secure random
+            basis = secure_choice(self.bases)
             self.bob_bases.append(basis)
 
             # Apply twisting effect if this is a twist index
@@ -117,8 +114,6 @@ class TwistedPairQKD(BaseProtocol):
                 pass
 
             # Measure in the chosen basis
-            from ..core import Measurement
-
             result = Measurement.measure_in_basis(qubit, basis)
             self.bob_results.append(result)
 

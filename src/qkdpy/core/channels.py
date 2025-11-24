@@ -29,6 +29,10 @@ class QuantumChannel:
         polarization_drift_rate: float = 0.02,  # 2%
         temperature: float = 20.0,  # Celsius
         eavesdropper: Callable | None = None,
+        # Legacy/Explicit noise parameters
+        loss: float | None = None,
+        noise_model: str = "none",
+        noise_level: float = 0.0,
     ):
         """Initialize a quantum channel with realistic physical properties.
 
@@ -42,7 +46,9 @@ class QuantumChannel:
             polarization_drift_rate: Rate of polarization drift
             temperature: Temperature in Celsius (affects noise)
             eavesdropper: Optional function representing an eavesdropping attack
-
+            loss: Direct loss probability (overrides distance-based calculation)
+            noise_model: Type of noise model ("none", "depolarizing", "bit_flip", etc.)
+            noise_level: Probability/intensity of the noise
         """
         self.distance = max(0.0, distance)
         self.loss_coefficient = max(0.0, loss_coefficient)
@@ -53,9 +59,14 @@ class QuantumChannel:
         self.polarization_drift_rate = max(0.0, polarization_drift_rate)
         self.temperature = temperature
         self.eavesdropper = eavesdropper
+        self.noise_model = noise_model
+        self.noise_level = noise_level
 
         # Calculate initial loss based on distance and loss coefficient
-        self.loss = self._calculate_loss_from_distance()
+        if loss is not None:
+            self.loss = max(0.0, min(1.0, loss))
+        else:
+            self.loss = self._calculate_loss_from_distance()
 
         self.transmitted_count = 0
         self.lost_count = 0
@@ -123,10 +134,33 @@ class QuantumChannel:
             self.eavesdropped_count += 1
 
         # Apply various realistic noise effects
-        qubit = self._apply_polarization_drift(qubit, timestamp)
-        qubit = self._apply_phase_fluctuations(qubit, timestamp)
-        qubit = self._apply_misalignment_errors(qubit)
-        qubit = self._apply_thermal_noise(qubit)
+        # Note: These effects are currently only implemented for Qubits (dimension 2)
+        if hasattr(qubit, "dimension") and qubit.dimension > 2:
+            # For high-dimensional qudits, we currently skip these specific noise models
+            # as they are defined for 2D systems (polarization, phase, etc.)
+            pass
+        else:
+            qubit = self._apply_polarization_drift(qubit, timestamp)
+            qubit = self._apply_phase_fluctuations(qubit, timestamp)
+            qubit = self._apply_misalignment_errors(qubit)
+            qubit = self._apply_thermal_noise(qubit)
+
+        # Apply explicit noise models if configured
+        if self.noise_model == "depolarizing":
+            if hasattr(qubit, "dimension") and qubit.dimension > 2:
+                # Skip for now or implement d-dimensional depolarizing
+                pass
+            else:
+                qubit = self._depolarizing_noise(qubit)
+        elif self.noise_model == "bit_flip":
+            if not (hasattr(qubit, "dimension") and qubit.dimension > 2):
+                qubit = self._bit_flip_noise(qubit)
+        elif self.noise_model == "phase_flip":
+            if not (hasattr(qubit, "dimension") and qubit.dimension > 2):
+                qubit = self._phase_flip_noise(qubit)
+        elif self.noise_model == "amplitude_damping":
+            if not (hasattr(qubit, "dimension") and qubit.dimension > 2):
+                qubit = self._amplitude_damping_noise(qubit)
 
         return qubit
 

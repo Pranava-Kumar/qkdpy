@@ -3,6 +3,7 @@
 import numpy as np
 
 from ..core import Measurement, QuantumChannel, Qubit
+from ..core.secure_random import secure_choice, secure_randint
 from .base import BaseProtocol
 
 
@@ -28,7 +29,8 @@ class SARG04(BaseProtocol):
         self.security_threshold = 0.11  # Similar to BB84
 
         # Number of qubits to send (we'll send more than needed to account for sifting)
-        self.num_qubits = key_length * 3  # Send 3x more qubits than needed
+        # SARG04 efficiency is ~25%, so we need ~4x raw bits. Adding buffer.
+        self.num_qubits = key_length * 6  # Send 6x more qubits than needed
 
         # Alice's random bits and bases
         self.alice_bits: list[int] = []
@@ -44,65 +46,94 @@ class SARG04(BaseProtocol):
     def prepare_states(self) -> list[Qubit]:
         """Prepare quantum states for transmission.
 
-        In SARG04, Alice randomly chooses bits and bases, and prepares qubits
-        in the corresponding states, similar to BB84.
+        In SARG04, Alice prepares states like BB84 but also selects a 'partner' state
+        to form a non-orthogonal set for announcement.
+
+        Mapping:
+        - Bit 0: |0> (Z) or |+> (X)
+        - Bit 1: |1> (Z) or |-> (X)
+
+        Announcement Pairs (one sent, one partner with opposite bit):
+        - If sending |0> (Bit 0), partner is |-> (Bit 1). Set: {|0>, |->}
+        - If sending |1> (Bit 1), partner is |+> (Bit 0). Set: {|1>, |+>}
+        - If sending |+> (Bit 0), partner is |1> (Bit 1). Set: {|+>, |1>}
+        - If sending |-> (Bit 1), partner is |0> (Bit 0). Set: {|->, |0>}
 
         Returns:
             List of qubits to be sent through the quantum channel
-
         """
         qubits = []
         self.alice_bits = []
         self.alice_bases = []
+        self.announced_sets: list[tuple[str, str]] = (
+            []
+        )  # Stores the two states in the set (e.g., ("0", "-"))
 
         for _ in range(self.num_qubits):
             # Alice randomly chooses a bit (0 or 1)
-            bit = int(np.random.randint(0, 2))
+            bit = secure_randint(0, 2)
             self.alice_bits.append(bit)
 
             # Alice randomly chooses a basis
-            basis = np.random.choice(self.bases)
+            basis = secure_choice(self.bases)
             self.alice_bases.append(basis)
 
-            # Prepare the qubit in the appropriate state
+            # Prepare state and select partner
+            qubit = None
+            partner_state = ""
+            sent_state_str = ""
+
             if basis == "computational":
-                # Computational basis: |0> or |1>
-                qubit = Qubit.zero() if bit == 0 else Qubit.one()
-            else:  # hadamard basis
-                # Hadamard basis: |+> or |->
-                qubit = Qubit.plus() if bit == 0 else Qubit.minus()
+                if bit == 0:
+                    qubit = Qubit.zero()
+                    sent_state_str = "0"
+                    partner_state = "-"  # |0> paired with |->
+                else:
+                    qubit = Qubit.one()
+                    sent_state_str = "1"
+                    partner_state = "+"  # |1> paired with |+>
+            else:  # hadamard
+                if bit == 0:
+                    qubit = Qubit.plus()
+                    sent_state_str = "+"
+                    partner_state = "1"  # |+> paired with |1>
+                else:
+                    qubit = Qubit.minus()
+                    sent_state_str = "-"
+                    partner_state = "0"  # |-> paired with |0>
 
             qubits.append(qubit)
+
+            # Randomize order in announcement to hide which one was sent
+            if secure_randint(0, 2) == 0:
+                self.announced_sets.append((sent_state_str, partner_state))
+            else:
+                self.announced_sets.append((partner_state, sent_state_str))
 
         return qubits
 
     def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
         """Measure received quantum states.
 
-        In SARG04, Bob randomly chooses bases to measure in, and then makes
-        a guess about which state Alice sent.
+        Bob measures in a random basis.
 
         Args:
             qubits: List of received qubits
 
         Returns:
             List of measurement results
-
         """
         self.bob_results = []
         self.bob_bases = []
-        self.bob_guesses = []
 
         for qubit in qubits:
             if qubit is None:
-                # Qubit was lost in the channel
                 self.bob_results.append(None)
                 self.bob_bases.append(None)
-                self.bob_guesses.append(None)
                 continue
 
             # Bob randomly chooses a basis
-            basis = np.random.choice(self.bases)
+            basis = secure_choice(self.bases)
             self.bob_bases.append(basis)
 
             # Measure in the chosen basis
@@ -110,28 +141,18 @@ class SARG04(BaseProtocol):
             qubit.collapse_state(result, basis)
             self.bob_results.append(result)
 
-            # SARG04 specific: Bob makes a guess about which state Alice sent
-            # If Bob measured in the computational basis and got 0, he guesses Alice sent |0> or |+>
-            # If Bob measured in the computational basis and got 1, he guesses Alice sent |1> or |->
-            # If Bob measured in the Hadamard basis and got 0, he guesses Alice sent |0> or |+>
-            # If Bob measured in the Hadamard basis and got 1, he guesses Alice sent |1> or |->
-
-            # Bob randomly chooses one of the two possible states
-            guess = int(np.random.randint(0, 2))
-            self.bob_guesses.append(guess)
-
         # Filter out None values to return only int results
         return [result for result in self.bob_results if result is not None]
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
-        """Sift the raw keys to keep only measurements in certain conditions.
+        """Sift the raw keys based on SARG04 logic.
 
-        In SARG04, Alice and Bob keep bits where Bob's guess is inconsistent
-        with his measurement basis, but consistent with Alice's basis.
+        Bob keeps the bit if his measurement result is orthogonal to one of the
+        states in the announced set. This allows him to infer the *other* state
+        was the one sent.
 
         Returns:
             Tuple of (alice_sifted_key, bob_sifted_key)
-
         """
         alice_sifted = []
         bob_sifted = []
@@ -141,73 +162,81 @@ class SARG04(BaseProtocol):
             if self.bob_bases[i] is None or self.bob_results[i] is None:
                 continue
 
-            # In SARG04, we keep measurements where Bob's guess is inconsistent with his measurement basis,
-            # but consistent with Alice's basis (simplified implementation)
-            # For this implementation, we'll keep all matching basis measurements like BB84
-            if (
-                self.alice_bases[i] is not None
-                and self.bob_bases[i] is not None
-                and self.alice_bases[i] == self.bob_bases[i]
-            ):
-                alice_sifted.append(self.alice_bits[i])
-                # We already checked that self.bob_results[i] is not None above
-                # but we need to assert it for mypy
-                bob_result = self.bob_results[i]
-                if bob_result is not None:
-                    bob_sifted.append(bob_result)
+            s1, s2 = self.announced_sets[i]
+            bob_basis = self.bob_bases[i]
+            bob_result = self.bob_results[i]
+
+            # Determine Bob's measured state string
+            measured_state = ""
+            if bob_basis == "computational":
+                measured_state = "0" if bob_result == 0 else "1"
+            else:
+                measured_state = "+" if bob_result == 0 else "-"
+
+            # Check orthogonality
+            # Orthogonal pairs: (0, 1), (+, -)
+            is_ortho_s1 = self._are_orthogonal(measured_state, s1)
+            is_ortho_s2 = self._are_orthogonal(measured_state, s2)
+
+            inferred_bit = -1
+
+            if is_ortho_s1 and not is_ortho_s2:
+                # Orthogonal to s1, so must be s2
+                inferred_bit = self._get_bit_from_state(s2)
+            elif is_ortho_s2 and not is_ortho_s1:
+                # Orthogonal to s2, so must be s1
+                inferred_bit = self._get_bit_from_state(s1)
+            else:
+                # Inconclusive (orthogonal to neither or both - both impossible for these sets)
+                continue
+
+            # If we have a conclusive result, keep the bit
+            alice_sifted.append(self.alice_bits[i])
+            bob_sifted.append(inferred_bit)
 
         return alice_sifted, bob_sifted
 
+    def _are_orthogonal(self, state1: str, state2: str) -> bool:
+        """Check if two state strings are orthogonal."""
+        if state1 == "0" and state2 == "1":
+            return True
+        if state1 == "1" and state2 == "0":
+            return True
+        if state1 == "+" and state2 == "-":
+            return True
+        if state1 == "-" and state2 == "+":
+            return True
+        return False
+
+    def _get_bit_from_state(self, state: str) -> int:
+        """Get the bit encoded by a state string."""
+        if state in ["0", "+"]:
+            return 0
+        if state in ["1", "-"]:
+            return 1
+        raise ValueError(f"Unknown state: {state}")
+
     def estimate_qber(self) -> float:
-        """Estimate the Quantum Bit Error Rate (QBER).
-
-        In SARG04, Alice and Bob publicly compare a subset of their sifted keys
-        to estimate the error rate.
-
-        Returns:
-            Estimated QBER value
-
-        """
+        """Estimate the Quantum Bit Error Rate (QBER)."""
         alice_sifted, bob_sifted = self.sift_keys()
 
-        # If we don't have enough bits for estimation, return a high QBER
         if len(alice_sifted) < 10:
             return 1.0
 
-        # Use a random subset of the sifted key for QBER estimation
         sample_size = max(1, int(len(alice_sifted) * 0.2))
-
-        # Randomly select indices for the sample
         indices = np.random.choice(len(alice_sifted), size=sample_size, replace=False)
 
-        # Count errors in the sample
         errors = 0
         for idx in indices:
             if alice_sifted[idx] != bob_sifted[idx]:
                 errors += 1
 
-        # Calculate QBER
-        qber = errors / sample_size
-        return qber
+        return errors / sample_size
 
     def _get_security_threshold(self) -> float:
-        """Get the security threshold for the SARG04 protocol.
-
-        Returns:
-            Maximum QBER value considered secure
-
-        """
         return self.security_threshold
 
     def get_sifting_efficiency(self) -> float:
-        """Calculate the sifting efficiency of the protocol.
-
-        Returns:
-            Fraction of received qubits that are included in the sifted key
-
-        """
         alice_sifted, _ = self.sift_keys()
-
         received_count = sum(1 for basis in self.bob_bases if basis is not None)
-
         return len(alice_sifted) / received_count if received_count > 0 else 0

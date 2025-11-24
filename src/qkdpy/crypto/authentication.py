@@ -3,7 +3,7 @@
 import hashlib
 import hmac
 
-import numpy as np
+from ..core.secure_random import secure_choice, secure_randint
 
 
 class QuantumAuth:
@@ -92,7 +92,8 @@ class QuantumAuth:
         """
         # If no challenge is provided, generate a random one
         if challenge is None:
-            challenge = "".join(np.random.choice(list("0123456789abcdef"), size=16))
+            chars = list("0123456789abcdef")
+            challenge = "".join(secure_choice(chars) for _ in range(16))
 
         # Convert the key to bytes
         key_bytes = bytes(
@@ -184,7 +185,7 @@ class QuantumAuth:
         """
         # If no nonce is provided, generate a random one
         if nonce is None:
-            nonce = np.random.randint(0, 2**32)
+            nonce = secure_randint(0, 2**32)
 
         # Convert the key to bytes
         key_bytes = bytes(

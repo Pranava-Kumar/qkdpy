@@ -5,6 +5,7 @@ import time
 import numpy as np
 
 from ..core import QuantumChannel
+from ..core.secure_random import secure_randint
 from ..protocols.bb84 import BB84
 
 
@@ -184,7 +185,7 @@ class MultiPartyQKDNetwork:
             return {}
 
         # Generate a master key
-        master_key = [np.random.randint(0, 2) for _ in range(key_length)]
+        master_key = [secure_randint(0, 2) for _ in range(key_length)]
 
         # Distribute key to all nodes (simplified implementation)
         distributed_keys = {source: master_key}
@@ -195,7 +196,7 @@ class MultiPartyQKDNetwork:
                 # and use them to securely distribute the master key
                 # For now, we'll just generate random keys for each node
                 distributed_keys[node] = [
-                    np.random.randint(0, 2) for _ in range(key_length)
+                    secure_randint(0, 2) for _ in range(key_length)
                 ]
 
         return distributed_keys

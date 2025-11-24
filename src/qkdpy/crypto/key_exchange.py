@@ -283,3 +283,66 @@ class QuantumKeyExchange:
         except Exception as e:
             print(f"Error exporting session log: {e}")
             return False
+
+    def rotate_key(self, session_id: str, new_key_length: int | None = None) -> bool:
+        """Rotate the key for an active session.
+
+        Args:
+            session_id: Session identifier
+            new_key_length: Length of the new key (optional, defaults to current key length)
+
+        Returns:
+            True if rotation successful, False otherwise
+        """
+        if session_id not in self.exchange_sessions:
+            return False
+
+        session = self.exchange_sessions[session_id]
+        if session["status"] != "completed":
+            return False
+
+        # Use current key length if not specified
+        if new_key_length is None:
+            new_key_length = session["key_length"]
+
+        # Initiate a new exchange for rotation
+        # In a real system, we might use the old key to authenticate the new exchange
+        # Here we simulate it by running a new protocol execution
+        try:
+            from ..protocols import BaseProtocol
+
+            qkd: BaseProtocol
+            if session["protocol"] == "BB84":
+                qkd = BB84(self.channel, key_length=new_key_length)
+            elif session["protocol"] == "E91":
+                qkd = E91(self.channel, key_length=new_key_length)
+            else:
+                return False
+
+            results = qkd.execute()
+
+            if (
+                not results["is_secure"]
+                or not isinstance(results["final_key"], list)
+                or len(results["final_key"]) == 0
+            ):
+                return False
+
+            # Update session with new key
+            session["shared_key"] = results["final_key"]
+            session["key_length"] = new_key_length
+            session["last_rotation_time"] = time.time()
+
+            # Update QBER statistics
+            qber_val = results["qber"]
+            session["qber"] = (
+                float(qber_val)
+                if isinstance(qber_val, int | float) and not isinstance(qber_val, bool)
+                else 1.0
+            )
+
+            return True
+
+        except Exception as e:
+            print(f"Error during key rotation: {e}")
+            return False

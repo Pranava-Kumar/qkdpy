@@ -3,6 +3,7 @@
 import numpy as np
 
 from .qubit import Qubit
+from .secure_random import secure_choice, secure_normal, secure_random
 
 
 class QuantumDetector:
@@ -76,11 +77,11 @@ class QuantumDetector:
 
         # Check for real photon detection
         if photon_present:
-            if np.random.random() < self.efficiency:
+            if secure_random() < self.efficiency:
                 detection_occurs = True
                 # For simplicity, we'll consider the measurement result as 0 or 1
                 # In a more complex implementation, we'd handle the quantum state properly
-                measurement_result = np.random.choice([0, 1])
+                measurement_result = secure_choice([0, 1])
 
         # Check for dark count during this time interval
         # Calculate dark count probability based on time since last check
@@ -94,18 +95,18 @@ class QuantumDetector:
 
         # Calculate probability of dark count
         p_dark = self.dark_count_rate * time_since_check
-        if np.random.random() < p_dark:
+        if secure_random() < p_dark:
             if not detection_occurs:  # Only count if no real photon was detected
                 detection_occurs = True
-                measurement_result = np.random.choice([0, 1])
+                measurement_result = secure_choice([0, 1])
                 self.dark_counts_detected += 1
             else:
                 # Both real detection and dark count - model as afterpulse
-                if np.random.random() < self.afterpulse_probability:
+                if secure_random() < self.afterpulse_probability:
                     self.afterpulses_detected += 1
 
         # Add timing jitter
-        detection_time += np.random.normal(0, self.timing_jitter)
+        detection_time += secure_normal(0, self.timing_jitter)
 
         if detection_occurs:
             self.total_photons_detected += 1
@@ -138,7 +139,7 @@ class QuantumDetector:
         # In a real implementation, we'd consider the probability based on the state
         prob_detect = abs(qubit.state[measurement_result_temp]) ** 2
 
-        photon_present = np.random.random() < prob_detect
+        photon_present = secure_random() < prob_detect
         detection_result, detection_time = self.detect(photon_present, timestamp, basis)
 
         # Only collapse the state if detection occurred
@@ -209,7 +210,7 @@ class DetectorArray:
             # If no detection occurred, we might need some error handling or random assignment
             # For now, we'll assume a detection always occurs for protocol execution
             # This is a simplification - a real system would handle undetected photons
-            result = np.random.choice([0, 1])
+            result = secure_choice([0, 1])
 
         return result
 

@@ -4,6 +4,8 @@ import math
 
 import numpy as np
 
+from .secure_random import secure_random
+
 
 class Qubit:
     """Represents a single qubit with state manipulation capabilities.
@@ -101,7 +103,7 @@ class Qubit:
         if basis == "computational":
             # Standard computational basis measurement
             prob_0, prob_1 = self.probabilities
-            result = 0 if np.random.random() < prob_0 else 1
+            result = 0 if secure_random() < prob_0 else 1
 
         elif basis == "hadamard":
             # Hadamard basis measurement
@@ -112,7 +114,7 @@ class Qubit:
             )  # Create a temporary qubit for measurement
             temp_qubit.apply_gate(h_gate)
             prob_0, prob_1 = temp_qubit.probabilities
-            result = 0 if np.random.random() < prob_0 else 1
+            result = 0 if secure_random() < prob_0 else 1
 
         elif basis == "circular":
             # Circular basis measurement
@@ -123,7 +125,7 @@ class Qubit:
             )  # Create a temporary qubit for measurement
             temp_qubit.apply_gate(circ_gate)
             prob_0, prob_1 = temp_qubit.probabilities
-            result = 0 if np.random.random() < prob_0 else 1
+            result = 0 if secure_random() < prob_0 else 1
         else:
             raise ValueError("Basis must be 'computational', 'hadamard', or 'circular'")
 

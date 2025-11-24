@@ -22,6 +22,19 @@ class QKDOptimizer:
         self.best_performance = 0.0
         self.model = None  # For neural network-based optimization
 
+        # Check for sklearn
+        try:
+            from sklearn.gaussian_process import GaussianProcessRegressor
+            from sklearn.gaussian_process.kernels import Matern
+            from sklearn.neural_network import MLPRegressor
+
+            self.sklearn_available = True
+            self.gp_class = GaussianProcessRegressor
+            self.gp_kernel = Matern
+            self.mlp_class = MLPRegressor
+        except ImportError:
+            self.sklearn_available = False
+
     def optimize_channel_parameters(
         self,
         parameter_space: dict[str, tuple[float, float]],
@@ -104,13 +117,33 @@ class QKDOptimizer:
 
         # Improved Bayesian optimization iterations
         for _ in range(num_iterations - initial_samples):
-            # Fit a simple Gaussian process model to the data
-            # In a full implementation, we would use a proper GP library
-            # For this implementation, we'll use a simplified approach
+            # Fit a Gaussian process model to the data
+            if self.sklearn_available and len(param_history) >= 5:
+                # Prepare data
+                X = []
+                y = []
+                param_names = list(parameter_space.keys())
+                for i in range(len(param_history)):
+                    row = [param_history[i][name] for name in param_names]
+                    X.append(row)
+                    y.append(objective_history[i])
 
-            # If we have enough data, use expected improvement
-            if len(param_history) >= 5:
-                # Select next point using expected improvement
+                X = np.array(X)
+                y = np.array(y)
+
+                # Train GP
+                kernel = self.gp_kernel(nu=2.5)
+                gp = self.gp_class(kernel=kernel, n_restarts_optimizer=5)
+                gp.fit(X, y)
+
+                # Select next point using Expected Improvement with the trained GP
+                next_params = self._sklearn_gp_search(
+                    gp, parameter_space, best_value, param_names
+                )
+
+            # Fallback to simplified approach if sklearn not available or not enough data
+            elif len(param_history) >= 5:
+                # Select next point using expected improvement (manual implementation)
                 next_params = self._expected_improvement_search(
                     parameter_space, param_history, objective_history
                 )
@@ -178,6 +211,40 @@ class QKDOptimizer:
         self.optimization_history.append(result)
 
         return result
+
+    def _sklearn_gp_search(self, gp, parameter_space, best_value, param_names):
+        """Search for next parameter using sklearn GP and Expected Improvement."""
+        # Random sampling for candidate points
+        candidates = []
+        X_candidates = []
+
+        for _ in range(100):
+            cand = {}
+            row = []
+            for name in param_names:
+                min_v, max_v = parameter_space[name]
+                val = np.random.uniform(min_v, max_v)
+                cand[name] = val
+                row.append(val)
+            candidates.append(cand)
+            X_candidates.append(row)
+
+        X_candidates = np.array(X_candidates)
+
+        # Predict mean and std
+        mu, sigma = gp.predict(X_candidates, return_std=True)
+
+        # Calculate EI
+        with np.errstate(divide="warn"):
+            imp = mu - best_value
+            Z = imp / sigma
+            ei = imp * self._standard_normal_cdf(Z) + sigma * self._standard_normal_pdf(
+                Z
+            )
+            ei[sigma == 0.0] = 0.0
+
+        best_idx = np.argmax(ei)
+        return candidates[best_idx]
 
     def _expected_improvement_search(
         self,
@@ -533,8 +600,24 @@ class QKDOptimizer:
 
         # Perform optimization iterations
         for _iteration in range(num_iterations - initial_samples):
-            # Train a simple neural network model
-            model = self._train_simple_nn(X_train, y_train)
+            # Train a neural network model
+            if self.sklearn_available:
+                # Prepare data
+                X = np.array(X_train)
+                y = np.array(y_train)
+
+                # Train MLP
+                mlp = self.mlp_class(
+                    hidden_layer_sizes=(50, 50), max_iter=500, learning_rate_init=0.01
+                )
+                mlp.fit(X, y)
+
+                def model(x, model_instance=mlp):
+                    return model_instance.predict(x)
+
+            else:
+                # Train a simple neural network model (manual fallback)
+                model = self._train_simple_nn(X_train, y_train)
 
             # Use the model to guide search
             # Try several candidate solutions and select the most promising

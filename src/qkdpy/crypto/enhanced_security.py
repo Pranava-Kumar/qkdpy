@@ -64,7 +64,6 @@ class QuantumKeyValidation:
     """Validation mechanisms for quantum keys."""
 
     @staticmethod
-    @staticmethod
     def statistical_randomness_test(key: list[int]) -> dict:
         """Perform statistical randomness tests on a quantum key.
 
@@ -80,10 +79,28 @@ class QuantumKeyValidation:
         # Convert to numpy array for easier manipulation
         bits = np.array(key)
 
-        # Frequency test
+        # Frequency test (Monobit test)
         ones_count = np.sum(bits)
         zeros_count = len(bits) - ones_count
         frequency_p_value = 1 - abs(ones_count - zeros_count) / len(bits)
+
+        # Block Frequency Test
+        block_size = 128
+        if len(bits) >= block_size:
+            num_blocks = len(bits) // block_size
+            block_means = []
+            for i in range(num_blocks):
+                block = bits[i * block_size : (i + 1) * block_size]
+                block_means.append(np.mean(block))
+
+            # Chi-square statistic for block frequency
+            chi_square = 4 * block_size * np.sum((np.array(block_means) - 0.5) ** 2)
+            # Simplified p-value (not rigorous, but indicative)
+            # Ideally we'd use scipy.stats.chi2.sf(chi_square, num_blocks)
+            # Here we just return the statistic
+            block_freq_stat = chi_square
+        else:
+            block_freq_stat = None
 
         # Runs test (simplified)
         runs_count = 1
@@ -107,6 +124,7 @@ class QuantumKeyValidation:
         # Return results
         return {
             "frequency_test_p_value": frequency_p_value,
+            "block_frequency_stat": block_freq_stat,
             "runs_test_p_value": runs_p_value,
             "longest_run_length": max_run_length,
             "key_length": len(key),

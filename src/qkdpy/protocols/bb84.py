@@ -1,8 +1,7 @@
 """BB84 QKD protocol implementation."""
 
-import numpy as np
-
 from ..core import Measurement, QuantumChannel, Qubit
+from ..core.secure_random import secure_choice, secure_randint
 from .base import BaseProtocol
 
 
@@ -36,7 +35,7 @@ class BB84(BaseProtocol):
         )
 
         # Number of qubits to send (we'll send more than needed to account for sifting)
-        self.num_qubits: int = key_length * 3  # Send 3x more qubits than needed
+        self.num_qubits: int = key_length * 5  # Send 5x more qubits than needed
 
         # Alice's random bits and bases
         self.alice_bits: list[int] = []
@@ -61,12 +60,12 @@ class BB84(BaseProtocol):
         self.alice_bases = []
 
         for _ in range(self.num_qubits):
-            # Alice randomly chooses a bit (0 or 1)
-            bit = int(np.random.randint(0, 2))
+            # Alice randomly chooses a bit (0 or 1) - CSPRNG for security
+            bit = secure_randint(0, 2)
             self.alice_bits.append(bit)
 
-            # Alice randomly chooses a basis
-            basis = np.random.choice(self.bases)
+            # Alice randomly chooses a basis - CSPRNG for security
+            basis = secure_choice(self.bases)
             self.alice_bases.append(basis)
 
             # Prepare the qubit in the appropriate state
@@ -105,8 +104,8 @@ class BB84(BaseProtocol):
                 self.bob_bases.append(None)
                 continue
 
-            # Bob randomly chooses a basis
-            basis = np.random.choice(self.bases)
+            # Bob randomly chooses a basis - CSPRNG for security
+            basis = secure_choice(self.bases)
             self.bob_bases.append(basis)
 
             # Measure in the chosen basis

@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from .secure_random import secure_weighted_choice
+
 
 class Qudit:
     """Represents a d-dimensional quantum system (qudit) with state manipulation capabilities.
@@ -45,7 +47,7 @@ class Qudit:
             Qudit in the specified computational basis state
         """
         if level < 0 or level >= dimension:
-            raise ValueError(f"Level must be between 0 and {dimension-1}")
+            raise ValueError(f"Level must be between 0 and {dimension - 1}")
 
         state = np.zeros(dimension, dtype=complex)
         state[level] = 1.0
@@ -76,7 +78,7 @@ class Qudit:
             Qudit in the specified Fourier basis state
         """
         if level < 0 or level >= dimension:
-            raise ValueError(f"Level must be between 0 and {dimension-1}")
+            raise ValueError(f"Level must be between 0 and {dimension - 1}")
 
         state = np.zeros(dimension, dtype=complex)
         for j in range(dimension):
@@ -133,7 +135,7 @@ class Qudit:
             # Measure in computational basis
             probabilities = self.probabilities
             # Sample according to probabilities
-            result = np.random.choice(self.dimension, p=probabilities)
+            result = secure_weighted_choice(list(range(self.dimension)), probabilities)
         else:
             # Transform to the measurement basis
             if basis_matrix.shape != (self.dimension, self.dimension):
@@ -146,7 +148,7 @@ class Qudit:
             probabilities = [float(abs(coeff) ** 2) for coeff in transformed_state]
 
             # Sample according to probabilities
-            result = np.random.choice(self.dimension, p=probabilities)
+            result = secure_weighted_choice(list(range(self.dimension)), probabilities)
 
         return result
 
@@ -182,7 +184,7 @@ class Qudit:
             basis_matrix: The measurement basis matrix used, or None for computational basis
         """
         if result < 0 or result >= self.dimension:
-            raise ValueError(f"Result must be between 0 and {self.dimension-1}")
+            raise ValueError(f"Result must be between 0 and {self.dimension - 1}")
 
         if basis_matrix is None:
             # Collapses to computational basis state |result>

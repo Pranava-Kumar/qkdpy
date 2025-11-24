@@ -323,7 +323,10 @@ class SecurityAnalyzer:
 
         # Calculate vulnerability score (lower is better)
         max_vulnerability = (
-            max(v["vulnerability_level"] for v in vulnerabilities.values())
+            max(
+                v.get("vulnerability_level", v.get("success_probability", 0.0))
+                for v in vulnerabilities.values()
+            )
             if vulnerabilities
             else 0
         )

@@ -7,6 +7,7 @@ import numpy as np
 from .gate_utils import GateUtils
 from .gates import PauliX, PauliY
 from .qubit import Qubit
+from .secure_random import secure_choice
 
 
 class Measurement:
@@ -88,7 +89,7 @@ class Measurement:
         chosen_bases = []
 
         for qubit in qubits:
-            basis = np.random.choice(bases)
+            basis = secure_choice(bases)
             result = Measurement.measure_in_basis(qubit, basis)
             results.append(result)
             chosen_bases.append(basis)

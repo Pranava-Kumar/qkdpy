@@ -254,7 +254,9 @@ class QBERTimingAnalysis:
         return mismatches / total_pairs if total_pairs > 0 else 0.0
 
     def update_with_drift(
-        self, drift_rate: float, time_elapsed: float  # s/s  # s
+        self,
+        drift_rate: float,
+        time_elapsed: float,  # s/s  # s
     ) -> float:
         """Update timing window based on clock drift.
 

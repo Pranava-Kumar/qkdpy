@@ -4,9 +4,8 @@ import hashlib
 import hmac
 import time
 
-import numpy as np
-
 from ..core import QuantumChannel
+from ..core.secure_random import secure_choice, secure_randint
 from ..protocols import BB84
 
 
@@ -75,7 +74,8 @@ class QuantumAuthenticator:
 
         # If no challenge provided, generate a random one
         if challenge is None:
-            challenge = "".join(np.random.choice(list("0123456789abcdef"), size=16))
+            chars = list("0123456789abcdef")
+            challenge = "".join(secure_choice(chars) for _ in range(16))
 
         # Get the shared key
         shared_key = self.authenticated_parties[party_id]["shared_key"]
@@ -94,7 +94,7 @@ class QuantumAuthenticator:
         auth_token = hmac.new(key_bytes, challenge_bytes, hashlib.sha256).hexdigest()
 
         # Store the authentication token
-        token_id = f"token_{int(time.time() * 1000000)}_{np.random.randint(10000)}"
+        token_id = f"token_{int(time.time() * 1000000)}_{secure_randint(0, 10000)}"
         self.auth_tokens[token_id] = {
             "party_id": party_id,
             "challenge": challenge,

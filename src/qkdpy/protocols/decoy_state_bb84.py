@@ -1,8 +1,7 @@
 """Decoy-State BB84 QKD protocol implementation."""
 
-import numpy as np
-
 from ..core import Measurement, QuantumChannel, Qubit
+from ..core.secure_random import secure_choice, secure_randint, secure_random
 from .base import BaseProtocol
 
 
@@ -80,18 +79,23 @@ class DecoyStateBB84(BaseProtocol):
         self.vacuum_count = 0
 
         for _ in range(self.num_pulses):
-            # Alice randomly chooses a bit (0 or 1)
-            bit = int(np.random.randint(0, 2))
+            # Alice randomly chooses a bit (0 or 1) - secure random
+            bit = secure_randint(0, 2)
             self.alice_bits.append(bit)
 
-            # Alice randomly chooses a basis
-            basis = np.random.choice(self.bases)
+            # Alice randomly chooses a basis - secure random
+            basis = secure_choice(self.bases)
             self.alice_bases.append(basis)
 
-            # Alice randomly chooses an intensity type (signal, decoy, or vacuum)
-            intensity_type = np.random.choice(
-                ["signal", "decoy", "vacuum"], p=[0.7, 0.25, 0.05]
-            )
+            # Alice randomly chooses an intensity type - secure random with weights
+            # Probabilities: signal (0.7), decoy (0.25), vacuum (0.05)
+            rand_val = secure_random()
+            if rand_val < 0.7:
+                intensity_type = "signal"
+            elif rand_val < 0.95:  # 0.7 + 0.25
+                intensity_type = "decoy"
+            else:
+                intensity_type = "vacuum"
             self.alice_intensities.append(intensity_type)
 
             if intensity_type == "signal":
@@ -135,8 +139,8 @@ class DecoyStateBB84(BaseProtocol):
                 self.bob_bases.append(None)
                 continue
 
-            # Bob randomly chooses a basis
-            basis = np.random.choice(self.bases)
+            # Bob randomly chooses a basis - secure random
+            basis = secure_choice(self.bases)
             self.bob_bases.append(basis)
 
             # Measure in the chosen basis

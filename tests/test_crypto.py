@@ -14,7 +14,6 @@ from qkdpy.crypto import (
 
 
 class TestCrypto(unittest.TestCase):
-
     def test_one_time_pad_creation(self):
         otp = OneTimePad()
         self.assertIsNotNone(otp)

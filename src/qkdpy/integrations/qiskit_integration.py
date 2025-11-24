@@ -188,10 +188,17 @@ class QiskitIntegration:
 
         noise_model = NoiseModel()
 
-        # Add loss as a reset error (simplified model)
+        # Add loss as amplitude damping error
         if qkdpy_channel.loss > 0:
-            # For simplicity, we'll model loss as a combination of errors
-            pass  # Loss is typically handled at the protocol level in Qiskit
+            from qiskit_aer.noise import amplitude_damping_error
+
+            # Convert dB loss to probability: loss_prob = 1 - 10^(-loss_dB/10)
+            # Assuming qkdpy_channel.loss is in dB/km * length or just transmission probability?
+            # Let's assume qkdpy_channel.loss is the probability of photon loss (0 to 1)
+            # If it's dB, we'd need conversion. Let's assume it's probability for consistency with simple models.
+            loss_prob = qkdpy_channel.loss
+            error = amplitude_damping_error(loss_prob)
+            noise_model.add_all_qubit_quantum_error(error, ["id", "x", "h"])
 
         # Add noise based on noise model
         if qkdpy_channel.noise_level > 0:
@@ -217,26 +224,129 @@ class QiskitIntegration:
 
         return noise_model
 
-    def create_entanglement_circuit(self, num_pairs: int = 1):
-        """Create a Qiskit circuit for generating entangled pairs.
+    def create_e91_circuit(
+        self,
+        num_pairs: int = 1,
+        alice_bases: list[str] | None = None,
+        bob_bases: list[str] | None = None,
+    ):
+        """Create a Qiskit circuit implementing the E91 protocol.
 
         Args:
-            num_pairs: Number of entangled pairs to create
+            num_pairs: Number of entangled pairs
+            alice_bases: List of bases Alice uses ('Z', 'X', 'W' for various angles)
+            bob_bases: List of bases Bob uses
 
         Returns:
-            Qiskit QuantumCircuit creating entangled pairs
+            Qiskit QuantumCircuit implementing E91
         """
+        if alice_bases is None:
+            alice_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+        if bob_bases is None:
+            bob_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+
         # Create quantum registers for Alice and Bob
         qreg_alice = QuantumRegister(num_pairs, "alice")
         qreg_bob = QuantumRegister(num_pairs, "bob")
-        circuit = QuantumCircuit(qreg_alice, qreg_bob)
+        creg_alice = ClassicalRegister(num_pairs, "c_alice")
+        creg_bob = ClassicalRegister(num_pairs, "c_bob")
+        circuit = QuantumCircuit(qreg_alice, qreg_bob, creg_alice, creg_bob)
 
-        # Create entangled pairs using Hadamard and CNOT
+        # Create entangled pairs
         for i in range(num_pairs):
-            circuit.h(qreg_alice[i])  # Create superposition
-            circuit.cx(qreg_alice[i], qreg_bob[i])  # Create entanglement
+            circuit.h(qreg_alice[i])
+            circuit.cx(qreg_alice[i], qreg_bob[i])
+
+        # Alice measures
+        for i, basis in enumerate(alice_bases):
+            if basis == "X":
+                circuit.h(qreg_alice[i])
+            elif basis == "W":  # -45 degrees (approximate for CHSH)
+                circuit.ry(-np.pi / 4, qreg_alice[i])
+            # Z is default
+            circuit.measure(qreg_alice[i], creg_alice[i])
+
+        # Bob measures
+        for i, basis in enumerate(bob_bases):
+            if basis == "X":
+                circuit.h(qreg_bob[i])
+            elif basis == "W":  # 45 degrees
+                circuit.ry(np.pi / 4, qreg_bob[i])
+            # Z is default
+            circuit.measure(qreg_bob[i], creg_bob[i])
 
         return circuit
+
+    def simulate_e91_with_qiskit(
+        self,
+        num_pairs: int = 10,
+        noise_model: str | None = None,
+        noise_level: float = 0.0,
+    ) -> tuple[list[int], list[int], list[str], list[str]]:
+        """Simulate E91 protocol using Qiskit.
+
+        Args:
+            num_pairs: Number of pairs to simulate
+            noise_model: Type of noise
+            noise_level: Noise level
+
+        Returns:
+            Tuple of (alice_bits, bob_bits, alice_bases, bob_bases)
+        """
+        from qiskit import transpile
+        from qiskit_aer import AerSimulator
+
+        # Randomly choose bases (simplified E91: Z, X, and intermediate)
+        # For standard E91/Ekert91, we usually use 3 bases.
+        # Here we use a simplified set for demonstration.
+        bases_options = ["Z", "X", "W"]  # W is for intermediate angle
+        alice_bases = [np.random.choice(bases_options) for _ in range(num_pairs)]
+        bob_bases = [np.random.choice(bases_options) for _ in range(num_pairs)]
+
+        circuit = self.create_e91_circuit(num_pairs, alice_bases, bob_bases)
+
+        # Simulator setup
+        simulator = AerSimulator()
+        if noise_model and noise_level > 0:
+            # Re-use convert_channel_to_qiskit logic or create noise model here
+            # For simplicity, create a basic one
+            from qiskit_aer.noise import NoiseModel, depolarizing_error
+
+            nm = NoiseModel()
+            if noise_model == "depolarizing":
+                error = depolarizing_error(noise_level, 1)
+                nm.add_all_qubit_quantum_error(error, ["id", "x", "h", "cx", "ry"])
+            simulator = AerSimulator(noise_model=nm)
+
+        # Run
+        circuit = transpile(circuit, simulator)
+        result = simulator.run(circuit, shots=1).result()
+        counts = result.get_counts(circuit)
+        outcome = list(counts.keys())[0]  # e.g. "01 10" (bob alice)
+
+        # Parse outcome. Qiskit format is "creg_bob creg_alice" with spaces often, or just bits.
+        # With multiple registers, it's usually "c_bob c_alice" (reversed bit order within register, and registers separated)
+        # Let's handle the string carefully.
+        # The circuit has creg_alice then creg_bob. Qiskit output order is reversed registers: bob alice.
+        # And bits are reversed within register: bit[n]...bit[0].
+
+        # Remove spaces
+        outcome = outcome.replace(" ", "")
+
+        # Total bits = 2 * num_pairs
+        # Bob is first (high indices in total string if we consider registers), Alice is second.
+        # Actually Qiskit prints: regN ... reg1 reg0
+        # Here reg1 is bob, reg0 is alice.
+        # So outcome is: [bob_bits][alice_bits]
+
+        bob_outcome_str = outcome[:num_pairs]
+        alice_outcome_str = outcome[num_pairs:]
+
+        # Reverse to get index 0 to N
+        bob_bits = [int(b) for b in reversed(bob_outcome_str)]
+        alice_bits = [int(b) for b in reversed(alice_outcome_str)]
+
+        return alice_bits, bob_bits, alice_bases, bob_bases
 
     def benchmark_qkdpy_vs_qiskit(
         self, num_qubits: int = 100, num_trials: int = 10

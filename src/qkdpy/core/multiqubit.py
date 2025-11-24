@@ -7,6 +7,7 @@ import numpy as np
 from .gate_utils import GateUtils
 from .gates import Identity
 from .qubit import Qubit
+from .secure_random import secure_random
 
 
 class MultiQubitState:
@@ -188,12 +189,57 @@ class MultiQubitState:
             for op in ops[1:]:
                 full_gate = np.kron(full_gate, op)
         else:
-            # For multi-qubit gates, we need to construct the operator more carefully
-            # This is a simplified implementation - a full implementation would require
-            # more sophisticated indexing
-            raise NotImplementedError("Multi-qubit gates not yet implemented")
+            # General approach for multi-qubit gates
+            # This works for any number of target qubits and any gate size
 
-        # Apply the gate
+            # Create new state vector
+            new_state = np.zeros_like(self._state)
+
+            # Number of target qubits
+            k = len(target_qubits)
+
+            # Pre-compute shifts for efficiency
+            # target_qubits[0] corresponds to the most significant bit of the gate index
+            shifts = [self._num_qubits - 1 - q for q in target_qubits]
+
+            # Iterate over all basis states
+            for i in range(len(self._state)):
+                if self._state[i] == 0:
+                    continue
+
+                # Extract the index for the target qubits
+                target_idx = 0
+                for bit_idx, shift in enumerate(shifts):
+                    if (i >> shift) & 1:
+                        target_idx |= 1 << (k - 1 - bit_idx)
+
+                # The gate maps |target_idx> to sum(U[row, target_idx] * |row>)
+                # We need to add contribution to new_state
+
+                # Get the column of the gate matrix corresponding to target_idx
+                col = gate[:, target_idx]
+
+                for row_idx, amplitude in enumerate(col):
+                    if amplitude == 0:
+                        continue
+
+                    # Construct the new full state index
+                    # Start with i, but clear the target bits
+                    new_i = i
+                    for shift in shifts:
+                        new_i &= ~(1 << shift)
+
+                    # Set the target bits according to row_idx
+                    for bit_idx, shift in enumerate(shifts):
+                        if (row_idx >> (k - 1 - bit_idx)) & 1:
+                            new_i |= 1 << shift
+
+                    new_state[new_i] += amplitude * self._state[i]
+
+            self._state = new_state
+            return
+
+        # Apply the gate (for single qubit case)
         self._state = full_gate @ self._state
 
     def measure(self, target_qubit: int) -> tuple[int, Optional["MultiQubitState"]]:
@@ -226,7 +272,7 @@ class MultiQubitState:
                 prob_0 += np.abs(self._state[i]) ** 2
 
         # Perform the measurement
-        result = 0 if np.random.random() < prob_0 else 1
+        result = 0 if secure_random() < prob_0 else 1
 
         # Convert numpy integer to Python int to avoid returning np.int32
         result = int(result)
@@ -243,12 +289,16 @@ class MultiQubitState:
         for i in range(2 ** (self._num_qubits - 1)):
             # Determine the indices in the original state that correspond to
             # this basis state in the new system with the measurement result
-            if result == 0:
-                # Target qubit is 0
-                old_index = i << 1  # Insert 0 at the target position
-            else:
-                # Target qubit is 1
-                old_index = (i << 1) | 1  # Insert 1 at the target position
+
+            # The target qubit is at position (num_qubits - 1 - target_qubit) from the right
+            target_pos = self._num_qubits - 1 - target_qubit
+            mask = (1 << target_pos) - 1
+
+            # Split i into upper and lower parts around target_pos
+            lower = i & mask
+            upper = (i & ~mask) << 1
+
+            old_index = upper | (result << target_pos) | lower
 
             new_state[i] = self._state[old_index]
 

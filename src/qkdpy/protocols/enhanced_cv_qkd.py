@@ -3,6 +3,7 @@
 import numpy as np
 
 from ..core import QuantumChannel, Qubit
+from ..core.secure_random import secure_normal, secure_randint
 from .base import BaseProtocol
 
 
@@ -74,13 +75,13 @@ class EnhancedCVQKD(BaseProtocol):
         self.alice_modulations_p = []
 
         for _ in range(self.num_signals):
-            # Alice generates random bits for key generation
-            bit = int(np.random.randint(0, 2))
+            # Alice randomly chooses a bit (0 or 1) - secure random
+            bit = secure_randint(0, 2)
             self.alice_bits.append(bit)
 
-            # Alice generates Gaussian modulations for both quadratures
-            modulation_x = np.random.normal(0, np.sqrt(self.modulation_variance))
-            modulation_p = np.random.normal(0, np.sqrt(self.modulation_variance))
+            # Alice generates Gaussian modulations - secure random
+            modulation_x = secure_normal(0, np.sqrt(self.modulation_variance))
+            modulation_p = secure_normal(0, np.sqrt(self.modulation_variance))
 
             self.alice_modulations_x.append(modulation_x)
             self.alice_modulations_p.append(modulation_p)
@@ -137,9 +138,9 @@ class EnhancedCVQKD(BaseProtocol):
             # Add channel noise (thermal noise + excess noise)
             thermal_noise = 1.0  # Vacuum noise
             total_noise = thermal_noise + self.excess_noise
-
-            noise_x = np.random.normal(0, np.sqrt(total_noise / 2))
-            noise_p = np.random.normal(0, np.sqrt(total_noise / 2))
+            # Add noise to both quadratures - secure random
+            noise_x = secure_normal(0, np.sqrt(total_noise / 2))
+            noise_p = secure_normal(0, np.sqrt(total_noise / 2))
 
             noisy_x = transmitted_x + noise_x
             noisy_p = transmitted_p + noise_p
@@ -148,10 +149,10 @@ class EnhancedCVQKD(BaseProtocol):
             detected_x = noisy_x * np.sqrt(self.detection_efficiency)
             detected_p = noisy_p * np.sqrt(self.detection_efficiency)
 
-            # Add electronic noise
-            elec_noise = np.random.normal(0, np.sqrt(0.1))
+            # Add electronic noise - secure random
+            elec_noise = secure_normal(0, np.sqrt(0.1))
             final_x = detected_x + elec_noise
-            elec_noise = np.random.normal(0, np.sqrt(0.1))
+            elec_noise = secure_normal(0, np.sqrt(0.1))
             final_p = detected_p + elec_noise
 
             self.bob_measurements_x.append(final_x)

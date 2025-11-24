@@ -1,8 +1,7 @@
 """B92 QKD protocol implementation."""
 
-import numpy as np
-
 from ..core import Measurement, QuantumChannel, Qubit
+from ..core.secure_random import secure_randint
 from .base import BaseProtocol
 
 
@@ -57,8 +56,8 @@ class B92(BaseProtocol):
         self.alice_bits = []
 
         for _ in range(self.num_qubits):
-            # Alice randomly chooses a bit (0 or 1)
-            bit = int(np.random.randint(0, 2))
+            # Alice randomly chooses a bit (0 or 1) - secure random
+            bit = secure_randint(0, 2)
             self.alice_bits.append(bit)
 
             # Prepare the qubit in the appropriate state

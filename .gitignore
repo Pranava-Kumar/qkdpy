@@ -12,8 +12,6 @@ wheels/
 # Crush tool directory
 .crush/
 
-tests/
-
 .env
 
 GEMINI.md

@@ -3,14 +3,19 @@
 import numpy as np
 
 from ..core import QuantumChannel, Qudit
+from ..core.secure_random import secure_randint
 from .base import BaseProtocol
 
 
 class HDQKD(BaseProtocol):
-    """Implementation of High-Dimensional Quantum Key Distribution protocol.
+    """Implementation of High-Dimensional Quantum Key Distribution (HD-QKD).
 
-    HD-QKD uses qudits (d-dimensional quantum systems) instead of qubits,
-    allowing for more information per photon and enhanced security.
+    Utilizes qudits (d-level quantum systems) to encode information.
+
+    NOTE: This implementation currently supports full Mutually Unbiased Bases (MUBs)
+    construction only for PRIME dimensions (d = 2, 3, 5, 7, ...). For non-prime
+    dimensions, it falls back to a computational/Fourier basis pair which may
+    not provide optimal security guarantees.
     """
 
     def __init__(
@@ -131,7 +136,7 @@ class HDQKD(BaseProtocol):
         else:
             # For prime powers, we'll use an approximation
             mubs = [np.eye(d, dtype=complex)]
-            for k in range(1, d):
+            for k in range(d):
                 # Create a generalized Fourier matrix with shift
                 fourier_matrix = np.zeros((d, d), dtype=complex)
                 for i in range(d):
@@ -209,12 +214,12 @@ class HDQKD(BaseProtocol):
         self.alice_bases = []
 
         for _ in range(self.num_qudits):
-            # Alice randomly chooses a symbol (0 to d-1)
-            symbol = np.random.randint(0, self.dimension)
+            # Alice randomly chooses a symbol (0 to d-1) - secure random
+            symbol = secure_randint(0, self.dimension)
             self.alice_symbols.append(symbol)
 
-            # Alice randomly chooses a basis (0 to d)
-            basis_idx = np.random.randint(0, len(self.mubs))
+            # Alice randomly chooses a basis - secure random
+            basis_idx = secure_randint(0, len(self.mubs))
             self.alice_bases.append(basis_idx)
 
             # Prepare the qudit in the appropriate basis state
@@ -251,8 +256,8 @@ class HDQKD(BaseProtocol):
                 self.bob_bases.append(None)
                 continue
 
-            # Bob randomly chooses a basis from the MUBs
-            basis_idx = np.random.randint(0, len(self.mubs))
+            # Bob randomly chooses a basis - secure random
+            basis_idx = secure_randint(0, len(self.mubs))
             self.bob_bases.append(basis_idx)
 
             # Measure in the chosen basis

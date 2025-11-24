@@ -74,6 +74,7 @@ We welcome pull requests! To contribute code:
 - All tests must pass before a pull request will be merged
 - Use pytest for testing
 - Aim for high test coverage
+- Run benchmarks for performance-critical changes: `pytest tests/benchmark_cv_qkd.py`
 
 ### Documentation
 

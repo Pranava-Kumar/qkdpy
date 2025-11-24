@@ -11,13 +11,60 @@ QKDpy is a comprehensive Python library for Quantum Key Distribution (QKD) simul
 ## Features
 
 - **Quantum Simulation**: Simulate qubits, quantum gates (now with individual gate classes for better modularity), multi-qubit states, and measurements (with flexible state collapse for research and visualization)
-- **QKD Protocols**: Implementations of BB84, E92, E91, SARG04, CV-QKD, Device-Independent QKD, HD-QKD, and more
-- **High-Dimensional QKD**: Support for qudit-based protocols with enhanced security and key rates
+- **QKD Protocols**: Robust implementations of:
+  - **BB84** (Standard and Decoy-State variants)
+  - **E91** (Entanglement-based with true Bell state simulation)
+  - **B92** (Two-state protocol)
+  - **CV-QKD** (Gaussian Modulated Coherent State with homodyne detection)
+  - **Device-Independent QKD** (CHSH inequality verification)
+  - **HD-QKD** (High-Dimensional QKD for prime dimensions)
+  - **Twisted Pair QKD** (Experimental protocol)
+- **High-Dimensional QKD**: Support for qudit-based protocols with enhanced security and key rates (currently optimized for prime dimensions)
 - **Key Management**: Advanced error correction and privacy amplification algorithms
 - **Quantum Cryptography**: Quantum authentication, key exchange, and random number generation
-- **Enhanced Security**: Message authentication, key validation, and side-channel protection
-- **Machine Learning Integration**: Optimization and anomaly detection for QKD systems
-- **Quantum Networks**: Multi-party QKD and network simulation capabilities
+- **Comprehensive Testing**: Validated with a suite of over 200 tests covering security, integration, performance, and correctness.
+- **Enhanced Security**: Cryptographically Secure Pseudo-Random Number Generation (CSPRNG), secure key rotation, and NIST-style randomness verification.
+- **Machine Learning Integration**: Advanced parameter optimization using `scikit-learn` (Bayesian and Neural Networks).
+- **Quantum Networks**: Physically accurate entanglement swapping and multi-party QKD simulation.
+
+...
+
+## Enterprise Features
+
+QKDpy now supports enterprise-grade simulation capabilities:
+
+```python
+from qkdpy import QuantumNetwork, QKDOptimizer, QuantumKeyExchange, QuantumChannel
+
+# 1. Optimize Network Parameters with ML
+optimizer = QKDOptimizer("BB84")
+best_params = optimizer.optimize_channel_parameters(
+    {"loss": (0.0, 0.5)},
+    objective_function,
+    method="bayesian" # Uses Gaussian Process
+)
+
+# 2. Secure Key Exchange with Rotation
+channel = QuantumChannel(loss=0.1)
+exchange = QuantumKeyExchange(channel)
+session_id = exchange.initiate_key_exchange("Alice", "Bob", 128)
+exchange.execute_key_exchange(session_id)
+
+# Rotate key for forward secrecy
+exchange.rotate_key(session_id, new_key_length=256)
+
+# 3. Entanglement Swapping in Networks
+network = QuantumNetwork("EnterpriseNet")
+network.add_node("Alice", position=(0,0))
+network.add_node("Relay", position=(10,0))
+network.add_node("Bob", position=(20,0))
+network.add_connection("Alice", "Relay", 10)
+network.add_connection("Relay", "Bob", 10)
+
+# Teleport entanglement from Alice-Relay and Relay-Bob to Alice-Bob
+success = network.perform_entanglement_swapping("Alice", "Bob")
+```
+
 - **Visualization**: Advanced tools to visualize quantum states and protocol execution
 - **Quantum Network Analysis**: Tools for analyzing quantum networks and multi-party QKD
 - **Extensible Design**: Easy to add new protocols and features
@@ -165,16 +212,21 @@ parameter_space = {
 ```
 
 ## Contributing
+
 We welcome contributions! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
 
 ## License
+
 QKDpy is licensed under the Apache License 2.0. See [LICENSE](LICENSE) for the full license text.
 
 ## Citation
+
 If you use QKDpy in your research, please cite it as described in [CITATION.cff](CITATION.cff).
 
 ## Code of Conduct
+
 This project adheres to the Contributor Covenant [code of conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
 
 ## Contact
+
 For questions, suggestions, or issues, please open an [issue](https://github.com/yourusername/qkdpy/issues) on GitHub.
