@@ -6,7 +6,13 @@
 [![Release](https://github.com/yourusername/qkdpy/actions/workflows/release.yml/badge.svg)](https://github.com/yourusername/qkdpy/actions/workflows/release.yml)
 [![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://qkdpy.readthedocs.io/)
 
-QKDpy is a comprehensive Python library for Quantum Key Distribution (QKD) simulations, implementing various QKD protocols, quantum simulators, and cryptographic tools. It provides an intuitive API similar to NumPy, TensorFlow, and scikit-learn, making quantum cryptography accessible to developers and researchers.
+QKDpy is a comprehensive, enterprise-grade Python library for **Quantum Key Distribution (QKD)** simulations. It provides a robust toolkit for researchers and developers working on **Post-Quantum Cryptography**, **Quantum Networking**, and **Quantum Information Science**.
+
+Designed with an intuitive API similar to NumPy and TensorFlow, QKDpy enables high-fidelity simulation of:
+
+- **QKD Protocols** (BB84, E91, CV-QKD)
+- **Quantum Networks** & Entanglement Swapping
+- **Secure Key Management** & Privacy Amplification
 
 ## Features
 

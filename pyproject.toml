@@ -14,11 +14,28 @@ authors = [
 maintainers = [
     {name = "Pranava-Kumar", email = "pranavakumar.it@gmail.com"},
 ]
-keywords = ["quantum", "cryptography", "qkd", "simulation", "hd-qkd", "quantum-networks"]
+keywords = [
+    "quantum",
+    "cryptography",
+    "qkd",
+    "simulation",
+    "hd-qkd",
+    "quantum-networks",
+    "quantum-computing",
+    "cybersecurity",
+    "post-quantum",
+    "quantum-key-distribution",
+    "bb84",
+    "e91",
+    "cv-qkd",
+    "quantum-internet",
+    "network-security"
+]
 classifiers = [
-    "Development Status :: 3 - Alpha",
+    "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
+    "Intended Audience :: Education",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
@@ -26,6 +43,9 @@ classifiers = [
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Physics",
     "Topic :: Security :: Cryptography",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: System :: Networking",
+    "Framework :: Pytest",
 ]
 requires-python = ">=3.10"
 dependencies = [
