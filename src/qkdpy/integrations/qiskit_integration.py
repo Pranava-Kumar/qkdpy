@@ -1,5 +1,7 @@
 """Qiskit integration plugin for QKDpy."""
 
+from typing import Any
+
 try:
     from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
     from qiskit.quantum_info import Statevector
@@ -18,7 +20,7 @@ from ..protocols.bb84 import BB84
 class QiskitIntegration:
     """Integration with Qiskit quantum computing framework."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Qiskit integration."""
         if not QISKIT_AVAILABLE:
             raise ImportError(
@@ -26,7 +28,7 @@ class QiskitIntegration:
                 "to use Qiskit integration."
             )
 
-    def qubit_to_qiskit(self, qkdpy_qubit: Qubit):
+    def qubit_to_qiskit(self, qkdpy_qubit: Qubit) -> Statevector:
         """Convert a QKDpy Qubit to a Qiskit Statevector.
 
         Args:
@@ -40,7 +42,7 @@ class QiskitIntegration:
         # Create Qiskit Statevector
         return Statevector(state)
 
-    def qiskit_to_qubit(self, qiskit_state):
+    def qiskit_to_qubit(self, qiskit_state: Statevector) -> Qubit:
         """Convert a Qiskit Statevector to a QKDpy Qubit.
 
         Args:
@@ -59,7 +61,7 @@ class QiskitIntegration:
         num_qubits: int = 1,
         alice_bases: list[str] | None = None,
         bob_bases: list[str] | None = None,
-    ):
+    ) -> QuantumCircuit:
         """Create a Qiskit circuit implementing the BB84 protocol.
 
         Args:
@@ -175,7 +177,7 @@ class QiskitIntegration:
 
         return alice_bits, bob_bits, matching_bases
 
-    def convert_channel_to_qiskit(self, qkdpy_channel: QuantumChannel):
+    def convert_channel_to_qiskit(self, qkdpy_channel: QuantumChannel) -> Any:
         """Convert a QKDpy QuantumChannel to a Qiskit NoiseModel.
 
         Args:
@@ -194,8 +196,7 @@ class QiskitIntegration:
 
             # Convert dB loss to probability: loss_prob = 1 - 10^(-loss_dB/10)
             # Assuming qkdpy_channel.loss is in dB/km * length or just transmission probability?
-            # Let's assume qkdpy_channel.loss is the probability of photon loss (0 to 1)
-            # If it's dB, we'd need conversion. Let's assume it's probability for consistency with simple models.
+            # Let's assume it's probability for consistency with simple models.
             loss_prob = qkdpy_channel.loss
             error = amplitude_damping_error(loss_prob)
             noise_model.add_all_qubit_quantum_error(error, ["id", "x", "h"])
@@ -229,7 +230,7 @@ class QiskitIntegration:
         num_pairs: int = 1,
         alice_bases: list[str] | None = None,
         bob_bases: list[str] | None = None,
-    ):
+    ) -> QuantumCircuit:
         """Create a Qiskit circuit implementing the E91 protocol.
 
         Args:
@@ -350,7 +351,7 @@ class QiskitIntegration:
 
     def benchmark_qkdpy_vs_qiskit(
         self, num_qubits: int = 100, num_trials: int = 10
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Benchmark QKDpy against Qiskit for BB84 protocol.
 
         Args:

@@ -3,12 +3,14 @@
 import math
 import random
 from collections.abc import Callable
+from typing import Any, cast
 
 import numpy as np
 
 from .gate_utils import GateUtils
 from .gates import Identity, PauliX, PauliY, PauliZ
 from .qubit import Qubit
+from .qudit import Qudit
 
 
 class QuantumChannel:
@@ -28,12 +30,14 @@ class QuantumChannel:
         phase_fluctuation_rate: float = 0.05,  # 5%
         polarization_drift_rate: float = 0.02,  # 2%
         temperature: float = 20.0,  # Celsius
-        eavesdropper: Callable | None = None,
+        eavesdropper: (
+            Callable[[Qubit | Qudit], tuple[Qubit | Qudit, bool]] | None
+        ) = None,
         # Legacy/Explicit noise parameters
         loss: float | None = None,
         noise_model: str = "none",
         noise_level: float = 0.0,
-    ):
+    ) -> None:
         """Initialize a quantum channel with realistic physical properties.
 
         Args:
@@ -91,7 +95,7 @@ class QuantumChannel:
         # Calculate loss based on Beer-Lambert law: I = I0 * exp(-alpha * distance)
         # Convert to probability of survival
         loss_probability = 1.0 - (alpha_linear**self.distance)
-        return min(1.0, max(0.0, loss_probability))
+        return float(min(1.0, max(0.0, loss_probability)))
 
     def _calculate_thermal_noise(self) -> float:
         """Calculate thermal noise contribution based on temperature.
@@ -106,7 +110,9 @@ class QuantumChannel:
         temp_factor = max(0.1, (self.temperature - 20.0) / 20.0 + 1.0)
         return base_thermal_noise * temp_factor
 
-    def transmit(self, qubit: Qubit, timestamp: float = 0.0) -> Qubit | None:
+    def transmit(
+        self, qubit: Qubit | Qudit, timestamp: float = 0.0
+    ) -> Qubit | Qudit | None:
         """Transmit a qubit through the channel with realistic effects.
 
         Args:
@@ -140,10 +146,11 @@ class QuantumChannel:
             # as they are defined for 2D systems (polarization, phase, etc.)
             pass
         else:
-            qubit = self._apply_polarization_drift(qubit, timestamp)
-            qubit = self._apply_phase_fluctuations(qubit, timestamp)
-            qubit = self._apply_misalignment_errors(qubit)
-            qubit = self._apply_thermal_noise(qubit)
+            if isinstance(qubit, Qubit):
+                qubit = self._apply_polarization_drift(qubit, timestamp)
+                qubit = self._apply_phase_fluctuations(qubit, timestamp)
+                qubit = self._apply_misalignment_errors(qubit)
+                qubit = self._apply_thermal_noise(qubit)
 
         # Apply explicit noise models if configured
         if self.noise_model == "depolarizing":
@@ -151,22 +158,29 @@ class QuantumChannel:
                 # Skip for now or implement d-dimensional depolarizing
                 pass
             else:
-                qubit = self._depolarizing_noise(qubit)
+                if isinstance(qubit, Qubit):
+                    qubit = self._depolarizing_noise(qubit)
         elif self.noise_model == "bit_flip":
             if not (hasattr(qubit, "dimension") and qubit.dimension > 2):
-                qubit = self._bit_flip_noise(qubit)
+                if isinstance(qubit, Qubit):
+                    qubit = self._bit_flip_noise(qubit)
         elif self.noise_model == "phase_flip":
             if not (hasattr(qubit, "dimension") and qubit.dimension > 2):
-                qubit = self._phase_flip_noise(qubit)
+                if isinstance(qubit, Qubit):
+                    qubit = self._phase_flip_noise(qubit)
         elif self.noise_model == "amplitude_damping":
             if not (hasattr(qubit, "dimension") and qubit.dimension > 2):
-                qubit = self._amplitude_damping_noise(qubit)
+                if isinstance(qubit, Qubit):
+                    qubit = self._amplitude_damping_noise(qubit)
 
         return qubit
 
     def transmit_batch(
-        self, qubits: list[Qubit], start_time: float = 0.0, pulse_interval: float = 1e-9
-    ) -> list[Qubit | None]:
+        self,
+        qubits: list[Qubit | Qudit],
+        start_time: float = 0.0,
+        pulse_interval: float = 1e-9,
+    ) -> list[Qubit | Qudit | None]:
         """Transmit a batch of qubits through the channel.
 
         Args:
@@ -196,7 +210,7 @@ class QuantumChannel:
                     PauliZ().matrix,
                 ]
             )
-            if not np.array_equal(gate, Identity().matrix):
+            if not np.array_equal(cast(Any, gate), Identity().matrix):
                 self.error_count += 1
             qubit.apply_gate(gate)
         return qubit
@@ -253,7 +267,10 @@ class QuantumChannel:
         self.eavesdropped_count = 0
         self.eavesdropper_detected = False
 
-    def set_eavesdropper(self, eavesdropper: Callable | None) -> None:
+    def set_eavesdropper(
+        self,
+        eavesdropper: Callable[[Qubit | Qudit], tuple[Qubit | Qudit, bool]] | None,
+    ) -> None:
         """Set or remove an eavesdropper on the channel.
 
         Args:
@@ -264,8 +281,8 @@ class QuantumChannel:
 
     @staticmethod
     def intercept_resend_attack(
-        qubit: Qubit, basis: str = "random"
-    ) -> tuple[Qubit, bool]:
+        qubit: Qubit | Qudit, basis: str = "random"
+    ) -> tuple[Qubit | Qudit, bool]:
         """Implement an intercept-resend eavesdropping attack.
 
         Args:
@@ -287,7 +304,7 @@ class QuantumChannel:
 
         # Prepare a new qubit in the measured state
         if basis == "computational":
-            new_qubit = Qubit.zero() if measurement == 0 else Qubit.one()
+            new_qubit: Qubit | Qudit = Qubit.zero() if measurement == 0 else Qubit.one()
         elif basis == "hadamard":
             new_qubit = Qubit.plus() if measurement == 0 else Qubit.minus()
         elif basis == "circular":
@@ -295,6 +312,8 @@ class QuantumChannel:
                 new_qubit = Qubit(1 / math.sqrt(2), 1j / math.sqrt(2))
             else:
                 new_qubit = Qubit(1 / math.sqrt(2), -1j / math.sqrt(2))
+        else:
+            raise ValueError("Invalid basis for intercept-resend attack.")
 
         # Check if the attack was detected by comparing with the original state
         # This is a simplified check - in reality, detection happens during protocol execution
@@ -303,7 +322,9 @@ class QuantumChannel:
         return new_qubit, detected
 
     @staticmethod
-    def entanglement_attack(qubit: Qubit) -> tuple[Qubit, bool]:
+    def entanglement_attack(
+        qubit: Qubit | Qudit,
+    ) -> tuple[Qubit | Qudit, bool]:
         """Implement an entanglement-based eavesdropping attack.
 
         Args:
@@ -324,9 +345,10 @@ class QuantumChannel:
             theta = np.random.random() * np.pi
             phi = np.random.random() * 2 * np.pi
             gate = GateUtils.unitary_from_angles(theta, phi, 0)
-            qubit.apply_gate(gate)
-
-            # In this simplified model, we'll say the attack is detected 50% of the time
+            if isinstance(qubit, Qubit):
+                qubit.apply_gate(gate)
+            else:
+                pass  # Qudit does not have apply_gate directly
             detected = np.random.random() < 0.5
         else:
             detected = False
@@ -425,7 +447,7 @@ class QuantumChannel:
             )
 
             # Only count as error if it's not identity
-            if not np.array_equal(gate, Identity().matrix):
+            if not np.array_equal(cast(Any, gate), Identity().matrix):
                 self.error_count += 1
             qubit.apply_gate(gate)
 

@@ -13,7 +13,7 @@ import numpy as np
 class SecureRandom:
     """Cryptographically secure random number generator using Python's secrets module."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the secure random generator."""
         # Create a numpy Generator with secure seed for numpy operations
         secure_seed = secrets.randbits(128)
@@ -69,7 +69,7 @@ class SecureRandom:
         u1 = self.random()
         u2 = self.random()
         z0 = np.sqrt(-2.0 * np.log(u1)) * np.cos(2.0 * np.pi * u2)
-        return mean + std * z0
+        return float(mean + std * z0)
 
     def bits(self, num_bits: int) -> list[int]:
         """Generate cryptographically secure random bits.
@@ -82,7 +82,7 @@ class SecureRandom:
         """
         num_bytes = (num_bits + 7) // 8
         random_bytes = secrets.token_bytes(num_bytes)
-        bits = []
+        bits: list[int] = []
         for byte in random_bytes:
             for i in range(8):
                 if len(bits) < num_bits:
@@ -178,7 +178,7 @@ def secure_weighted_choice(
         probabilities = [p / total_prob for p in probabilities]
 
     # Cumulative distribution
-    cum_probs = []
+    cum_probs: list[float] = []
     current_sum = 0.0
     for p in probabilities:
         current_sum += p
@@ -195,7 +195,7 @@ def secure_weighted_choice(
     return items[-1]
 
 
-def reseed_secure_rng():
+def reseed_secure_rng() -> None:
     """Reseed the global secure RNG instance.
 
     This should be called if you want to ensure fresh entropy,

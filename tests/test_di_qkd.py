@@ -27,8 +27,8 @@ class TestDeviceIndependentQKD(unittest.TestCase):
 
         # Check that we have the right number of qubits
         self.assertEqual(len(qubits), di_qkd.num_pairs)
-        # Check that they are None (placeholders)
-        self.assertIsNone(qubits[0])
+        # Check that they are not None (placeholders)
+        self.assertIsNotNone(qubits[0])
 
     def test_di_qkd_bell_test(self):
         """Test Bell inequality testing in DI-QKD."""

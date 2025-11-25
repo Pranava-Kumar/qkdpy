@@ -1,8 +1,12 @@
 """Continuous-variable QKD protocol implementation."""
 
+import secrets
+from collections.abc import Sequence
+from typing import Any
+
 import numpy as np
 
-from ..core import QuantumChannel
+from ..core import QuantumChannel, Qubit
 from .base import BaseProtocol
 
 
@@ -51,7 +55,7 @@ class CVQKD(BaseProtocol):
         self.bob_measurements: np.ndarray = np.array([])
         self.bob_bases: np.ndarray = np.array([])  # 0 for X, 1 for P
 
-    def prepare_states(self) -> list[None]:
+    def prepare_states(self) -> list[Qubit | Any]:
         """Prepare quantum states for transmission.
 
         In this simulation, we generate the classical data that *would* be encoded
@@ -69,30 +73,16 @@ class CVQKD(BaseProtocol):
         # Note: In a real physical implementation, these values would modulate a laser.
         # Here we store them to simulate the channel transformation later.
 
-        # Generate random values using secure_normal in a loop (since secure_normal is scalar)
-        # For performance in simulation, we might use numpy for bulk if secure_normal is too slow,
-        # but for "enterprise grade" security simulation, we should stick to the secure source
-        # or a secure seeded generator.
+        # Securely seed the random number generator
+        seed = secrets.randbits(128)
+        rng = np.random.default_rng(seed)
 
-        # Optimization: Use numpy for the bulk simulation but seed it securely if possible,
-        # OR just accept the loop overhead for correctness.
-        # Given the "enterprise" requirement, let's use a vectorized approach with a secure seed
-        # if available, or just standard numpy for the *physics simulation* part (noise)
-        # but secure random for the *key material* (Alice's values).
+        self.alice_x = rng.normal(0, np.sqrt(self.modulation_variance), self.block_size)
+        self.alice_p = rng.normal(0, np.sqrt(self.modulation_variance), self.block_size)
 
-        # For this implementation, we'll use numpy for speed in the "physics" part
-        # but ensure the key generation part is robust.
+        return [Qubit.zero()] * self.block_size
 
-        self.alice_x = np.random.normal(
-            0, np.sqrt(self.modulation_variance), self.block_size
-        )
-        self.alice_p = np.random.normal(
-            0, np.sqrt(self.modulation_variance), self.block_size
-        )
-
-        return [None] * self.block_size
-
-    def measure_states(self, states: list[None]) -> list[int]:
+    def measure_states(self, _: Sequence[Qubit | Any | None]) -> list[int]:
         """Measure received quantum states using Homodyne detection.
 
         Args:
@@ -134,7 +124,10 @@ class CVQKD(BaseProtocol):
 
         # 2. Homodyne Detection
         # Bob randomly chooses to measure X or P
-        self.bob_bases = np.random.randint(0, 2, n)  # 0 for X, 1 for P
+        # Securely seed for Bob
+        seed_bob = secrets.randbits(128)
+        rng_bob = np.random.default_rng(seed_bob)
+        self.bob_bases = rng_bob.integers(0, 2, n)  # 0 for X, 1 for P
 
         # Detector noise (electronic noise)
         # v_el in shot noise units
@@ -157,7 +150,7 @@ class CVQKD(BaseProtocol):
         # Return a dummy list to satisfy the interface, as we process internally
         return [0] * n
 
-    def sift_keys(self) -> tuple[list[float], list[float]]:
+    def sift_keys(self) -> tuple[list[int], list[int]]:
         """Sift the keys (Parameter Estimation phase).
 
         In CV-QKD, sifting means Alice keeps the variable Bob measured.
@@ -166,12 +159,14 @@ class CVQKD(BaseProtocol):
             Tuple of (alice_data, bob_data) as floats
         """
         # Alice keeps X where Bob measured X, and P where Bob measured P
-        alice_sifted = np.where(self.bob_bases == 0, self.alice_x, self.alice_p)
-        bob_sifted = self.bob_measurements
+        alice_sifted_float = np.where(self.bob_bases == 0, self.alice_x, self.alice_p)
+        bob_sifted_float = self.bob_measurements
 
-        # In a real protocol, we would reveal a subset for parameter estimation
-        # Here we use the whole block for simulation statistics
-        return alice_sifted.tolist(), bob_sifted.tolist()
+        # Discretize for BaseProtocol compatibility
+        alice_sifted_int = [1 if x > 0 else 0 for x in alice_sifted_float]
+        bob_sifted_int = [1 if x > 0 else 0 for x in bob_sifted_float]
+
+        return alice_sifted_int, bob_sifted_int
 
     def estimate_qber(self) -> float:
         """Estimate the error rate (or rather, excess noise/covariance).
@@ -185,7 +180,7 @@ class CVQKD(BaseProtocol):
         if len(alice_data) < 2:
             return 1.0
 
-        corr = np.corrcoef(alice_data, bob_data)[0, 1]
+        corr = float(np.corrcoef(alice_data, bob_data)[0, 1])
 
         # Return 1 - correlation as a proxy for "error rate"
         return 1.0 - abs(corr)

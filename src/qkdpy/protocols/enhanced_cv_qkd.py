@@ -1,8 +1,11 @@
 """Enhanced continuous-variable QKD protocol implementation."""
 
+from collections.abc import Sequence
+from typing import cast
+
 import numpy as np
 
-from ..core import QuantumChannel, Qubit
+from ..core import QuantumChannel, Qubit, Qudit
 from ..core.secure_random import secure_normal, secure_randint
 from .base import BaseProtocol
 
@@ -59,7 +62,7 @@ class EnhancedCVQKD(BaseProtocol):
         self.covariance_matrix: np.ndarray | None = None
         self.secret_fraction: float = 0.0
 
-    def prepare_states(self) -> list[Qubit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare quantum states for transmission.
 
         In CV-QKD, Alice prepares coherent states with Gaussian modulation
@@ -69,7 +72,7 @@ class EnhancedCVQKD(BaseProtocol):
         Returns:
             List of qubits to be sent through the quantum channel
         """
-        qubits = []
+        qubits: list[Qubit | Qudit] = []
         self.alice_bits = []
         self.alice_modulations_x = []
         self.alice_modulations_p = []
@@ -97,7 +100,7 @@ class EnhancedCVQKD(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+    def measure_states(self, qubits: Sequence[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         In CV-QKD, Bob performs homodyne measurements on the received signals.
@@ -281,7 +284,7 @@ class EnhancedCVQKD(BaseProtocol):
         chi_be = 1.0  # Eve's information (simplified)
 
         # Secret fraction
-        secret_fraction = max(0.0, h_b - chi_be)
+        secret_fraction = float(max(0.0, h_b - chi_be))
 
         self.secret_fraction = secret_fraction
         return secret_fraction
@@ -296,7 +299,9 @@ class EnhancedCVQKD(BaseProtocol):
             return 1.0
 
         # Calculate the noise from the difference between expected and actual correlations
-        expected_corr = np.sqrt(self.transmission_t * self.modulation_variance)
+        expected_corr = cast(
+            float, np.sqrt(self.transmission_t * self.modulation_variance)
+        )
         actual_corr_x = np.mean(
             [
                 abs(a * b)

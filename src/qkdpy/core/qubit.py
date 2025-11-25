@@ -186,7 +186,7 @@ class Qubit:
         y = np.real(np.trace(rho @ sigma_y))
         z = np.real(np.trace(rho @ sigma_z))
 
-        return (x, y, z)
+        return (float(x), float(y), float(z))
 
     def __repr__(self) -> str:
         """String representation of the qubit."""
@@ -197,4 +197,4 @@ class Qubit:
         """Check if two qubits have the same state."""
         if not isinstance(other, Qubit):
             return NotImplemented
-        return np.allclose(self._state, other._state)
+        return bool(np.allclose(self._state, other._state))

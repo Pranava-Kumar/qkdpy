@@ -1,6 +1,7 @@
 """Realistic photon source models for QKD protocols."""
 
 from enum import Enum
+from typing import Any, Protocol
 
 import numpy as np
 
@@ -13,7 +14,22 @@ class PhotonSourceState(Enum):
     MULTI_PHOTON = 2  # Multiple photons in the same mode
 
 
-class PhotonSource:
+PhotonPulse = (
+    tuple[Any, float]
+    | tuple[PhotonSourceState, float, str]
+    | tuple[bool, float, dict[str, bool]]
+)
+
+
+class PhotonPulseGenerator(Protocol):
+    """Protocol for photon pulse generators."""
+
+    def generate_photon_pulse(self, time: float) -> PhotonPulse:
+        """Generate a photon pulse at the specified time."""
+        ...
+
+
+class PhotonSource(PhotonPulseGenerator):
     """Base class for realistic photon sources in QKD systems."""
 
     def __init__(
@@ -53,7 +69,7 @@ class PhotonSource:
         c = 299792458  # Speed of light
         return h * c / self.wavelength
 
-    def generate_photon_pulse(self, time: float) -> tuple[bool, float]:
+    def generate_photon_pulse(self, time: float) -> PhotonPulse:
         """Generate a photon pulse at the specified time.
 
         Args:
@@ -166,7 +182,7 @@ class DecoyStateSource(PhotonSource):
         power: float = 1e-6,
         efficiency: float = 0.1,
         decoy_probability: float = 0.1,  # 10% decoy state pulses
-        random_number_generator: np.random.Generator = None,
+        random_number_generator: np.random.Generator | None = None,
     ):
         """Initialize a decoy state source.
 
@@ -254,7 +270,7 @@ class DecoyStateSource(PhotonSource):
             # Generate signal pulse
             return self.generate_signal_pulse(time)
 
-    def get_pulse_type_statistics(self, num_pulses: int = 1000) -> dict[str, float]:
+    def get_pulse_type_statistics(self, num_pulses: int = 1000) -> dict[str, Any]:
         """Get statistics about pulse types generated.
 
         Args:
@@ -327,9 +343,7 @@ class ParametricDownConversionSource(PhotonSource):
             mean_photon_number  # Probability of pair generation per pulse
         )
 
-    def generate_photon_pulse(
-        self, time: float
-    ) -> tuple[bool, float, dict[str, float]]:
+    def generate_photon_pulse(self, time: float) -> tuple[bool, float, dict[str, bool]]:
         """Generate a photon pulse from the PDC source.
 
         Args:
@@ -343,7 +357,7 @@ class ParametricDownConversionSource(PhotonSource):
         # Determine if a pair is generated
         pair_generated = np.random.random() < self.heralding_probability
 
-        additional_info = {}
+        additional_info: dict[str, bool] = {}
         photon_present = False
 
         if pair_generated:
@@ -377,7 +391,7 @@ class ParametricDownConversionSource(PhotonSource):
 class PhotonSourceManager:
     """Manager for coordinating multiple photon sources in QKD protocols."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the photon source manager."""
         self.sources: dict[str, PhotonSource] = {}
         self.active_source: str | None = None
@@ -402,8 +416,11 @@ class PhotonSourceManager:
         self.active_source = source_id
 
     def generate_sequence(
-        self, duration: float, source_id: str = None, timestamps: list[float] = None
-    ) -> list[tuple[any, float]]:
+        self,
+        duration: float,
+        source_id: str | None = None,
+        timestamps: list[float] | None = None,
+    ) -> list[PhotonPulse]:
         """Generate a sequence of photon pulses.
 
         Args:
@@ -423,36 +440,18 @@ class PhotonSourceManager:
             raise ValueError(f"Source {source_id} not found")
 
         source = self.sources[source_id]
-
+        results: list[PhotonPulse] = []
         if timestamps is not None:
             # Generate pulses at specific timestamps
-            results = []
             for time in timestamps:
-                if hasattr(source, "generate_signal_pulse") and hasattr(
-                    source, "generate_decoy_pulse"
-                ):
-                    # Special handling for decoy state source
-                    result = source.generate_photon_pulse(time)
-                    results.append(result)
-                else:
-                    photon_state, actual_time = source.generate_photon_pulse(time)
-                    results.append((photon_state, actual_time))
+                results.append(source.generate_photon_pulse(time))
         else:
             # Generate pulses at regular intervals
             num_pulses = int(duration * source.pulse_rate)
             pulse_interval = 1.0 / source.pulse_rate
 
-            results = []
             for i in range(num_pulses):
                 time = i * pulse_interval
-                if hasattr(source, "generate_signal_pulse") and hasattr(
-                    source, "generate_decoy_pulse"
-                ):
-                    # Special handling for decoy state source
-                    result = source.generate_photon_pulse(time)
-                    results.append(result)
-                else:
-                    photon_state, actual_time = source.generate_photon_pulse(time)
-                    results.append((photon_state, actual_time))
+                results.append(source.generate_photon_pulse(time))
 
         return results

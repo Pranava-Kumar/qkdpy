@@ -1,8 +1,10 @@
 """SARG04 QKD protocol implementation."""
 
+from collections.abc import Sequence
+
 import numpy as np
 
-from ..core import Measurement, QuantumChannel, Qubit
+from ..core import Measurement, QuantumChannel, Qubit, Qudit
 from ..core.secure_random import secure_choice, secure_randint
 from .base import BaseProtocol
 
@@ -14,7 +16,7 @@ class SARG04(BaseProtocol):
     It is more robust to certain types of eavesdropping attacks than BB84.
     """
 
-    def __init__(self, channel: QuantumChannel, key_length: int = 100):
+    def __init__(self, channel: QuantumChannel, key_length: int = 100) -> None:
         """Initialize the SARG04 protocol.
 
         Args:
@@ -34,16 +36,17 @@ class SARG04(BaseProtocol):
 
         # Alice's random bits and bases
         self.alice_bits: list[int] = []
-        self.alice_bases: list[str | None] = []
+        self.alice_bases: list[int | str | None] = []
 
         # Bob's measurement results and bases
         self.bob_results: list[int | None] = []
-        self.bob_bases: list[str | None] = []
+        self.bob_bases: list[int | str | None] = []
 
         # SARG04 specific: Bob's measurement guesses
         self.bob_guesses: list[int | None] = []
+        self.announced_sets: list[tuple[str, str]] = []
 
-    def prepare_states(self) -> list[Qubit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare quantum states for transmission.
 
         In SARG04, Alice prepares states like BB84 but also selects a 'partner' state
@@ -60,14 +63,12 @@ class SARG04(BaseProtocol):
         - If sending |-> (Bit 1), partner is |0> (Bit 0). Set: {|->, |0>}
 
         Returns:
-            List of qubits to be sent through the quantum channel
+            List of quantum states (qubits or qudits) to be sent through the quantum channel
         """
-        qubits = []
+        qubits: list[Qubit | Qudit] = []
         self.alice_bits = []
         self.alice_bases = []
-        self.announced_sets: list[tuple[str, str]] = (
-            []
-        )  # Stores the two states in the set (e.g., ("0", "-"))
+        self.announced_sets = []  # Stores the two states in the set (e.g., ("0", "-"))
 
         for _ in range(self.num_qubits):
             # Alice randomly chooses a bit (0 or 1)
@@ -79,7 +80,7 @@ class SARG04(BaseProtocol):
             self.alice_bases.append(basis)
 
             # Prepare state and select partner
-            qubit = None
+            qubit: Qubit | Qudit
             partner_state = ""
             sent_state_str = ""
 
@@ -112,13 +113,13 @@ class SARG04(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+    def measure_states(self, states: Sequence[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         Bob measures in a random basis.
 
         Args:
-            qubits: List of received qubits
+            states: List of received quantum states (may contain None for lost states)
 
         Returns:
             List of measurement results
@@ -126,8 +127,8 @@ class SARG04(BaseProtocol):
         self.bob_results = []
         self.bob_bases = []
 
-        for qubit in qubits:
-            if qubit is None:
+        for quantum_state in states:
+            if quantum_state is None:
                 self.bob_results.append(None)
                 self.bob_bases.append(None)
                 continue
@@ -137,8 +138,16 @@ class SARG04(BaseProtocol):
             self.bob_bases.append(basis)
 
             # Measure in the chosen basis
-            result = Measurement.measure_in_basis(qubit, basis)
-            qubit.collapse_state(result, basis)
+            result = None
+            if isinstance(quantum_state, Qubit):
+                result = Measurement.measure_in_basis(quantum_state, basis)
+                quantum_state.collapse_state(result, basis)
+            elif isinstance(quantum_state, Qudit):
+                # For qudits, basis needs to be converted if using Qudit.measure
+                # For simplicity, assuming a default computational measurement
+                result = quantum_state.measure_computational()
+                quantum_state.collapse_state(result)
+
             self.bob_results.append(result)
 
         # Filter out None values to return only int results
@@ -154,8 +163,8 @@ class SARG04(BaseProtocol):
         Returns:
             Tuple of (alice_sifted_key, bob_sifted_key)
         """
-        alice_sifted = []
-        bob_sifted = []
+        alice_sifted: list[int] = []
+        bob_sifted: list[int] = []
 
         for i in range(self.num_qubits):
             # Skip if Bob didn't receive the qubit
@@ -231,7 +240,7 @@ class SARG04(BaseProtocol):
             if alice_sifted[idx] != bob_sifted[idx]:
                 errors += 1
 
-        return errors / sample_size
+        return float(errors / sample_size)
 
     def _get_security_threshold(self) -> float:
         return self.security_threshold
@@ -239,4 +248,4 @@ class SARG04(BaseProtocol):
     def get_sifting_efficiency(self) -> float:
         alice_sifted, _ = self.sift_keys()
         received_count = sum(1 for basis in self.bob_bases if basis is not None)
-        return len(alice_sifted) / received_count if received_count > 0 else 0
+        return float(len(alice_sifted) / received_count if received_count > 0 else 0)

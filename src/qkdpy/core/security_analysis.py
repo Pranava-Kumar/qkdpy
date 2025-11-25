@@ -21,7 +21,7 @@ class AttackType(Enum):
 class SecurityAnalyzer:
     """Comprehensive security analysis tools for QKD protocols."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize the security analyzer."""
         self.attack_results: list[dict[str, Any]] = []
 
@@ -123,9 +123,9 @@ class SecurityAnalyzer:
             Corrected key rate after privacy amplification
         """
 
-        def h2(x):
+        def h2(x: float) -> float:
             """Binary entropy function."""
-            return -x * np.log2(x) - (1 - x) * np.log2(1 - x) if 0 < x < 1 else 0
+            return -x * np.log2(x) - (1 - x) * np.log2(1 - x) if 0 < x < 1 else 0.0
 
         if qber > 0.5:
             return 0.0  # No secure key possible
@@ -154,7 +154,7 @@ class SecurityAnalyzer:
         }
 
         efficiency = efficiency_factors.get(protocol_name.lower(), 0.5)
-        return corrected_rate * efficiency
+        return float(corrected_rate * efficiency)
 
     def _estimate_security_parameters(
         self,
@@ -163,7 +163,7 @@ class SecurityAnalyzer:
         channel_loss: float,
         mean_photon_number: float,
         num_decoy_states: int,
-    ) -> dict[str, float]:
+    ) -> dict[str, Any]:
         """Estimate key security parameters.
 
         Args:
@@ -246,7 +246,7 @@ class SecurityAnalyzer:
         Returns:
             Dictionary mapping attack types to vulnerability assessments
         """
-        vulnerabilities = {}
+        vulnerabilities: dict[AttackType, dict[str, float]] = {}
 
         # Intercept-Resend Attack
         ir_success_prob = 0.25  # Basic intercept-resend success probability
@@ -446,14 +446,14 @@ class SecurityAnalyzer:
 class QBERAnalysis:
     """Analysis tools specifically for QBER (Quantum Bit Error Rate)."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize QBER analysis tools."""
         pass
 
     def analyze_qber_trends(
         self,
         qber_values: list[float],
-        time_intervals: list[float] = None,
+        time_intervals: list[float] | None = None,
         window_size: int = 10,
     ) -> dict[str, Any]:
         """Analyze trends in QBER values over time.
@@ -492,10 +492,10 @@ class QBERAnalysis:
                     else "decreasing" if slope < -0.001 else "stable"
                 )
             else:
-                slope = 0
+                slope = 0.0
                 trend_direction = "insufficient_data"
         else:
-            slope = 0
+            slope = 0.0
             trend_direction = "insufficient_data"
 
         # Detect anomalies
@@ -525,7 +525,7 @@ class QBERAnalysis:
         if len(qber_values) < 3:
             return []
 
-        anomalies = []
+        anomalies: list[int] = []
         mean_qber = np.mean(qber_values)
         std_qber = np.std(qber_values)
 
@@ -566,13 +566,13 @@ class QBERAnalysis:
         # Lower CV = more stable
         stability_score = 1.0 / (1.0 + cv)  # Maps to [0, 1]
 
-        return min(1.0, max(0.0, stability_score))
+        return float(min(1.0, max(0.0, stability_score)))
 
 
 class SideChannelAnalyzer:
     """Analyzer for side-channel attacks in QKD systems."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize side-channel analyzer."""
         pass
 
@@ -627,8 +627,8 @@ class SideChannelAnalyzer:
         detection_rate = sum(detections) / len(detections) if detections else 0.0
 
         # Analyze timing patterns
-        intervals = []
-        last_detection_time = None
+        intervals: list[float] = []
+        last_detection_time: float | None = None
         for timestamp, detected in detector_timing:
             if detected:
                 if last_detection_time is not None:
@@ -661,7 +661,7 @@ class SideChannelAnalyzer:
             return {"error": "No detector settings provided"}
 
         # Check for correlations between settings and outcomes
-        keys = set()
+        keys: set[str] = set()
         for setting in detector_settings:
             keys.update(setting.keys())
 
@@ -695,7 +695,7 @@ class SideChannelAnalyzer:
         Returns:
             List of identified vulnerabilities
         """
-        vulnerabilities = []
+        vulnerabilities: list[str] = []
 
         # Check for timing-based vulnerabilities
         if timing_analysis.get("possible_timing_attacks", False):
@@ -720,7 +720,7 @@ class SideChannelAnalyzer:
         Returns:
             List of recommendations
         """
-        recommendations = []
+        recommendations: list[str] = []
 
         if "timing_correlation" in vulnerabilities:
             recommendations.append(

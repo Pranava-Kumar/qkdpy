@@ -119,7 +119,7 @@ class GateUtils:
 
         # Check if U * U† = I
         identity = np.eye(n)
-        return np.allclose(gate @ gate.conj().T, identity, atol=tol)
+        return bool(np.allclose(gate @ gate.conj().T, identity, atol=tol))
 
     @staticmethod
     def is_hermitian(gate: np.ndarray, tol: float = 1e-10) -> bool:
@@ -138,4 +138,4 @@ class GateUtils:
             return False
 
         # Check if A = A†
-        return np.allclose(gate, gate.conj().T, atol=tol)
+        return bool(np.allclose(gate, gate.conj().T, atol=tol))

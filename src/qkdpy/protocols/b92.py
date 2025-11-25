@@ -1,6 +1,8 @@
 """B92 QKD protocol implementation."""
 
-from ..core import Measurement, QuantumChannel, Qubit
+from collections.abc import Sequence
+
+from ..core import Measurement, QuantumChannel, Qubit, Qudit
 from ..core.secure_random import secure_randint
 from .base import BaseProtocol
 
@@ -38,12 +40,12 @@ class B92(BaseProtocol):
 
         # Bob's measurement results
         self.bob_results: list[int | None] = []
-        self.bob_bases: list[str | None] = []
+        self.bob_bases: list[int | str | None] = []
 
         # B92 uses two non-orthogonal states
         self.bases = ["computational", "hadamard"]
 
-    def prepare_states(self) -> list[Qubit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare quantum states for transmission.
 
         In B92, Alice randomly chooses bits and prepares qubits in the
@@ -52,7 +54,7 @@ class B92(BaseProtocol):
         Returns:
             List of qubits to be sent through the quantum channel
         """
-        qubits = []
+        qubits: list[Qubit | Qudit] = []
         self.alice_bits = []
 
         for _ in range(self.num_qubits):
@@ -62,6 +64,7 @@ class B92(BaseProtocol):
 
             # Prepare the qubit in the appropriate state
             # For B92, we use |0> for bit 0 and |+> for bit 1
+            qubit: Qubit | Qudit
             if bit == 0:
                 # Computational basis: |0>
                 qubit = Qubit.zero()
@@ -73,7 +76,7 @@ class B92(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+    def measure_states(self, qubits: Sequence[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         In B92, Bob measures in the Hadamard basis and interprets the results.

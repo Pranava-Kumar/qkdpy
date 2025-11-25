@@ -1,5 +1,7 @@
 """PennyLane integration plugin for QKDpy."""
 
+from typing import Any
+
 try:
     import pennylane as qml
     from pennylane import numpy as pnp
@@ -19,7 +21,7 @@ from ..protocols.bb84 import BB84
 class PennyLaneIntegration:
     """Integration with PennyLane quantum computing framework."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize PennyLane integration."""
         if not PENNYLANE_AVAILABLE:
             raise ImportError(
@@ -27,7 +29,7 @@ class PennyLaneIntegration:
                 "to use PennyLane integration."
             )
 
-    def qubit_to_pennylane(self, qkdpy_qubit: Qubit):
+    def qubit_to_pennylane(self, qkdpy_qubit: Qubit) -> Any:
         """Convert a QKDpy Qubit to a PennyLane state.
 
         Args:
@@ -44,7 +46,7 @@ class PennyLaneIntegration:
         # Create PennyLane tensor
         return pnp.tensor(state, requires_grad=False)
 
-    def pennylane_to_qubit(self, pennylane_state) -> Qubit:
+    def pennylane_to_qubit(self, pennylane_state: Any) -> Qubit:
         """Convert a PennyLane state to a QKDpy Qubit.
 
         Args:
@@ -66,7 +68,7 @@ class PennyLaneIntegration:
         num_qubits: int = 1,
         alice_bases: list[str] | None = None,
         bob_bases: list[str] | None = None,
-    ):
+    ) -> Any:
         """Create a PennyLane circuit implementing the BB84 protocol.
 
         Args:
@@ -87,8 +89,8 @@ class PennyLaneIntegration:
         # Create device
         dev = qml.device("default.qubit", wires=num_qubits)
 
-        @qml.qnode(dev)
-        def bb84_circuit():
+        @qml.qnode(dev)  # type: ignore
+        def bb84_circuit() -> list[Any]:
             # Alice prepares qubits
             for i, (basis,) in enumerate(zip(alice_bases, strict=False)):
                 if basis == "X":  # Hadamard basis
@@ -136,8 +138,8 @@ class PennyLaneIntegration:
             # For simplicity, we'll add noise to the device
             pass
 
-        @qml.qnode(dev)
-        def bb84_circuit():
+        @qml.qnode(dev)  # type: ignore
+        def bb84_circuit() -> list[Any]:
             # Alice prepares qubits
             for i, (bit, basis) in enumerate(
                 zip(alice_bits, alice_bases, strict=False)
@@ -168,7 +170,9 @@ class PennyLaneIntegration:
 
         return alice_bits, bob_bits, matching_bases
 
-    def convert_channel_to_pennylane(self, qkdpy_channel: QuantumChannel) -> dict:
+    def convert_channel_to_pennylane(
+        self, qkdpy_channel: QuantumChannel
+    ) -> dict[str, Any]:
         """Convert a QKDpy QuantumChannel to PennyLane noise parameters.
 
         Args:
@@ -193,7 +197,7 @@ class PennyLaneIntegration:
 
         return noise_params
 
-    def create_entanglement_circuit(self, num_pairs: int = 1):
+    def create_entanglement_circuit(self, num_pairs: int = 1) -> Any:
         """Create a PennyLane circuit for generating entangled pairs.
 
         Args:
@@ -205,8 +209,8 @@ class PennyLaneIntegration:
         # Create device
         dev = qml.device("default.qubit", wires=2 * num_pairs)
 
-        @qml.qnode(dev)
-        def entanglement_circuit():
+        @qml.qnode(dev)  # type: ignore
+        def entanglement_circuit() -> list[Any]:
             # Create entangled pairs using Hadamard and CNOT
             for i in range(num_pairs):
                 qml.Hadamard(wires=i)  # Create superposition
@@ -218,7 +222,7 @@ class PennyLaneIntegration:
 
     def benchmark_qkdpy_vs_pennylane(
         self, num_qubits: int = 100, num_trials: int = 10
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Benchmark QKDpy against PennyLane for BB84 protocol.
 
         Args:

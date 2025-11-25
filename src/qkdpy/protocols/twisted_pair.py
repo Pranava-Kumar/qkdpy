@@ -1,8 +1,10 @@
 """Twisted Pair QKD protocol implementation."""
 
+from collections.abc import Sequence
+
 import numpy as np
 
-from ..core import Measurement, QuantumChannel, Qubit
+from ..core import Measurement, QuantumChannel, Qubit, Qudit
 from ..core.secure_random import secure_choice, secure_randint
 from .base import BaseProtocol
 
@@ -15,7 +17,7 @@ class TwistedPairQKD(BaseProtocol):
         channel: QuantumChannel,
         key_length: int = 100,
         security_threshold: float = 0.11,
-    ):
+    ) -> None:
         """Initialize the Twisted Pair QKD protocol.
 
         Args:
@@ -37,18 +39,18 @@ class TwistedPairQKD(BaseProtocol):
 
         # Alice's and Bob's data
         self.alice_bits: list[int] = []
-        self.alice_bases: list[str | None] = []
+        self.alice_bases: list[int | str | None] = []
         self.bob_results: list[int | None] = []
-        self.bob_bases: list[str | None] = []
+        self.bob_bases: list[int | str | None] = []
         self.twist_indices: list[int] = []
 
-    def prepare_states(self) -> list[Qubit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare quantum states for transmission with twisted encoding.
 
         Returns:
             List of qubits to be sent through the quantum channel
         """
-        qubits = []
+        qubits: list[Qubit | Qudit] = []
         self.alice_bits = []
         self.alice_bases = []
         self.twist_indices = []
@@ -84,11 +86,11 @@ class TwistedPairQKD(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+    def measure_states(self, states: Sequence[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states with twisted decoding.
 
         Args:
-            qubits: List of received qubits (may contain None for lost qubits)
+            states: List of received quantum states (may contain None for lost states)
 
         Returns:
             List of measurement results
@@ -96,8 +98,8 @@ class TwistedPairQKD(BaseProtocol):
         self.bob_results = []
         self.bob_bases = []
 
-        for i, qubit in enumerate(qubits):
-            if qubit is None:
+        for i, quantum_state in enumerate(states):
+            if quantum_state is None:
                 # Qubit was lost in the channel
                 self.bob_results.append(None)
                 self.bob_bases.append(None)
@@ -114,7 +116,14 @@ class TwistedPairQKD(BaseProtocol):
                 pass
 
             # Measure in the chosen basis
-            result = Measurement.measure_in_basis(qubit, basis)
+            result = None
+            if isinstance(quantum_state, Qubit):
+                result = Measurement.measure_in_basis(quantum_state, basis)
+            elif isinstance(quantum_state, Qudit):
+                # For qudits, basis needs to be converted if using Qudit.measure
+                # For simplicity, assuming a default computational measurement
+                result = quantum_state.measure_computational()
+
             self.bob_results.append(result)
 
         # Filter out None values to return only int results
@@ -126,8 +135,8 @@ class TwistedPairQKD(BaseProtocol):
         Returns:
             Tuple of (alice_sifted_key, bob_sifted_key)
         """
-        alice_sifted = []
-        bob_sifted = []
+        alice_sifted: list[int] = []
+        bob_sifted: list[int] = []
 
         for i in range(self.num_qubits):
             # Skip if Bob didn't receive the qubit
@@ -185,16 +194,18 @@ class TwistedPairQKD(BaseProtocol):
         Returns:
             Fraction of qubits that were twisted
         """
-        return len(self.twist_indices) / self.num_qubits if self.num_qubits > 0 else 0
+        return len(self.twist_indices) / self.num_qubits if self.num_qubits > 0 else 0.0
 
-    def get_basis_distribution(self) -> dict:
+    def get_basis_distribution(
+        self,
+    ) -> dict[str, dict[int | str, int] | int]:
         """Analyze the distribution of measurement bases.
 
         Returns:
             Dictionary with basis distribution statistics
         """
-        alice_basis_counts: dict[str, int] = {}
-        bob_basis_counts: dict[str, int] = {}
+        alice_basis_counts: dict[int | str, int] = {}
+        bob_basis_counts: dict[int | str, int] = {}
 
         # Count Alice's basis choices
         for basis in self.alice_bases:

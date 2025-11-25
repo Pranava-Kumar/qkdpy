@@ -1,8 +1,10 @@
 """High-Dimensional Quantum Key Distribution (HD-QKD) protocol implementation."""
 
+from collections.abc import Sequence
+
 import numpy as np
 
-from ..core import QuantumChannel, Qudit
+from ..core import QuantumChannel, Qubit, Qudit
 from ..core.secure_random import secure_randint
 from .base import BaseProtocol
 
@@ -24,7 +26,7 @@ class HDQKD(BaseProtocol):
         key_length: int = 100,
         dimension: int = 4,
         security_threshold: float = 0.15,
-    ):
+    ) -> None:
         """Initialize the HD-QKD protocol.
 
         Args:
@@ -44,11 +46,11 @@ class HDQKD(BaseProtocol):
 
         # Alice's random symbols and bases
         self.alice_symbols: list[int] = []
-        self.alice_bases: list[int | None] = []
+        self.alice_bases: list[int | str | None] = []
 
         # Bob's measurement results and bases
         self.bob_results: list[int | None] = []
-        self.bob_bases: list[int | None] = []
+        self.bob_bases: list[int | str | None] = []
 
         # MUBs (Mutually Unbiased Bases) for the dimension
         self.mubs = self._generate_mubs(dimension)
@@ -201,7 +203,7 @@ class HDQKD(BaseProtocol):
 
         return mubs
 
-    def prepare_states(self) -> list[Qudit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare quantum states for transmission in HD-QKD.
 
         In HD-QKD, Alice randomly chooses symbols from {0, 1, ..., d-1} and bases.
@@ -209,7 +211,7 @@ class HDQKD(BaseProtocol):
         Returns:
             List of qudits encoded with HD information
         """
-        qudits = []
+        qudits: list[Qubit | Qudit] = []
         self.alice_symbols = []
         self.alice_bases = []
 
@@ -235,7 +237,7 @@ class HDQKD(BaseProtocol):
 
         return qudits
 
-    def measure_states(self, qudits: list[Qudit | None]) -> list[int]:
+    def measure_states(self, qudits: Sequence[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         In HD-QKD, Bob randomly chooses bases from the MUBs to measure in.
@@ -263,10 +265,12 @@ class HDQKD(BaseProtocol):
             # Measure in the chosen basis
             # The measurement basis is the conjugate transpose of the MUB matrix
             measurement_basis = self.mubs[basis_idx].conj().T
-            result = qudit.measure(measurement_basis)
-
-            # Collapse the state to the measurement result in the measurement basis
-            qudit.collapse_state(result, measurement_basis)
+            if isinstance(qudit, Qudit):
+                result = qudit.measure(measurement_basis)
+                # Collapse the state to the measurement result in the measurement basis
+                qudit.collapse_state(result, measurement_basis)
+            else:
+                result = 0  # Default value for Qubit or if something else comes through
             self.bob_results.append(result)
 
         # Filter out None values to return only int results
@@ -340,23 +344,25 @@ class HDQKD(BaseProtocol):
         # In HD-QKD, we can encode log2(d) bits per photon instead of 1
         return float(np.log2(self.dimension))
 
-    def get_basis_distribution(self) -> dict:
+    def get_basis_distribution(
+        self,
+    ) -> dict[str, dict[int | str, int] | int]:
         """Analyze the distribution of measurement bases.
 
         Returns:
             Dictionary with basis distribution statistics
         """
-        alice_basis_counts: dict[str, int] = {}
-        bob_basis_counts: dict[str, int] = {}
+        alice_basis_counts: dict[int | str, int] = {}
+        bob_basis_counts: dict[int | str, int] = {}
 
         # Count Alice's basis choices
         for basis in self.alice_bases:
-            if basis is not None and basis != "":
+            if basis is not None:
                 alice_basis_counts[basis] = alice_basis_counts.get(basis, 0) + 1
 
         # Count Bob's basis choices
         for basis in self.bob_bases:
-            if basis is not None and basis != "":
+            if basis is not None:
                 bob_basis_counts[basis] = bob_basis_counts.get(basis, 0) + 1
 
         return {

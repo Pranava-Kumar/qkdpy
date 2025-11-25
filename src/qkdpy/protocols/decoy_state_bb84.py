@@ -1,6 +1,8 @@
 """Decoy-State BB84 QKD protocol implementation."""
 
-from ..core import Measurement, QuantumChannel, Qubit
+from collections.abc import Sequence
+
+from ..core import Measurement, QuantumChannel, Qubit, Qudit
 from ..core.secure_random import secure_choice, secure_randint, secure_random
 from .base import BaseProtocol
 
@@ -46,19 +48,19 @@ class DecoyStateBB84(BaseProtocol):
 
         # Alice's random bits, bases, and intensities
         self.alice_bits: list[int] = []
-        self.alice_bases: list[str | None] = []
+        self.alice_bases: list[int | str | None] = []
         self.alice_intensities: list[str] = []  # "signal", "decoy", or "vacuum"
 
         # Bob's measurement results and bases
         self.bob_results: list[int | None] = []
-        self.bob_bases: list[str | None] = []
+        self.bob_bases: list[int | str | None] = []
 
         # Statistics for decoy state analysis
         self.signal_count: int = 0
         self.decoy_count: int = 0
         self.vacuum_count: int = 0
 
-    def prepare_states(self) -> list[Qubit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare quantum states for transmission with decoy states.
 
         In Decoy-State BB84, Alice randomly chooses bits, bases, and intensities
@@ -108,7 +110,7 @@ class DecoyStateBB84(BaseProtocol):
             # Prepare the qubit in the appropriate state
             if basis == "computational":
                 # Computational basis: |0> or |1>
-                qubit = Qubit.zero() if bit == 0 else Qubit.one()
+                qubit: Qubit | Qudit = Qubit.zero() if bit == 0 else Qubit.one()
             else:  # hadamard basis
                 # Hadamard basis: |+> or |->
                 qubit = Qubit.plus() if bit == 0 else Qubit.minus()
@@ -117,7 +119,7 @@ class DecoyStateBB84(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, qubits: list[Qubit | None]) -> list[int]:
+    def measure_states(self, qubits: Sequence[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         In Decoy-State BB84, Bob randomly chooses bases to measure in.

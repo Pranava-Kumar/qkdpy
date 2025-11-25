@@ -188,7 +188,9 @@ class TestQuantumNetwork(unittest.TestCase):
     def test_multiparty_qkd(self):
         """Test multi-party QKD functionality."""
         # Test secret sharing
-        secret = [1, 0, 1, 1, 0, 0, 1, 0]
+        # Use a longer secret (128 bits) to avoid accidental reconstruction by subset
+        # which has a probability of 1/2^N
+        secret = [np.random.randint(0, 2) for _ in range(128)]
         shares = MultiPartyQKD.quantum_secret_sharing(secret, 3, 2)
 
         self.assertEqual(len(shares), 3)

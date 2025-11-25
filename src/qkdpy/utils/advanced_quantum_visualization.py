@@ -1,18 +1,19 @@
-"""Advanced visualization tools for quantum states and protocol execution."""
+"Advanced visualization tools for quantum states and protocol execution."
 
-from typing import Any
+from typing import Any, cast
 
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.figure import Figure
 
 # Optional imports
 try:
-    import seaborn as sns
+    import seaborn as sns  # noqa: F401
 
     SEABORN_AVAILABLE = True
 except ImportError:
     SEABORN_AVAILABLE = False
-    sns = None
+    _ = None
 
 from ..core import QuantumChannel, Qubit
 from ..protocols.base import BaseProtocol
@@ -26,7 +27,7 @@ class QuantumStateVisualizer:
         qubit: Qubit,
         title: str = "Density Matrix Visualization",
         figsize: tuple[int, int] = (8, 6),
-    ) -> plt.Figure:
+    ) -> Figure:
         """Plot the density matrix of a qubit.
 
         Args:
@@ -42,6 +43,7 @@ class QuantumStateVisualizer:
 
         # Create figure
         fig, ax = plt.subplots(1, 1, figsize=figsize)
+        ax = cast(Any, ax)
 
         # Plot real part of density matrix
         im = ax.imshow(rho.real, cmap="RdBu_r", vmin=-1, vmax=1)
@@ -57,13 +59,14 @@ class QuantumStateVisualizer:
         # Add value annotations
         for i in range(2):
             for j in range(2):
+                val = rho[i, j].real
                 ax.text(
                     j,
                     i,
-                    f"{rho[i, j].real:.2f}",
+                    f"{val:.2f}",
                     ha="center",
                     va="center",
-                    color="white" if abs(rho[i, j].real) < 0.5 else "black",
+                    color="white" if abs(val) < 0.5 else "black",
                 )
 
         plt.tight_layout()
@@ -75,7 +78,7 @@ class QuantumStateVisualizer:
         time_points: list[float] | None = None,
         title: str = "Bloch Vector Evolution",
         figsize: tuple[int, int] = (10, 8),
-    ) -> plt.Figure:
+    ) -> Figure:
         """Plot the evolution of a qubit's Bloch vector over time.
 
         Args:
@@ -99,6 +102,7 @@ class QuantumStateVisualizer:
         # Create figure
         fig = plt.figure(figsize=figsize)
         ax = fig.add_subplot(111, projection="3d")
+        ax = cast(Any, ax)
 
         # Draw the Bloch sphere
         u = np.linspace(0, 2 * np.pi, 100)
@@ -131,7 +135,7 @@ class QuantumStateVisualizer:
         measurement_axis: str = "Z",
         title: str = "Quantum State Measurement Probabilities",
         figsize: tuple[int, int] = (10, 6),
-    ) -> plt.Figure:
+    ) -> Figure:
         """Plot histogram of measurement probabilities for multiple qubit states.
 
         Args:
@@ -168,20 +172,21 @@ class QuantumStateVisualizer:
 
         # Create figure
         fig, ax = plt.subplots(1, 1, figsize=figsize)
+        ax = cast(Any, ax)
 
         # Create bar chart
         x_pos = np.arange(len(qubit_states))
         width = 0.35
 
-        ax.bar(x_pos - width / 2, prob_0, width, label="P(|0\u27e9)", alpha=0.8)
-        ax.bar(x_pos + width / 2, prob_1, width, label="P(|1\u27e9)", alpha=0.8)
+        ax.bar(x_pos - width / 2, prob_0, width, label="P(|0⟩)", alpha=0.8)
+        ax.bar(x_pos + width / 2, prob_1, width, label="P(|1⟩)", alpha=0.8)
 
         # Set labels and title
         ax.set_xlabel("Qubit Index")
         ax.set_ylabel("Probability")
         ax.set_title(title)
         ax.set_xticks(x_pos)
-        ax.set_xticklabels([f"|\u03c8{i}\u27e9" for i in range(len(qubit_states))])
+        ax.set_xticklabels([f"|ψ{i}⟩" for i in range(len(qubit_states))])
         ax.legend()
         ax.grid(True, alpha=0.3)
 
@@ -192,7 +197,7 @@ class QuantumStateVisualizer:
         channel: QuantumChannel,
         title: str = "Quantum Channel Characteristics",
         figsize: tuple[int, int] = (12, 8),
-    ) -> plt.Figure:
+    ) -> Figure:
         """Plot characteristics of a quantum channel.
 
         Args:
@@ -251,7 +256,7 @@ class ProtocolExecutionVisualizer:
         protocol: BaseProtocol,
         title: str = "Protocol Execution Timeline",
         figsize: tuple[int, int] = (12, 8),
-    ) -> plt.Figure:
+    ) -> Figure:
         """Plot timeline of protocol execution steps.
 
         Args:
@@ -264,6 +269,7 @@ class ProtocolExecutionVisualizer:
         """
         # Create figure
         fig, ax = plt.subplots(1, 1, figsize=figsize)
+        ax = cast(Any, ax)
 
         # Define execution steps (this is a simplified example)
         steps = [
@@ -305,7 +311,7 @@ class ProtocolExecutionVisualizer:
         qber_values: list[float],
         title: str = "Key Generation Performance",
         figsize: tuple[int, int] = (12, 8),
-    ) -> plt.Figure:
+    ) -> Figure:
         """Plot key generation performance metrics.
 
         Args:
@@ -352,7 +358,7 @@ class ProtocolExecutionVisualizer:
         secure_threshold: float,
         title: str = "Security Analysis",
         figsize: tuple[int, int] = (10, 6),
-    ) -> plt.Figure:
+    ) -> Figure:
         """Plot security analysis based on QBER values.
 
         Args:
@@ -428,7 +434,7 @@ class ProtocolExecutionVisualizer:
         metrics: list[str] | None = None,
         title: str = "Protocol Comparison",
         figsize: tuple[int, int] = (12, 8),
-    ) -> plt.Figure:
+    ) -> Figure:
         """Compare different protocols based on performance metrics.
 
         Args:
@@ -445,7 +451,7 @@ class ProtocolExecutionVisualizer:
 
         # Extract data
         protocols = list(protocol_results.keys())
-        data = {metric: [] for metric in metrics}
+        data: dict[str, list[Any]] = {metric: [] for metric in metrics}
 
         for protocol in protocols:
             results = protocol_results[protocol]
@@ -457,6 +463,7 @@ class ProtocolExecutionVisualizer:
 
         # Create figure
         fig, ax = plt.subplots(1, 1, figsize=figsize)
+        ax = cast(Any, ax)
 
         # Create grouped bar chart
         x_pos = np.arange(len(protocols))
@@ -495,7 +502,7 @@ class InteractiveQuantumVisualizer:
     @staticmethod
     def create_interactive_bloch_sphere(
         qubit: Qubit, title: str = "Interactive Bloch Sphere"
-    ) -> plt.Figure:
+    ) -> Figure:
         """Create an interactive Bloch sphere visualization.
 
         Args:
@@ -547,7 +554,7 @@ class InteractiveQuantumVisualizer:
         qubit_states: list[Qubit],
         interval: int = 200,
         title: str = "Animated Qubit Evolution",
-    ) -> plt.Figure:
+    ) -> Figure:
         """Create an animation of qubit state evolution.
 
         Args:
@@ -574,6 +581,7 @@ class InteractiveQuantumVisualizer:
 
         for i, (idx, subtitle) in enumerate(zip(indices, titles, strict=False)):
             ax = fig.add_subplot(1, 3, i + 1, projection="3d")
+            ax = cast(Any, ax)
             qubit = qubit_states[idx]
 
             # Get Bloch vector

@@ -12,7 +12,7 @@ class Qudit:
     |ψ> = Σ α_i |i> where i ∈ {0, 1, ..., d-1} and Σ |α_i|² = 1
     """
 
-    def __init__(self, state: np.ndarray, dimension: int = 2):
+    def __init__(self, state: np.ndarray, dimension: int = 2) -> None:
         """Initialize a qudit with given state vector.
 
         Args:
@@ -150,7 +150,7 @@ class Qudit:
             # Sample according to probabilities
             result = secure_weighted_choice(list(range(self.dimension)), probabilities)
 
-        return result
+        return int(result)
 
     def measure_computational(self) -> int:
         """Measure the qudit in the computational basis.
@@ -281,4 +281,4 @@ class Qudit:
         if self.dimension != other.dimension:
             return False
 
-        return np.allclose(self._state, other._state)
+        return bool(np.allclose(self._state, other._state))

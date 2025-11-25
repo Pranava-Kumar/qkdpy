@@ -1,5 +1,7 @@
 """Cirq integration plugin for QKDpy."""
 
+from typing import Any
+
 try:
     import cirq
 
@@ -17,7 +19,7 @@ from ..protocols.bb84 import BB84
 class CirqIntegration:
     """Integration with Cirq quantum computing framework."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         """Initialize Cirq integration."""
         if not CIRQ_AVAILABLE:
             raise ImportError(
@@ -25,7 +27,7 @@ class CirqIntegration:
                 "to use Cirq integration."
             )
 
-    def qubit_to_cirq(self, qkdpy_qubit: Qubit):
+    def qubit_to_cirq(self, qkdpy_qubit: Qubit) -> Any:
         """Convert a QKDpy Qubit to a Cirq state.
 
         Args:
@@ -39,7 +41,7 @@ class CirqIntegration:
         # Create Cirq state
         return cirq.StateVectorSimulationState(state_vector=state)
 
-    def cirq_to_qubit(self, cirq_state):
+    def cirq_to_qubit(self, cirq_state: Any) -> Qubit:
         """Convert a Cirq state to a QKDpy Qubit.
 
         Args:
@@ -58,7 +60,7 @@ class CirqIntegration:
         num_qubits: int = 1,
         alice_bases: list[str] | None = None,
         bob_bases: list[str] | None = None,
-    ):
+    ) -> Any:
         """Create a Cirq circuit implementing the BB84 protocol.
 
         Args:
@@ -159,7 +161,7 @@ class CirqIntegration:
 
         return alice_bits, bob_bits, matching_bases
 
-    def convert_channel_to_cirq(self, qkdpy_channel: QuantumChannel):
+    def convert_channel_to_cirq(self, qkdpy_channel: QuantumChannel) -> list[Any]:
         """Convert a QKDpy QuantumChannel to Cirq noise gates.
 
         Args:
@@ -186,7 +188,7 @@ class CirqIntegration:
 
         return noise_gates
 
-    def create_entanglement_circuit(self, num_pairs: int = 1):
+    def create_entanglement_circuit(self, num_pairs: int = 1) -> Any:
         """Create a Cirq circuit for generating entangled pairs.
 
         Args:
@@ -213,7 +215,7 @@ class CirqIntegration:
 
     def benchmark_qkdpy_vs_cirq(
         self, num_qubits: int = 100, num_trials: int = 10
-    ) -> dict:
+    ) -> dict[str, Any]:
         """Benchmark QKDpy against Cirq for BB84 protocol.
 
         Args:

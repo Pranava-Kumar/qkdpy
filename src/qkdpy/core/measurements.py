@@ -7,6 +7,7 @@ import numpy as np
 from .gate_utils import GateUtils
 from .gates import PauliX, PauliY
 from .qubit import Qubit
+from .qudit import Qudit
 from .secure_random import secure_choice
 
 
@@ -18,43 +19,59 @@ class Measurement:
     """
 
     @staticmethod
-    def measure_in_basis(qubit: Qubit, basis: str = "computational") -> int:
-        """Measure a qubit in the specified basis.
+    def measure_in_basis(qubit: Qubit | Qudit, basis: str = "computational") -> int:
+        """Measure a qubit/qudit in the specified basis.
 
         Args:
-            qubit: The qubit to measure
-            basis: Measurement basis ('computational', 'hadamard', 'circular')
+            qubit: The qubit/qudit to measure
+            basis: Measurement basis ('computational', 'hadamard', 'circular', 'fourier')
 
         Returns:
-            Measurement result (0 or 1)
+            Measurement result (integer)
 
+        Raises:
+            ValueError: If an unsupported basis is specified for Qudit
         """
-        return qubit.measure(basis)
+        if isinstance(qubit, Qubit):
+            return qubit.measure(basis)
+        elif isinstance(qubit, Qudit):
+            # For qudits, we need to convert the string basis to a basis matrix
+            # This is a simplification; a full implementation would define
+            # basis matrices for Qudits. For now, we'll assume computational
+            # or a simple fourier basis.
+            if basis == "computational":
+                return qubit.measure_computational()
+            elif basis == "fourier":
+                return qubit.measure_fourier()
+            else:
+                raise ValueError(f"Unsupported basis '{basis}' for Qudit measurement")
+        else:
+            raise TypeError("Unsupported quantum state type")
 
     @staticmethod
     def measure_batch_in_basis(
-        qubits: list[Qubit], basis: str = "computational"
+        qubits: list[Qubit | Qudit], basis: str = "computational"
     ) -> list[int]:
-        """Measure a batch of qubits in the specified basis.
+        """Measure a batch of qubits/qudits in the specified basis.
 
         Args:
-            qubits: List of qubits to measure
-            basis: Measurement basis ('computational', 'hadamard', 'circular')
+            qubits: List of qubits/qudits to measure
+            basis: Measurement basis ('computational', 'hadamard', 'circular', 'fourier')
 
         Returns:
-            List of measurement results (0 or 1 for each qubit)
+            List of measurement results (integer for each quantum state)
 
         """
         return [Measurement.measure_in_basis(q, basis) for q in qubits]
 
     @staticmethod
     def measure_in_random_basis(
-        qubit: Qubit, bases: list[str] | None = None
+        qubit: Qubit | Qudit, bases: list[str] | None = None
     ) -> tuple[int, str]:
-        """Measure a qubit in a randomly chosen basis.
+        """Measure a qubit/qudit in a randomly chosen basis.
 
         Args:
-            qubit: The qubit to measure
+            qubit: The qubit/qudit to measure
             bases: List of bases to choose from (default: ['computational', 'hadamard'])
 
         Returns:
@@ -70,12 +87,12 @@ class Measurement:
 
     @staticmethod
     def measure_batch_in_random_bases(
-        qubits: list[Qubit], bases: list[str] | None = None
+        qubits: list[Qubit | Qudit], bases: list[str] | None = None
     ) -> tuple[list[int], list[str]]:
-        """Measure a batch of qubits in randomly chosen bases.
+        """Measure a batch of qubits/qudits in randomly chosen bases.
 
         Args:
-            qubits: List of qubits to measure
+            qubits: List of qubits/qudits to measure
             bases: List of bases to choose from (default: ['computational', 'hadamard'])
 
         Returns:
@@ -236,7 +253,7 @@ class Measurement:
 
     @staticmethod
     def quantum_state_tomography(
-        qubit: Qubit, num_measurements: int = 1000
+        qubit: Qubit | Qudit, num_measurements: int = 1000
     ) -> dict[str, float]:
         """Perform quantum state tomography to reconstruct the density matrix.
 
@@ -248,6 +265,11 @@ class Measurement:
             Dictionary containing the reconstructed density matrix elements
 
         """
+        if isinstance(qubit, Qudit):
+            raise NotImplementedError(
+                "Quantum state tomography is not implemented for Qudits"
+            )
+
         # Make a copy of the qubit to avoid modifying the original
         qubit_copy = Qubit(qubit.state[0], qubit.state[1])
 

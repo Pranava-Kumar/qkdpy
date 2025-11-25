@@ -56,7 +56,8 @@ class QuantumSimulator:
                 # Calculate fidelity
                 fidelity = abs(np.vdot(initial_state.state, received.state)) ** 2
                 fidelities.append(fidelity)
-                received_states.append(received)
+                if isinstance(received, Qubit):
+                    received_states.append(received)
 
         # Calculate statistics
         stats_result: dict[str, Any] = {

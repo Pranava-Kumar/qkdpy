@@ -1,6 +1,8 @@
 """BB84 QKD protocol implementation."""
 
-from ..core import Measurement, QuantumChannel, Qubit
+from collections.abc import Sequence
+
+from ..core import Measurement, QuantumChannel, Qubit, Qudit
 from ..core.secure_random import secure_choice, secure_randint
 from .base import BaseProtocol
 
@@ -39,13 +41,13 @@ class BB84(BaseProtocol):
 
         # Alice's random bits and bases
         self.alice_bits: list[int] = []
-        self.alice_bases: list[str | None] = []
+        self.alice_bases: list[int | str | None] = []
 
         # Bob's measurement results and bases
         self.bob_results: list[int | None] = []
-        self.bob_bases: list[str | None] = []
+        self.bob_bases: list[int | str | None] = []
 
-    def prepare_states(self) -> list[Qubit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare quantum states for transmission.
 
         In BB84, Alice randomly chooses bits and bases, and prepares qubits
@@ -71,7 +73,7 @@ class BB84(BaseProtocol):
             # Prepare the qubit in the appropriate state
             if basis == "computational":
                 # Computational basis: |0> or |1>
-                qubit = Qubit.zero() if bit == 0 else Qubit.one()
+                qubit: Qubit | Qudit = Qubit.zero() if bit == 0 else Qubit.one()
             else:  # hadamard basis
                 # Hadamard basis: |+> or |->
                 qubit = Qubit.plus() if bit == 0 else Qubit.minus()
@@ -80,7 +82,7 @@ class BB84(BaseProtocol):
 
         return qubits
 
-    def measure_states(self, states: list) -> list[int]:
+    def measure_states(self, states: Sequence[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         In BB84, Bob randomly chooses bases to measure in.
@@ -92,8 +94,7 @@ class BB84(BaseProtocol):
             List of measurement results
 
         """
-        # In BB84, states should be qubits
-        qubits = states  # type: List[Union[Qubit, None]]
+        qubits = states
         self.bob_results = []
         self.bob_bases = []
 
@@ -110,7 +111,6 @@ class BB84(BaseProtocol):
 
             # Measure in the chosen basis
             result = Measurement.measure_in_basis(qubit, basis)
-            qubit.collapse_state(result, basis)
             self.bob_results.append(result)
 
         # Filter out None values to return only int results

@@ -1,6 +1,7 @@
 """Base class for QKD protocols."""
 
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 
 from ..core import QuantumChannel, Qubit, Qudit
 from ..core.secure_random import secure_bits
@@ -34,8 +35,8 @@ class BaseProtocol(ABC):
         self.qber: float = 0.0
 
         # Basis information
-        self.alice_bases: list[str | None] = []
-        self.bob_bases: list[str | None] = []
+        self.alice_bases: list[int | str | None] = []
+        self.bob_bases: list[int | str | None] = []
 
         # Error correction and privacy amplification parameters
         self.error_correction_method: str = "cascade"
@@ -56,7 +57,7 @@ class BaseProtocol(ABC):
         pass
 
     @abstractmethod
-    def measure_states(self, states: list[Qubit | Qudit | None]) -> list[int]:
+    def measure_states(self, states: Sequence[Qubit | Qudit | None]) -> list[int]:
         """Measure received quantum states.
 
         Args:
@@ -282,12 +283,12 @@ class BaseProtocol(ABC):
 
         # Generate a random seed for the hash function
         # Generate a random seed for the hash function using CSPRNG
-        seed = []
+        seed: list[list[int]] = []
         for _ in range(r):
             seed.append(secure_bits(n))
 
         # Apply the hash function
-        result = []
+        result: list[int] = []
         for i in range(r):
             # Compute the dot product modulo 2
             bit = int(sum(seed[i][j] * int(key_str[j]) for j in range(n)) % 2)

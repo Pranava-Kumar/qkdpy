@@ -1,8 +1,11 @@
 """E91 QKD protocol implementation."""
 
+from collections.abc import Sequence
+from typing import Any
+
 import numpy as np
 
-from ..core import QuantumChannel
+from ..core import QuantumChannel, Qubit
 from ..core.gates import Ry
 from ..core.multiqubit import MultiQubitState
 from ..core.secure_random import secure_randint, secure_random
@@ -56,15 +59,15 @@ class E91(BaseProtocol):
         self.alice_results: list[int] = []
         self.bob_results: list[int] = []
 
-    def prepare_states(self) -> list[None]:
+    def prepare_states(self) -> list[Qubit | Any]:
         """Prepare entangled quantum states.
 
         In this simulation, we generate pairs on demand during measurement.
         Returns placeholders.
         """
-        return [None] * self.num_pairs
+        return [Qubit.zero() for _ in range(self.num_pairs)]
 
-    def measure_states(self, states: list[None]) -> list[int]:
+    def measure_states(self, states: Sequence[Qubit | Any | None]) -> list[int]:
         """Distribute and measure entangled states.
 
         Args:
@@ -171,7 +174,7 @@ class E91(BaseProtocol):
         )
         return errors / len(alice_sifted)
 
-    def test_bell_inequality(self) -> dict[str, float]:
+    def test_bell_inequality(self) -> dict[str, Any]:
         """Test CHSH inequality.
 
         We use the non-matching bases for the CHSH test.
@@ -241,7 +244,7 @@ class E91(BaseProtocol):
 
         # 1. Prepare & Measure (simulated together)
         # We pass empty list or list of Nones, doesn't matter as measure_states ignores input
-        self.measure_states([None] * self.num_pairs)
+        self.measure_states([Qubit.zero()] * self.num_pairs)
 
         # 2. Bell Test
         bell_stats = self.test_bell_inequality()

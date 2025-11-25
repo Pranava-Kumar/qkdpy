@@ -1,6 +1,7 @@
 """Timing and synchronization models for QKD protocols."""
 
 import time
+from typing import cast
 
 import numpy as np
 
@@ -83,9 +84,10 @@ class TimingSynchronizer:
         alice_time = reference_time + self.alice_clock_offset + drift
 
         # Add timing jitter
-        alice_time += np.random.normal(0, self.timing_jitter)
+        jitter = cast(float, np.random.normal(0, self.timing_jitter))
+        alice_time += jitter
 
-        return alice_time
+        return float(alice_time)
 
     def get_bob_time(self, reference_time: float) -> float:
         """Get Bob's local time based on reference time and drift.
@@ -104,9 +106,10 @@ class TimingSynchronizer:
         bob_time = reference_time + self.bob_clock_offset + drift
 
         # Add timing jitter
-        bob_time += np.random.normal(0, self.timing_jitter)
+        jitter = cast(float, np.random.normal(0, self.timing_jitter))
+        bob_time += jitter
 
-        return bob_time
+        return float(bob_time)
 
     def calculate_time_difference(self, reference_time: float) -> float:
         """Calculate the time difference between Alice and Bob's clocks.
@@ -163,7 +166,7 @@ class PhotonTimingModel:
         self.source_jitter = source_jitter
 
         # Speed of light in fiber (m/s)
-        self.v_fiber = 299792458 * speed_of_light_factor
+        self.v_fiber = 299792458 * self.speed_of_light_factor
 
         # Propagation time for photons
         self.propagation_time = fiber_length / self.v_fiber
@@ -177,8 +180,10 @@ class PhotonTimingModel:
         Returns:
             Actual emission time with jitter
         """
-        actual_emission = emission_time + np.random.normal(0, self.source_jitter)
-        return actual_emission
+        actual_emission = emission_time + cast(
+            float, np.random.normal(0, self.source_jitter)
+        )
+        return float(actual_emission)
 
     def detect_photon(self, arrival_time: float) -> float:
         """Simulate photon detection with timing resolution.
@@ -190,10 +195,10 @@ class PhotonTimingModel:
             Measured arrival time with resolution effects
         """
         # Detector adds timing uncertainty
-        measured_time = arrival_time + np.random.normal(
-            0, self.detector_timing_resolution
+        measured_time = arrival_time + cast(
+            float, np.random.normal(0, self.detector_timing_resolution)
         )
-        return measured_time
+        return float(measured_time)
 
     def photon_transit_time(self) -> float:
         """Get the transit time for a photon through the fiber.

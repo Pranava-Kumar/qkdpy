@@ -1,5 +1,7 @@
 """Realistic quantum detector model for QKD protocols."""
 
+from typing import Any
+
 import numpy as np
 
 from .qubit import Qubit
@@ -21,7 +23,7 @@ class QuantumDetector:
         timing_jitter: float = 1e-10,  # Timing jitter in seconds (std)
         afterpulse_probability: float = 0.01,  # Probability of afterpulsing
         reset_time: float = 1e-6,  # Time to reset after detection in seconds
-    ):
+    ) -> None:
         """Initialize the quantum detector.
 
         Args:
@@ -41,8 +43,9 @@ class QuantumDetector:
         self.reset_time = max(0.0, reset_time)
 
         # Internal state tracking
-        self.last_detection_time = -np.inf
-        self.in_dead_time = False
+        self.last_detection_time: float = -np.inf
+        self.in_dead_time: bool = False
+        self._last_dark_check_time: float | None = None
 
         # Statistics
         self.total_photons_detected = 0
@@ -85,7 +88,7 @@ class QuantumDetector:
 
         # Check for dark count during this time interval
         # Calculate dark count probability based on time since last check
-        if hasattr(self, "_last_dark_check_time"):
+        if self._last_dark_check_time is not None:
             time_since_check = timestamp - self._last_dark_check_time
         else:
             time_since_check = 1e-9  # Small time interval for first check
@@ -148,7 +151,7 @@ class QuantumDetector:
 
         return detection_result, detection_time
 
-    def get_statistics(self) -> dict:
+    def get_statistics(self) -> dict[str, Any]:
         """Get detector statistics.
 
         Returns:
@@ -178,7 +181,7 @@ class QuantumDetector:
 class DetectorArray:
     """Array of quantum detectors for multi-basis measurements."""
 
-    def __init__(self, num_detectors: int = 2, **detector_kwargs):
+    def __init__(self, num_detectors: int = 2, **detector_kwargs: Any) -> None:
         """Initialize an array of detectors.
 
         Args:
@@ -214,7 +217,7 @@ class DetectorArray:
 
         return result
 
-    def get_statistics(self) -> list[dict]:
+    def get_statistics(self) -> list[dict[str, Any]]:
         """Get statistics for all detectors.
 
         Returns:

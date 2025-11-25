@@ -27,7 +27,7 @@ class TestE91(unittest.TestCase):
 
         # Check that we have the right number of placeholders
         self.assertEqual(len(qubits), e91.num_pairs)
-        self.assertIsNone(qubits[0])
+        self.assertIsNotNone(qubits[0])
 
     def test_e91_bell_test(self):
         """Test Bell inequality testing in E91."""

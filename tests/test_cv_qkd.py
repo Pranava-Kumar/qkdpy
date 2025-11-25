@@ -33,9 +33,9 @@ class TestCVQKD(unittest.TestCase):
         self.assertEqual(len(cv_qkd.alice_x), cv_qkd.block_size)
         self.assertEqual(len(cv_qkd.alice_p), cv_qkd.block_size)
 
-        # Check that returned list contains None (as we use internal arrays)
+        # Check that returned list contains Qubit objects (placeholders)
         for item in qubits:
-            self.assertIsNone(item)
+            self.assertIsNotNone(item)
 
     def test_cv_qkd_sift_keys(self):
         """Test CV-QKD key sifting."""

@@ -10,7 +10,7 @@ from scipy.special import erf
 class QKDOptimizer:
     """Machine learning-based optimizer for QKD protocols."""
 
-    def __init__(self, protocol_name: str):
+    def __init__(self, protocol_name: str) -> None:
         """Initialize the QKD optimizer.
 
         Args:
@@ -20,7 +20,7 @@ class QKDOptimizer:
         self.optimization_history: list[dict[str, Any]] = []
         self.best_parameters: dict[str, float] = {}
         self.best_performance = 0.0
-        self.model = None  # For neural network-based optimization
+        self.model: Any = None  # For neural network-based optimization
 
         # Check for sklearn
         try:
@@ -85,18 +85,18 @@ class QKDOptimizer:
             Dictionary with optimization results
         """
         # Initialize with random samples
-        best_params = {}
-        best_value: Any = float("-inf")
+        best_params: dict[str, float] = {}
+        best_value: float = float("-inf")
 
         # Track parameter values and objective values
-        param_history = []
-        objective_history = []
+        param_history: list[dict[str, float]] = []
+        objective_history: list[float] = []
 
         # Initial random sampling
         initial_samples = min(10, num_iterations // 2)
         for _ in range(initial_samples):
             # Generate random parameters within bounds
-            params = {}
+            params: dict[str, float] = {}
             for param_name, (min_val, max_val) in parameter_space.items():
                 params[param_name] = np.random.uniform(min_val, max_val)
 
@@ -120,21 +120,21 @@ class QKDOptimizer:
             # Fit a Gaussian process model to the data
             if self.sklearn_available and len(param_history) >= 5:
                 # Prepare data
-                X = []
-                y = []
+                X: list[list[float]] = []
+                y: list[float] = []
                 param_names = list(parameter_space.keys())
                 for i in range(len(param_history)):
                     row = [param_history[i][name] for name in param_names]
                     X.append(row)
                     y.append(objective_history[i])
 
-                X = np.array(X)
-                y = np.array(y)
+                X_np = np.array(X)
+                y_np = np.array(y)
 
                 # Train GP
                 kernel = self.gp_kernel(nu=2.5)
                 gp = self.gp_class(kernel=kernel, n_restarts_optimizer=5)
-                gp.fit(X, y)
+                gp.fit(X_np, y_np)
 
                 # Select next point using Expected Improvement with the trained GP
                 next_params = self._sklearn_gp_search(
@@ -197,7 +197,7 @@ class QKDOptimizer:
             objective_history.append(value)
 
         # Store optimization results
-        result = {
+        result: dict[str, Any] = {
             "best_parameters": best_params,
             "best_objective_value": best_value,
             "parameter_history": param_history,
@@ -212,15 +212,21 @@ class QKDOptimizer:
 
         return result
 
-    def _sklearn_gp_search(self, gp, parameter_space, best_value, param_names):
+    def _sklearn_gp_search(
+        self,
+        gp: Any,
+        parameter_space: dict[str, tuple[float, float]],
+        best_value: float,
+        param_names: list[str],
+    ) -> dict[str, float]:
         """Search for next parameter using sklearn GP and Expected Improvement."""
         # Random sampling for candidate points
-        candidates = []
-        X_candidates = []
+        candidates: list[dict[str, float]] = []
+        X_candidates: list[list[float]] = []
 
         for _ in range(100):
-            cand = {}
-            row = []
+            cand: dict[str, float] = {}
+            row: list[float] = []
             for name in param_names:
                 min_v, max_v = parameter_space[name]
                 val = np.random.uniform(min_v, max_v)
@@ -229,10 +235,10 @@ class QKDOptimizer:
             candidates.append(cand)
             X_candidates.append(row)
 
-        X_candidates = np.array(X_candidates)
+        X_candidates_np = np.array(X_candidates)
 
         # Predict mean and std
-        mu, sigma = gp.predict(X_candidates, return_std=True)
+        mu, sigma = gp.predict(X_candidates_np, return_std=True)
 
         # Calculate EI
         with np.errstate(divide="warn"):
@@ -243,14 +249,14 @@ class QKDOptimizer:
             )
             ei[sigma == 0.0] = 0.0
 
-        best_idx = np.argmax(ei)
+        best_idx = int(np.argmax(ei))
         return candidates[best_idx]
 
     def _expected_improvement_search(
         self,
         parameter_space: dict[str, tuple[float, float]],
-        param_history: list,
-        objective_history: list,
+        param_history: list[dict[str, float]],
+        objective_history: list[float],
     ) -> dict[str, float]:
         """Select next point using expected improvement heuristic.
 
@@ -266,12 +272,12 @@ class QKDOptimizer:
         best_value = max(objective_history)
 
         # Try several candidate points
-        candidates = []
-        ei_values = []
+        candidates: list[dict[str, float]] = []
+        ei_values: list[float] = []
 
         for _ in range(20):
             # Generate random candidate
-            candidate = {}
+            candidate: dict[str, float] = {}
             for param_name, (min_val, max_val) in parameter_space.items():
                 candidate[param_name] = np.random.uniform(min_val, max_val)
             candidates.append(candidate)
@@ -292,17 +298,22 @@ class QKDOptimizer:
                 ) + uncertainty * self._standard_normal_pdf(z)
             else:
                 ei = (
-                    0 if predicted_value <= best_value else predicted_value - best_value
+                    0.0
+                    if predicted_value <= best_value
+                    else predicted_value - best_value
                 )
 
             ei_values.append(ei)
 
         # Select candidate with highest expected improvement
-        best_idx = np.argmax(ei_values)
+        best_idx = int(np.argmax(ei_values))
         return candidates[best_idx]
 
     def _simple_gp_predict(
-        self, candidate: dict[str, float], param_history: list, objective_history: list
+        self,
+        candidate: dict[str, float],
+        param_history: list[dict[str, float]],
+        objective_history: list[float],
     ) -> float:
         """Simple Gaussian process prediction.
 
@@ -334,10 +345,10 @@ class QKDOptimizer:
 
         # Weighted average of historical values
         prediction = np.sum(weights * np.array(objective_history))
-        return prediction
+        return float(prediction)
 
     def _simple_gp_uncertainty(
-        self, candidate: dict[str, float], param_history: list
+        self, candidate: dict[str, float], param_history: list[dict[str, float]]
     ) -> float:
         """Simple Gaussian process uncertainty estimate.
 
@@ -366,13 +377,15 @@ class QKDOptimizer:
         min_distance = np.min(distances)
         # Normalize and invert so that smaller distances mean lower uncertainty
         uncertainty = 1.0 / (1.0 + np.exp(-min_distance))
-        return uncertainty
+        return float(uncertainty)
 
-    def _standard_normal_cdf(self, x: float) -> float:
+    def _standard_normal_cdf(self, x: float | np.ndarray) -> float | np.ndarray:
         """Standard normal cumulative distribution function."""
+        # Use scipy.special.erf if available, otherwise fallback or loop
+        # But since we are in a scientific context, we likely have scipy
         return 0.5 * (1 + erf(x / np.sqrt(2)))
 
-    def _standard_normal_pdf(self, x: float) -> float:
+    def _standard_normal_pdf(self, x: float | np.ndarray) -> float | np.ndarray:
         """Standard normal probability density function."""
         return np.exp(-0.5 * x * x) / np.sqrt(2 * np.pi)
 
@@ -399,15 +412,15 @@ class QKDOptimizer:
         elitism_count = 2
 
         # Initialize population
-        population = []
+        population: list[dict[str, float]] = []
         for _ in range(population_size):
-            individual = {}
+            individual: dict[str, float] = {}
             for param_name, (min_val, max_val) in parameter_space.items():
                 individual[param_name] = np.random.uniform(min_val, max_val)
             population.append(individual)
 
         # Evaluate initial population
-        fitness_scores = []
+        fitness_scores: list[float] = []
         for individual in population:
             try:
                 fitness = objective_function(individual)
@@ -423,7 +436,7 @@ class QKDOptimizer:
         # Evolution loop
         for _ in range(num_iterations):
             # Create new population
-            new_population = []
+            new_population: list[dict[str, float]] = []
 
             # Elitism: keep best individuals
             sorted_indices = np.argsort(fitness_scores)[::-1]
@@ -468,7 +481,7 @@ class QKDOptimizer:
                 best_params = population[best_idx].copy()
 
         # Store optimization results
-        result = {
+        result: dict[str, Any] = {
             "best_parameters": best_params,
             "best_objective_value": best_fitness,
             "final_population": population,
@@ -505,8 +518,8 @@ class QKDOptimizer:
         self, parent1: dict[str, float], parent2: dict[str, float]
     ) -> tuple[dict[str, float], dict[str, float]]:
         """Uniform crossover for genetic algorithm."""
-        child1 = {}
-        child2 = {}
+        child1: dict[str, float] = {}
+        child2: dict[str, float] = {}
 
         for param_name in parent1:
             if np.random.random() < 0.5:
@@ -531,7 +544,7 @@ class QKDOptimizer:
                 current_val = individual[param_name]
                 mutation_strength = (max_val - min_val) * 0.1
                 new_val = np.random.normal(current_val, mutation_strength)
-                individual[param_name] = np.clip(new_val, min_val, max_val)
+                individual[param_name] = float(np.clip(new_val, min_val, max_val))
 
     def get_optimization_history(self) -> list[dict[str, Any]]:
         """Get the history of all optimizations.
@@ -558,14 +571,14 @@ class QKDOptimizer:
             Dictionary with optimization results
         """
         # Initialize training data
-        X_train = []  # Parameter sets
-        y_train = []  # Objective values
+        X_train: list[list[float]] = []  # Parameter sets
+        y_train: list[float] = []  # Objective values
 
         # Initial random sampling to build training dataset
         initial_samples = min(20, num_iterations // 2)
         for _ in range(initial_samples):
             # Generate random parameters within bounds
-            params = {}
+            params: dict[str, float] = {}
             for param_name, (min_val, max_val) in parameter_space.items():
                 params[param_name] = np.random.uniform(min_val, max_val)
 
@@ -582,15 +595,15 @@ class QKDOptimizer:
 
         # Find best initial solution
         best_idx = np.argmax(y_train)
-        best_params = {}
+        best_params: dict[str, float] = {}
         param_names = list(parameter_space.keys())
         for i, name in enumerate(param_names):
             best_params[name] = X_train[best_idx][i]
-        best_value = y_train[best_idx]
+        best_value: float = y_train[best_idx]
 
         # Track history
-        param_history = []
-        objective_history = []
+        param_history: list[dict[str, float]] = []
+        objective_history: list[float] = []
         for i in range(len(X_train)):
             params = {}
             for j, name in enumerate(param_names):
@@ -600,6 +613,7 @@ class QKDOptimizer:
 
         # Perform optimization iterations
         for _iteration in range(num_iterations - initial_samples):
+            model: Callable[[np.ndarray], np.ndarray]
             # Train a neural network model
             if self.sklearn_available:
                 # Prepare data
@@ -612,8 +626,10 @@ class QKDOptimizer:
                 )
                 mlp.fit(X, y)
 
-                def model(x, model_instance=mlp):
+                def model_func(x: np.ndarray, model_instance: Any = mlp) -> np.ndarray:
                     return model_instance.predict(x)
+
+                model = model_func
 
             else:
                 # Train a simple neural network model (manual fallback)
@@ -621,13 +637,13 @@ class QKDOptimizer:
 
             # Use the model to guide search
             # Try several candidate solutions and select the most promising
-            candidates = []
-            predictions = []
+            candidates: list[dict[str, float]] = []
+            predictions: list[float] = []
 
             for _ in range(10):
                 # Generate candidate parameters
                 candidate = {}
-                candidate_vector = []
+                candidate_vector: list[float] = []
                 for param_name, (min_val, max_val) in parameter_space.items():
                     val = np.random.uniform(min_val, max_val)
                     candidate[param_name] = val
@@ -682,7 +698,9 @@ class QKDOptimizer:
 
         return result
 
-    def _train_simple_nn(self, X_train: list, y_train: list) -> Callable:
+    def _train_simple_nn(
+        self, X_train: list[list[float]], y_train: list[float]
+    ) -> Callable[[np.ndarray], np.ndarray]:
         """Train a simple neural network model.
 
         Args:
@@ -732,7 +750,7 @@ class QKDOptimizer:
             predictions = z2.flatten()
 
             # Compute loss (mean squared error)
-            _loss = np.mean((predictions - y_norm) ** 2)
+            # _loss = np.mean((predictions - y_norm) ** 2)
 
             # Backward pass - Corrected gradient computation
             m = len(y_norm)  # Number of samples
@@ -755,7 +773,7 @@ class QKDOptimizer:
             b1 -= learning_rate * db1
 
         # Return prediction function
-        def predict(X_test):
+        def predict(X_test: np.ndarray) -> np.ndarray:
             X_test_norm = (X_test - X_mean) / X_std
             z1 = X_test_norm @ W1 + b1
             a1 = np.tanh(z1)
@@ -780,13 +798,9 @@ class QKDOptimizer:
             param_names = list(parameters.keys())
             param_vector = [parameters[name] for name in param_names]
             X = np.array(param_vector).reshape(1, -1)
-            return self.model(X)[0]
+            return float(self.model(X)[0])
 
         # If no model is trained, return a simple heuristic
-        # This is a placeholder - in a real implementation, we would:
-        # 1. Train a model on historical protocol performance data
-        # 2. Use the model to predict performance for new parameters
-        # 3. Return the prediction
         return 0.0  # Placeholder
 
 
@@ -835,7 +849,7 @@ class QKDAnomalyDetector:
         Returns:
             Dictionary mapping metric names to anomaly flags
         """
-        anomalies = {}
+        anomalies: dict[str, bool] = {}
 
         for metric, value in current_metrics.items():
             if metric in self.baseline_statistics:
@@ -890,7 +904,7 @@ class QKDAnomalyDetector:
                     anomaly_counts[metric] = anomaly_counts.get(metric, 0) + 1
 
         # Calculate anomaly rates
-        anomaly_rates = {}
+        anomaly_rates: dict[str, float] = {}
         for metric, count in anomaly_counts.items():
             anomaly_rates[metric] = float(count / total_detections)
 

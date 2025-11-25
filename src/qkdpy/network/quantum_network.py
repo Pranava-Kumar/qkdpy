@@ -1,7 +1,8 @@
 """Advanced quantum network simulation for multi-party QKD."""
 
+import secrets
 import time
-from typing import Any
+from typing import Any, cast
 
 import numpy as np
 
@@ -22,37 +23,41 @@ except ImportError:
     NETWORKX_AVAILABLE = False
 
     # Use a simple graph implementation if networkx is not available
-    class nx:
+    class _nx:  # Renamed to _nx to avoid redefinition
         @staticmethod
-        def Graph():
+        def Graph() -> Any:
             return SimpleGraph()
 
         @staticmethod
-        def dijkstra_path(G, source, target):
+        def dijkstra_path(
+            G: Any, source: Any, target: Any, weight: str | None = None
+        ) -> list[Any]:
             # Simple implementation of Dijkstra's algorithm
             return simple_dijkstra_path(G, source, target)
+
+    nx = _nx  # Alias nx to _nx
 
 
 class SimpleGraph:
     """Simple graph implementation if networkx is not available."""
 
-    def __init__(self):
-        self.adjacency_list = {}
+    def __init__(self) -> None:
+        self.adjacency_list: dict[Any, set[Any]] = {}
 
-    def add_node(self, node):
+    def add_node(self, node: Any) -> None:
         if node not in self.adjacency_list:
             self.adjacency_list[node] = set()
 
-    def add_edge(self, node1, node2):
+    def add_edge(self, node1: Any, node2: Any) -> None:
         self.add_node(node1)
         self.add_node(node2)
         self.adjacency_list[node1].add(node2)
         self.adjacency_list[node2].add(node1)
 
-    def nodes(self):
-        return self.adjacency_list.keys()
+    def nodes(self) -> list[Any]:
+        return list(self.adjacency_list.keys())
 
-    def edges(self):
+    def edges(self) -> list[tuple[Any, Any]]:
         edges = []
         for node1 in self.adjacency_list:
             for node2 in self.adjacency_list[node1]:
@@ -60,16 +65,16 @@ class SimpleGraph:
                     edges.append((node1, node2))
         return edges
 
-    def neighbors(self, node):
+    def neighbors(self, node: Any) -> set[Any]:
         return self.adjacency_list.get(node, set())
 
 
-def simple_dijkstra_path(graph, source, target):
+def simple_dijkstra_path(graph: SimpleGraph, source: Any, target: Any) -> list[Any]:
     """Simple implementation of Dijkstra's algorithm."""
     if not NETWORKX_AVAILABLE:
         # Initialize distances and previous nodes
         distances = {node: float("inf") for node in graph.nodes()}
-        previous = dict.fromkeys(graph.nodes())
+        previous: dict[Any, Any] = dict.fromkeys(graph.nodes())
         distances[source] = 0
         unvisited = set(graph.nodes())
 
@@ -138,7 +143,7 @@ class QuantumNetwork:
         self,
         node_id: str,
         protocol: BaseProtocol | None = None,
-        position: tuple[float, float] = None,
+        position: tuple[float, float] | None = None,
     ) -> None:
         """Add a node to the quantum network.
 
@@ -163,7 +168,7 @@ class QuantumNetwork:
         node1_id: str,
         node2_id: str,
         channel: QuantumChannel | None = None,
-        distance: float = None,  # in km
+        distance: float | None = None,  # in km
         fiber_type: str = "standard",  # 'standard', 'dispersion-shifted', 'hollow-core'
         has_repeater: bool = False,
     ) -> None:
@@ -186,7 +191,7 @@ class QuantumNetwork:
         if distance is None:
             pos1 = self.graph.nodes[node1_id].get("position")
             pos2 = self.graph.nodes[node2_id].get("position")
-            if pos1 and pos2:
+            if pos1 is not None and pos2 is not None:
                 # Calculate Euclidean distance between nodes
                 distance = np.sqrt((pos1[0] - pos2[0]) ** 2 + (pos1[1] - pos2[1]) ** 2)
             else:
@@ -285,24 +290,35 @@ class QuantumNetwork:
         try:
             if weight == "distance":
                 # Use physical distance as weight
-                return nx.dijkstra_path(
-                    self.graph, source, destination, weight="distance"
+                return cast(
+                    list[str],
+                    nx.dijkstra_path(
+                        self.graph, source, destination, weight="distance"
+                    ),
                 )
             elif weight == "latency":
                 # Calculate path based on latency (simplified model)
                 # For now, use distance as proxy for latency
-                return nx.dijkstra_path(
-                    self.graph, source, destination, weight="distance"
+                return cast(
+                    list[str],
+                    nx.dijkstra_path(
+                        self.graph, source, destination, weight="distance"
+                    ),
                 )
             elif weight == "loss":
                 # Calculate path based on cumulative loss
                 # For now, use distance as proxy for loss (longer distance = higher loss)
-                return nx.dijkstra_path(
-                    self.graph, source, destination, weight="distance"
+                return cast(
+                    list[str],
+                    nx.dijkstra_path(
+                        self.graph, source, destination, weight="distance"
+                    ),
                 )
             else:
                 # Use hop count as default
-                return nx.dijkstra_path(self.graph, source, destination)
+                return cast(
+                    list[str], nx.dijkstra_path(self.graph, source, destination)
+                )
         except nx.NetworkXNoPath:
             # No path exists
             return []
@@ -361,7 +377,7 @@ class QuantumNetwork:
                     results = protocol.execute()
                     if (
                         results.get("is_secure", False)
-                        and results.get("qber", 1.0) < security_threshold
+                        and cast(float, results.get("qber", 1.0)) < security_threshold
                     ):
                         final_key = results.get("final_key", [])
                         # Ensure we return a list of integers
@@ -423,7 +439,7 @@ class QuantumNetwork:
             # Execute the protocol
             try:
                 results = protocol.execute()
-                current_qber = results.get("qber", 1.0)
+                current_qber = cast(float, results.get("qber", 1.0))
                 total_qber += current_qber
 
                 if (
@@ -462,14 +478,21 @@ class QuantumNetwork:
         # Create the final key by combining all hop keys
         if hop_results:
             # Start with the first key
-            final_key = hop_results[0]["key"][:key_length].copy()
+            # Explicitly cast to list[int] to satisfy mypy
+            first_key_data = hop_results[0]["key"]
+            if isinstance(first_key_data, list):
+                final_key = [int(x) for x in first_key_data[:key_length]]
+            else:
+                final_key = []
 
             # XOR in subsequent keys
             for i in range(1, len(hop_results)):
-                hop_key = hop_results[i]["key"][: len(final_key)]  # Truncate to match
-                for j in range(len(final_key)):
-                    if j < len(hop_key):
-                        final_key[j] ^= hop_key[j]
+                hop_key_data = hop_results[i]["key"]
+                if isinstance(hop_key_data, list):
+                    hop_key = [int(x) for x in hop_key_data[: len(final_key)]]
+                    for j in range(len(final_key)):
+                        if j < len(hop_key):
+                            final_key[j] ^= hop_key[j]
 
             # Adjust key length to desired size
             if len(final_key) > key_length:
@@ -613,7 +636,7 @@ class QuantumNetwork:
     def simulate_network_performance(
         self,
         num_trials: int = 100,
-        key_lengths: list[int] = None,
+        key_lengths: list[int] | None = None,
         path_selection: str = "random",
     ) -> dict[str, Any]:
         """Simulate the performance of the quantum network.
@@ -887,7 +910,7 @@ class MultiPartyQKD:
         # Create random shares for the first (num_shares - 1) shares
         shares = []
         for _ in range(num_shares - 1):
-            share = [np.random.randint(0, 2) for _ in range(len(secret))]
+            share = [secrets.randbelow(2) for _ in range(len(secret))]
             shares.append(share)
 
         # Create the last share such that XOR of all shares equals the secret

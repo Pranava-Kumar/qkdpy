@@ -6,6 +6,7 @@ from typing import Any
 import numpy as np
 
 from ..core import QuantumChannel
+from ..core.secure_random import secure_randint
 from ..key_management import QuantumKeyManager
 from ..protocols import BaseProtocol
 from ..protocols.bb84 import BB84
@@ -471,7 +472,7 @@ class RealisticQuantumNetwork:
         elif len(final_key) < key_length:
             # Extend with random bits
             extension = [
-                np.random.randint(0, 2) for _ in range(key_length - len(final_key))
+                secure_randint(0, 2) for _ in range(key_length - len(final_key))
             ]
             final_key.extend(extension)
 
@@ -569,7 +570,7 @@ class RealisticQuantumNetwork:
         Returns:
             Dictionary with calibration results
         """
-        results = {
+        results: dict[str, Any] = {
             "successful_calibrations": 0,
             "failed_calibrations": 0,
             "calibrated_nodes": [],

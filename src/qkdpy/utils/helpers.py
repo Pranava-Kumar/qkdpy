@@ -1,5 +1,7 @@
 """Helper functions for QKDpy."""
 
+import secrets
+
 import numpy as np
 
 
@@ -13,7 +15,7 @@ def random_bit_string(length: int) -> list[int]:
         List of random bits
 
     """
-    return [int(np.random.randint(0, 2)) for _ in range(length)]
+    return [secrets.randbelow(2) for _ in range(length)]
 
 
 def bits_to_bytes(bits: list[int]) -> bytes:
@@ -214,7 +216,7 @@ def generate_random_permutation(n: int) -> list[int]:
 
     """
     permutation = list(range(n))
-    np.random.shuffle(permutation)
+    secrets.SystemRandom().shuffle(permutation)
     return permutation
 
 
