@@ -10,6 +10,10 @@ QKDpy is a comprehensive Python library for Quantum Key Distribution (QKD) simul
 
 ## Features
 
+- **Enterprise Grade Security**:
+  - **CSPRNG Integration**: All critical cryptographic operations (key generation, basis choice, secret sharing) now use `secrets` module for cryptographically secure randomness.
+  - **Type Safety**: Fully typed codebase passing strict `mypy` checks.
+  - **Audited**: Comprehensive security audit passed with distinction.
 - **Quantum Simulation**: Simulate qubits, quantum gates (now with individual gate classes for better modularity), multi-qubit states, and measurements (with flexible state collapse for research and visualization)
 - **QKD Protocols**: Robust implementations of:
   - **BB84** (Standard and Decoy-State variants)
@@ -23,7 +27,6 @@ QKDpy is a comprehensive Python library for Quantum Key Distribution (QKD) simul
 - **Key Management**: Advanced error correction and privacy amplification algorithms
 - **Quantum Cryptography**: Quantum authentication, key exchange, and random number generation
 - **Comprehensive Testing**: Validated with a suite of over 200 tests covering security, integration, performance, and correctness.
-- **Enhanced Security**: Cryptographically Secure Pseudo-Random Number Generation (CSPRNG), secure key rotation, and NIST-style randomness verification.
 - **Machine Learning Integration**: Advanced parameter optimization using `scikit-learn` (Bayesian and Neural Networks).
 - **Quantum Networks**: Physically accurate entanglement swapping and multi-party QKD simulation.
 

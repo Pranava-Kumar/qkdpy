@@ -29,3 +29,5 @@ issues.txt
 # Build artifacts
 docs/_build/
 node_modules/
+
+.github
