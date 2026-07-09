@@ -29,26 +29,25 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
-      - name: Debug - list packages and pre-commit version
-        run: |
-          echo "## CI Environment" >> $GITHUB_STEP_SUMMARY
-          echo "- Python: $(python --version)" >> $GITHUB_STEP_SUMMARY
-          echo "- pre-commit: $(uv run pre-commit --version)" >> $GITHUB_STEP_SUMMARY
-          echo "- Files: $(git ls-files | wc -l) tracked" >> $GITHUB_STEP_SUMMARY
+      - name: Format check (black)
+        run: uv run black --check --diff src/ tests/ benchmarks/ 02-research/ 2>&1 || (echo "Black found formatting issues above" && false)
 
-      - name: Run pre-commit with captured output
-        shell: bash
+      - name: Import sort check (isort)
+        run: uv run isort --check-only --diff src/ tests/ 2>&1 || (echo "isort found sorting issues above" && false)
+
+      - name: Lint check (ruff)
+        run: uv run ruff check src/ tests/ 2>&1 || (echo "Ruff found lint issues above" && false)
+
+      - name: Formatting helpers check (pre-commit hooks)
         run: |
-          set +o pipefail
-          uv run pre-commit run --all-files --show-diff-on-failure 2>&1 | tee /tmp/precommit-output.txt
-          EXITCODE=${PIPESTATUS[0]}
-          echo "Pre-commit exit code: $EXITCODE"
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "## Pre-commit Output" >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          cat /tmp/precommit-output.txt >> $GITHUB_STEP_SUMMARY
-          echo '```' >> $GITHUB_STEP_SUMMARY
-          exit $EXITCODE
+          uv run pre-commit run trailing-whitespace --all-files 2>&1
+          uv run pre-commit run end-of-file-fixer --all-files 2>&1
+          uv run pre-commit run check-yaml --all-files 2>&1
+          uv run pre-commit run check-toml --all-files 2>&1
+          uv run pre-commit run check-json --all-files 2>&1
+          uv run pre-commit run check-merge-conflict --all-files 2>&1
+          uv run pre-commit run debug-statements --all-files 2>&1
+          uv run pre-commit run requirements-txt-fixer --all-files 2>&1
 
   test:
     needs: lint
