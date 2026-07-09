@@ -29,8 +29,26 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
-      - name: Run pre-commit
-        run: uv run pre-commit run --all-files --show-diff-on-failure
+      - name: Debug - list packages and pre-commit version
+        run: |
+          echo "## CI Environment" >> $GITHUB_STEP_SUMMARY
+          echo "- Python: $(python --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- pre-commit: $(uv run pre-commit --version)" >> $GITHUB_STEP_SUMMARY
+          echo "- Files: $(git ls-files | wc -l) tracked" >> $GITHUB_STEP_SUMMARY
+
+      - name: Run pre-commit with captured output
+        shell: bash
+        run: |
+          set +o pipefail
+          uv run pre-commit run --all-files --show-diff-on-failure 2>&1 | tee /tmp/precommit-output.txt
+          EXITCODE=${PIPESTATUS[0]}
+          echo "Pre-commit exit code: $EXITCODE"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Pre-commit Output" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/precommit-output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit $EXITCODE
 
   test:
     needs: lint
