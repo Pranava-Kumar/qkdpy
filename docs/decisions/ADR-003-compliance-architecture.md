@@ -101,7 +101,7 @@ reports.
 ## Consequences
 
 - Adding a new standard requires writing one `_check_*` method and adding a
-  `STANDARD_METHOD_MAP` entry.  No base class changes needed.
+  new entry to the dispatch ``if/elif`` chain.  No base class changes needed.
 - Report exporters are methods on `ComplianceReport`, not separate classes,
   because the report is a data container with no serialisation logic of its
   own.  If export formats proliferate (>5), extract to a `renderers/` package.
