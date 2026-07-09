@@ -7,6 +7,7 @@ standards and generates compliance reports.
 from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
+from html import escape
 from typing import Any
 
 from ..config import QKDConfig, SecurityMode, get_config
@@ -124,6 +125,88 @@ class ComplianceReport:
                     lines.append("")
 
         return "\n".join(lines)
+
+    def export_html(self) -> str:
+        """Export report as a self-contained HTML page."""
+        rate = self.passed_checks / self.total_checks * 100 if self.total_checks > 0 else 0.0
+        status_colour = "#22c55e" if self.overall_compliant else "#ef4444"
+        standards_str = ", ".join(escape(s.value) for s in self.standards_checked)
+        severity_colours = {
+            "critical": "#dc2626",
+            "high": "#ea580c",
+            "medium": "#ca8a04",
+            "low": "#2563eb",
+        }
+
+        rows_html = ""
+        for c in self.checks:
+            badge = "&#9989;" if c.passed else "&#10060;"
+            colour = severity_colours.get(c.severity, "#2563eb")
+            rows_html += f"""
+            <tr>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:13px">{escape(c.check_id)}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb">{escape(c.requirement)}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb">{badge}</td>
+                <td style="padding:8px 12px;border-bottom:1px solid #e5e7eb"><span style="background:{colour};color:#fff;padding:2px 8px;border-radius:9999px;font-size:12px">{escape(c.severity)}</span></td>
+            </tr>"""
+
+        failed_html = ""
+        for c in self.get_failed_checks():
+            details_html = ""
+            if c.details:
+                details_html = f'<p style="margin:4px 0;font-size:13px"><strong>Details:</strong> {escape(c.details)}</p>'
+            rec_html = ""
+            if c.recommendation:
+                rec_html = f'<p style="margin:4px 0;font-size:13px"><strong>Recommendation:</strong> {escape(c.recommendation)}</p>'
+            failed_html += f"""
+            <div style="margin-bottom:16px;padding:16px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:6px">
+                <h3 style="margin:0 0 4px;font-size:15px;font-weight:600">[{escape(c.check_id)}] {escape(c.requirement)}</h3>
+                <p style="margin:4px 0;color:#6b7280;font-size:13px">{escape(c.description)}</p>
+                {details_html}
+                {rec_html}
+            </div>"""
+
+        return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Compliance Report — {escape(self.report_id)}</title>
+</head>
+<body style="margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f9fafb;color:#111827">
+<div style="max-width:960px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:32px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px">
+        <h1 style="margin:0;font-size:24px;font-weight:700">Compliance Report</h1>
+        <span style="background:{status_colour};color:#fff;padding:6px 16px;border-radius:9999px;font-size:14px;font-weight:600">{'COMPLIANT' if self.overall_compliant else 'NON-COMPLIANT'}</span>
+    </div>
+    <table style="width:100%;font-size:14px;margin-bottom:24px">
+        <tr><td style="padding:4px 0;color:#6b7280">Report ID</td><td style="padding:4px 0;font-family:monospace">{escape(self.report_id)}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280">Generated</td><td style="padding:4px 0">{self.generated_at.isoformat()}</td></tr>
+        <tr><td style="padding:4px 0;color:#6b7280">Standards</td><td style="padding:4px 0">{standards_str}</td></tr>
+    </table>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px">
+        <div style="background:#f3f4f6;border-radius:8px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:700">{self.total_checks}</div><div style="font-size:12px;color:#6b7280">Total</div></div>
+        <div style="background:#f0fdf4;border-radius:8px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:700;color:#16a34a">{self.passed_checks}</div><div style="font-size:12px;color:#6b7280">Passed</div></div>
+        <div style="background:#fef2f2;border-radius:8px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:700;color:#dc2626">{self.failed_checks}</div><div style="font-size:12px;color:#6b7280">Failed</div></div>
+        <div style="background:#eff6ff;border-radius:8px;padding:16px;text-align:center"><div style="font-size:28px;font-weight:700;color:#2563eb">{rate:.1f}%</div><div style="font-size:12px;color:#6b7280">Rate</div></div>
+    </div>
+    <h2 style="font-size:18px;font-weight:600;margin:0 0 12px">All Checks</h2>
+    <table style="width:100%;border-collapse:collapse;margin-bottom:32px">
+        <thead>
+            <tr style="background:#f9fafb;text-align:left">
+                <th style="padding:8px 12px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase">ID</th>
+                <th style="padding:8px 12px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase">Requirement</th>
+                <th style="padding:8px 12px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase">Status</th>
+                <th style="padding:8px 12px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase">Severity</th>
+            </tr>
+        </thead>
+        <tbody>{rows_html}</tbody>
+    </table>
+    {failed_html if self.failed_checks > 0 else ''}
+    <p style="font-size:12px;color:#9ca3af;margin:32px 0 0;text-align:center">Generated by QKDpy Enterprise Compliance Suite</p>
+</div>
+</body>
+</html>"""
 
 
 class ComplianceChecker:

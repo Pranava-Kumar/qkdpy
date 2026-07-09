@@ -101,6 +101,8 @@ class EnterpriseConfig:
     enable_compliance_reporting: bool = False
     compliance_standard: str = "ETSI-GS-QKD-014"
     enable_key_escrow: bool = False
+    product_tier: str = "free"  # "free" | "enterprise" | "premium"
+    license_key: str | None = None
 
 
 @dataclass
@@ -138,11 +140,22 @@ def get_config() -> QKDConfig:
 def set_config(config: QKDConfig) -> None:
     """Set the global configuration.
 
+    If the config includes an enterprise product tier, the licensing
+    module is synchronised automatically.
+
     Args:
         config: Configuration to set
     """
     global _config
     _config = config
+    # Sync product tier to licensing module
+    tier_str = config.enterprise.product_tier.lower()
+    try:
+        from .enterprise.licensing import ProductTier, set_active_tier  # noqa: PLC0415
+
+        set_active_tier(ProductTier(tier_str))
+    except (ImportError, ValueError):
+        pass  # licensing module unavailable or unknown tier — use default
 
 
 def reset_config() -> None:
@@ -205,6 +218,10 @@ def load_config_from_env() -> QKDConfig:
     config.enterprise.compliance_standard = os.getenv(
         "QKDPY_COMPLIANCE_STANDARD", config.enterprise.compliance_standard
     )
+    config.enterprise.product_tier = os.getenv(
+        "QKDPY_PRODUCT_TIER", config.enterprise.product_tier
+    )
+    config.enterprise.license_key = os.getenv("QKDPY_LICENSE_KEY")
 
     return config
 

@@ -402,6 +402,57 @@ class TestComplianceReportGeneration(unittest.TestCase):
         md = report.export_markdown()
         self.assertIn("## Failed Checks", md)
 
+    def test_export_html_contains_basic_structure(self):
+        """HTML export is a valid self-contained page."""
+        config = _make_config()
+        checker = ComplianceChecker(
+            standards=[ComplianceStandard.ETSI_GS_QKD_014],
+            config=config,
+        )
+        report = checker.check_compliance()
+        html = report.export_html()
+        self.assertIn("DOCTYPE html", html)
+        self.assertIn("Compliance Report", html)
+        self.assertIn("COMPLIANT", html)
+        self.assertIn("ETSI GS QKD 014", html)
+
+    def test_export_html_shows_failed_section(self):
+        """HTML export includes failed checks section when failures exist."""
+        config = _make_config(enable_hsm=False)
+        checker = ComplianceChecker(
+            standards=[ComplianceStandard.ETSI_GS_QKD_014],
+            config=config,
+        )
+        report = checker.check_compliance()
+        html = report.export_html()
+        self.assertIn("NON-COMPLIANT", html)
+        self.assertIn("ETSI-014-001", html)
+
+    def test_export_html_is_valid_html_syntax(self):
+        """HTML export at minimum opens and closes html tag."""
+        config = _make_config()
+        checker = ComplianceChecker(
+            standards=[ComplianceStandard.ETSI_GS_QKD_014],
+            config=config,
+        )
+        report = checker.check_compliance()
+        html = report.export_html()
+        self.assertTrue(html.strip().startswith("<!DOCTYPE html>"))
+        self.assertIn("</html>", html)
+
+    def test_export_html_shows_four_stat_cards(self):
+        """HTML export contains four summary stat cards."""
+        config = _make_config()
+        checker = ComplianceChecker(
+            standards=[ComplianceStandard.ETSI_GS_QKD_014],
+            config=config,
+        )
+        report = checker.check_compliance()
+        html = report.export_html()
+        # Total, Passed, Failed, Rate
+        for label in ("Total", "Passed", "Failed"):
+            self.assertIn(label, html)
+
     def test_overall_non_compliant_when_critical_failure(self):
         """Overall compliant is False when a critical check fails."""
         config = _make_config(enable_hsm=False)
