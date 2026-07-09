@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qkdpy"
-version = "0.3.0"
+version = "0.4.0"
 description = "A Python Package for Quantum Key Distribution"
 readme = "README.md"
 license = "Apache-2.0"
@@ -47,11 +47,12 @@ classifiers = [
     "Topic :: System :: Networking",
     "Framework :: Pytest",
 ]
-requires-python = ">=3.10"
+requires-python = ">=3.11"
 dependencies = [
     "numpy>=1.24.0",
     "matplotlib>=3.7.0",
     "scipy>=1.10.0",
+    "structlog>=23.0.0",
 ]
 
 [project.optional-dependencies]
@@ -82,6 +83,10 @@ docs = [
 viz = [
     "seaborn>=0.12.0",
 ]
+enterprise = [
+    "cryptography>=41.0.0",
+    "pkcs11>=0.7.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/Pranava-Kumar/qkdpy"
@@ -91,13 +96,13 @@ Repository = "https://github.com/Pranava-Kumar/qkdpy"
 # This is the KEY fix - explicitly specify that only qkdpy should be packaged
 [tool.setuptools.packages.find]
 where = ["src"]  # Look in the src directory
-include = ["qkdpy*"]  # Include qkdpy and all its subpackages
+include = ["qkdpy", "qkdpy.*"]  # Include qkdpy and all its subpackages
 exclude = ["docs*", "tests*", "examples*"]  # Exclude these from packaging
 
 # Rest of your tool configurations...
 [tool.ruff]
 line-length = 88
-target-version = "py310"
+target-version = "py311"
 include = ["*.py", "*.pyi"]
 exclude = [
     ".eggs",
@@ -135,7 +140,7 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.mypy]
-python_version = "3.10"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
