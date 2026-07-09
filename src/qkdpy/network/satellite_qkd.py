@@ -327,12 +327,11 @@ class SatelliteQKD:
             t = i / (time_steps - 1) if time_steps > 1 else 0
 
             # Elevation angle varies during pass — peak at middle of pass
-            # (used implicitly in QBER calculation below)
             peak_elevation = 80.0
             min_elevation = 10.0
-            _elevation = min_elevation + (peak_elevation - min_elevation) * math.sin(
-                math.pi * t
-            )
+            elevation_angle = min_elevation + (
+                peak_elevation - min_elevation
+            ) * math.sin(math.pi * t)
 
             # Calculate satellite position for this time step
             sat_lat = self.ground_station_lat + 5 * math.cos(math.pi * t)
@@ -348,7 +347,7 @@ class SatelliteQKD:
 
             # Compute the per-step QBER *before* using it to derive key rate.
             # Higher elevation (closer to zenith) typically means lower QBER.
-            qber = 0.02 + 0.01 * (1 - math.sin(math.pi * t))
+            qber = 0.02 + 0.01 * (1 - math.sin(math.radians(elevation_angle)))
 
             # Create channel for this position (atmospheric profile is constant
             # within a pass — only the geometric path changes with elevation).

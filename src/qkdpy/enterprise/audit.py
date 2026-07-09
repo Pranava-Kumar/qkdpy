@@ -174,9 +174,10 @@ class AuditLogger:
         crash (the most recent line may still be lost if the OS cannot flush
         the disk cache, but no prior content will be corrupt).
         """
+        assert self.storage_path is not None
         line = json.dumps(event.to_dict()) + "\n"
         try:
-            with open(self.storage_path, "a") as f:  # type: ignore
+            with open(self.storage_path, "a") as f:
                 f.write(line)
                 f.flush()
                 os.fsync(f.fileno())

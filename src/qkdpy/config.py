@@ -226,7 +226,7 @@ def validate_config(config: QKDConfig) -> list[str]:
         List of warning messages
 
     Raises:
-        ConfigurationError: If configuration is invalid
+        InvalidConfigError: If configuration is invalid
     """
     warnings: list[str] = []
 
