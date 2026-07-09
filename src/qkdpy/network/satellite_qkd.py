@@ -18,8 +18,8 @@ from typing import Any
 import numpy as np
 
 from ..core.channels import QuantumChannel
-from ..ml.efficient_models import EfficientQKDPredictor
 from ..utils.logging_config import get_logger
+from .protocols import ChannelPredictor
 
 logger = get_logger(__name__)
 
@@ -269,6 +269,7 @@ class SatelliteQKD:
         ground_station_lat: float = 0.0,
         ground_station_lon: float = 0.0,
         protocol: str = "BB84",
+        channel_predictor: ChannelPredictor | None = None,
     ) -> None:
         """Initialize satellite QKD system.
 
@@ -278,6 +279,7 @@ class SatelliteQKD:
             ground_station_lat: Ground station latitude
             ground_station_lon: Ground station longitude
             protocol: QKD protocol to use
+            channel_predictor: Optional ML predictor. Created lazily if None.
         """
         self.orbit_type = orbit_type
         self.altitude_km = altitude_km
@@ -286,7 +288,7 @@ class SatelliteQKD:
         self.protocol_name = protocol
 
         # ML predictor for channel conditions
-        self._channel_predictor: EfficientQKDPredictor | None = None
+        self._channel_predictor: ChannelPredictor | None = channel_predictor
         self._pass_history: list[dict[str, Any]] = []
 
         logger.info(
@@ -419,12 +421,15 @@ class SatelliteQKD:
         X = np.array(X)
         y = np.array(y)
 
-        # Create and train efficient predictor
-        self._channel_predictor = EfficientQKDPredictor(
-            input_dim=5,
-            max_memory_mb=128,
-            enable_quantization=True,
-        )
+        # Create and train efficient predictor if none was injected
+        if self._channel_predictor is None:
+            from ..ml.efficient_models import EfficientQKDPredictor
+
+            self._channel_predictor = EfficientQKDPredictor(
+                input_dim=5,
+                max_memory_mb=128,
+                enable_quantization=True,
+            )
 
         results = self._channel_predictor.fit(X, y, epochs=50)
 

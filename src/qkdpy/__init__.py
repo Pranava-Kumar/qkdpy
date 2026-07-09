@@ -106,6 +106,7 @@ from .ml import (
 # Import network tools
 from .network import (  # Satellite QKD
     AtmosphericProfile,
+    ChannelPredictor,
     FreeSpaceOpticalChannel,
     MultiPartyQKD,
     MultiPartyQKDNetwork,
@@ -230,6 +231,7 @@ __all__ = [
     "MultiPartyQKD",
     "MultiPartyQKDNetwork",
     # Satellite QKD
+    "ChannelPredictor",
     "SatelliteQKD",
     "FreeSpaceOpticalChannel",
     "AtmosphericProfile",

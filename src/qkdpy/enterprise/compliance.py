@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
-from ..config import SecurityMode, get_config
+from ..config import QKDConfig, SecurityMode, get_config
 from ..utils.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -128,13 +128,16 @@ class ComplianceChecker:
     def __init__(
         self,
         standards: list[ComplianceStandard] | None = None,
+        config: QKDConfig | None = None,
     ) -> None:
         """Initialize compliance checker.
 
         Args:
             standards: Standards to check (default: NIST SP 800-57)
+            config: QKD config to check against. Uses global config if None.
         """
         self.standards = standards or [ComplianceStandard.NIST_SP_800_57]
+        self._config = config
 
     def check_compliance(self) -> ComplianceReport:
         """Run all compliance checks.
@@ -187,7 +190,7 @@ class ComplianceChecker:
     def _check_nist_800_57(self) -> list[ComplianceCheck]:
         """Check NIST SP 800-57 compliance."""
         checks: list[ComplianceCheck] = []
-        config = get_config()
+        config = self._config if self._config is not None else get_config()
 
         # Key length requirements
         checks.append(
@@ -264,7 +267,7 @@ class ComplianceChecker:
     def _check_fips_140_2(self) -> list[ComplianceCheck]:
         """Check FIPS 140-2 compliance."""
         checks: list[ComplianceCheck] = []
-        config = get_config()
+        config = self._config if self._config is not None else get_config()
 
         # HSM requirement
         checks.append(
@@ -299,7 +302,7 @@ class ComplianceChecker:
     def _check_iso_27001(self) -> list[ComplianceCheck]:
         """Check ISO 27001 compliance."""
         checks: list[ComplianceCheck] = []
-        config = get_config()
+        config = self._config if self._config is not None else get_config()
 
         # Access control
         checks.append(
