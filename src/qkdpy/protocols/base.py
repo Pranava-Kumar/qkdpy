@@ -136,57 +136,85 @@ class BaseProtocol(ABC):
             Dictionary containing protocol results and statistics
 
         """
-        # Reset statistics
-        self.reset()
+        # Lazy imports to avoid circular dependency (protocols → utils.instrumentation → utils.__init__ → ..protocols.base)
+        from ..utils.instrumentation import (  # noqa: PLC0415
+            OperationSpan,
+            record_protocol_execution,
+            record_qber_diagnostic,
+        )
 
-        # Step 1: Alice prepares quantum states
-        qubits = self.prepare_states()
+        with OperationSpan(f"protocol.execute.{self.__class__.__name__}"):
+            # Reset statistics
+            self.reset()
 
-        # Step 2: Transmit qubits through the quantum channel
-        received_qubits = self.channel.transmit_batch(qubits)
+            # Step 1: Alice prepares quantum states
+            qubits = self.prepare_states()
 
-        # Step 3: Bob measures the received states
-        measurement_results = self.measure_states(received_qubits)
+            # Step 2: Transmit qubits through the quantum channel
+            received_qubits = self.channel.transmit_batch(qubits)
 
-        # Step 4: Sift keys based on matching bases
-        alice_sifted, bob_sifted = self.sift_keys()
+            # Step 3: Bob measures the received states
+            measurement_results = self.measure_states(received_qubits)
 
-        # Step 5: Estimate QBER
-        qber = self.estimate_qber()
+            # Step 4: Sift keys based on matching bases
+            alice_sifted, bob_sifted = self.sift_keys()
 
-        # Step 6: Error correction
-        alice_corrected, bob_corrected = self.error_correction(alice_sifted, bob_sifted)
+            # Step 5: Estimate QBER
+            qber = self.estimate_qber()
+            record_qber_diagnostic(
+                protocol=self.__class__.__name__,
+                qber=qber,
+                threshold=self._get_security_threshold(),
+                key_size=len(alice_sifted),
+                distance_km=getattr(self.channel, "distance_km", None),
+            )
 
-        # Convert to Python integers to avoid numpy.int32 issues
-        alice_corrected = [int(bit) for bit in alice_corrected]
-        bob_corrected = [int(bit) for bit in bob_corrected]
+            # Step 6: Error correction
+            alice_corrected, bob_corrected = self.error_correction(
+                alice_sifted, bob_sifted
+            )
 
-        # Step 7: Privacy amplification
-        # Estimate information leak based on QBER
-        leak = int(len(alice_corrected) * self._estimate_eve_information(qber))
-        final_key = self.privacy_amplification(alice_corrected, leak)
+            # Convert to Python integers to avoid numpy.int32 issues
+            alice_corrected = [int(bit) for bit in alice_corrected]
+            bob_corrected = [int(bit) for bit in bob_corrected]
 
-        # Truncate to requested key length if necessary
-        if len(final_key) > self.key_length:
-            final_key = final_key[: self.key_length]
+            # Step 7: Privacy amplification
+            # Estimate information leak based on QBER
+            leak = int(len(alice_corrected) * self._estimate_eve_information(qber))
+            final_key = self.privacy_amplification(alice_corrected, leak)
 
-        # Update protocol status
-        self.raw_key = measurement_results
-        self.sifted_key = alice_sifted
-        self.final_key = final_key
-        self.qber = qber
-        self.is_complete = True
-        self.is_secure = qber < self._get_security_threshold()
+            # Truncate to requested key length if necessary
+            if len(final_key) > self.key_length:
+                final_key = final_key[: self.key_length]
 
-        # Return protocol results
-        return {
-            "raw_key": self.raw_key,
-            "sifted_key": self.sifted_key,
-            "final_key": self.final_key,
-            "qber": self.qber,
-            "is_secure": self.is_secure,
-            "channel_stats": self.channel.get_statistics(),
-        }
+            # Update protocol status
+            self.raw_key = measurement_results
+            self.sifted_key = alice_sifted
+            self.final_key = final_key
+            self.qber = qber
+            self.is_complete = True
+            self.is_secure = qber < self._get_security_threshold()
+
+            # Build result dict
+            result = {
+                "raw_key": self.raw_key,
+                "sifted_key": self.sifted_key,
+                "final_key": self.final_key,
+                "qber": self.qber,
+                "is_secure": self.is_secure,
+                "channel_stats": self.channel.get_statistics(),
+            }
+
+            record_protocol_execution(
+                protocol_name=self.__class__.__name__,
+                key_length=self.key_length,
+                qber=self.qber,
+                final_key_size=len(self.final_key),
+                is_secure=self.is_secure,
+                duration_ms=0.0,
+                channel_stats=self.channel.get_statistics(),
+            )
+            return result
 
     def reset(self) -> None:
         """Reset the protocol state."""

@@ -99,7 +99,7 @@ class EnterpriseConfig:
     enable_hsm: bool = False
     hsm_library_path: str | None = None
     enable_compliance_reporting: bool = False
-    compliance_standard: str = "NIST-SP-800-57"
+    compliance_standard: str = "ETSI-GS-QKD-014"
     enable_key_escrow: bool = False
 
 
@@ -202,6 +202,9 @@ def load_config_from_env() -> QKDConfig:
     # Enterprise settings
     config.enterprise.enable_hsm = _get_env_bool("QKDPY_HSM_ENABLED")
     config.enterprise.hsm_library_path = os.getenv("QKDPY_HSM_LIBRARY_PATH")
+    config.enterprise.compliance_standard = os.getenv(
+        "QKDPY_COMPLIANCE_STANDARD", config.enterprise.compliance_standard
+    )
 
     return config
 

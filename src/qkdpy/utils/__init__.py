@@ -19,6 +19,13 @@ from .helpers import (
     mutual_information,
     random_bit_string,
 )
+from .instrumentation import (
+    OperationSpan,
+    instrument,
+    record_ml_training,
+    record_protocol_execution,
+    record_qber_diagnostic,
+)
 from .logging_config import (
     QKDLogger,
     configure_default_logger,
@@ -76,6 +83,12 @@ __all__ = [
     "log_warning",
     "log_error",
     "log_security",
+    # Instrumentation
+    "OperationSpan",
+    "instrument",
+    "record_protocol_execution",
+    "record_ml_training",
+    "record_qber_diagnostic",
     # Validation
     "validate_range",
     "validate_type",

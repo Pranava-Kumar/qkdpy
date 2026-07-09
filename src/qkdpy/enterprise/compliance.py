@@ -18,6 +18,10 @@ logger = get_logger(__name__)
 class ComplianceStandard(Enum):
     """Supported compliance standards."""
 
+    ETSI_GS_QKD_014 = "ETSI GS QKD 014"
+    ETSI_GS_QKD_016 = "ETSI GS QKD 016"
+    ISO_IEC_23837_1 = "ISO/IEC 23837-1"
+    ISO_IEC_23837_2 = "ISO/IEC 23837-2"
     NIST_SP_800_57 = "NIST SP 800-57"
     NIST_SP_800_90 = "NIST SP 800-90"
     COMMON_CRITERIA = "Common Criteria"
@@ -133,10 +137,12 @@ class ComplianceChecker:
         """Initialize compliance checker.
 
         Args:
-            standards: Standards to check (default: NIST SP 800-57)
+            standards: Standards to check (default: ETSI GS QKD 014)
             config: QKD config to check against. Uses global config if None.
         """
-        self.standards = standards or [ComplianceStandard.NIST_SP_800_57]
+        self.standards = (
+            standards if standards is not None else [ComplianceStandard.ETSI_GS_QKD_014]
+        )
         self._config = config
 
     def check_compliance(self) -> ComplianceReport:
@@ -156,6 +162,15 @@ class ComplianceChecker:
                 checks.extend(self._check_fips_140_2())
             elif standard == ComplianceStandard.ISO_27001:
                 checks.extend(self._check_iso_27001())
+            elif standard == ComplianceStandard.ETSI_GS_QKD_014:
+                checks.extend(self._check_etsi_qkd_014())
+            elif standard == ComplianceStandard.ETSI_GS_QKD_016:
+                checks.extend(self._check_etsi_qkd_016())
+            elif standard in (
+                ComplianceStandard.ISO_IEC_23837_1,
+                ComplianceStandard.ISO_IEC_23837_2,
+            ):
+                checks.extend(self._check_iso_23837())
 
         passed = sum(1 for c in checks if c.passed)
         failed = len(checks) - passed
@@ -344,6 +359,215 @@ class ComplianceChecker:
                 severity="medium",
                 details="Audit logging and log protection",
                 recommendation="Enable audit logging with secret redaction",
+            )
+        )
+
+        return checks
+
+    def _check_etsi_qkd_014(self) -> list[ComplianceCheck]:
+        """Check ETSI GS QKD 014 (KME-SA Interface) compliance."""
+        checks: list[ComplianceCheck] = []
+        config = self._config if self._config is not None else get_config()
+
+        # KME-SA interface defined and HSM enabled
+        hsm_available = config.enterprise.enable_hsm
+        checks.append(
+            ComplianceCheck(
+                check_id="ETSI-014-001",
+                standard=ComplianceStandard.ETSI_GS_QKD_014,
+                requirement="KME-SA interface compliance",
+                description=(
+                    "Key Management Entity (KME) interface must be defined and HSM "
+                    "enabled to conform to ETSI GS QKD 014 key delivery specification"
+                ),
+                passed=hsm_available,
+                severity="critical",
+                details=f"HSM enabled: {hsm_available}",
+                recommendation="Enable HSM integration to provide a KME interface",
+            )
+        )
+
+        # Key format compliance (hex-encoded, proper length)
+        key_len_ok = config.security.min_key_length >= 128
+        checks.append(
+            ComplianceCheck(
+                check_id="ETSI-014-002",
+                standard=ComplianceStandard.ETSI_GS_QKD_014,
+                requirement="Key format compliance",
+                description=(
+                    "Keys must be delivered in hex-encoded format with a minimum "
+                    "length of 128 bits as specified by ETSI 014"
+                ),
+                passed=key_len_ok,
+                severity="critical",
+                details=f"Minimum key length: {config.security.min_key_length} bits "
+                f"(requires >= 128)",
+                recommendation="Set min_key_length to at least 128 bits for ETSI 014 compliance",
+            )
+        )
+
+        # Identity authentication (mutual authentication between KME and SA)
+        auth_ok = config.security.require_authentication
+        checks.append(
+            ComplianceCheck(
+                check_id="ETSI-014-003",
+                standard=ComplianceStandard.ETSI_GS_QKD_014,
+                requirement="Identity authentication",
+                description=(
+                    "Mutual authentication between Key Management Entity (KME) and "
+                    "Security Application (SA) must be enforced"
+                ),
+                passed=auth_ok,
+                severity="high",
+                details=f"Authentication required: {auth_ok}",
+                recommendation="Enable authentication to enforce mutual KME-SA identity verification",
+            )
+        )
+
+        # Key churn (key refresh/rotation)
+        rotation_ok = (
+            config.security.enable_key_rotation
+            and config.security.key_rotation_interval_seconds <= 3600
+        )
+        checks.append(
+            ComplianceCheck(
+                check_id="ETSI-014-004",
+                standard=ComplianceStandard.ETSI_GS_QKD_014,
+                requirement="Key churn",
+                description=(
+                    "Key refresh or rotation must be enabled with a reasonable "
+                    "interval (<= 1 hour) to satisfy key churn requirements"
+                ),
+                passed=rotation_ok,
+                severity="high",
+                details=f"Key rotation enabled: {config.security.enable_key_rotation}, "
+                f"Interval: {config.security.key_rotation_interval_seconds}s",
+                recommendation=(
+                    "Enable key rotation with an interval of 3600 seconds or less"
+                ),
+            )
+        )
+
+        return checks
+
+    def _check_etsi_qkd_016(self) -> list[ComplianceCheck]:
+        """Check ETSI GS QKD 016 (Common Criteria Protection Profile) compliance."""
+        checks: list[ComplianceCheck] = []
+        config = self._config if self._config is not None else get_config()
+
+        # Security target — production mode required
+        mode_ok = config.security.mode == SecurityMode.PRODUCTION
+        checks.append(
+            ComplianceCheck(
+                check_id="ETSI-016-001",
+                standard=ComplianceStandard.ETSI_GS_QKD_016,
+                requirement="Security target compliance",
+                description=(
+                    "System must meet Common Criteria security target requirements "
+                    "by operating in PRODUCTION security mode"
+                ),
+                passed=mode_ok,
+                severity="critical",
+                details=f"Current security mode: {config.security.mode.value}",
+                recommendation="Set security mode to 'production' for Common Criteria compliance",
+            )
+        )
+
+        # Authentication mechanisms
+        checks.append(
+            ComplianceCheck(
+                check_id="ETSI-016-002",
+                standard=ComplianceStandard.ETSI_GS_QKD_016,
+                requirement="Authentication mechanisms",
+                description=(
+                    "Authentication mechanisms must be in place to satisfy "
+                    "Common Criteria security functional requirements"
+                ),
+                passed=config.security.require_authentication,
+                severity="critical",
+                details=f"Authentication required: {config.security.require_authentication}",
+                recommendation="Enable authentication for Common Criteria compliance",
+            )
+        )
+
+        # Audit logging
+        checks.append(
+            ComplianceCheck(
+                check_id="ETSI-016-003",
+                standard=ComplianceStandard.ETSI_GS_QKD_016,
+                requirement="Audit logging",
+                description=(
+                    "Audit logging must be enabled to meet Common Criteria "
+                    "audit functional requirements"
+                ),
+                passed=config.security.enable_audit_logging,
+                severity="high",
+                details=f"Audit logging enabled: {config.security.enable_audit_logging}",
+                recommendation="Enable audit logging for Common Criteria compliance",
+            )
+        )
+
+        return checks
+
+    def _check_iso_23837(self) -> list[ComplianceCheck]:
+        """Check ISO/IEC 23837 (QKD Security Requirements) compliance."""
+        checks: list[ComplianceCheck] = []
+        config = self._config if self._config is not None else get_config()
+
+        # Security requirements — key length
+        key_len_ok = config.security.min_key_length >= 128
+        checks.append(
+            ComplianceCheck(
+                check_id="ISO-23837-001",
+                standard=ComplianceStandard.ISO_IEC_23837_1,
+                requirement="Security requirements definition",
+                description=(
+                    "Key length must meet or exceed the minimum security "
+                    "requirements defined in ISO/IEC 23837 (128 bits)"
+                ),
+                passed=key_len_ok,
+                severity="critical",
+                details=f"Minimum key length: {config.security.min_key_length} bits",
+                recommendation="Ensure min_key_length is at least 128 bits",
+            )
+        )
+
+        # QBER threshold
+        qber_ok = config.security.max_qber_threshold <= 0.11
+        checks.append(
+            ComplianceCheck(
+                check_id="ISO-23837-002",
+                standard=ComplianceStandard.ISO_IEC_23837_2,
+                requirement="QBER threshold",
+                description=(
+                    "Quantum Bit Error Rate (QBER) threshold must be within the "
+                    "acceptable range (<= 0.11) defined by ISO/IEC 23837"
+                ),
+                passed=qber_ok,
+                severity="critical",
+                details=f"Max QBER threshold: {config.security.max_qber_threshold}",
+                recommendation="Set max_qber_threshold to 0.11 or lower",
+            )
+        )
+
+        # Key distillation parameters
+        distillation_ok = (
+            config.security.enable_key_rotation and config.security.enable_audit_logging
+        )
+        checks.append(
+            ComplianceCheck(
+                check_id="ISO-23837-003",
+                standard=ComplianceStandard.ISO_IEC_23837_2,
+                requirement="Key distillation parameters",
+                description=(
+                    "Key rotation and audit logging must both be enabled for "
+                    "proper key distillation as required by ISO/IEC 23837"
+                ),
+                passed=distillation_ok,
+                severity="high",
+                details=f"Key rotation: {config.security.enable_key_rotation}, "
+                f"Audit logging: {config.security.enable_audit_logging}",
+                recommendation="Enable both key rotation and audit logging",
             )
         )
 
