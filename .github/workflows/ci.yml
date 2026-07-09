@@ -30,7 +30,17 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Format check (black)
-        run: uv run black --check --diff src/ tests/ benchmarks/ 02-research/ 2>&1 || (echo "Black found formatting issues above" && false)
+        run: |
+          set +o pipefail
+          uv run black --check --diff src/ tests/ benchmarks/ 02-research/ 2>&1 | tee /tmp/black-diff.txt
+          EXITCODE=${PIPESTATUS[0]}
+          echo "Black exit code: $EXITCODE"
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Black Diff" >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          cat /tmp/black-diff.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+          exit $EXITCODE
 
       - name: Import sort check (isort)
         run: uv run isort --check-only --diff src/ tests/ 2>&1 || (echo "isort found sorting issues above" && false)
