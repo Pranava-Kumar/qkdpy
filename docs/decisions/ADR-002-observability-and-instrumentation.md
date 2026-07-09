@@ -107,6 +107,6 @@ fields are preserved in both formats.
   change with no upstream dependencies.
 - Structured events are immediately visible in both console and JSON output
   without configuration changes.
-- The `Lazy imports in `protocols/base.py` avoid a circular dependency between
+- The lazy imports in ``protocols/base.py`` avoid a circular dependency between
   `protocols.base` → `utils.instrumentation` → `utils.__init__` → `protocols.base`
   (via advanced_quantum_visualization).

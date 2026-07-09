@@ -34,24 +34,24 @@ dispatch pattern.
 ```
 ComplianceChecker
 │
-├─ _check_etsi_014()       → list[ComplianceCheck]
-├─ _check_etsi_016()       → list[ComplianceCheck]
-├─ _check_iso_23837()      → list[ComplianceCheck]
-├─ _check_nist_800_57()    → list[ComplianceCheck]
-├─ _check_fips_140()       → list[ComplianceCheck]
-└─ _check_iso_27001()      → list[ComplianceCheck]
+├─ _check_etsi_qkd_014()         → list[ComplianceCheck]
+├─ _check_etsi_qkd_016()         → list[ComplianceCheck]
+├─ _check_iso_23837()            → list[ComplianceCheck]   (shared for 23837-1 and 23837-2)
+├─ _check_nist_800_57()          → list[ComplianceCheck]
+├─ _check_fips_140_2()           → list[ComplianceCheck]
+└─ _check_iso_27001()            → list[ComplianceCheck]
 ```
 
 Each `_check_*` method is a pure function that takes config and returns a list
 of `ComplianceCheck` results.  The `ComplianceChecker.check_compliance()` method
-iterates the requested standards, dispatches to the appropriate method via a
-`STANDARD_METHOD_MAP`, and aggregates into a `ComplianceReport`.
+iterates the requested standards and dispatches via an ``if/elif`` chain to the
+appropriate method, aggregating results into a `ComplianceReport`.
 
 ### Report structure
 
 ```
 ComplianceReport
-├─ report_id            ← UUID
+├─ report_id            ← str (hex token, 16 chars)
 ├─ generated_at         ← datetime
 ├─ standards_checked    ← list[ComplianceStandard]
 ├─ checks               ← list[ComplianceCheck]
@@ -63,8 +63,7 @@ ComplianceReport
 ├─ get_failed_checks()  → filter
 ├─ get_summary()        → dict
 ├─ export_markdown()    → str
-├─ export_html()        → str
-└─ export_json()        → str
+└─ export_html()        → str
 ```
 
 ### Check design
