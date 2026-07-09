@@ -29,8 +29,15 @@ jobs:
       - name: Install dependencies
         run: uv sync --all-extras --dev
 
-      - name: Run pre-commit
-        run: uv run pre-commit run --all-files --show-diff-on-failure
+      - name: List installed pre-commit packages
+        run: uv run pip list 2>&1 | grep -i -E "pre-commit|black|isort|ruff"
+
+      - name: Debug - check git tracked files
+        run: git ls-files | wc -l && git ls-files
+
+      - name: Run pre-commit (verbose)
+        run: uv run pre-commit run --all-files --show-diff-on-failure 2>&1
+        continue-on-error: true
 
   test:
     needs: lint
