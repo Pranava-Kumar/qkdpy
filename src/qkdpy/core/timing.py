@@ -31,11 +31,13 @@ class TimingSynchronizer:
         # Initialize clock states
         self.alice_clock_offset = 0.0  # Alice's clock offset from reference
         self.bob_clock_offset = 0.0  # Bob's clock offset from reference
-        self.alice_clock_drift = np.random.uniform(-max_drift_rate, max_drift_rate)
-        self.bob_clock_drift = np.random.uniform(-max_drift_rate, max_drift_rate)
+        self.alice_clock_drift = float(
+            np.random.uniform(-max_drift_rate, max_drift_rate)
+        )
+        self.bob_clock_drift = float(np.random.uniform(-max_drift_rate, max_drift_rate))
 
         # Reference time (for simulation purposes)
-        self.reference_time = time.time()
+        self.reference_time = float(time.time())
 
         # Timing statistics
         self.timing_measurements: list[dict] = []
@@ -50,7 +52,7 @@ class TimingSynchronizer:
             Dictionary with synchronization results
         """
         # Add timing jitter to synchronization
-        sync_error = np.random.normal(0, self.synchronization_accuracy)
+        sync_error = float(np.random.normal(0, self.synchronization_accuracy))
 
         # Update clock offsets based on synchronization
         self.alice_clock_offset = sync_error / 2  # Assume equal adjustment
@@ -83,7 +85,7 @@ class TimingSynchronizer:
         alice_time = reference_time + self.alice_clock_offset + drift
 
         # Add timing jitter
-        jitter = np.random.normal(0, self.timing_jitter)
+        jitter = float(np.random.normal(0, self.timing_jitter))
         alice_time += jitter
 
         return alice_time
@@ -105,7 +107,7 @@ class TimingSynchronizer:
         bob_time = reference_time + self.bob_clock_offset + drift
 
         # Add timing jitter
-        jitter = np.random.normal(0, self.timing_jitter)
+        jitter = float(np.random.normal(0, self.timing_jitter))
         bob_time += jitter
 
         return bob_time
@@ -126,18 +128,24 @@ class TimingSynchronizer:
     def update_clock_drift(self) -> None:
         """Update clock drift values (to simulate gradual changes)."""
         # Small random walk for drift values
-        drift_change = np.random.normal(0, self.max_drift_rate * 0.01)  # Small changes
-        self.alice_clock_drift = np.clip(
-            self.alice_clock_drift + drift_change,
-            -self.max_drift_rate,
-            self.max_drift_rate,
+        drift_change = float(
+            np.random.normal(0, self.max_drift_rate * 0.01)
+        )  # Small changes
+        self.alice_clock_drift = float(
+            np.clip(
+                self.alice_clock_drift + drift_change,
+                -self.max_drift_rate,
+                self.max_drift_rate,
+            )
         )
 
-        drift_change = np.random.normal(0, self.max_drift_rate * 0.01)
-        self.bob_clock_drift = np.clip(
-            self.bob_clock_drift + drift_change,
-            -self.max_drift_rate,
-            self.max_drift_rate,
+        drift_change = float(np.random.normal(0, self.max_drift_rate * 0.01))
+        self.bob_clock_drift = float(
+            np.clip(
+                self.bob_clock_drift + drift_change,
+                -self.max_drift_rate,
+                self.max_drift_rate,
+            )
         )
 
 
@@ -179,7 +187,7 @@ class PhotonTimingModel:
         Returns:
             Actual emission time with jitter
         """
-        actual_emission = emission_time + np.random.normal(0, self.source_jitter)
+        actual_emission = emission_time + float(np.random.normal(0, self.source_jitter))
         return actual_emission
 
     def detect_photon(self, arrival_time: float) -> float:

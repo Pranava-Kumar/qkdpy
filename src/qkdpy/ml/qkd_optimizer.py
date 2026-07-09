@@ -383,11 +383,13 @@ class QKDOptimizer:
         """Standard normal cumulative distribution function."""
         # Use scipy.special.erf if available, otherwise fallback or loop
         # But since we are in a scientific context, we likely have scipy
-        return 0.5 * (1 + erf(x / np.sqrt(2)))  # type: ignore[no-any-return]
+        result: float | np.ndarray = 0.5 * (1 + erf(x / np.sqrt(2)))
+        return result
 
     def _standard_normal_pdf(self, x: float | np.ndarray) -> float | np.ndarray:
         """Standard normal probability density function."""
-        return np.exp(-0.5 * x * x) / np.sqrt(2 * np.pi)  # type: ignore[no-any-return]
+        result: float | np.ndarray = np.exp(-0.5 * x * x) / np.sqrt(2 * np.pi)
+        return result
 
     def _genetic_algorithm_optimization(
         self,
@@ -627,7 +629,8 @@ class QKDOptimizer:
                 mlp.fit(X, y)
 
                 def model_func(x: np.ndarray, model_instance: Any = mlp) -> np.ndarray:
-                    return model_instance.predict(x)  # type: ignore[no-any-return]
+                    result: np.ndarray = model_instance.predict(x)
+                    return result
 
                 model = model_func
 
@@ -778,8 +781,10 @@ class QKDOptimizer:
             z1 = X_test_norm @ W1 + b1
             a1 = np.tanh(z1)
             z2 = a1 @ W2 + b2
-            predictions = z2.flatten() * y_std + y_mean  # Denormalize
-            return predictions  # type: ignore[no-any-return]
+            predictions_result: np.ndarray = (
+                z2.flatten() * y_std + y_mean
+            )  # Denormalize
+            return predictions_result
 
         return predict
 

@@ -320,9 +320,8 @@ class EnhancedCVQKD(BaseProtocol):
         )
 
         avg_corr = (actual_corr_x + actual_corr_p) / 2
-        noise_estimate = float(
-            max(0.0, (expected_corr - avg_corr) / expected_corr)  # type: ignore[arg-type]
-        )
+        raw_noise = (expected_corr - avg_corr) / expected_corr
+        noise_estimate = float(raw_noise if raw_noise > 0.0 else 0.0)
 
         return noise_estimate
 

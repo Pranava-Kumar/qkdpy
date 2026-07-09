@@ -123,7 +123,8 @@ class EfficientQKDPredictor:
 
     def _relu(self, x: np.ndarray) -> np.ndarray:
         """ReLU activation function."""
-        return np.maximum(0, x)  # type: ignore[no-any-return]
+        result: np.ndarray = np.maximum(0, x)
+        return result
 
     def _relu_derivative(self, x: np.ndarray) -> np.ndarray:
         """Derivative of ReLU activation function."""
