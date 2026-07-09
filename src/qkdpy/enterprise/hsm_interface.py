@@ -523,7 +523,7 @@ def get_hsm(
     elif provider == HSMProvider.PKCS11:
         # Check if PKCS#11 library is available
         try:
-            import pkcs11  # type: ignore[import-not-found]  # noqa: F401
+            import pkcs11  # noqa: F401
 
             raise NotImplementedError("PKCS#11 HSM not yet implemented")
         except ImportError:
