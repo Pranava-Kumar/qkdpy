@@ -29,3 +29,10 @@ issues.txt
 # Build artifacts
 docs/_build/
 node_modules/
+
+# Local AI / IDE config
+.agents/
+.openclaude/
+
+# Project analysis
+PROJECT_ANALYSIS.md
