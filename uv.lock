@@ -1437,7 +1437,7 @@ requires-dist = [
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.17.1" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=1.0.0" },
     { name = "numpy", specifier = ">=1.24.0" },
-    { name = "pandas", marker = "extra == 'ml'", specifier = ">=2.0.0" },
+    { name = "pandas", marker = "extra == 'ml'", specifier = ">=2.3.1" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=3.0.0" },
     { name = "pytest", marker = "extra == 'dev'", specifier = ">=7.0.0" },
     { name = "pytest-cov", marker = "extra == 'dev'", specifier = ">=4.0.0" },

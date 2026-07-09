@@ -2,6 +2,7 @@
 
 import secrets
 import time
+from collections.abc import Iterator
 from typing import Any, cast
 
 import numpy as np
@@ -38,32 +39,61 @@ except ImportError:
     nx = _nx  # Alias nx to _nx
 
 
+class NodeView:
+    """A view of graph nodes that supports both dict-style access and callable iteration.
+
+    Mirrors the networkx NodeView API so SimpleGraph and nx.Graph are interchangeable.
+    """
+
+    def __init__(self, graph: "SimpleGraph") -> None:
+        self._graph = graph
+
+    def __call__(self) -> list[Any]:
+        return list(self._graph.adjacency_list.keys())
+
+    def __getitem__(self, node: Any) -> dict[str, Any]:
+        return self._graph._node_attrs.get(node, {})
+
+    def __contains__(self, node: Any) -> bool:
+        return node in self._graph.adjacency_list
+
+    def __iter__(self) -> Iterator[Any]:
+        return iter(self._graph.adjacency_list)
+
+    def __len__(self) -> int:
+        return len(self._graph.adjacency_list)
+
+
 class SimpleGraph:
     """Simple graph implementation if networkx is not available."""
 
     def __init__(self) -> None:
         self.adjacency_list: dict[Any, set[Any]] = {}
+        self._node_attrs: dict[Any, dict[str, Any]] = {}
 
-    def add_node(self, node: Any) -> None:
+    def add_node(self, node: Any, **attrs: Any) -> None:
         if node not in self.adjacency_list:
             self.adjacency_list[node] = set()
+            self._node_attrs[node] = {}
+        self._node_attrs[node].update(attrs)
 
-    def add_edge(self, node1: Any, node2: Any) -> None:
+    def add_edge(self, node1: Any, node2: Any, **attrs: Any) -> None:
         self.add_node(node1)
         self.add_node(node2)
         self.adjacency_list[node1].add(node2)
         self.adjacency_list[node2].add(node1)
 
-    def nodes(self) -> list[Any]:
-        return list(self.adjacency_list.keys())
+    @property
+    def nodes(self) -> NodeView:
+        return NodeView(self)
 
     def edges(self) -> list[tuple[Any, Any]]:
-        edges = []
+        _edges = []
         for node1 in self.adjacency_list:
             for node2 in self.adjacency_list[node1]:
-                if (node2, node1) not in edges:  # Avoid duplicate edges
-                    edges.append((node1, node2))
-        return edges
+                if (node2, node1) not in _edges:  # Avoid duplicate edges
+                    _edges.append((node1, node2))
+        return _edges
 
     def neighbors(self, node: Any) -> set[Any]:
         return self.adjacency_list.get(node, set())

@@ -38,7 +38,7 @@ class TestEfficientQKDPredictor(unittest.TestCase):
     def test_predict_returns_float32(self):
         p = EfficientQKDPredictor(input_dim=3, max_memory_mb=64, enable_pruning=False)
         p.fit(self.X, self.y, epochs=5, learning_rate=0.05, batch_size=8)
-        self.assertEqual(p.predict(self.X).dtype, np.float64)
+        self.assertEqual(p.predict(self.X).dtype, np.float32)
 
     def test_fit_accepts_validation_split(self):
         p = EfficientQKDPredictor(input_dim=3, max_memory_mb=64, enable_pruning=False)
