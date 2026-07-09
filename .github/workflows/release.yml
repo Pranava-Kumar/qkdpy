@@ -3,41 +3,38 @@ name: Release to PyPI
 on:
   push:
     tags:
-      - "v*"  # Triggers on tags like v0.1.1, v0.1.2, etc.
+      - "v*"
 
 permissions:
-  id-token: write  # Required for trusted publishing to PyPI
-  contents: read   # Allows reading repo contents
+  id-token: write
+  contents: read
 
 jobs:
   release:
     runs-on: ubuntu-latest
-    environment: release  # Optional: Matches trusted publisher config
+    environment: release
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up uv
-        uses: astral-sh/setup-uv@v3
-        with:
-          version: latest
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"  # Consistent with your current setup
+          python-version: "3.11"
 
-      - name: Create virtual environment
-        run: |
-          uv venv
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: latest
+          enable-cache: true
 
       - name: Install dependencies
-        run: uv sync --all-extras --dev  # Installs from pyproject.toml
+        run: uv sync --all-extras --dev
 
       - name: Build package
-        run: uv build  # Builds sdist and wheel (faster with uv)
+        run: uv build
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
-          print-hash: true  # Optional: Prints file hashes
-          verbose: true     # Optional: Detailed output
+          print-hash: true
+          verbose: true

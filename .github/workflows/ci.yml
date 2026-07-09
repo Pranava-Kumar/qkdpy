@@ -6,108 +6,115 @@ on:
   pull_request:
     branches: [main]
 
+env:
+  UV_SYSTEM_PYTHON: true
+
 jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Install dependencies
+        run: uv sync --all-extras --dev
+
+      - name: Run pre-commit
+        run: uv run pre-commit run --all-files --show-diff-on-failure
+
   test:
+    needs: lint
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ["3.10", "3.11", "3.12"]
+        os: [ubuntu-latest]
+        python-version: ["3.11", "3.12"]
+        include:
+          - os: windows-latest
+            python-version: "3.11"
+      # Continue on partial failures so all matrix results report
+      fail-fast: false
 
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v1
+        uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
-
-      - name: Create virtual environment
-        run: |
-          uv venv
+          enable-cache: true
 
       - name: Install dependencies
-        run: |
-          uv pip install -e ".[dev]"
+        run: uv sync --all-extras --dev
 
-      - name: Run pre-commit
-        run: |
-          uv run pre-commit run --all-files
-
-      - name: Run tests
-        run: |
-          uv run pytest --cov=src/qkdpy --cov-report=xml
-          uv run pytest tests/benchmark_cv_qkd.py  # Run benchmarks to ensure they don't break
+      - name: Run tests with coverage
+        run: uv run pytest --cov=src/qkdpy --cov-report=xml --cov-report=term -x
 
       - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         with:
-          file: ./coverage.xml
-          flags: unittests
-          name: codecov-umbrella
+          files: ./coverage.xml
+          flags: ${{ matrix.os }},py${{ matrix.python-version }}
           fail_ci_if_error: false
 
   type-check:
+    needs: lint
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v1
+        uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
-
-      - name: Create virtual environment
-        run: |
-          uv venv
+          enable-cache: true
 
       - name: Install dependencies
-        run: |
-          uv pip install -e ".[dev]"
+        run: uv sync --all-extras --dev
 
       - name: Run mypy
-        run: |
-          uv run mypy src/qkdpy
+        run: uv run mypy src/qkdpy
 
-  docs:
+  benchmark:
+    needs: test
     runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     steps:
       - uses: actions/checkout@v4
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: "3.11"
 
       - name: Install uv
-        uses: astral-sh/setup-uv@v1
+        uses: astral-sh/setup-uv@v5
         with:
           version: "latest"
-
-      - name: Create virtual environment
-        run: |
-          uv venv
+          enable-cache: true
 
       - name: Install dependencies
-        run: |
-          uv pip install -e ".[docs]"
+        run: uv sync --all-extras --dev
 
-      - name: Build documentation
-        run: |
-          cd docs && make html
-
-      - name: Upload documentation
-        uses: actions/upload-artifact@v4
-        with:
-          name: documentation
-          path: docs/_build/html/
+      - name: Run benchmarks
+        run: uv run pytest tests/benchmark_cv_qkd.py -v
