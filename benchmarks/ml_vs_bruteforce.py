@@ -186,7 +186,9 @@ def brute_force_grid(
     hi_vals = np.array([param_ranges[n][1] for n in param_names])
 
     # Build meshgrid
-    axes = [np.linspace(lo, hi, grid_size) for lo, hi in zip(lo_vals, hi_vals, strict=True)]
+    axes = [
+        np.linspace(lo, hi, grid_size) for lo, hi in zip(lo_vals, hi_vals, strict=True)
+    ]
     mesh = np.meshgrid(*axes, indexing="ij")
     n_points = mesh[0].size
 

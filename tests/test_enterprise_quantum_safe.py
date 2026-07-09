@@ -1,4 +1,5 @@
 """Tests for the quantum-safe migration toolkit (PREMIUM tier)."""
+
 import unittest
 
 from qkdpy.enterprise.quantum_safe import (
@@ -29,8 +30,20 @@ class TestCryptoInventoryReport(unittest.TestCase):
     def test_risk_score_all_safe(self):
         """Inventory with only safe assets has zero risk."""
         safe = [
-            CryptoAsset(name="AES-256", algorithm_type=CryptoAlgorithmType.SYMMETRIC, key_size_bits=256, resistance=QuantumResistance.SAFE, location="storage"),
-            CryptoAsset(name="SHA-3", algorithm_type=CryptoAlgorithmType.HASH, key_size_bits=256, resistance=QuantumResistance.SAFE, location="integrity"),
+            CryptoAsset(
+                name="AES-256",
+                algorithm_type=CryptoAlgorithmType.SYMMETRIC,
+                key_size_bits=256,
+                resistance=QuantumResistance.SAFE,
+                location="storage",
+            ),
+            CryptoAsset(
+                name="SHA-3",
+                algorithm_type=CryptoAlgorithmType.HASH,
+                key_size_bits=256,
+                resistance=QuantumResistance.SAFE,
+                location="integrity",
+            ),
         ]
         report = CryptoInventoryReport(
             scanned_at=__import__("datetime").datetime.now(__import__("datetime").UTC),
@@ -41,8 +54,20 @@ class TestCryptoInventoryReport(unittest.TestCase):
     def test_risk_score_all_vulnerable(self):
         """Inventory with only vulnerable assets has risk_score 1.0."""
         vuln = [
-            CryptoAsset(name="RSA-2048", algorithm_type=CryptoAlgorithmType.ASYMMETRIC, key_size_bits=2048, resistance=QuantumResistance.VULNERABLE, location="tls"),
-            CryptoAsset(name="DH-2048", algorithm_type=CryptoAlgorithmType.KEY_EXCHANGE, key_size_bits=2048, resistance=QuantumResistance.VULNERABLE, location="vpn"),
+            CryptoAsset(
+                name="RSA-2048",
+                algorithm_type=CryptoAlgorithmType.ASYMMETRIC,
+                key_size_bits=2048,
+                resistance=QuantumResistance.VULNERABLE,
+                location="tls",
+            ),
+            CryptoAsset(
+                name="DH-2048",
+                algorithm_type=CryptoAlgorithmType.KEY_EXCHANGE,
+                key_size_bits=2048,
+                resistance=QuantumResistance.VULNERABLE,
+                location="vpn",
+            ),
         ]
         report = CryptoInventoryReport(
             scanned_at=__import__("datetime").datetime.now(__import__("datetime").UTC),
@@ -53,9 +78,27 @@ class TestCryptoInventoryReport(unittest.TestCase):
     def test_risk_score_mixed(self):
         """Mixed inventory produces intermediate risk score."""
         mixed = [
-            CryptoAsset(name="RSA-2048", algorithm_type=CryptoAlgorithmType.ASYMMETRIC, key_size_bits=2048, resistance=QuantumResistance.VULNERABLE, location="tls"),
-            CryptoAsset(name="AES-128", algorithm_type=CryptoAlgorithmType.SYMMETRIC, key_size_bits=128, resistance=QuantumResistance.MIGRATE_SOON, location="vpn"),
-            CryptoAsset(name="AES-256", algorithm_type=CryptoAlgorithmType.SYMMETRIC, key_size_bits=256, resistance=QuantumResistance.SAFE, location="storage"),
+            CryptoAsset(
+                name="RSA-2048",
+                algorithm_type=CryptoAlgorithmType.ASYMMETRIC,
+                key_size_bits=2048,
+                resistance=QuantumResistance.VULNERABLE,
+                location="tls",
+            ),
+            CryptoAsset(
+                name="AES-128",
+                algorithm_type=CryptoAlgorithmType.SYMMETRIC,
+                key_size_bits=128,
+                resistance=QuantumResistance.MIGRATE_SOON,
+                location="vpn",
+            ),
+            CryptoAsset(
+                name="AES-256",
+                algorithm_type=CryptoAlgorithmType.SYMMETRIC,
+                key_size_bits=256,
+                resistance=QuantumResistance.SAFE,
+                location="storage",
+            ),
         ]
         report = CryptoInventoryReport(
             scanned_at=__import__("datetime").datetime.now(__import__("datetime").UTC),
@@ -68,7 +111,12 @@ class TestCryptoInventoryReport(unittest.TestCase):
         """get_summary returns correct fields."""
         report = classic_enterprise_profile()
         summary = report.get_summary()
-        for key in ("total_assets", "vulnerable_count", "risk_score", "system_description"):
+        for key in (
+            "total_assets",
+            "vulnerable_count",
+            "risk_score",
+            "system_description",
+        ):
             self.assertIn(key, summary)
         self.assertGreater(summary["vulnerable_count"], 0)
 
@@ -136,7 +184,12 @@ class TestGenerateRoadmap(unittest.TestCase):
         """get_summary returns expected keys."""
         roadmap = generate_roadmap()
         summary = roadmap.get_summary()
-        for key in ("target_completion", "total_steps", "risk_score", "vulnerable_assets"):
+        for key in (
+            "target_completion",
+            "total_steps",
+            "risk_score",
+            "vulnerable_assets",
+        ):
             self.assertIn(key, summary)
 
 

@@ -9,6 +9,7 @@ import numpy as np
 
 from .gate_utils import GateUtils
 from .gates import Identity, PauliX, PauliY, PauliZ
+from .measurements import Measurement
 from .qubit import Qubit
 from .qudit import Qudit
 
@@ -300,7 +301,7 @@ class QuantumChannel:
         original_state = qubit.state.copy()
 
         # Measure in the chosen basis
-        measurement = qubit.measure(basis)
+        measurement = Measurement.measure_in_basis(qubit, basis)
 
         # Prepare a new qubit in the measured state
         if basis == "computational":

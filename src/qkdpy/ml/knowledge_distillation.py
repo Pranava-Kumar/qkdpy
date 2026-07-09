@@ -51,7 +51,7 @@ class KnowledgeDistillation:
 
     def distill(
         self,
-        student,
+        student: Any,
         X_train: np.ndarray,
         y_train: np.ndarray,
         **kwargs: Any,
@@ -69,4 +69,4 @@ class KnowledgeDistillation:
         """
         soft_targets = self.generate_soft_targets(X_train)
         combined_targets = self.alpha * soft_targets + (1 - self.alpha) * y_train
-        return student.fit(X_train, combined_targets, **kwargs)
+        return student.fit(X_train, combined_targets, **kwargs)  # type: ignore[no-any-return]

@@ -523,12 +523,12 @@ def get_hsm(
     elif provider == HSMProvider.PKCS11:
         # Check if PKCS#11 library is available
         try:
-            import pkcs11  # noqa: F401
+            import pkcs11  # type: ignore[import-not-found]  # noqa: F401
 
             raise NotImplementedError("PKCS#11 HSM not yet implemented")
         except ImportError:
             raise HSMNotAvailableError(
-                "PKCS#11 support requires the 'pkcs11' package. "
+                "PKCS#11 support requires the 'python-pkcs11' package. "
                 "Install with: pip install qkdpy[enterprise]"
             ) from None
 

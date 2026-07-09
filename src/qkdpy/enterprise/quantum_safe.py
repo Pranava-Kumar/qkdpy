@@ -10,11 +10,11 @@ This module is gated behind ``Feature.QUANTUM_SAFE_MIGRATION`` and
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from datetime import UTC, datetime, timedelta
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from typing import Any
 
-from ..config import QKDConfig, get_config
+from ..config import QKDConfig
 from ..utils.logging_config import get_logger
 
 logger = get_logger(__name__)
@@ -25,7 +25,7 @@ logger = get_logger(__name__)
 # ---------------------------------------------------------------------------
 
 
-class CryptoAlgorithmType(str, Enum):
+class CryptoAlgorithmType(StrEnum):
     """Category of a cryptographic algorithm found in an inventory scan."""
 
     SYMMETRIC = "symmetric"
@@ -36,7 +36,7 @@ class CryptoAlgorithmType(str, Enum):
     RANDOM = "random"
 
 
-class QuantumResistance(str, Enum):
+class QuantumResistance(StrEnum):
     """How resistant an algorithm is known to be against quantum attacks."""
 
     VULNERABLE = "vulnerable"  # e.g., RSA, ECDSA, Diffie-Hellman
@@ -74,7 +74,8 @@ class CryptoInventoryReport:
         return sum(
             1
             for a in self.assets
-            if a.resistance in (QuantumResistance.VULNERABLE, QuantumResistance.MIGRATE_SOON)
+            if a.resistance
+            in (QuantumResistance.VULNERABLE, QuantumResistance.MIGRATE_SOON)
         )
 
     @property
@@ -186,7 +187,7 @@ def classic_enterprise_profile() -> CryptoInventoryReport:
 # ---------------------------------------------------------------------------
 
 
-class MigrationPhase(str, Enum):
+class MigrationPhase(StrEnum):
     """Phases of a quantum-safe migration."""
 
     ASSESS = "assess"
@@ -354,7 +355,10 @@ def generate_roadmap(
             description="Use QKDpy Enterprise compliance suite to continuously monitor "
             "crypto hygiene. Alert on any new vulnerable asset deployments.",
             estimated_effort="Ongoing",
-            depends_on=["Migrate external-facing TLS", "Rotate long-lived signing keys"],
+            depends_on=[
+                "Migrate external-facing TLS",
+                "Rotate long-lived signing keys",
+            ],
         )
     )
 
@@ -402,7 +406,10 @@ class QuantumSafeAssessment:
         else:
             recs.append("No quantum-vulnerable crypto assets detected.")
 
-        if any(a.key_size_bits == 128 and a.algorithm_type == CryptoAlgorithmType.SYMMETRIC for a in self.inventory.assets):
+        if any(
+            a.key_size_bits == 128 and a.algorithm_type == CryptoAlgorithmType.SYMMETRIC
+            for a in self.inventory.assets
+        ):
             recs.append(
                 "Upgrade 128-bit AES deployments to 256-bit to maintain "
                 "128-bit post-quantum security margin."

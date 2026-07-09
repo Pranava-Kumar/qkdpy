@@ -1,6 +1,19 @@
 # QKDpy Documentation
 
-Welcome to the documentation for QKDpy, a Python library for Quantum Key Distribution simulations.
+Welcome to the documentation for **QKDpy**, a production-grade Python library for Quantum Key Distribution simulations at the intersection of **Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**.
+
+## Key Capabilities
+
+| Domain | Features |
+|--------|----------|
+| **Satellite QKD** | Satellite-ground links, free-space optical channels, orbital mechanics, atmospheric modeling |
+| **QKD Protocols** | 10+ protocols (BB84, E91, CV-QKD, HD-QKD, B92, SARG04, SixState, DI-QKD) |
+| **AI/ML** | Bayesian optimization, neural network predictors, anomaly detection, adaptive protocols |
+| **Enterprise** | Three-tier licensing (FREE/ENTERPRISE/PREMIUM), compliance checking, HSM integration, audit logging |
+| **Observability** | Structured instrumentation via OperationSpan, @instrument decorator, domain-specific events |
+| **Quantum-Safe** | Crypto inventory assessment, risk scoring, phased migration roadmap (PREMIUM) |
+
+## Contents
 
 ```{toctree}
 :maxdepth: 2
@@ -11,6 +24,14 @@ quickstart
 api
 examples
 ```
+
+## Architecture Decisions
+
+Key design decisions are documented as Architecture Decision Records (ADRs):
+
+- [ADR-001: Product Tier Licensing Model](decisions/ADR-001-product-tier-licensing.md)
+- [ADR-002: Observability and Instrumentation](decisions/ADR-002-observability-and-instrumentation.md)
+- [ADR-003: Enterprise Compliance Architecture](decisions/ADR-003-compliance-architecture.md)
 
 ## Indices and tables
 

@@ -196,7 +196,9 @@ class BaseProtocol(ABC):
             self.is_secure = qber < self._get_security_threshold()
 
             # Build result dict
-            result = {
+            result: dict[
+                str, list[int] | float | bool | dict[str, int | float | bool]
+            ] = {
                 "raw_key": self.raw_key,
                 "sifted_key": self.sifted_key,
                 "final_key": self.final_key,

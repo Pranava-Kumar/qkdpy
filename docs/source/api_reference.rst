@@ -102,105 +102,35 @@ Crypto Module
    :members:
    :undoc-members:
 
-.. automodule:: qkdpy.crypto.quantum_rng
-   :members:
-   :undoc-members:
+Enterprise Module
+-----------------
 
-.. automodule:: qkdpy.crypto.enhanced_security
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.crypto.advanced_crypto
-   :members:
-   :undoc-members:
-
-Protocols Module
-----------------
-
-.. automodule:: qkdpy.protocols
+.. automodule:: qkdpy.enterprise
    :members:
    :undoc-members:
    :noindex:
 
-.. automodule:: qkdpy.protocols.base
+.. automodule:: qkdpy.enterprise.licensing
    :members:
    :undoc-members:
 
-.. automodule:: qkdpy.protocols.bb84
+.. automodule:: qkdpy.enterprise.compliance
    :members:
    :undoc-members:
 
-.. automodule:: qkdpy.protocols.e91
+.. automodule:: qkdpy.enterprise.quantum_safe
    :members:
    :undoc-members:
 
-.. automodule:: qkdpy.protocols.b92
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.protocols.sarg04
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.protocols.decoy_state_bb84
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.protocols.cv_qkd
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.protocols.enhanced_cv_qkd
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.protocols.hd_qkd
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.protocols.di_qkd
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.protocols.twisted_pair
-   :members:
-   :undoc-members:
-
-Key Management Module
----------------------
-
-.. automodule:: qkdpy.key_management
+.. automodule:: qkdpy.enterprise.hsm_interface
    :members:
    :undoc-members:
    :noindex:
 
-.. automodule:: qkdpy.key_management.key_manager
+.. automodule:: qkdpy.enterprise.audit
    :members:
    :undoc-members:
-
-.. automodule:: qkdpy.key_management.key_distillation
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.key_management.error_correction
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.key_management.advanced_error_correction
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.key_management.privacy_amplification
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.key_management.advanced_privacy_amplification
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.key_management.quantum_error_correction
-   :members:
-   :undoc-members:
+   :noindex:
 
 ML Module
 ---------
@@ -210,11 +140,11 @@ ML Module
    :undoc-members:
    :noindex:
 
-.. automodule:: qkdpy.ml.efficient_models
+.. automodule:: qkdpy.ml.qkd_optimizer
    :members:
    :undoc-members:
 
-.. automodule:: qkdpy.ml.qkd_optimizer
+.. automodule:: qkdpy.ml.efficient_models
    :members:
    :undoc-members:
 
@@ -223,26 +153,6 @@ ML Module
    :undoc-members:
 
 .. automodule:: qkdpy.ml.model_selector
-   :members:
-   :undoc-members:
-
-Enterprise Module
------------------
-
-.. automodule:: qkdpy.enterprise
-   :members:
-   :undoc-members:
-   :noindex:
-
-.. automodule:: qkdpy.enterprise.compliance
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.enterprise.audit
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.enterprise.hsm_interface
    :members:
    :undoc-members:
 
@@ -258,19 +168,7 @@ Network Module
    :members:
    :undoc-members:
 
-.. automodule:: qkdpy.network.protocols
-   :members:
-   :undoc-members:
-
 .. automodule:: qkdpy.network.quantum_network
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.network.realistic_quantum_network
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.network.multiparty_qkd
    :members:
    :undoc-members:
 
@@ -282,11 +180,7 @@ Utils Module
    :undoc-members:
    :noindex:
 
-.. automodule:: qkdpy.utils.helpers
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.utils.validation
+.. automodule:: qkdpy.utils.instrumentation
    :members:
    :undoc-members:
 
@@ -294,42 +188,6 @@ Utils Module
    :members:
    :undoc-members:
 
-.. automodule:: qkdpy.utils.visualization
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.utils.advanced_visualization
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.utils.advanced_quantum_visualization
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.utils.quantum_simulator
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.utils.secure_random
-   :members:
-   :undoc-members:
-
-Integrations Module
--------------------
-
-.. automodule:: qkdpy.integrations
-   :members:
-   :undoc-members:
-   :noindex:
-
-.. automodule:: qkdpy.integrations.qiskit_integration
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.integrations.cirq_integration
-   :members:
-   :undoc-members:
-
-.. automodule:: qkdpy.integrations.pennylane_integration
+.. automodule:: qkdpy.utils.validation
    :members:
    :undoc-members:

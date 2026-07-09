@@ -3,7 +3,104 @@ Enterprise Features
 
 QKDpy provides enterprise-grade features for production deployments of
 Quantum Key Distribution systems. These features address compliance,
-security auditing, and hardware integration requirements.
+security auditing, licensing, and cryptographic migration requirements.
+
+The enterprise features are organized into a cumulative three-tier model:
+**FREE**, **ENTERPRISE**, and **PREMIUM**.
+
+Tier Overview
+-------------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 30 15 15 15
+
+   * - Feature
+     - FREE
+     - ENTERPRISE
+     - PREMIUM
+   * - All QKD Protocols
+     - ✓
+     - ✓
+     - ✓
+   * - Satellite QKD Simulation
+     - ✓
+     - ✓
+     - ✓
+   * - ML Integration
+     - ✓
+     - ✓
+     - ✓
+   * - Advanced Visualization
+     - ✓
+     - ✓
+     - ✓
+   * - Compliance Reporting
+     -
+     - ✓
+     - ✓
+   * - HSM Integration
+     -
+     - ✓
+     - ✓
+   * - Audit Logging
+     -
+     - ✓
+     - ✓
+   * - ML-Based Attack Detection
+     -
+     - ✓
+     - ✓
+   * - Key Escrow
+     -
+     - ✓
+     - ✓
+   * - Compliance HTML Export
+     -
+     - ✓
+     - ✓
+   * - Quantum-Safe Migration Toolkit
+     -
+     -
+     - ✓
+   * - Crypto Inventory Assessment
+     -
+     -
+     - ✓
+   * - Priority Support
+     -
+     -
+     - ✓
+
+Licensing
+---------
+
+.. automodule:: qkdpy.enterprise.licensing
+   :members:
+   :undoc-members:
+   :noindex:
+
+The licensing module provides runtime feature gating via the
+:func:`~qkdpy.enterprise.licensing.require_feature` decorator and
+:func:`~qkdpy.enterprise.licensing.feature_available` function.
+The active tier is configured via the ``QKDPY_PRODUCT_TIER`` environment
+variable or the :func:`qkdpy.config.set_config` function.
+
+Usage:
+
+.. code-block:: python
+
+   from qkdpy.enterprise import (
+       ProductTier, Feature, get_active_tier,
+       set_active_tier, feature_available,
+   )
+
+   # Set active tier
+   set_active_tier(ProductTier.ENTERPRISE)
+
+   # Check feature availability
+   if feature_available(Feature.COMPLIANCE_REPORTING):
+       print("Available")
 
 Hardware Security Module (HSM)
 ------------------------------
@@ -38,10 +135,55 @@ Compliance
    :noindex:
 
 Built-in compliance checking against industry standards including
-FIPS 140-2/140-3, Common Criteria (CC), and ETSI QKD standards.
+FIPS 140-2/140-3, Common Criteria (CC), ETSI QKD standards,
+ISO/IEC 23837, NIST SP 800-57, and ISO 27001.
 
-Usage Example
--------------
+Supported standards:
+
+- **ETSI GS QKD 014** — KME-SA Interface (key delivery, authentication, status)
+- **ETSI GS QKD 016** — Common Criteria Protection Profile (security target, audit)
+- **ISO/IEC 23837-1/2** — QKD Security Requirements (key length, QBER thresholds)
+- **NIST SP 800-57** — Key Management (key length, algorithm lifetime)
+- **FIPS 140-2/140-3** — Cryptographic Module (approved algorithms, module integrity)
+- **ISO 27001** — Information Security (access control, logging, crypto policy)
+
+Quantum-Safe Migration Toolkit
+------------------------------
+
+.. automodule:: qkdpy.enterprise.quantum_safe
+   :members:
+   :undoc-members:
+   :noindex:
+
+**PREMIUM-tier** toolkit for assessing and planning migration to
+quantum-resistant cryptography. Provides cryptographic inventory management,
+risk scoring, and phased migration roadmap generation.
+
+Key components:
+
+- :class:`~qkdpy.enterprise.quantum_safe.CryptoInventoryReport` — Asset inventory with weighted risk scoring
+- :class:`~qkdpy.enterprise.quantum_safe.MigrationRoadmap` — Phased migration plan with effort estimates
+- :class:`~qkdpy.enterprise.quantum_safe.QuantumSafeAssessment` — Full assessment combining inventory, roadmap, and recommendations
+- :func:`~qkdpy.enterprise.quantum_safe.classic_enterprise_profile` — Preset inventory for classic enterprise environments
+- :func:`~qkdpy.enterprise.quantum_safe.generate_roadmap` — Generate migration roadmap from inventory
+
+Example:
+
+.. code-block:: python
+
+   from qkdpy.enterprise.quantum_safe import (
+       classic_enterprise_profile,
+       generate_roadmap,
+       QuantumSafeAssessment,
+   )
+
+   inventory = classic_enterprise_profile()
+   roadmap = generate_roadmap(inventory)
+   assessment = QuantumSafeAssessment(inventory, roadmap)
+   print(assessment.to_dict())
+
+Comprehensive Example
+---------------------
 
 .. code-block:: python
 

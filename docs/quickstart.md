@@ -54,5 +54,42 @@ results = hd_qkd.execute()
 print(f"Generated key: {results['final_key']}")
 print(f"QBER: {results['qber']:.4f}")
 print(f"Is secure: {results['is_secure']}")
-print(f"Dimensional efficiency gain: {hd_qkd.get_dimension_efficiency():.2f}x")
+
+# The execution is automatically instrumented with:
+# - OperationSpan tracing (duration, success/failure)
+# - QBER diagnostics (warning if QBER approaches threshold)
+# - Protocol execution event recording
 ```
+
+## Enterprise Quick Start
+
+To use enterprise features (requires ENTERPRISE or PREMIUM tier):
+
+```bash
+pip install qkdpy[enterprise]
+export QKDPY_PRODUCT_TIER=enterprise
+```
+
+```python
+from qkdpy.enterprise import ComplianceChecker, ComplianceStandard
+
+# Run compliance checks against industry standards
+checker = ComplianceChecker()
+report = checker.check_compliance(
+    [ComplianceStandard.ETSI_GS_QKD_014,
+     ComplianceStandard.NIST_SP_800_57]
+)
+
+print(report.export_markdown())
+
+# Check overall compliance status
+if report.overall_compliant:
+    print("All checks passed!")
+else:
+    print(f"Failed checks: {report.failed_checks}")
+    for check in report.get_failed_checks():
+        print(f"  - [{check.severity}] {check.requirement}")
+        print(f"    Recommendation: {check.recommendation}")
+```
+
+See the [examples](examples.md) page for more advanced usage including the quantum-safe migration toolkit and observability features.

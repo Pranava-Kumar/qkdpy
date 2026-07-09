@@ -1,8 +1,8 @@
 # Examples
 
-## Advanced Usage
+## Advanced Protocol Usage
 
-QKDpy also supports advanced protocols and features:
+QKDpy supports advanced protocols and features:
 
 ```python
 from qkdpy import (
@@ -43,9 +43,180 @@ parameter_space = {
     "loss": (0.0, 0.5),
     "noise_level": (0.0, 0.1)
 }
-# optimization_results = optimizer.optimize_channel_parameters(
-#     parameter_space,
-#     lambda params: simulate_protocol_performance(params),
-#     num_iterations=50
-# )
+```
+
+## Observability & Instrumentation
+
+Protocol executions are automatically instrumented with structured telemetry. You can also add custom instrumentation:
+
+```python
+from qkdpy.utils import OperationSpan, instrument
+
+# Track execution time and emit structured events
+with OperationSpan("custom.operation", protocol="BB84") as span:
+    # ... your code ...
+    span.set_metadata(qber=0.025, key_size=256)
+
+# Decorate any function for automatic instrumentation
+@instrument("ml.train")
+def train_model(self, data):
+    # Function is automatically wrapped in OperationSpan
+    ...
+
+# Record domain-specific events
+from qkdpy.utils import record_protocol_execution, record_ml_training
+
+record_protocol_execution(
+    protocol_name="BB84",
+    key_length=256,
+    qber=0.025,
+    final_key_size=192,
+    is_secure=True,
+    duration_ms=145.2,
+)
+
+record_ml_training(
+    model_name="QKDPredictor",
+    protocol="BB84",
+    input_dim=10,
+    training_samples=5000,
+    training_time_ms=3200.5,
+    final_loss=0.023,
+    convergence_iterations=42,
+)
+```
+
+## Enterprise Compliance Checking
+
+Requires ENTERPRISE tier:
+
+```python
+import os
+os.environ["QKDPY_PRODUCT_TIER"] = "enterprise"
+
+from qkdpy.enterprise import (
+    ComplianceChecker,
+    ComplianceStandard,
+)
+
+# Initialize compliance checker
+checker = ComplianceChecker()
+
+# Run checks against multiple standards
+report = checker.check_compliance([
+    ComplianceStandard.ETSI_GS_QKD_014,
+    ComplianceStandard.NIST_SP_800_57,
+    ComplianceStandard.FIPS_140_2,
+])
+
+# Export reports in multiple formats
+print(report.export_markdown())
+html = report.export_html()  # Enterprise-gated feature
+
+# Analyze results
+print(f"Overall compliant: {report.overall_compliant}")
+print(f"Passed: {report.passed_checks}/{report.passed_checks + report.failed_checks}")
+
+for check in report.get_failed_checks():
+    print(f"[{check.severity.upper()}] {check.check_id}: {check.requirement}")
+    print(f"  → {check.recommendation}")
+```
+
+## Quantum-Safe Migration Toolkit
+
+Requires PREMIUM tier:
+
+```python
+import os
+os.environ["QKDPY_PRODUCT_TIER"] = "premium"
+
+from qkdpy.enterprise.quantum_safe import (
+    classic_enterprise_profile,
+    generate_roadmap,
+    QuantumSafeAssessment,
+    CryptoAsset,
+    CryptoAlgorithmType,
+    QuantumResistance,
+)
+
+# Use the preset classic enterprise profile
+inventory = classic_enterprise_profile()
+print(f"Total cryptographic assets: {inventory.total_assets}")
+print(f"Vulnerable to quantum attacks: {inventory.vulnerable_count}")
+print(f"Overall risk score: {inventory.risk_score:.0%}")
+
+# Generate a phased migration roadmap
+roadmap = generate_roadmap(inventory)
+summary = roadmap.get_summary()
+print(f"Target completion: {summary['target_completion']}")
+print(f"Migration steps: {summary['total_steps']}")
+
+for step in roadmap.steps:
+    print(f"  [{step.phase.value}] {step.title} - {step.estimated_effort}")
+
+# Create a full assessment with recommendations
+assessment = QuantumSafeAssessment(
+    inventory=inventory,
+    roadmap=roadmap,
+)
+assessment_dict = assessment.to_dict()
+for rec in assessment_dict["recommendations"]:
+    print(f"- {rec}")
+
+# Build a custom inventory
+from datetime import datetime, UTC
+
+custom_inventory = CryptoInventoryReport(
+    scanned_at=datetime.now(UTC),
+    system_description="My Custom System",
+    assets=[
+        CryptoAsset(
+            name="RSA-2048",
+            algorithm_type=CryptoAlgorithmType.ASYMMETRIC,
+            key_size_bits=2048,
+            resistance=QuantumResistance.VULNERABLE,
+            location="tls-certificates",
+        ),
+        CryptoAsset(
+            name="AES-256",
+            algorithm_type=CryptoAlgorithmType.SYMMETRIC,
+            key_size_bits=256,
+            resistance=QuantumResistance.SAFE,
+            location="storage-encryption",
+        ),
+    ],
+)
+```
+
+## Product Tier Gating
+
+The licensing system gates features at runtime. Each tier is cumulative:
+
+```python
+from qkdpy.enterprise import (
+    ProductTier,
+    Feature,
+    get_active_tier,
+    set_active_tier,
+    feature_available,
+)
+
+# Check current tier
+print(f"Active tier: {get_active_tier().value}")
+
+# Check feature availability
+if feature_available(Feature.COMPLIANCE_REPORTING):
+    print("Compliance reporting is available")
+
+# Features raise LicenseError when called without the right tier
+from qkdpy.enterprise import require_feature, LicenseError
+
+@require_feature(Feature.QUANTUM_SAFE_MIGRATION)
+def run_migration_assessment():
+    ...
+
+try:
+    run_migration_assessment()
+except LicenseError as e:
+    print(f"License error: {e}")
 ```

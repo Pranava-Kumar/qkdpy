@@ -1,7 +1,6 @@
 """Timing and synchronization models for QKD protocols."""
 
 import time
-from typing import cast
 
 import numpy as np
 
@@ -84,10 +83,10 @@ class TimingSynchronizer:
         alice_time = reference_time + self.alice_clock_offset + drift
 
         # Add timing jitter
-        jitter = cast(float, np.random.normal(0, self.timing_jitter))
+        jitter = np.random.normal(0, self.timing_jitter)
         alice_time += jitter
 
-        return float(alice_time)
+        return alice_time
 
     def get_bob_time(self, reference_time: float) -> float:
         """Get Bob's local time based on reference time and drift.
@@ -106,10 +105,10 @@ class TimingSynchronizer:
         bob_time = reference_time + self.bob_clock_offset + drift
 
         # Add timing jitter
-        jitter = cast(float, np.random.normal(0, self.timing_jitter))
+        jitter = np.random.normal(0, self.timing_jitter)
         bob_time += jitter
 
-        return float(bob_time)
+        return bob_time
 
     def calculate_time_difference(self, reference_time: float) -> float:
         """Calculate the time difference between Alice and Bob's clocks.
@@ -180,10 +179,8 @@ class PhotonTimingModel:
         Returns:
             Actual emission time with jitter
         """
-        actual_emission = emission_time + cast(
-            float, np.random.normal(0, self.source_jitter)
-        )
-        return float(actual_emission)
+        actual_emission = emission_time + np.random.normal(0, self.source_jitter)
+        return actual_emission
 
     def detect_photon(self, arrival_time: float) -> float:
         """Simulate photon detection with timing resolution.
@@ -195,8 +192,8 @@ class PhotonTimingModel:
             Measured arrival time with resolution effects
         """
         # Detector adds timing uncertainty
-        measured_time = arrival_time + cast(
-            float, np.random.normal(0, self.detector_timing_resolution)
+        measured_time = arrival_time + np.random.normal(
+            0, self.detector_timing_resolution
         )
         return float(measured_time)
 

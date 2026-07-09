@@ -1,6 +1,14 @@
 QKDpy Documentation
 ===================
 
+A production-grade Python library for Quantum Key Distribution at the intersection of
+**Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**.
+
+.. note::
+
+   QKDpy uses a cumulative three-tier licensing model (FREE / ENTERPRISE / PREMIUM).
+   See :doc:`enterprise/index` for details.
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents

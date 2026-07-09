@@ -237,7 +237,7 @@ class FreeSpaceOpticalChannel(QuantumChannel):
         integrated_cn2 = cn2 * 1000 * sec_z  # Approximate
 
         r0 = (0.423 * k**2 * integrated_cn2) ** (-3 / 5)
-        return max(0.01, r0)  # Minimum 1 cm
+        return float(max(0.01, r0))  # Minimum 1 cm
 
     def get_channel_metrics(self) -> dict[str, float]:
         """Get detailed channel metrics."""
@@ -315,7 +315,7 @@ class SatelliteQKD:
         """
         atmosphere = atmosphere or AtmosphericProfile()
 
-        results = {
+        results: dict[str, Any] = {
             "time_points": [],
             "elevation_angles": [],
             "channel_losses_db": [],
@@ -418,20 +418,23 @@ class SatelliteQKD:
             X.append(features)
             y.append(pass_data["total_key_bits"])
 
-        X = np.array(X)
-        y = np.array(y)
+        X_arr: np.ndarray = np.array(X)
+        y_arr: np.ndarray = np.array(y)
 
         # Create and train efficient predictor if none was injected
-        if self._channel_predictor is None:
+        predictor = self._channel_predictor
+        if predictor is None:
             from ..ml.efficient_models import EfficientQKDPredictor
 
-            self._channel_predictor = EfficientQKDPredictor(
+            predictor = EfficientQKDPredictor(  # type: ignore[assignment]
                 input_dim=5,
                 max_memory_mb=128,
                 enable_quantization=True,
             )
+            self._channel_predictor = predictor
 
-        results = self._channel_predictor.fit(X, y, epochs=50)
+        assert predictor is not None
+        results = predictor.fit(X_arr, y_arr, epochs=50)
 
         logger.info(
             "Channel predictor trained",

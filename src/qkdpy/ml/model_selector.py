@@ -21,7 +21,7 @@ class AdaptiveModelSelector:
             Estimated available memory
         """
         try:
-            import psutil
+            import psutil  # type: ignore[import-untyped]
 
             return int(psutil.virtual_memory().available / (1024 * 1024))
         except ImportError:

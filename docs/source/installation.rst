@@ -42,11 +42,33 @@ QKDpy provides several optional dependency groups for extended functionality:
    # Visualization extras (seaborn)
    pip install qkdpy[viz]
 
-   # Enterprise features (cryptography, PKCS#11)
+   # Enterprise features (cryptography, PKCS#11, compliance)
    pip install qkdpy[enterprise]
 
    # All extras
    pip install qkdpy[all]
+
+Product Tiers
+-------------
+
+QKDpy uses a cumulative three-tier licensing model:
+
+- **FREE** (default) — All protocols, satellite simulation, ML, visualization
+- **ENTERPRISE** — Adds compliance reporting, HSM, audit logging, attack detection, key escrow
+- **PREMIUM** — Adds quantum-safe migration toolkit, crypto inventory, priority support
+
+Set the active tier via environment variable:
+
+.. code-block:: bash
+
+   export QKDPY_PRODUCT_TIER=enterprise
+
+Or programmatically:
+
+.. code-block:: python
+
+   from qkdpy import set_config
+   set_config(product_tier="enterprise")
 
 Verify installation
 -------------------

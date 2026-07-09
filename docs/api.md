@@ -57,3 +57,61 @@
    :undoc-members:
    :show-inheritance:
 ```
+
+## Enterprise Module
+
+### Licensing
+
+```{eval-rst}
+.. automodule:: qkdpy.enterprise.licensing
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Compliance
+
+```{eval-rst}
+.. automodule:: qkdpy.enterprise.compliance
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Quantum-Safe Migration
+
+```{eval-rst}
+.. automodule:: qkdpy.enterprise.quantum_safe
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### HSM Interface
+
+```{eval-rst}
+.. automodule:: qkdpy.enterprise.hsm_interface
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Audit Logging
+
+```{eval-rst}
+.. automodule:: qkdpy.enterprise.audit
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+## Utilities Module
+
+### Instrumentation
+
+```{eval-rst}
+.. automodule:: qkdpy.utils.instrumentation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```

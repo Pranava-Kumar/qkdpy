@@ -12,6 +12,7 @@ structlog globally.
 
 import logging
 import sys
+from collections.abc import MutableMapping
 from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Any
@@ -43,16 +44,16 @@ logging.addLevelName(LOG_LEVELS["SECURITY"], "SECURITY")
 
 
 def add_timestamp(
-    logger: logging.Logger, method_name: str, event_dict: dict[str, Any]
-) -> dict[str, Any]:
+    logger: Any, method_name: str, event_dict: MutableMapping[str, Any]
+) -> MutableMapping[str, Any]:
     """Add ISO-8601 timestamp to log events."""
     event_dict["timestamp"] = datetime.now(UTC).isoformat()
     return event_dict
 
 
 def add_qkd_context(
-    logger: logging.Logger, method_name: str, event_dict: dict[str, Any]
-) -> dict[str, Any]:
+    logger: Any, method_name: str, event_dict: MutableMapping[str, Any]
+) -> MutableMapping[str, Any]:
     """Add QKD-specific context to log events."""
     event_dict["library"] = "qkdpy"
     event_dict["library_version"] = _get_version()
@@ -60,8 +61,8 @@ def add_qkd_context(
 
 
 def redact_sensitive_data(
-    logger: logging.Logger, method_name: str, event_dict: dict[str, Any]
-) -> dict[str, Any]:
+    logger: Any, method_name: str, event_dict: MutableMapping[str, Any]
+) -> MutableMapping[str, Any]:
     """Redact sensitive data from log events.
 
     Uses an **explicit denylist** of full key names — substring matching
@@ -71,7 +72,7 @@ def redact_sensitive_data(
     for key in list(event_dict.keys()):
         if key in _REDACT_KEYS:
             value = event_dict[key]
-            if isinstance(value, (list, bytes, str)):
+            if isinstance(value, list | bytes | str):
                 event_dict[key] = f"[REDACTED: {len(value)} items]"
             else:
                 event_dict[key] = "[REDACTED]"

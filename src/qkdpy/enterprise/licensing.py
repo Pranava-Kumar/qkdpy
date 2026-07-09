@@ -8,16 +8,17 @@ of silently degraded behaviour.
 
 from __future__ import annotations
 
-from enum import Enum
+from collections.abc import Callable
+from enum import StrEnum
 from functools import wraps
-from typing import Any, Callable, TypeVar
+from typing import Any, TypeVar
 
 from ..exceptions import QKDException
 
 F = TypeVar("F", bound=Callable[..., Any])
 
 
-class ProductTier(str, Enum):
+class ProductTier(StrEnum):
     """QKDpy product tiers."""
 
     FREE = "free"
@@ -25,7 +26,7 @@ class ProductTier(str, Enum):
     PREMIUM = "premium"
 
 
-class Feature(str, Enum):
+class Feature(StrEnum):
     """Individual features that can be gated behind a tier."""
 
     COMPLIANCE_REPORTING = "compliance_reporting"

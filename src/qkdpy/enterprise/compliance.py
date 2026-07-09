@@ -128,7 +128,11 @@ class ComplianceReport:
 
     def export_html(self) -> str:
         """Export report as a self-contained HTML page."""
-        rate = self.passed_checks / self.total_checks * 100 if self.total_checks > 0 else 0.0
+        rate = (
+            self.passed_checks / self.total_checks * 100
+            if self.total_checks > 0
+            else 0.0
+        )
         status_colour = "#22c55e" if self.overall_compliant else "#ef4444"
         standards_str = ", ".join(escape(s.value) for s in self.standards_checked)
         severity_colours = {

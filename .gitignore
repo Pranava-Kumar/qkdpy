@@ -1,38 +1,43 @@
-# Python-generated files
+# ── Python ──────────────────────────────────────────
 __pycache__/
 *.py[oc]
+*.so
 build/
 dist/
 wheels/
 *.egg-info
 
-# Virtual environments
+# ── Virtual environments ───────────────────────────
 .venv
+.venv/
 
-# Crush tool directory
+# ── Environment & secrets ──────────────────────────
+.env
+
+# ── IDE / Editor ───────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ── AI / Agent config ──────────────────────────────
+.agents/
+.openclaude/
 .crush/
 
-.env
-
-GEMINI.md
-QWEN.md
-test_file.txt
-test_file.txt.enc
-
-QKDpy_Research.md
-
-project.toml.backup
-
-issues.txt
-.env
-
-# Build artifacts
+# ── Build artifacts ────────────────────────────────
 docs/_build/
 node_modules/
 
-# Local AI / IDE config
-.agents/
-.openclaude/
-
-# Project analysis
+# ── Research drafts (personal) ─────────────────────
+GEMINI.md
+QWEN.md
+QKDpy_Research.md
 PROJECT_ANALYSIS.md
+test_file.txt
+test_file.txt.enc
+project.toml.backup
+issues.txt

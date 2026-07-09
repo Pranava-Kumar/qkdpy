@@ -123,7 +123,7 @@ class EfficientQKDPredictor:
 
     def _relu(self, x: np.ndarray) -> np.ndarray:
         """ReLU activation function."""
-        return np.maximum(0, x)
+        return np.maximum(0, x)  # type: ignore[no-any-return]
 
     def _relu_derivative(self, x: np.ndarray) -> np.ndarray:
         """Derivative of ReLU activation function."""
@@ -235,7 +235,7 @@ class EfficientQKDPredictor:
 
                 # Compute loss
                 loss = np.mean((output.flatten() - y_batch) ** 2)
-                epoch_loss += loss
+                epoch_loss += float(loss)
                 n_batches += 1
 
                 # Backward pass

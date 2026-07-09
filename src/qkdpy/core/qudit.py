@@ -32,7 +32,7 @@ class Qudit:
         if norm == 0:
             raise ValueError("Cannot create a qudit with zero norm")
 
-        self._state = state / norm
+        self._state: np.ndarray = state / norm
         self.dimension = dimension
 
     @classmethod
@@ -121,7 +121,7 @@ class Qudit:
 
         self._state = operator @ self._state
 
-    def measure(self, basis_matrix: np.ndarray = None) -> int:
+    def measure(self, basis_matrix: np.ndarray | None = None) -> int:
         """Measure the qudit in the specified basis.
 
         Args:
@@ -176,7 +176,9 @@ class Qudit:
 
         return self.measure(fourier_matrix)
 
-    def collapse_state(self, result: int, basis_matrix: np.ndarray = None) -> None:
+    def collapse_state(
+        self, result: int, basis_matrix: np.ndarray | None = None
+    ) -> None:
         """Collapse the qudit's state to a specific measurement result.
 
         Args:

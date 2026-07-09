@@ -320,9 +320,11 @@ class EnhancedCVQKD(BaseProtocol):
         )
 
         avg_corr = (actual_corr_x + actual_corr_p) / 2
-        noise_estimate = max(0.0, (expected_corr - avg_corr) / expected_corr)
+        noise_estimate = float(
+            max(0.0, (expected_corr - avg_corr) / expected_corr)  # type: ignore[arg-type]
+        )
 
-        return float(noise_estimate)
+        return noise_estimate
 
     def _get_security_threshold(self) -> float:
         """Get the security threshold for the CV-QKD protocol.

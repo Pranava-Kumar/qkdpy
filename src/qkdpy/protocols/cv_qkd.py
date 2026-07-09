@@ -53,7 +53,7 @@ class CVQKD(BaseProtocol):
         self.alice_x: np.ndarray = np.array([])
         self.alice_p: np.ndarray = np.array([])
         self.bob_measurements: np.ndarray = np.array([])
-        self.bob_bases: np.ndarray = np.array([])  # 0 for X, 1 for P
+        self.bob_bases: Any = np.array([])  # 0 for X, 1 for P
 
     def prepare_states(self) -> list[Qubit | Any]:
         """Prepare quantum states for transmission.
@@ -127,7 +127,9 @@ class CVQKD(BaseProtocol):
         # Securely seed for Bob
         seed_bob = secrets.randbits(128)
         rng_bob = np.random.default_rng(seed_bob)
-        self.bob_bases = rng_bob.integers(0, 2, n)  # 0 for X, 1 for P
+        self.bob_bases = rng_bob.integers(
+            0, 2, n
+        )  # 0 for X, 1 for P  # type: ignore[assignment]
 
         # Detector noise (electronic noise)
         # v_el in shot noise units

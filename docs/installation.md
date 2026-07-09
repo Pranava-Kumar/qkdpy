@@ -1,6 +1,6 @@
 # Installation
 
-To install QKDpy, you can use pip or uv:
+To install QKDpy, you can use pip or uv.
 
 ## Using uv (recommended)
 
@@ -28,4 +28,50 @@ source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 
 # Install in development mode
 pip install -e .
+```
+
+## Optional Extras
+
+QKDpy provides several optional dependency groups for extended functionality:
+
+```bash
+# Development tools (testing, linting, documentation)
+pip install qkdpy[dev]
+
+# Machine learning components (scikit-learn, pandas)
+pip install qkdpy[ml]
+
+# Documentation dependencies
+pip install qkdpy[docs]
+
+# Visualization extras (seaborn)
+pip install qkdpy[viz]
+
+# Enterprise features (cryptography, PKCS#11, compliance)
+pip install qkdpy[enterprise]
+
+# All extras
+pip install qkdpy[all]
+```
+
+## Product Tiers
+
+QKDpy uses a cumulative three-tier licensing model. By default, the FREE tier is active, which includes all QKD protocols, satellite simulation, ML integration, and advanced visualization.
+
+To activate higher tiers:
+
+```bash
+# Set via environment variable
+export QKDPY_PRODUCT_TIER=enterprise   # or premium
+
+# Or set programmatically
+python -c "from qkdpy import set_config; set_config(product_tier='enterprise')"
+```
+
+See the [Product Tiers](README.md#-product-tiers) section in the README for a full feature comparison.
+
+## Verify Installation
+
+```bash
+python -c "import qkdpy; print(qkdpy.__version__)"
 ```

@@ -303,7 +303,7 @@ class QKDOptimizer:
                     else predicted_value - best_value
                 )
 
-            ei_values.append(ei)
+            ei_values.append(float(ei))
 
         # Select candidate with highest expected improvement
         best_idx = int(np.argmax(ei_values))
@@ -383,11 +383,11 @@ class QKDOptimizer:
         """Standard normal cumulative distribution function."""
         # Use scipy.special.erf if available, otherwise fallback or loop
         # But since we are in a scientific context, we likely have scipy
-        return 0.5 * (1 + erf(x / np.sqrt(2)))
+        return 0.5 * (1 + erf(x / np.sqrt(2)))  # type: ignore[no-any-return]
 
     def _standard_normal_pdf(self, x: float | np.ndarray) -> float | np.ndarray:
         """Standard normal probability density function."""
-        return np.exp(-0.5 * x * x) / np.sqrt(2 * np.pi)
+        return np.exp(-0.5 * x * x) / np.sqrt(2 * np.pi)  # type: ignore[no-any-return]
 
     def _genetic_algorithm_optimization(
         self,
@@ -627,7 +627,7 @@ class QKDOptimizer:
                 mlp.fit(X, y)
 
                 def model_func(x: np.ndarray, model_instance: Any = mlp) -> np.ndarray:
-                    return model_instance.predict(x)
+                    return model_instance.predict(x)  # type: ignore[no-any-return]
 
                 model = model_func
 
@@ -779,7 +779,7 @@ class QKDOptimizer:
             a1 = np.tanh(z1)
             z2 = a1 @ W2 + b2
             predictions = z2.flatten() * y_std + y_mean  # Denormalize
-            return predictions
+            return predictions  # type: ignore[no-any-return]
 
         return predict
 

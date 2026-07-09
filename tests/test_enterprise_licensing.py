@@ -1,7 +1,9 @@
 """Tests for the enterprise product tier licensing module."""
+
 import unittest
 
 from qkdpy.enterprise.licensing import (
+    TIER_FEATURES,
     Feature,
     LicenseError,
     ProductTier,
@@ -9,7 +11,6 @@ from qkdpy.enterprise.licensing import (
     get_active_tier,
     require_feature,
     set_active_tier,
-    TIER_FEATURES,
 )
 
 
@@ -120,7 +121,9 @@ class TestFeatureAvailability(unittest.TestCase):
 
     def test_explicit_tier_overrides_active(self):
         """feature_available respects explicit tier parameter."""
-        result = feature_available(Feature.COMPLIANCE_REPORTING, tier=ProductTier.ENTERPRISE)
+        result = feature_available(
+            Feature.COMPLIANCE_REPORTING, tier=ProductTier.ENTERPRISE
+        )
         self.assertTrue(result)
 
     def test_explicit_free_tier(self):

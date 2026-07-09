@@ -101,9 +101,10 @@ class B92(BaseProtocol):
             basis = "hadamard"
             self.bob_bases.append(basis)
 
-            # Measure in the chosen basis
+            # Measure in the chosen basis (B92 only uses Qubits)
             result = Measurement.measure_in_basis(qubit, basis)
-            qubit.collapse_state(result, basis)
+            if isinstance(qubit, Qubit):
+                qubit.collapse_state(result, basis)
             self.bob_results.append(result)
 
         # Filter out None values to return only int results
