@@ -7,6 +7,20 @@ QKDException class and provide detailed context for debugging and auditing.
 
 from typing import Any
 
+_REDACT_KEYS: frozenset[str] = frozenset(
+    {
+        "raw_key",
+        "key_material",
+        "secret_key",
+        "shared_secret",
+        "password",
+        "token",
+        "api_key",
+        "private_key",
+        "session_key",
+    }
+)
+
 
 def _redact_context(context: dict[str, Any]) -> dict[str, Any]:
     """Return a copy of ``context`` with sensitive keys redacted.
@@ -14,8 +28,6 @@ def _redact_context(context: dict[str, Any]) -> dict[str, Any]:
     Uses the same denylist as the structured logger to avoid leaking
     secrets into logs or external error reporting.
     """
-    from .utils.logging_config import _REDACT_KEYS
-
     redacted: dict[str, Any] = {}
     for key, value in context.items():
         if key in _REDACT_KEYS:
@@ -383,9 +395,73 @@ class OptimizationError(MLError):
     error_code = "QKD_OPTIMIZATION_ERROR"
 
 
-# === Backward-compat re-exports ===
-# ``wrap_exception`` historically lived here; it now lives in
-# ``qkdpy.utils.exceptions`` so exception class definitions and helpers
-# are not mixed. The re-export keeps `from qkdpy.exceptions import wrap_exception`
-# working for any existing caller.
-from .utils.exceptions import wrap_exception  # noqa: F401, E402
+# === Exception utilities ===
+
+
+def wrap_exception(
+    original: Exception,
+    qkd_exception_class: type[QKDException] = QKDException,
+    message: str | None = None,
+) -> QKDException:
+    """Wrap a standard exception in a QKD exception.
+
+    The wrapped exception carries the original via Python's ``__cause__``,
+    so tracebacks preserve the full chain.
+
+    Args:
+        original: Original exception to wrap
+        qkd_exception_class: QKD exception class to use
+        message: Optional custom message (defaults to original message)
+
+    Returns:
+        Wrapped QKD exception with original as cause
+    """
+    return qkd_exception_class(
+        message or str(original),
+        cause=original,
+    )
+
+
+__all__ = [
+    # Exception classes
+    "QKDException",
+    "ProtocolError",
+    "ProtocolSecurityError",
+    "ProtocolStateError",
+    "InsufficientKeyError",
+    "ChannelError",
+    "ChannelLossError",
+    "ChannelNoiseError",
+    "ChannelCalibrationError",
+    "KeyManagementError",
+    "KeyNotFoundError",
+    "KeyExpiredError",
+    "KeyExhaustedError",
+    "KeyStorageError",
+    "CryptoError",
+    "EncryptionError",
+    "DecryptionError",
+    "AuthenticationError",
+    "IntegrityError",
+    "ValidationError",
+    "ParameterError",
+    "RangeError",
+    "TypeValidationError",
+    "ConfigurationError",
+    "MissingConfigError",
+    "InvalidConfigError",
+    "NetworkError",
+    "NodeNotFoundError",
+    "ConnectionError",
+    "PathNotFoundError",
+    "HardwareError",
+    "HSMError",
+    "HSMNotAvailableError",
+    "DetectorError",
+    "MLError",
+    "ModelNotTrainedError",
+    "InsufficientDataError",
+    "OptimizationError",
+    # Utilities
+    "wrap_exception",
+]

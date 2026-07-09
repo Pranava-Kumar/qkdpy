@@ -16,6 +16,8 @@ from datetime import UTC, datetime
 from functools import lru_cache
 from typing import Any
 
+from ..exceptions import _REDACT_KEYS
+
 try:
     import structlog
     from structlog.types import Processor
@@ -55,21 +57,6 @@ def add_qkd_context(
     event_dict["library"] = "qkdpy"
     event_dict["library_version"] = _get_version()
     return event_dict
-
-
-_REDACT_KEYS: frozenset[str] = frozenset(
-    {
-        "raw_key",
-        "key_material",
-        "secret_key",
-        "shared_secret",
-        "password",
-        "token",
-        "api_key",
-        "private_key",
-        "session_key",
-    }
-)
 
 
 def redact_sensitive_data(
