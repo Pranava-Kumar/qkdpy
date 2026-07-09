@@ -4,8 +4,8 @@ import unittest
 
 from qkdpy.utils.validation import (
     ParameterError,
+    RangeError,
     TypeValidationError,
-    ValidationError,
     validate_not_empty,
     validate_positive,
     validate_probability,
@@ -53,11 +53,11 @@ class TestValidationDecorators(unittest.TestCase):
         self.assertEqual(_needs_range(5), 5)
 
     def test_range_too_low(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(RangeError):
             _needs_range(-1)
 
     def test_range_too_high(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(RangeError):
             _needs_range(11)
 
     def test_range_boundary(self):
@@ -79,11 +79,11 @@ class TestValidationDecorators(unittest.TestCase):
         self.assertEqual(_needs_positive(3.14), 3.14)
 
     def test_positive_invalid(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(RangeError):
             _needs_positive(-1)
 
     def test_positive_zero(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(RangeError):
             _needs_positive(0)
 
     # -- validate_probability ---------------------------------------
@@ -94,11 +94,11 @@ class TestValidationDecorators(unittest.TestCase):
         self.assertEqual(_needs_probability(1.0), 1.0)
 
     def test_probability_out_of_range(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(RangeError):
             _needs_probability(1.5)
 
     def test_probability_negative(self):
-        with self.assertRaises(ValidationError):
+        with self.assertRaises(RangeError):
             _needs_probability(-0.1)
 
     # -- validate_not_empty -----------------------------------------

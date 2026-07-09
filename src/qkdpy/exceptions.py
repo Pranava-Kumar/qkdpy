@@ -7,8 +7,6 @@ QKDException class and provide detailed context for debugging and auditing.
 
 from typing import Any
 
-from .utils.logging_config import _REDACT_KEYS
-
 
 def _redact_context(context: dict[str, Any]) -> dict[str, Any]:
     """Return a copy of ``context`` with sensitive keys redacted.
@@ -16,6 +14,8 @@ def _redact_context(context: dict[str, Any]) -> dict[str, Any]:
     Uses the same denylist as the structured logger to avoid leaking
     secrets into logs or external error reporting.
     """
+    from .utils.logging_config import _REDACT_KEYS
+
     redacted: dict[str, Any] = {}
     for key, value in context.items():
         if key in _REDACT_KEYS:
