@@ -19,7 +19,30 @@ from .helpers import (
     mutual_information,
     random_bit_string,
 )
+from .logging_config import (
+    QKDLogger,
+    configure_default_logger,
+    get_logger,
+    log_debug,
+    log_error,
+    log_info,
+    log_security,
+    log_warning,
+)
 from .quantum_simulator import QuantumNetworkAnalyzer, QuantumSimulator
+from .validation import (
+    validate_binary_key,
+    validate_density_matrix,
+    validate_key_length,
+    validate_normalized_state,
+    validate_not_empty,
+    validate_positive,
+    validate_probability,
+    validate_qber,
+    validate_range,
+    validate_type,
+    validate_unitary,
+)
 from .visualization import BlochSphere, KeyRateAnalyzer, ProtocolVisualizer
 
 __all__ = [
@@ -44,4 +67,25 @@ __all__ = [
     "mutual_information",
     "generate_random_permutation",
     "apply_permutation",
+    # Logging
+    "QKDLogger",
+    "get_logger",
+    "configure_default_logger",
+    "log_debug",
+    "log_info",
+    "log_warning",
+    "log_error",
+    "log_security",
+    # Validation
+    "validate_range",
+    "validate_type",
+    "validate_positive",
+    "validate_probability",
+    "validate_not_empty",
+    "validate_key_length",
+    "validate_binary_key",
+    "validate_qber",
+    "validate_unitary",
+    "validate_normalized_state",
+    "validate_density_matrix",
 ]

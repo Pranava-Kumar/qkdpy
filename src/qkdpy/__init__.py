@@ -4,9 +4,18 @@ QKDpy is a comprehensive library for Quantum Key Distribution (QKD) simulations,
 implementing various QKD protocols, quantum simulators, and cryptographic tools.
 """
 
-__version__ = "0.2.7"
+__version__ = "0.4.0"
 __author__ = "Pranava Kumar"
 __email__ = "pranavakumar.it@gmail.com"
+
+# Import configuration
+from .config import (
+    QKDConfig,
+    get_config,
+    is_debug_mode,
+    is_production_mode,
+    set_config,
+)
 
 # Import core components
 from .core import (
@@ -60,6 +69,20 @@ from .crypto.key_exchange import QuantumKeyExchange
 from .crypto.quantum_auth import QuantumAuthenticator
 from .crypto.quantum_rng import QuantumRandomNumberGenerator
 
+# Import exceptions
+from .exceptions import (
+    ChannelError,
+    ConfigurationError,
+    CryptoError,
+    KeyManagementError,
+    MLError,
+    NetworkError,
+    ProtocolError,
+    ProtocolSecurityError,
+    QKDException,
+    ValidationError,
+)
+
 # Import key management
 from .key_management import (
     ErrorCorrection,
@@ -72,16 +95,27 @@ from .key_management.advanced_privacy_amplification import AdvancedPrivacyAmplif
 from .key_management.key_manager import QuantumKeyManager
 
 # Import ML tools
-from .ml import QKDAnomalyDetector, QKDOptimizer
+from .ml import (
+    AdaptiveModelSelector,
+    EfficientQKDPredictor,
+    KnowledgeDistillation,
+    QKDAnomalyDetector,
+    QKDOptimizer,
+)
 
 # Import network tools
-from .network import (
+from .network import (  # Satellite QKD
+    AtmosphericProfile,
+    FreeSpaceOpticalChannel,
     MultiPartyQKD,
     MultiPartyQKDNetwork,
+    OrbitType,
     QuantumNetwork,
     QuantumNode,
     RealisticQuantumNetwork,
     RealisticQuantumNode,
+    SatelliteQKD,
+    simulate_satellite_qkd,
 )
 
 # Import protocols
@@ -99,6 +133,7 @@ from .utils.advanced_visualization import (
     AdvancedKeyRateAnalyzer,
     AdvancedProtocolVisualizer,
 )
+from .utils.logging_config import configure_default_logger, get_logger
 from .utils.quantum_simulator import QuantumNetworkAnalyzer, QuantumSimulator
 
 __all__ = [
@@ -179,9 +214,14 @@ __all__ = [
     "InteractiveQuantumVisualizer",
     "QuantumSimulator",
     "QuantumNetworkAnalyzer",
+    "get_logger",
+    "configure_default_logger",
     # ML tools
     "QKDOptimizer",
     "QKDAnomalyDetector",
+    "EfficientQKDPredictor",
+    "KnowledgeDistillation",
+    "AdaptiveModelSelector",
     # Network tools
     "QuantumNetwork",
     "QuantumNode",
@@ -189,6 +229,29 @@ __all__ = [
     "RealisticQuantumNode",
     "MultiPartyQKD",
     "MultiPartyQKDNetwork",
+    # Satellite QKD
+    "SatelliteQKD",
+    "FreeSpaceOpticalChannel",
+    "AtmosphericProfile",
+    "OrbitType",
+    "simulate_satellite_qkd",
+    # Configuration
+    "QKDConfig",
+    "get_config",
+    "set_config",
+    "is_debug_mode",
+    "is_production_mode",
+    # Exceptions
+    "QKDException",
+    "ProtocolError",
+    "ProtocolSecurityError",
+    "ChannelError",
+    "KeyManagementError",
+    "CryptoError",
+    "ValidationError",
+    "ConfigurationError",
+    "NetworkError",
+    "MLError",
     # Integrations
     "QiskitIntegration",
     "CirqIntegration",
