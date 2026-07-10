@@ -5,7 +5,7 @@ import math
 import numpy as np
 
 from .gate_utils import GateUtils
-from .gates import PauliX, PauliY
+from .gates import Hadamard, SDag
 from .qubit import Qubit
 from .qudit import Qudit
 from .secure_random import secure_choice
@@ -282,16 +282,16 @@ class Measurement:
             # Reset the qubit to its original state
             qubit_copy._state = qubit.state.copy()
 
-            # Measure in X basis (Hadamard)
-            qubit_copy.apply_gate(PauliX().matrix)
+            # Measure in X basis (Hadamard rotates X eigenstates to Z)
+            qubit_copy.apply_gate(Hadamard().matrix)
             result_x = qubit_copy.measure("computational")
             qubit_copy.collapse_state(result_x, "computational")
             results_x.append(result_x)
 
-            # Reset and measure in Y basis
+            # Reset and measure in Y basis (S† H rotates Y eigenstates to Z)
             qubit_copy._state = qubit.state.copy()
-            qubit_copy.apply_gate(PauliX().matrix)
-            qubit_copy.apply_gate(PauliY().matrix)
+            qubit_copy.apply_gate(SDag().matrix)
+            qubit_copy.apply_gate(Hadamard().matrix)
             result_y = qubit_copy.measure("computational")
             qubit_copy.collapse_state(result_y, "computational")
             results_y.append(result_y)

@@ -298,6 +298,9 @@ class QuantumNetwork:
         # Remove the node
         del self.nodes[node_id]
 
+        # Remove from network graph to keep routing consistent
+        self.graph.remove_node(node_id)
+
     def get_shortest_path(
         self, source: str, destination: str, weight: str = "distance"
     ) -> list[str]:
