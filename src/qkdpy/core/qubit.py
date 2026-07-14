@@ -93,43 +93,43 @@ class Qubit:
     def measure(self, basis: str = "computational") -> int:
         """Measure the qubit in the specified basis.
 
+        Collapses the qubit's state to the post-measurement state
+        corresponding to the outcome, as required by quantum mechanics.
+
         Args:
             basis: 'computational' (Z), 'hadamard' (X), or 'circular' (Y)
 
         Returns:
             Measurement result (0 or 1)
-
         """
         if basis == "computational":
-            # Standard computational basis measurement
             prob_0, prob_1 = self.probabilities
             result = 0 if secure_random() < prob_0 else 1
+            self.collapse_state(result, basis)
 
         elif basis == "hadamard":
-            # Hadamard basis measurement
-            # Transform to Hadamard basis, measure, then transform back
+            # Rotate to X eigenbasis, measure Z, rotate back
             h_gate = np.array([[1, 1], [1, -1]], dtype=complex) / math.sqrt(2)
-            temp_qubit = Qubit(
-                self._state[0], self._state[1]
-            )  # Create a temporary qubit for measurement
-            temp_qubit.apply_gate(h_gate)
-            prob_0, prob_1 = temp_qubit.probabilities
+            rotated = h_gate @ self._state
+            prob_0 = abs(rotated[0]) ** 2
+            prob_1 = abs(rotated[1]) ** 2
             result = 0 if secure_random() < prob_0 else 1
+            self.collapse_state(result, basis)
 
         elif basis == "circular":
-            # Circular basis measurement
-            # Transform to circular basis, measure, then transform back
-            circ_gate = np.array([[1, -1j], [1, 1j]], dtype=complex) / math.sqrt(2)
-            temp_qubit = Qubit(
-                self._state[0], self._state[1]
-            )  # Create a temporary qubit for measurement
-            temp_qubit.apply_gate(circ_gate)
-            prob_0, prob_1 = temp_qubit.probabilities
+            # Rotate to Y eigenbasis, measure Z, rotate back
+            # S^dag @ H transforms Z-basis to Y-basis
+            phase_gate = np.array([[1, 0], [0, -1j]], dtype=complex)
+            h_gate = np.array([[1, 1], [1, -1]], dtype=complex) / math.sqrt(2)
+            y_rot = h_gate @ phase_gate  # transforms Z-basis to Y-basis
+            rotated = y_rot @ self._state
+            prob_0 = abs(rotated[0]) ** 2
+            prob_1 = abs(rotated[1]) ** 2
             result = 0 if secure_random() < prob_0 else 1
+            self.collapse_state(result, basis)
         else:
             raise ValueError("Basis must be 'computational', 'hadamard', or 'circular'")
 
-        # Convert numpy integer to Python int to avoid returning np.int32
         return int(result)
 
     def collapse_state(self, result: int, basis: str = "computational") -> None:
