@@ -95,26 +95,31 @@ class E91(BaseProtocol):
                 self.bob_results.append(-1)
                 continue
 
-            if (
-                self.channel.noise_model == "depolarizing"
-                and secure_random() < self.channel.noise_level
-            ):
-                gate_idx = secure_randint(0, 4)
+            # Apply channel noise to the Bell pair's qubits
+            # (MultiQubitState must stay intact for entanglement correlations)
+            if secure_random() < self.channel.noise_level:
+                # Apply a non-trivial Pauli (X, Y, or Z) to Bob's qubit
+                gate_idx = secure_randint(1, 3)
+                self.channel.error_count += 1
                 if gate_idx == 1:  # X
-                    bell_pair.apply_gate(np.array([[0, 1], [1, 0]], dtype=complex), 1)
+                    bell_pair.apply_gate(
+                        np.array([[0, 1], [1, 0]], dtype=complex), 1
+                    )
                 elif gate_idx == 2:  # Y
                     bell_pair.apply_gate(
                         np.array([[0, -1j], [1j, 0]], dtype=complex), 1
                     )
                 elif gate_idx == 3:  # Z
-                    bell_pair.apply_gate(np.array([[1, 0], [0, -1]], dtype=complex), 1)
+                    bell_pair.apply_gate(
+                        np.array([[1, 0], [0, -1]], dtype=complex), 1
+                    )
 
             # 3. Alice Measures
             a_idx = self.alice_settings[i]
             angle_a = self.alice_angles[a_idx]
 
             if angle_a != 0:
-                bell_pair.apply_gate(Ry(-angle_a).matrix, 0)
+                bell_pair.apply_gate(Ry(angle_a).matrix, 0)
 
             res_a, collapsed_state = bell_pair.measure(0)
             self.alice_results.append(res_a)
@@ -128,7 +133,7 @@ class E91(BaseProtocol):
             angle_b = self.bob_angles[b_idx]
 
             if angle_b != 0:
-                collapsed_state.apply_gate(Ry(-angle_b).matrix, 0)
+                collapsed_state.apply_gate(Ry(angle_b).matrix, 0)
 
             res_b, _ = collapsed_state.measure(0)
             self.bob_results.append(res_b)
