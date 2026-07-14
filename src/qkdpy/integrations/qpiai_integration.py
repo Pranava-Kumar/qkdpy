@@ -71,7 +71,7 @@ class QpiAIIntegration:
             QKDpy Qubit representing the same quantum state
         """
         state = qpiai_state.data
-        return Qubit(float(np.real(state[0])), float(np.real(state[1])))
+        return Qubit(state[0], state[1])
 
     def statevector_from_array(
         self, data: list[complex] | np.ndarray
@@ -129,13 +129,18 @@ class QpiAIIntegration:
         num_qubits: int = 1,
         alice_bases: list[str] | None = None,
         bob_bases: list[str] | None = None,
+        alice_bits: list[int] | None = None,
     ) -> Circuit:
         """Create a QpiAI circuit implementing the BB84 protocol.
+
+        Alice and Bob operate on the same physical qubits (connected via
+        quantum channel). Alice prepares, then Bob measures.
 
         Args:
             num_qubits: Number of qubits to encode
             alice_bases: Bases Alice uses ('Z' or 'X')
             bob_bases: Bases Bob uses ('Z' or 'X')
+            alice_bits: Alice's bit values (0 or 1) for encoding
 
         Returns:
             QpiAI Circuit for BB84
@@ -144,26 +149,25 @@ class QpiAIIntegration:
             alice_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
         if bob_bases is None:
             bob_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+        if alice_bits is None:
+            alice_bits = [np.random.randint(0, 2) for _ in range(num_qubits)]
 
-        circuit = Circuit(num_qubits * 2, num_qubits * 2)
+        circuit = Circuit(num_qubits, num_qubits)
 
-        # Alice prepares and encodes qubits
+        # Alice prepares and encodes qubits (same qubits Bob will measure)
         for i in range(num_qubits):
-            alice_bit = np.random.randint(0, 2)
-            if alice_bit == 1:
+            if alice_bits[i] == 1:
                 circuit.X(i)
             if alice_bases[i] == "X":
                 circuit.H(i)
 
-        # Alice sends to Bob (qubits pass through channel)
-        # Bob measures in his chosen bases
+        # Bob measures in his chosen bases (same qubits)
         for i in range(num_qubits):
-            bob_wire = i + num_qubits
             if bob_bases[i] == "X":
-                circuit.H(bob_wire)
+                circuit.H(i)
 
         # Measurement
-        for i in range(num_qubits * 2):
+        for i in range(num_qubits):
             circuit.MEASURE(i, i)
 
         return circuit

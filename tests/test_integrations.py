@@ -116,10 +116,10 @@ class TestQiskitQuantumInfo(unittest.TestCase):
         sv_plus = self.integration.state_from_label("+")
         sv_minus = self.integration.state_from_label("-")
 
-        self.assertAlmostEqual(float(sv0.data[0]), 1.0)
-        self.assertAlmostEqual(float(sv1.data[1]), 1.0)
-        self.assertAlmostEqual(float(sv_plus.data[0]), 1 / np.sqrt(2))
-        self.assertAlmostEqual(float(sv_minus.data[0]), 1 / np.sqrt(2))
+        self.assertAlmostEqual(abs(sv0.data[0]), 1.0)
+        self.assertAlmostEqual(abs(sv1.data[1]), 1.0)
+        self.assertAlmostEqual(abs(sv_plus.data[0]), 1 / np.sqrt(2))
+        self.assertAlmostEqual(abs(sv_minus.data[0]), 1 / np.sqrt(2))
 
     def test_entanglement_measures_bell_state(self):
         """Test concurrence and entanglement_of_formation on Bell state."""
@@ -166,7 +166,7 @@ class TestQiskitQuantumInfo(unittest.TestCase):
         import math
 
         # Reduced state of Bell pair = I/2 purity = 0.5
-        self.assertAlmostEqual(float(reduced.purity()), 0.5, places=6)
+        self.assertAlmostEqual(abs(reduced.purity()), 0.5, places=6)
 
     def test_mutual_information(self):
         """Test mutual information on Bell state."""
@@ -189,7 +189,7 @@ class TestQiskitQuantumInfo(unittest.TestCase):
 
         self.assertIsInstance(dm, DensityMatrix)
         self.assertEqual(dm._data.shape, (4, 4))
-        self.assertAlmostEqual(float(dm.purity()), 1.0, places=6)
+        self.assertAlmostEqual(abs(dm.purity()), 1.0, places=6)
 
     def test_von_neumann_entropy_reduced(self):
         """Test von Neumann entropy on reduced Bell state density matrix."""

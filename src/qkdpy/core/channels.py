@@ -200,19 +200,28 @@ class QuantumChannel:
         return results
 
     def _depolarizing_noise(self, qubit: Qubit) -> Qubit:
-        """Apply depolarizing noise to a qubit."""
-        if np.random.random() < self.noise_level:
-            # Apply a random Pauli operator
+        """Apply depolarizing noise to a qubit.
+
+        Standard depolarizing channel: rho -> (1-p)*rho + p/3*(X*rho*X + Y*rho*Y + Z*rho*Z).
+        Uses statevector unraveling (quantum trajectory method).
+
+        Args:
+            qubit: Input qubit
+
+        Returns:
+            Qubit after potential depolarization
+        """
+        p = self.noise_level
+        if p > 0 and np.random.random() < p:
+            # Apply a random Pauli (X, Y, or Z) — NOT Identity
             gate = random.choice(
                 [
-                    Identity().matrix,
                     PauliX().matrix,
                     PauliY().matrix,
                     PauliZ().matrix,
                 ]
             )
-            if not np.array_equal(cast(Any, gate), Identity().matrix):
-                self.error_count += 1
+            self.error_count += 1
             qubit.apply_gate(gate)
         return qubit
 
@@ -231,13 +240,42 @@ class QuantumChannel:
         return qubit
 
     def _amplitude_damping_noise(self, qubit: Qubit) -> Qubit:
-        """Apply amplitude damping noise to a qubit."""
-        if np.random.random() < self.noise_level:
-            gamma = self.noise_level
-            if qubit.probabilities[1] > 0 and np.random.random() < gamma:
-                # Simulate amplitude damping by collapsing to |0> with probability gamma
-                qubit._state = np.array([1, 0], dtype=complex)
-                self.error_count += 1
+        """Apply amplitude damping noise to a qubit.
+
+        Uses the correct Kraus operators (quantum trajectory method):
+          K0 = [[1, 0], [0, sqrt(1-gamma)]]
+          K1 = [[0, sqrt(gamma)], [0, 0]]
+
+        The |1> amplitude is damped by sqrt(1-gamma) and the population
+        decays to |0> with probability gamma * |beta|^2.
+
+        Args:
+            qubit: Input qubit
+
+        Returns:
+            Qubit after amplitude damping
+        """
+        gamma = self.noise_level
+        if gamma <= 0:
+            return qubit
+
+        alpha, beta = qubit._state[0], qubit._state[1]
+
+        # Probability of quantum jump (|1> → |0>)
+        jump_prob = gamma * (abs(beta) ** 2)
+
+        if jump_prob > 0 and np.random.random() < jump_prob:
+            # K1: quantum jump — collapse to |0>
+            qubit._state = np.array([1.0 + 0.0j, 0.0 + 0.0j])
+            self.error_count += 1
+        else:
+            # K0: no jump — damp |1> amplitude, preserve |0>
+            new_alpha = alpha
+            new_beta = np.sqrt(1.0 - gamma) * beta
+            norm = np.sqrt(abs(new_alpha) ** 2 + abs(new_beta) ** 2)
+            if norm > 0:
+                qubit._state = np.array([new_alpha / norm, new_beta / norm])
+
         return qubit
 
     def get_statistics(self) -> dict[str, int | float | bool]:
@@ -372,11 +410,12 @@ class QuantumChannel:
             np.random.normal(0, self.polarization_drift_rate) * timestamp
         ) % (2 * np.pi)
 
-        # Apply rotation to simulate polarization drift
+        # Apply rotation to simulate polarization drift (Ry gate on Bloch sphere)
+        # Ry(theta) = cos(theta/2) * I - i * sin(theta/2) * Y
         rotation_matrix = np.array(
             [
-                [np.cos(drift_angle), -np.sin(drift_angle)],
-                [np.sin(drift_angle), np.cos(drift_angle)],
+                [np.cos(drift_angle / 2), -np.sin(drift_angle / 2)],
+                [np.sin(drift_angle / 2), np.cos(drift_angle / 2)],
             ],
             dtype=complex,
         )
@@ -416,9 +455,13 @@ class QuantumChannel:
         """
         if np.random.random() < self.misalignment_error:
             # Apply small random rotation to simulate basis misalignment
+            # Use SU(2) Ry gate with halved angle for Bloch sphere correctness
             angle = np.random.uniform(-0.1, 0.1)  # Small angle in radians
             misalignment_matrix = np.array(
-                [[np.cos(angle), -np.sin(angle)], [np.sin(angle), np.cos(angle)]],
+                [
+                    [np.cos(angle / 2), -np.sin(angle / 2)],
+                    [np.sin(angle / 2), np.cos(angle / 2)],
+                ],
                 dtype=complex,
             )
 
@@ -437,19 +480,17 @@ class QuantumChannel:
 
         """
         if np.random.random() < self.thermal_noise_factor:
-            # Apply random Pauli operator to simulate thermal noise
+            # Apply random non-trivial Pauli to simulate thermal noise
+            # (Identity is never applied since it's not an error)
             gate = random.choice(
                 [
-                    Identity().matrix,
                     PauliX().matrix,
                     PauliY().matrix,
                     PauliZ().matrix,
                 ]
             )
 
-            # Only count as error if it's not identity
-            if not np.array_equal(cast(Any, gate), Identity().matrix):
-                self.error_count += 1
+            self.error_count += 1
             qubit.apply_gate(gate)
 
         return qubit

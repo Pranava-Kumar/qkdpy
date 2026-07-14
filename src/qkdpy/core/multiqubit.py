@@ -320,23 +320,60 @@ class MultiQubitState:
     def entanglement_entropy(self, subsystem_qubits: list[int]) -> float:
         """Calculate the entanglement entropy of a subsystem.
 
+        Computes S(rho_reduced) = -Tr(rho_reduced * log2(rho_reduced))
+        where rho_reduced is obtained by tracing out all qubits NOT in
+        subsystem_qubits.
+
         Args:
             subsystem_qubits: List of qubit indices in the subsystem
 
         Returns:
-            Von Neumann entropy of the subsystem
+            Von Neumann entropy of the subsystem (base-2)
         """
+        import math
+
         if not subsystem_qubits or any(
             q < 0 or q >= self._num_qubits for q in subsystem_qubits
         ):
             raise ValueError("Invalid subsystem qubit indices")
 
-        # For a pure state, the entanglement entropy is the von Neumann entropy
-        # of the reduced density matrix of the subsystem
+        # Build the list of qubits to trace out (complement of subsystem)
+        trace_out_qubits = [
+            q for q in range(self._num_qubits) if q not in subsystem_qubits
+        ]
 
-        # This is a complex calculation that would require partial trace computation
-        # For now, we'll return a placeholder
-        return 0.0
+        # If tracing out nothing, return full state entropy (0 for pure state)
+        if not trace_out_qubits:
+            return 0.0
+
+        # Compute reduced density matrix via partial trace
+        rho = self.density_matrix()
+        dim = 2 ** self._num_qubits
+        rho = rho.reshape([2] * (2 * self._num_qubits))
+
+        # Trace out the specified qubits
+        # The density matrix indices are: [q0, q1, ..., q_{n-1}, q0', q1', ..., q_{n-1}']
+        # We trace by equating the indices of qubits to remove
+        trace_indices = [q for q in trace_out_qubits]
+        trace_indices_prime = [q + self._num_qubits for q in trace_out_qubits]
+
+        for ti, tip in zip(trace_indices, trace_indices_prime):
+            rho = np.trace(rho, axis1=ti, axis2=tip - 1)
+
+        # Normalize remaining density matrix
+        rho_reduced = rho.reshape(
+            (2 ** len(subsystem_qubits), 2 ** len(subsystem_qubits))
+        )
+        rho_reduced = rho_reduced / np.trace(rho_reduced)
+
+        # Compute von Neumann entropy from eigenvalues
+        eigenvalues = np.linalg.eigvalsh(rho_reduced)
+        entropy = 0.0
+        for val in eigenvalues:
+            if val > 1e-15:
+                entropy -= val * math.log2(val)
+
+        return float(entropy)
 
     def fidelity(self, other: "MultiQubitState") -> float:
         """Calculate the fidelity between this state and another state.
