@@ -372,10 +372,10 @@ class EfficientQKDPredictor:
         # Forward pass
         output, _, _ = self._forward(X_norm)
 
-        # Denormalize output
+        # Denormalize output (keep float32 to match internal precision)
         predictions = output.flatten() * self._output_std + self._output_mean
 
-        return predictions
+        return predictions.astype(np.float32, copy=False)
 
     def get_model_size_bytes(self) -> int:
         """Get model size in bytes."""

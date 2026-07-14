@@ -6,7 +6,20 @@ from typing import Any
 
 try:
     from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
-    from qiskit.quantum_info import Statevector
+    from qiskit.quantum_info import (
+        Statevector,
+        DensityMatrix,
+        StabilizerState,
+        Clifford,
+        partial_trace,
+        schmidt_decomposition,
+        entropy,
+        concurrence,
+        entanglement_of_formation,
+        negativity,
+        mutual_information,
+        state_fidelity,
+    )
 
     QISKIT_AVAILABLE = True
 except ImportError:
@@ -57,6 +70,168 @@ class QiskitIntegration:
         state = qiskit_state.data
         # Create QKDpy Qubit
         return Qubit(state[0], state[1])
+
+    # ------------------------------------------------------------------ #
+    #  Quantum Information Measures
+    # ------------------------------------------------------------------ #
+
+    def state_from_label(self, label: str) -> Statevector:
+        """Create a Qiskit Statevector from a standard basis label.
+
+        Supports labels like '0', '1', '+', '-', 'r', 'l' (single-qubit)
+        and multi-qubit labels like '00', '++', '01', etc.
+
+        Args:
+            label: Standard basis label
+
+        Returns:
+            Qiskit Statevector for the given label
+        """
+        return Statevector.from_label(label)
+
+    def compute_concurrence(self, state: DensityMatrix | Statevector) -> float:
+        """Compute the concurrence of a 2-qubit quantum state.
+
+        Concurrence ranges from 0 (separable) to 1 (maximally entangled).
+
+        Args:
+            state: 2-qubit DensityMatrix or Statevector
+
+        Returns:
+            Concurrence value
+        """
+        return float(concurrence(state))
+
+    def compute_entanglement_of_formation(
+        self, state: DensityMatrix | Statevector
+    ) -> float:
+        """Compute the entanglement of formation of a 2-qubit state.
+
+        Args:
+            state: 2-qubit DensityMatrix or Statevector
+
+        Returns:
+            Entanglement of formation value
+        """
+        return float(entanglement_of_formation(state))
+
+    def compute_negativity(self, state: DensityMatrix | Statevector) -> float:
+        """Compute the negativity of a quantum state.
+
+        Negativity measures entanglement based on the partial transpose.
+
+        Args:
+            state: DensityMatrix or Statevector (2-qubit for standard measure)
+
+        Returns:
+            Negativity value
+        """
+        return float(negativity(state))
+
+    def compute_mutual_information(
+        self, state: DensityMatrix | Statevector
+    ) -> float:
+        """Compute the mutual information of a bipartite state.
+
+        Mutual information I(A:B) = S(A) + S(B) - S(AB) measures total
+        correlations between subsystems.
+
+        Args:
+            state: Bipartite DensityMatrix or Statevector
+
+        Returns:
+            Mutual information value
+        """
+        return float(mutual_information(state))
+
+    def compute_partial_trace(
+        self, state: DensityMatrix | Statevector, qargs: list[int]
+    ) -> DensityMatrix:
+        """Compute the partial trace over specified qubits.
+
+        Args:
+            state: DensityMatrix or Statevector
+            qargs: List of qubit indices to trace out
+
+        Returns:
+            Reduced DensityMatrix
+        """
+        return partial_trace(state, qargs)
+
+    def compute_schmidt_decomposition(
+        self, state: Statevector, qargs: list[int]
+    ) -> list[tuple[float, Statevector, Statevector]]:
+        """Compute the Schmidt decomposition of a bipartite state.
+
+        Args:
+            state: Statevector
+            qargs: Two qubit indices defining the bipartition
+
+        Returns:
+            List of (coefficient, left_state, right_state) tuples
+        """
+        return schmidt_decomposition(state, qargs)
+
+    def compute_von_neumann_entropy(
+        self, state: DensityMatrix | Statevector
+    ) -> float:
+        """Compute the von Neumann entropy of a quantum state.
+
+        For a subsystem entropy, call :meth:`compute_partial_trace` first
+        to obtain the reduced density matrix.
+
+        Args:
+            state: DensityMatrix or Statevector
+
+        Returns:
+            von Neumann entropy value
+        """
+        return float(entropy(state, base=2))
+
+    def compute_state_fidelity(
+        self,
+        state1: Statevector | DensityMatrix,
+        state2: Statevector | DensityMatrix,
+    ) -> float:
+        """Compute the fidelity between two quantum states.
+
+        Args:
+            state1: First quantum state
+            state2: Second quantum state
+
+        Returns:
+            Fidelity value (0 to 1)
+        """
+        return float(state_fidelity(state1, state2))
+
+    def to_density_matrix(self, state: Statevector) -> DensityMatrix:
+        """Convert a Statevector to a DensityMatrix.
+
+        Args:
+            state: Statevector to convert
+
+        Returns:
+            DensityMatrix representation
+        """
+        return DensityMatrix(state)
+
+    def stabilizer_from_stabilizers(self, stabilizers: list[str]) -> StabilizerState:
+        """Create a StabilizerState from a list of Pauli stabilizer strings.
+
+        Useful for efficient simulation of large entanglement swapping networks.
+
+        Args:
+            stabilizers: List of Pauli strings (e.g., ['XX', 'ZZ'])
+
+        Returns:
+            StabilizerState
+        """
+        clifford = Clifford.from_list(stabilizers)
+        return StabilizerState(clifford)
+
+    # ------------------------------------------------------------------ #
+    #  Circuit Construction
+    # ------------------------------------------------------------------ #
 
     def create_bb84_circuit(
         self,

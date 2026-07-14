@@ -9,7 +9,7 @@ To install QKDpy, you can use pip or uv.
 curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Clone the repository
-git clone https://github.com/yourusername/qkdpy.git
+git clone https://github.com/Pranava-Kumar/qkdpy.git
 cd qkdpy
 
 # Create a virtual environment
@@ -49,6 +49,12 @@ pip install qkdpy[viz]
 
 # Enterprise features (cryptography, PKCS#11, compliance)
 pip install qkdpy[enterprise]
+
+# Cirq quantum computing framework integration
+pip install qkdpy[cirq]
+
+# PennyLane quantum computing framework integration
+pip install qkdpy[pennylane]
 
 # All extras
 pip install qkdpy[all]

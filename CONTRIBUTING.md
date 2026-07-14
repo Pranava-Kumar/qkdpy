@@ -4,13 +4,13 @@ We welcome contributions to QKDpy! This document provides guidelines and instruc
 
 ## Code of Conduct
 
-Please note that this project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating in this project, you agree to abide by its terms.
+Please note that this project adheres to a [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you agree to abide by its terms.
 
 ## How to Contribute
 
 ### Reporting Bugs
 
-If you find a bug, please report it by opening an issue on our [GitHub Issues](https://github.com/yourusername/qkdpy/issues) page. Please include:
+If you find a bug, please report it by opening an issue on our [GitHub Issues](https://github.com/Pranava-Kumar/qkdpy/issues) page. Please include:
 
 - A clear and descriptive title
 - A detailed description of the issue
@@ -22,7 +22,7 @@ If you find a bug, please report it by opening an issue on our [GitHub Issues](h
 
 ### Suggesting Enhancements
 
-We welcome suggestions for new features or improvements. Please open an issue on our [GitHub Issues](https://github.com/yourusername/qkdpy/issues) page and describe:
+We welcome suggestions for new features or improvements. Please open an issue on our [GitHub Issues](https://github.com/Pranava-Kumar/qkdpy/issues) page and describe:
 
 - A clear and descriptive title
 - A detailed description of the enhancement
@@ -47,7 +47,7 @@ We welcome pull requests! To contribute code:
 
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/qkdpy.git
+   git clone https://github.com/Pranava-Kumar/qkdpy.git
    cd qkdpy
    ```
 2. Install the package in development mode:

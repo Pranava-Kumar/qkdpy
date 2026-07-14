@@ -22,6 +22,13 @@ try:
 except (ImportError, NameError):
     PENNYLANE_AVAILABLE = False
 
+try:
+    from .qpiai_integration import QpiAIIntegration  # noqa: F401
+
+    QPIAI_AVAILABLE = True
+except (ImportError, NameError):
+    QPIAI_AVAILABLE = False
+
 __all__ = []
 
 if QISKIT_AVAILABLE:
@@ -32,3 +39,6 @@ if CIRQ_AVAILABLE:
 
 if PENNYLANE_AVAILABLE:
     __all__.append("PennyLaneIntegration")
+
+if QPIAI_AVAILABLE:
+    __all__.append("QpiAIIntegration")

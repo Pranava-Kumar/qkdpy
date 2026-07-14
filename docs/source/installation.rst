@@ -45,6 +45,12 @@ QKDpy provides several optional dependency groups for extended functionality:
    # Enterprise features (cryptography, PKCS#11, compliance)
    pip install qkdpy[enterprise]
 
+   # Cirq quantum computing framework integration
+   pip install qkdpy[cirq]
+
+   # PennyLane quantum computing framework integration
+   pip install qkdpy[pennylane]
+
    # All extras
    pip install qkdpy[all]
 

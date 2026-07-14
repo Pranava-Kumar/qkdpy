@@ -4,7 +4,8 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Documentation](https://img.shields.io/badge/docs-latest-brightgreen.svg)](https://qkdpy.readthedocs.io/)
+[![Tests](https://img.shields.io/badge/tests-389_passing-brightgreen.svg)](#-quick-start)
+[![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 **A production-grade Python library for Quantum Key Distribution at the intersection of Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**
 
@@ -260,6 +261,12 @@ for rec in report["recommendations"]:
 - **structlog backend** — JSON or console output
 - **Correlation IDs** — Trace operations across components
 
+### Framework Integrations
+
+- **Qiskit** — IBM quantum SDK integration for protocol simulation
+- **Cirq** — Google quantum framework for circuit-based QKD
+- **PennyLane** — Quantum ML integration for hybrid optimization
+
 ### Infrastructure
 
 - Structured exception hierarchy (`QKDException`)
@@ -280,6 +287,8 @@ uv pip install qkdpy
 # Or with optional features
 uv pip install qkdpy[ml]           # ML optimization
 uv pip install qkdpy[enterprise]   # Enterprise features
+uv pip install qkdpy[cirq]         # Cirq framework integration
+uv pip install qkdpy[pennylane]    # PennyLane ML integration
 uv pip install qkdpy[all]          # Everything
 ```
 

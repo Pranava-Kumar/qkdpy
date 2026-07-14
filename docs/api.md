@@ -115,3 +115,150 @@
    :undoc-members:
    :show-inheritance:
 ```
+
+## Key Management Module
+
+### Quantum Key Manager
+
+```{eval-rst}
+.. automodule:: qkdpy.key_management.key_manager
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Advanced Error Correction
+
+```{eval-rst}
+.. automodule:: qkdpy.key_management.advanced_error_correction
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+## Network Module
+
+### Quantum Network
+
+```{eval-rst}
+.. automodule:: qkdpy.network.quantum_network
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+## Machine Learning Module
+
+### QKD Optimizer
+
+```{eval-rst}
+.. automodule:: qkdpy.ml.qkd_optimizer
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Efficient Models
+
+```{eval-rst}
+.. automodule:: qkdpy.ml.efficient_models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Knowledge Distillation
+
+```{eval-rst}
+.. automodule:: qkdpy.ml.knowledge_distillation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+## Integrations Module
+
+### Qiskit Integration
+
+```{eval-rst}
+.. automodule:: qkdpy.integrations.qiskit_integration
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Cirq Integration
+
+```{eval-rst}
+.. automodule:: qkdpy.integrations.cirq_integration
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### PennyLane Integration
+
+```{eval-rst}
+.. automodule:: qkdpy.integrations.pennylane_integration
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+## Satellite Module
+
+### Satellite QKD
+
+```{eval-rst}
+.. automodule:: qkdpy.satellite.satellite_qkd
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Atmospheric Models
+
+```{eval-rst}
+.. automodule:: qkdpy.satellite.atmospheric_models
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+## Crypto Module
+
+### Encryption
+
+```{eval-rst}
+.. automodule:: qkdpy.crypto.encryption
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Decryption
+
+```{eval-rst}
+.. automodule:: qkdpy.crypto.decryption
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Authentication
+
+```{eval-rst}
+.. automodule:: qkdpy.crypto.authentication
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+### Key Exchange
+
+```{eval-rst}
+.. automodule:: qkdpy.crypto.key_exchange
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```

@@ -91,8 +91,298 @@ class TestIntegrations(unittest.TestCase):
 
             # Check that the module was imported successfully
             self.assertTrue(hasattr(integrations, "__all__"))
+            self.assertIn("QpiAIIntegration", integrations.__all__)
         except ImportError:
             self.fail("Failed to import integrations module")
+
+
+class TestQiskitQuantumInfo(unittest.TestCase):
+    """Test Qiskit integration quantum information methods."""
+
+    def setUp(self):
+        try:
+            from qkdpy.integrations.qiskit_integration import QiskitIntegration
+
+            self.integration = QiskitIntegration()
+        except ImportError:
+            self.skipTest("Qiskit not installed")
+
+    def test_state_from_label(self):
+        """Test Statevector.from_label() for BB84 basis states."""
+        import numpy as np
+
+        sv0 = self.integration.state_from_label("0")
+        sv1 = self.integration.state_from_label("1")
+        sv_plus = self.integration.state_from_label("+")
+        sv_minus = self.integration.state_from_label("-")
+
+        self.assertAlmostEqual(float(sv0.data[0]), 1.0)
+        self.assertAlmostEqual(float(sv1.data[1]), 1.0)
+        self.assertAlmostEqual(float(sv_plus.data[0]), 1 / np.sqrt(2))
+        self.assertAlmostEqual(float(sv_minus.data[0]), 1 / np.sqrt(2))
+
+    def test_entanglement_measures_bell_state(self):
+        """Test concurrence and entanglement_of_formation on Bell state."""
+        import numpy as np
+        from qiskit.quantum_info import Statevector
+
+        # Bell state |Φ+⟩ = (|00⟩ + |11⟩)/√2
+        bell = Statevector([1, 0, 0, 1]) / np.sqrt(2)
+
+        concurrence = self.integration.compute_concurrence(bell)
+        eof = self.integration.compute_entanglement_of_formation(bell)
+
+        self.assertAlmostEqual(concurrence, 1.0, places=7)
+        self.assertAlmostEqual(eof, 1.0, places=7)
+
+    def test_entanglement_measures_separable_state(self):
+        """Test concurrence on separable state (should be 0)."""
+        from qiskit.quantum_info import Statevector
+
+        separable = Statevector([1, 0, 0, 0])  # |00⟩
+
+        concurrence = self.integration.compute_concurrence(separable)
+        self.assertAlmostEqual(concurrence, 0.0, places=7)
+
+    def test_von_neumann_entropy(self):
+        """Test von Neumann entropy on Bell state (full state entropy = 0)."""
+        import numpy as np
+        from qiskit.quantum_info import Statevector
+
+        bell = Statevector([1, 0, 0, 1]) / np.sqrt(2)
+        # Full state of pure Bell pair has entropy 0
+        entropy = self.integration.compute_von_neumann_entropy(bell)
+
+        self.assertAlmostEqual(entropy, 0.0, places=6)
+
+    def test_partial_trace(self):
+        """Test partial trace on Bell state."""
+        import numpy as np
+        from qiskit.quantum_info import Statevector
+
+        bell = Statevector([1, 0, 0, 1]) / np.sqrt(2)
+        reduced = self.integration.compute_partial_trace(bell, qargs=[1])
+
+        import math
+
+        # Reduced state of Bell pair = I/2 purity = 0.5
+        self.assertAlmostEqual(float(reduced.purity()), 0.5, places=6)
+
+    def test_mutual_information(self):
+        """Test mutual information on Bell state."""
+        import numpy as np
+        from qiskit.quantum_info import Statevector
+
+        bell = Statevector([1, 0, 0, 1]) / np.sqrt(2)
+        mi = self.integration.compute_mutual_information(bell)
+
+        # I(A:B) base-2 = 2 for max entangled
+        self.assertAlmostEqual(mi, 2.0, places=5)
+
+    def test_to_density_matrix(self):
+        """Test Statevector to DensityMatrix conversion."""
+        import numpy as np
+        from qiskit.quantum_info import DensityMatrix, Statevector
+
+        bell = Statevector([1, 0, 0, 1]) / np.sqrt(2)
+        dm = self.integration.to_density_matrix(bell)
+
+        self.assertIsInstance(dm, DensityMatrix)
+        self.assertEqual(dm._data.shape, (4, 4))
+        self.assertAlmostEqual(float(dm.purity()), 1.0, places=6)
+
+    def test_von_neumann_entropy_reduced(self):
+        """Test von Neumann entropy on reduced Bell state density matrix."""
+        import numpy as np
+        from qiskit.quantum_info import Statevector
+
+        bell = Statevector([1, 0, 0, 1]) / np.sqrt(2)
+        reduced = self.integration.compute_partial_trace(bell, qargs=[1])
+        entropy = self.integration.compute_von_neumann_entropy(reduced)
+
+        # S(ρ_A) = log₂(2) = 1 for max entanglement
+        self.assertAlmostEqual(entropy, 1.0, places=6)
+
+
+class TestPennyLaneQuantumInfo(unittest.TestCase):
+    """Test PennyLane integration quantum information methods."""
+
+    def setUp(self):
+        try:
+            from qkdpy.integrations.pennylane_integration import (
+                PennyLaneIntegration,
+            )
+
+            self.integration = PennyLaneIntegration()
+        except ImportError:
+            self.skipTest("PennyLane not installed")
+
+    def test_vn_entropy_bell_state(self):
+        """Test von Neumann entropy on Bell state."""
+        import numpy as np
+
+        bell = np.array([1, 0, 0, 1], dtype=complex) / np.sqrt(2)
+        entropy = self.integration.compute_vn_entropy(bell, indices=[0])
+
+        import math
+
+        self.assertAlmostEqual(entropy, math.log(2), places=6)
+
+    def test_purity_bell_state(self):
+        """Test purity on Bell state (should be 1 for pure state)."""
+        import numpy as np
+
+        bell = np.array([1, 0, 0, 1], dtype=complex) / np.sqrt(2)
+        purity = self.integration.compute_purity(bell, indices=[0, 1])
+        self.assertAlmostEqual(purity, 1.0, places=6)
+
+    def test_fidelity_identical_states(self):
+        """Test fidelity between identical states."""
+        import numpy as np
+
+        bell = np.array([1, 0, 0, 1], dtype=complex) / np.sqrt(2)
+        fid = self.integration.compute_fidelity(bell, bell)
+        self.assertAlmostEqual(fid, 1.0, places=6)
+
+    def test_fidelity_orthogonal_states(self):
+        """Test fidelity between orthogonal states."""
+        import numpy as np
+
+        zero = np.array([1, 0], dtype=complex)
+        one = np.array([0, 1], dtype=complex)
+        fid = self.integration.compute_fidelity(zero, one)
+        self.assertAlmostEqual(fid, 0.0, places=6)
+
+    def test_trace_distance_identical(self):
+        """Test trace distance between identical states (should be 0)."""
+        import numpy as np
+
+        bell = np.array([1, 0, 0, 1], dtype=complex) / np.sqrt(2)
+        td = self.integration.compute_trace_distance(bell, bell)
+        self.assertAlmostEqual(td, 0.0, places=6)
+
+    def test_trace_distance_orthogonal(self):
+        """Test trace distance between orthogonal states."""
+        import numpy as np
+
+        zero = np.array([1, 0], dtype=complex)
+        one = np.array([0, 1], dtype=complex)
+        td = self.integration.compute_trace_distance(zero, one)
+        self.assertAlmostEqual(td, 1.0, places=6)
+
+    def test_chsh_correlation(self):
+        """Test CHSH correlation value (should violate Bell inequality).
+
+        Uses optimal angles for |Φ+⟩ with RY rotations:
+        a=0, a'=π/2, b=π/4, b'=-π/4  →  S = 2√2 ≈ 2.828
+        """
+        import numpy as np
+
+        s = self.integration.compute_chsh_correlation(
+            [0, np.pi / 2], [np.pi / 4, -np.pi / 4], num_qubits=20000
+        )
+        # CHSH value > 2 indicates non-local correlations
+        self.assertGreater(s, 2.0)
+
+
+class TestQpiAIIntegration(unittest.TestCase):
+    """Test QpiAI Quantum SDK integration."""
+
+    def setUp(self):
+        try:
+            from qkdpy.integrations.qpiai_integration import QpiAIIntegration
+
+            self.integration = QpiAIIntegration()
+        except ImportError:
+            self.skipTest("QpiAI Quantum SDK not installed")
+
+    def test_statevector_from_array(self):
+        """Test creating a Statevector from array."""
+        import numpy as np
+
+        sv = self.integration.statevector_from_array([1, 0, 0, 1])
+        self.assertEqual(len(sv.data), 4)
+
+    def test_compute_concurrence(self):
+        """Test concurrence on Bell state density matrix."""
+        import numpy as np
+
+        bell = np.array([1, 0, 0, 1], dtype=complex) / np.sqrt(2)
+        dm = np.outer(bell, np.conjugate(bell))
+        c = self.integration.compute_concurrence(dm)
+        self.assertAlmostEqual(c, 1.0, places=6)
+
+    def test_compute_purity(self):
+        """Test purity on pure Bell state."""
+        import numpy as np
+
+        bell = np.array([1, 0, 0, 1], dtype=complex) / np.sqrt(2)
+        dm = np.outer(bell, np.conjugate(bell))
+        p = self.integration.compute_purity(dm)
+        self.assertAlmostEqual(p, 1.0, places=6)
+
+    def test_create_bb84_circuit(self):
+        """Test BB84 circuit construction with QpiAI."""
+        circuit = self.integration.create_bb84_circuit(
+            num_qubits=2,
+            alice_bases=["Z", "X"],
+            bob_bases=["X", "Z"],
+        )
+        # Circuit should have been created (structure varies by RNG bits)
+        self.assertIsNotNone(circuit)
+
+    def test_create_entanglement_circuit(self):
+        """Test Bell state circuit generation."""
+        circuit, desc = self.integration.create_entanglement_circuit("|Ψ+>")
+        self.assertIsNotNone(circuit)
+        self.assertIn("01⟩ +", desc)
+
+    def test_create_ghz_circuit(self):
+        """Test GHZ state circuit generation."""
+        circuit = self.integration.create_ghz_circuit(num_qubits=4)
+        self.assertIsNotNone(circuit)
+
+    def test_calculate_qber(self):
+        """Test QBER calculation."""
+        qber = self.integration.calculate_qber([0, 1, 0], [0, 1, 0])
+        self.assertAlmostEqual(qber, 0.0)
+
+        qber_noisy = self.integration.calculate_qber([0, 1, 0], [0, 0, 0])
+        self.assertAlmostEqual(qber_noisy, 1 / 3)
+
+    def test_compute_chsh_value(self):
+        """Test CHSH S-value computation.
+
+        Optimal angles for |Φ+⟩ with RY rotations:
+        a=0, a'=π/2, b=π/4, b'=-π/4  →  S = 2√2 ≈ 2.828
+        """
+        import numpy as np
+
+        s = self.integration.compute_chsh_value(
+            [0, np.pi / 2, np.pi / 4, -np.pi / 4]
+        )
+        # Max quantum CHSH = 2√2 ≈ 2.828
+        self.assertGreater(s, 2.0)
+        self.assertLess(s, 3.0)
+
+    def test_simulate_no_api_key(self):
+        """Test simulate returns circuit info without API key."""
+        from qpiai_quantum import Circuit
+
+        circuit = Circuit(2, 2)
+        circuit.H(0)
+        circuit.CX(0, 1)
+        result = self.integration.simulate(circuit)
+        self.assertIn("circuit", result)
+        self.assertIn("num_qubits", result)
+
+    def test_submit_to_cloud_no_api_key(self):
+        """Test cloud submission raises error without API key."""
+        from qpiai_quantum import Circuit
+
+        circuit = Circuit(2, 2)
+        with self.assertRaises(ValueError):
+            self.integration.submit_to_cloud(circuit)
 
 
 if __name__ == "__main__":

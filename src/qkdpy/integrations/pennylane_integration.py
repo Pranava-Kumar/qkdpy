@@ -63,6 +63,258 @@ class PennyLaneIntegration:
         # Create QKDpy Qubit
         return Qubit(state[0], state[1])
 
+    # ------------------------------------------------------------------ #
+    #  Quantum Information Measures
+    # ------------------------------------------------------------------ #
+
+    def _ensure_density_matrix(self, state: np.ndarray) -> np.ndarray:
+        """Convert state vector to density matrix if needed.
+
+        PennyLane math functions require density matrices for
+        entropy, purity, and related computations.
+
+        Args:
+            state: State vector (1D) or density matrix (2D)
+
+        Returns:
+            Density matrix (2D array)
+        """
+        if state.ndim == 1:
+            return np.outer(state, np.conjugate(state))
+        return state
+
+    def compute_vn_entropy(self, state: np.ndarray, indices: list[int]) -> float:
+        """Compute the von Neumann entropy of a subsystem from a state.
+
+        Uses PennyLane's math module for direct computation on state vectors
+        or density matrices.
+
+        Args:
+            state: State vector or density matrix
+            indices: Subsystem indices to compute entropy for
+
+        Returns:
+            von Neumann entropy value
+        """
+        dm = self._ensure_density_matrix(state)
+        return float(qml.math.vn_entropy(dm, indices=indices))
+
+    def compute_mutual_info(
+        self, state: np.ndarray, indices0: list[int], indices1: list[int]
+    ) -> float:
+        """Compute the mutual information between two subsystems.
+
+        Args:
+            state: State vector or density matrix
+            indices0: First subsystem indices
+            indices1: Second subsystem indices
+
+        Returns:
+            Mutual information value
+        """
+        dm = self._ensure_density_matrix(state)
+        return float(
+            qml.math.vn_entanglement_entropy(
+                dm, indices0=indices0, indices1=indices1
+            )
+        )
+
+    def compute_purity(self, state: np.ndarray, indices: list[int]) -> float:
+        """Compute the purity of a subsystem from a state.
+
+        Purity = Tr(ρ²) ranges from 1/d (maximally mixed) to 1 (pure).
+
+        Args:
+            state: State vector or density matrix
+            indices: Subsystem indices
+
+        Returns:
+            Purity value
+        """
+        dm = self._ensure_density_matrix(state)
+        return float(qml.math.purity(dm, indices=indices))
+
+    def compute_fidelity(self, state1: np.ndarray, state2: np.ndarray) -> float:
+        """Compute the fidelity between two quantum states.
+
+        Args:
+            state1: First quantum state (state vector or density matrix)
+            state2: Second quantum state
+
+        Returns:
+            Fidelity value (0 to 1)
+        """
+        dm1 = self._ensure_density_matrix(state1)
+        dm2 = self._ensure_density_matrix(state2)
+        return float(qml.math.fidelity(dm1, dm2))
+
+    def compute_trace_distance(
+        self, state1: np.ndarray, state2: np.ndarray
+    ) -> float:
+        """Compute the trace distance between two quantum states.
+
+        Args:
+            state1: First quantum state
+            state2: Second quantum state
+
+        Returns:
+            Trace distance value (0 to 1)
+        """
+        dm1 = self._ensure_density_matrix(state1)
+        dm2 = self._ensure_density_matrix(state2)
+        return float(qml.math.trace_distance(dm1, dm2))
+
+    def compute_chsh_correlation(
+        self,
+        alice_angles: list[float],
+        bob_angles: list[float],
+        num_qubits: int = 100,
+    ) -> float:
+        """Compute the CHSH correlation value for DI-QKD verification.
+
+        The CHSH inequality |⟨S⟩| ≤ 2 is violated by quantum mechanics.
+        A value > 2 indicates non-local correlations suitable for DI-QKD.
+
+        Args:
+            alice_angles: Measurement angles for Alice
+            bob_angles: Measurement angles for Bob
+            num_qubits: Number of runs per angle setting
+
+        Returns:
+            CHSH S-value
+        """
+        dev = qml.device("default.qubit", wires=2, shots=num_qubits)
+
+        @qml.qnode(dev)  # type: ignore
+        def chsh_circuit(a_angle: float, b_angle: float) -> float:
+            qml.Hadamard(wires=0)
+            qml.CNOT(wires=[0, 1])
+            qml.RY(a_angle, wires=0)
+            qml.RY(b_angle, wires=1)
+            return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))
+
+        # CHSH value S = E(a,b) + E(a,b') + E(a',b) - E(a',b')
+        e_ab = chsh_circuit(alice_angles[0], bob_angles[0])
+        e_ab_prime = chsh_circuit(alice_angles[0], bob_angles[1])
+        e_a_prime_b = chsh_circuit(alice_angles[1], bob_angles[0])
+        e_a_prime_b_prime = chsh_circuit(alice_angles[1], bob_angles[1])
+
+        s_value = e_ab + e_ab_prime + e_a_prime_b - e_a_prime_b_prime
+        return float(s_value)
+
+    def create_state_tomography_circuit(self, num_qubits: int = 1) -> Any:
+        """Create a circuit for quantum state tomography.
+
+        Measures in Z, X, and Y bases to reconstruct the density matrix.
+
+        Args:
+            num_qubits: Number of qubits to perform tomography on
+
+        Returns:
+            QNode that returns measurement results in all bases
+        """
+        dev = qml.device("default.qubit", wires=num_qubits, shots=1000)
+        measurements = []
+
+        @qml.qnode(dev)  # type: ignore
+        def tomography_circuit(basis: str) -> list[float]:
+            if basis == "X":
+                for i in range(num_qubits):
+                    qml.Hadamard(wires=i)
+            elif basis == "Y":
+                for i in range(num_qubits):
+                    qml.RX(-np.pi / 2, wires=i)
+            # Z basis: no rotation needed
+            return [qml.expval(qml.PauliZ(i)) for i in range(num_qubits)]
+
+        def run_tomography() -> dict[str, list[float]]:
+            return {
+                "Z": tomography_circuit("Z"),
+                "X": tomography_circuit("X"),
+                "Y": tomography_circuit("Y"),
+            }
+
+        return run_tomography
+
+    # ------------------------------------------------------------------ #
+    #  Enhanced Circuit Construction
+    # ------------------------------------------------------------------ #
+
+    def create_e91_circuit(
+        self,
+        num_pairs: int = 1,
+        alice_bases: list[str] | None = None,
+        bob_bases: list[str] | None = None,
+    ) -> Any:
+        """Create a PennyLane circuit implementing the E91 protocol.
+
+        Uses entangled pairs with measurement in Z, X, and W bases.
+
+        Args:
+            num_pairs: Number of entangled pairs
+            alice_bases: Bases Alice uses ('Z', 'X', 'W')
+            bob_bases: Bases Bob uses ('Z', 'X', 'W')
+
+        Returns:
+            QNode implementing E91
+        """
+        if alice_bases is None:
+            alice_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+        if bob_bases is None:
+            bob_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+
+        dev = qml.device("default.qubit", wires=2 * num_pairs, shots=1)
+
+        @qml.qnode(dev)  # type: ignore
+        def e91_circuit() -> list[Any]:
+            # Create entangled pairs
+            for i in range(num_pairs):
+                qml.Hadamard(wires=i)
+                qml.CNOT(wires=[i, i + num_pairs])
+
+            # Alice measures her half
+            for i, basis in enumerate(alice_bases):
+                if basis == "X":
+                    qml.Hadamard(wires=i)
+                elif basis == "W":
+                    qml.RY(-np.pi / 4, wires=i)
+                # Z basis: no rotation
+
+            # Bob measures his half
+            for i, basis in enumerate(bob_bases):
+                bob_wire = i + num_pairs
+                if basis == "X":
+                    qml.Hadamard(wires=bob_wire)
+                elif basis == "W":
+                    qml.RY(np.pi / 4, wires=bob_wire)
+                # Z basis: no rotation
+
+            return [
+                qml.measure(wires=i) for i in range(2 * num_pairs)
+            ]
+
+        return e91_circuit
+
+    def create_entanglement_circuit(self, num_pairs: int = 1) -> Any:
+        """Create a PennyLane circuit that generates Bell state entangled pairs.
+
+        Args:
+            num_pairs: Number of entangled pairs to create
+
+        Returns:
+            QNode that generates Bell states
+        """
+        dev = qml.device("default.qubit", wires=2 * num_pairs, shots=1)
+
+        @qml.qnode(dev)  # type: ignore
+        def entanglement_circuit() -> list[Any]:
+            for i in range(num_pairs):
+                qml.Hadamard(wires=i)
+                qml.CNOT(wires=[i, i + num_pairs])
+            return [qml.measure(wires=i) for i in range(2 * num_pairs)]
+
+        return entanglement_circuit
+
     def create_bb84_circuit(
         self,
         num_qubits: int = 1,
