@@ -347,23 +347,16 @@ class MultiQubitState:
             return 0.0
 
         # Compute reduced density matrix via partial trace
-        rho = self.density_matrix()
-        dim = 2 ** self._num_qubits
-        rho = rho.reshape([2] * (2 * self._num_qubits))
-
-        # Trace out the specified qubits
-        # The density matrix indices are: [q0, q1, ..., q_{n-1}, q0', q1', ..., q_{n-1}']
-        # We trace by equating the indices of qubits to remove
-        trace_indices = [q for q in trace_out_qubits]
-        trace_indices_prime = [q + self._num_qubits for q in trace_out_qubits]
-
-        for ti, tip in zip(trace_indices, trace_indices_prime):
-            rho = np.trace(rho, axis1=ti, axis2=tip - 1)
-
-        # Normalize remaining density matrix
-        rho_reduced = rho.reshape(
-            (2 ** len(subsystem_qubits), 2 ** len(subsystem_qubits))
+        # Use statevector tensordot approach (matching Qiskit's partial_trace method):
+        # Contract the state tensor with its conjugate over the traced-out axes
+        state_tensor = self._state.reshape([2] * self._num_qubits)
+        rho_reduced = np.tensordot(
+            state_tensor, np.conj(state_tensor),
+            axes=(trace_out_qubits, trace_out_qubits),
         )
+        # Reshape to 2^k x 2^k density matrix and normalize
+        k = len(subsystem_qubits)
+        rho_reduced = rho_reduced.reshape((2**k, 2**k))
         rho_reduced = rho_reduced / np.trace(rho_reduced)
 
         # Compute von Neumann entropy from eigenvalues

@@ -141,7 +141,7 @@ class SARG04(BaseProtocol):
             result = None
             if isinstance(quantum_state, Qubit):
                 result = Measurement.measure_in_basis(quantum_state, basis)
-                quantum_state.collapse_state(result, basis)
+                # measure_in_basis already collapses the state via qubit.measure()
             elif isinstance(quantum_state, Qudit):
                 # For qudits, basis needs to be converted if using Qudit.measure
                 # For simplicity, assuming a default computational measurement

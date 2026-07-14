@@ -165,7 +165,7 @@ class QuantumChannel:
             if not (hasattr(qubit, "dimension") and qubit.dimension > 2):
                 if isinstance(qubit, Qubit):
                     qubit = self._bit_flip_noise(qubit)
-        elif self.noise_model == "phase_flip":
+        elif self.noise_model in ("phase_flip", "phase_damping", "dephasing"):
             if not (hasattr(qubit, "dimension") and qubit.dimension > 2):
                 if isinstance(qubit, Qubit):
                     qubit = self._phase_flip_noise(qubit)

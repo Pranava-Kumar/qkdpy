@@ -18,6 +18,27 @@ from ..core import QuantumChannel, Qubit
 from ..protocols.bb84 import BB84
 
 
+_CHSH_QNODE: Any = None
+
+
+def _get_chsh_qnode() -> Any:
+    """Get a cached CHSH QNode to avoid re-creating devices on every call."""
+    global _CHSH_QNODE
+    if _CHSH_QNODE is None:
+        dev = qml.device("default.qubit", wires=2)
+
+        @qml.qnode(dev)  # type: ignore
+        def _chsh_circuit(a_angle: float, b_angle: float) -> float:
+            qml.Hadamard(wires=0)
+            qml.CNOT(wires=[0, 1])
+            qml.RY(a_angle, wires=0)
+            qml.RY(b_angle, wires=1)
+            return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))
+
+        _CHSH_QNODE = _chsh_circuit
+    return _CHSH_QNODE
+
+
 class PennyLaneIntegration:
     """Integration with PennyLane quantum computing framework."""
 
@@ -175,23 +196,18 @@ class PennyLaneIntegration:
         The CHSH inequality |⟨S⟩| ≤ 2 is violated by quantum mechanics.
         A value > 2 indicates non-local correlations suitable for DI-QKD.
 
+        Uses exact analytic expectation values (shots parameter is accepted
+        for backward compatibility but not used).
+
         Args:
             alice_angles: Measurement angles for Alice
             bob_angles: Measurement angles for Bob
-            num_qubits: Number of runs per angle setting
+            num_qubits: Ignored; kept for backward compatibility
 
         Returns:
             CHSH S-value
         """
-        dev = qml.device("default.qubit", wires=2, shots=num_qubits)
-
-        @qml.qnode(dev)  # type: ignore
-        def chsh_circuit(a_angle: float, b_angle: float) -> float:
-            qml.Hadamard(wires=0)
-            qml.CNOT(wires=[0, 1])
-            qml.RY(a_angle, wires=0)
-            qml.RY(b_angle, wires=1)
-            return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))
+        chsh_circuit = _get_chsh_qnode()
 
         # CHSH value S = E(a,b) + E(a,b') + E(a',b) - E(a',b')
         e_ab = chsh_circuit(alice_angles[0], bob_angles[0])
@@ -448,29 +464,6 @@ class PennyLaneIntegration:
                 noise_params["phase_flip"] = qkdpy_channel.noise_level
 
         return noise_params
-
-    def create_entanglement_circuit(self, num_pairs: int = 1) -> Any:
-        """Create a PennyLane circuit for generating entangled pairs.
-
-        Args:
-            num_pairs: Number of entangled pairs to create
-
-        Returns:
-            PennyLane quantum function creating entangled pairs
-        """
-        # Create device
-        dev = qml.device("default.qubit", wires=2 * num_pairs)
-
-        @qml.qnode(dev)  # type: ignore
-        def entanglement_circuit() -> list[Any]:
-            # Create entangled pairs using Hadamard and CNOT
-            for i in range(num_pairs):
-                qml.Hadamard(wires=i)  # Create superposition
-                qml.CNOT(wires=[i, i + num_pairs])  # Create entanglement
-
-            return [qml.expval(qml.PauliZ(i)) for i in range(2 * num_pairs)]
-
-        return entanglement_circuit
 
     def benchmark_qkdpy_vs_pennylane(
         self, num_qubits: int = 100, num_trials: int = 10

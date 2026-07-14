@@ -25,8 +25,7 @@ except ImportError:
     np = None  # type: ignore[assignment]
 
 
-from ..core import QuantumChannel, Qubit
-from ..protocols.bb84 import BB84
+from ..core import Qubit
 
 
 class QpiAIIntegration:
@@ -44,6 +43,7 @@ class QpiAIIntegration:
                 "QpiAI Quantum SDK is not installed. "
                 "Install it from https://github.com/qpiai/quantum-sdk"
             )
+        self._api_key: str | None = None
 
     # ------------------------------------------------------------------ #
     #  State Conversion
@@ -256,7 +256,7 @@ class QpiAIIntegration:
             if basis == "X":
                 circuit.H(i)
             elif basis == "W":
-                circuit.RY(-np.pi / 4, i)
+                circuit.ry(i, -np.pi / 4)
             # Z basis: no rotation
 
         # Bob measures his half
@@ -265,7 +265,7 @@ class QpiAIIntegration:
             if basis == "X":
                 circuit.H(bob_wire)
             elif basis == "W":
-                circuit.RY(np.pi / 4, bob_wire)
+                circuit.ry(bob_wire, np.pi / 4)
 
         # Measure all qubits
         for i in range(num_pairs * 2):
@@ -292,18 +292,25 @@ class QpiAIIntegration:
         Returns:
             Dict with state information
         """
-        import os
+        if self._api_key is None:
+            import os
 
-        api_key = os.getenv("API_KEY")
-        if api_key:
+            self._api_key = os.getenv("API_KEY")
+
+        if self._api_key:
             try:
                 sv = Statevector(circuit)
                 return {
                     "statevector": sv.data,
                     "num_qubits": sv.num_qubits,
                 }
-            except Exception:
-                pass
+            except TypeError as exc:
+                # Statevector from circuit may fail if circuit has unresolved parameters
+                return {
+                    "circuit": circuit,
+                    "num_qubits": circuit.icr.num_qubits,
+                    "note": f"Circuit simulation skipped: {exc}",
+                }
 
         # Return circuit info for inspection
         return {
@@ -332,15 +339,17 @@ class QpiAIIntegration:
         Raises:
             ValueError: If API_KEY is not set
         """
-        import os
+        if self._api_key is None:
+            import os
 
-        api_key = os.getenv("API_KEY")
-        if not api_key:
+            self._api_key = os.getenv("API_KEY")
+
+        if not self._api_key:
             raise ValueError(
                 "API_KEY environment variable is required for cloud execution."
             )
 
-        manager = JobManager(api_key=api_key)
+        manager = JobManager(api_key=self._api_key)
         result = manager.run_circuit(
             circuit=circuit,
             device_name=device_name,

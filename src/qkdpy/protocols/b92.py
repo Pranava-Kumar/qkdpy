@@ -103,8 +103,7 @@ class B92(BaseProtocol):
 
             # Measure in the chosen basis (B92 only uses Qubits)
             result = Measurement.measure_in_basis(qubit, basis)
-            if isinstance(qubit, Qubit):
-                qubit.collapse_state(result, basis)
+            # measure_in_basis already collapses the state via qubit.measure()
             self.bob_results.append(result)
 
         # Filter out None values to return only int results

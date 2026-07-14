@@ -104,10 +104,10 @@ class TestE91(unittest.TestCase):
         print(f"Is violated: {bell_results['is_violated']}")
         print(f"Correlation values: {bell_results['correlation_values']}")
 
-        # Check that Bell's inequality is violated (with a more lenient check)
-        # In a perfect implementation, |S| should be > 2, but our simplified implementation
-        # might not achieve this. Let's check if |S| > 1.5 as a more lenient test.
-        self.assertTrue(abs(bell_results["s_value"]) > 1.5)
+        # Check that Bell's inequality is violated (|S| > 2)
+        # With 500 entangled pairs, the CHSH test uses ~220 samples across
+        # 4 angle combinations, giving sufficient statistics for S > 2.
+        self.assertTrue(bell_results["s_value"] > 2.0, msg=f"CHSH S={bell_results['s_value']:.3f} should exceed 2")
 
     def test_e91_security_threshold(self):
         """Test the security threshold of E91."""

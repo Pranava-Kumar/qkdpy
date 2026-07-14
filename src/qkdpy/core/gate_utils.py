@@ -25,7 +25,8 @@ class GateUtils:
                 2
             )  # Hadamard matrix
         elif basis == "circular":
-            return np.array([[1, 1], [1j, -1j]], dtype=complex) / math.sqrt(2)
+            # Diagonalizing gate for Y-basis: H @ S† maps |y+> → |0>, |y-> → |1>
+            return np.array([[1, -1j], [1, 1j]], dtype=complex) / math.sqrt(2)
         else:
             raise ValueError("Basis must be 'computational', 'hadamard', or 'circular'")
 

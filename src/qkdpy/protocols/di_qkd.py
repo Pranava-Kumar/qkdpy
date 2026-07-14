@@ -103,7 +103,7 @@ class DeviceIndependentQKD(BaseProtocol):
                 self.channel.noise_model == "depolarizing"
                 and secure_random() < self.channel.noise_level
             ):
-                gate_idx = secure_randint(0, 4)
+                gate_idx = secure_randint(1, 4)  # 1=X, 2=Y, 3=Z (skip Identity)
                 if gate_idx == 1:  # X
                     bell_pair.apply_gate(np.array([[0, 1], [1, 0]], dtype=complex), 1)
                 elif gate_idx == 2:  # Y
@@ -118,7 +118,7 @@ class DeviceIndependentQKD(BaseProtocol):
             angle_a = self.alice_angles[a_setting]
 
             if angle_a != 0:
-                rot_gate_a = Ry(-angle_a).matrix
+                rot_gate_a = Ry(angle_a).matrix
                 bell_pair.apply_gate(rot_gate_a, 0)
 
             res_a, collapsed_state = bell_pair.measure(0)
@@ -133,7 +133,7 @@ class DeviceIndependentQKD(BaseProtocol):
             angle_b = self.bob_angles[b_setting]
 
             if angle_b != 0:
-                rot_gate_b = Ry(-angle_b).matrix
+                rot_gate_b = Ry(angle_b).matrix
                 collapsed_state.apply_gate(rot_gate_b, 0)
 
             res_b, _ = collapsed_state.measure(0)
