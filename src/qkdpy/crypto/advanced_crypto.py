@@ -5,8 +5,6 @@ import secrets
 import time
 from typing import Any
 
-import numpy as np
-
 from ..core.secure_random import secure_randint
 from ..utils import bits_to_bytes, bytes_to_bits
 

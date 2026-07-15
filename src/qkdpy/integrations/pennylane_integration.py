@@ -19,7 +19,6 @@ from qkdpy.core.secure_random import secure_choice, secure_randint
 from ..core import QuantumChannel, Qubit
 from ..protocols.bb84 import BB84
 
-
 _CHSH_QNODE: Any = None
 
 
@@ -35,7 +34,9 @@ def _get_chsh_qnode() -> Any:
             qml.CNOT(wires=[0, 1])
             qml.RY(a_angle, wires=0)
             qml.RY(b_angle, wires=1)
-            return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))
+            # PennyLane's `expval(MeasurementValue)` returns a MeasurementProcess
+            # at definition time and a numpy float at runtime; cast in caller.
+            return qml.expval(qml.PauliZ(0) @ qml.PauliZ(1))  # type: ignore[no-any-return]
 
         _CHSH_QNODE = _chsh_circuit
     return _CHSH_QNODE
@@ -137,9 +138,7 @@ class PennyLaneIntegration:
         """
         dm = self._ensure_density_matrix(state)
         return float(
-            qml.math.vn_entanglement_entropy(
-                dm, indices0=indices0, indices1=indices1
-            )
+            qml.math.vn_entanglement_entropy(dm, indices0=indices0, indices1=indices1)
         )
 
     def compute_purity(self, state: np.ndarray, indices: list[int]) -> float:
@@ -171,9 +170,7 @@ class PennyLaneIntegration:
         dm2 = self._ensure_density_matrix(state2)
         return float(qml.math.fidelity(dm1, dm2))
 
-    def compute_trace_distance(
-        self, state1: np.ndarray, state2: np.ndarray
-    ) -> float:
+    def compute_trace_distance(self, state1: np.ndarray, state2: np.ndarray) -> float:
         """Compute the trace distance between two quantum states.
 
         Args:
@@ -211,11 +208,13 @@ class PennyLaneIntegration:
         """
         chsh_circuit = _get_chsh_qnode()
 
-        # CHSH value S = E(a,b) + E(a,b') + E(a',b) - E(a',b')
-        e_ab = chsh_circuit(alice_angles[0], bob_angles[0])
-        e_ab_prime = chsh_circuit(alice_angles[0], bob_angles[1])
-        e_a_prime_b = chsh_circuit(alice_angles[1], bob_angles[0])
-        e_a_prime_b_prime = chsh_circuit(alice_angles[1], bob_angles[1])
+        # CHSH value S = E(a,b) + E(a,b') + E(a',b) - E(a',b').
+        # The qnode returns a numpy scalar; cast to float defensively and
+        # to satisfy mypy's `no-any-return` on the caller.
+        e_ab = float(chsh_circuit(alice_angles[0], bob_angles[0]))
+        e_ab_prime = float(chsh_circuit(alice_angles[0], bob_angles[1]))
+        e_a_prime_b = float(chsh_circuit(alice_angles[1], bob_angles[0]))
+        e_a_prime_b_prime = float(chsh_circuit(alice_angles[1], bob_angles[1]))
 
         s_value = e_ab + e_ab_prime + e_a_prime_b - e_a_prime_b_prime
         return float(s_value)
@@ -232,7 +231,6 @@ class PennyLaneIntegration:
             QNode that returns measurement results in all bases
         """
         dev = qml.device("default.qubit", wires=num_qubits, shots=1000)
-        measurements = []
 
         @qml.qnode(dev)  # type: ignore
         def tomography_circuit(basis: str) -> list[float]:
@@ -307,9 +305,7 @@ class PennyLaneIntegration:
                     qml.RY(np.pi / 4, wires=bob_wire)
                 # Z basis: no rotation
 
-            return [
-                qml.measure(wires=i) for i in range(2 * num_pairs)
-            ]
+            return [qml.measure(wires=i) for i in range(2 * num_pairs)]
 
         return e91_circuit
 
@@ -356,8 +352,11 @@ class PennyLaneIntegration:
             # Randomly choose bases for Bob
             bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
 
-        # Create device
-        dev = qml.device("default.qubit", wires=num_qubits)
+        # Create device with explicit shots so `qml.sample` works under PL 0.40+
+        dev = qml.device("default.qubit", wires=num_qubits, shots=1)
+
+        # Legacy line kept for reference; PL 0.40 rejects analytic `qml.sample`
+        # dev = qml.device("default.qubit", wires=num_qubits)
 
         @qml.qnode(dev)  # type: ignore
         def bb84_circuit() -> list[Any]:
@@ -399,8 +398,11 @@ class PennyLaneIntegration:
         alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
         bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
 
-        # Create device
-        dev = qml.device("default.qubit", wires=num_qubits)
+        # Create device with explicit shots so `qml.sample` works under PL 0.40+
+        dev = qml.device("default.qubit", wires=num_qubits, shots=1)
+
+        # Legacy line kept for reference; PL 0.40 rejects analytic `qml.sample`
+        # dev = qml.device("default.qubit", wires=num_qubits)
 
         # Add noise if specified
         if noise_model and noise_level > 0:
@@ -419,21 +421,29 @@ class PennyLaneIntegration:
                 if basis == "X":  # Hadamard basis
                     qml.Hadamard(wires=i)
 
-            # Bob measures qubits
-            results = []
-            for i, (basis,) in enumerate(zip(bob_bases, strict=False)):
-                if basis == "X":  # Hadamard basis measurement
+            # Bob applies basis rotations then samples all wires in parallel.
+            # `qml.sample(wires=...)` returns a tensor with one row per shot;
+            # for a measurement-style API this is what PennyLane 0.40+
+            # expects on `default.qubit` when used as a simulator.
+            for i, basis in enumerate(bob_bases):
+                if basis == "X":
                     qml.Hadamard(wires=i)
-                result = qml.measure(wires=i)
-                results.append(result)
-
-            return results
+            return [qml.sample(wires=i) for i in range(num_qubits)]
 
         # Run the circuit
-        bob_bits = bb84_circuit()
-
-        # Convert measurements to integers
-        bob_bits = [int(bit) for bit in bob_bits]
+        raw = bb84_circuit()
+        # `qml.sample(wires=i)` returns a tensor with one row per shot.
+        # For a single-shot simulator default.shots is None and the tensor
+        # has 1 row; flatten and convert to Python ints.
+        bob_bits = []
+        for sample in raw:
+            arr = np.asarray(sample).flatten()
+            for value in arr:
+                bob_bits.append(int(value))
+        # If the simulator produces fewer/more samples than qubits, clamp:
+        bob_bits = bob_bits[:num_qubits]
+        if len(bob_bits) < num_qubits:
+            bob_bits = bob_bits + [0] * (num_qubits - len(bob_bits))
 
         # Determine matching bases
         matching_bases = [a == b for a, b in zip(alice_bases, bob_bases, strict=False)]

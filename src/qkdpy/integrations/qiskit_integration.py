@@ -2,22 +2,21 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import Any, cast
 
 try:
     from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
     from qiskit.quantum_info import (
-        Statevector,
         DensityMatrix,
         StabilizerState,
-        Clifford,
-        partial_trace,
-        schmidt_decomposition,
-        entropy,
+        Statevector,
         concurrence,
         entanglement_of_formation,
-        negativity,
+        entropy,
         mutual_information,
+        negativity,
+        partial_trace,
+        schmidt_decomposition,
         state_fidelity,
     )
 
@@ -128,11 +127,13 @@ class QiskitIntegration:
         Returns:
             Negativity value
         """
-        return float(negativity(state))
+        # Qiskit 2.x requires qargs to know which subsystem to compute over.
+        dm = state if isinstance(state, DensityMatrix) else DensityMatrix(state)
+        n_qubits = int(np.log2(dm.dim))
+        qargs = list(range(n_qubits))
+        return float(negativity(dm, qargs=qargs))
 
-    def compute_mutual_information(
-        self, state: DensityMatrix | Statevector
-    ) -> float:
+    def compute_mutual_information(self, state: DensityMatrix | Statevector) -> float:
         """Compute the mutual information of a bipartite state.
 
         Mutual information I(A:B) = S(A) + S(B) - S(AB) measures total
@@ -172,11 +173,11 @@ class QiskitIntegration:
         Returns:
             List of (coefficient, left_state, right_state) tuples
         """
-        return schmidt_decomposition(state, qargs)
+        result = schmidt_decomposition(state, qargs)
+        # qiskit's schmidt_decomposition is typed loosely; cast to the declared return type.
+        return cast(list[tuple[float, Any, Any]], result)
 
-    def compute_von_neumann_entropy(
-        self, state: DensityMatrix | Statevector
-    ) -> float:
+    def compute_von_neumann_entropy(self, state: DensityMatrix | Statevector) -> float:
         """Compute the von Neumann entropy of a quantum state.
 
         For a subsystem entropy, call :meth:`compute_partial_trace` first
@@ -228,8 +229,9 @@ class QiskitIntegration:
         Returns:
             StabilizerState
         """
-        clifford = Clifford.from_list(stabilizers)
-        return StabilizerState(clifford)
+        # Qiskit 2.x replaced Clifford.from_list() with the direct
+        # StabilizerState.from_stabilizer_list() constructor.
+        return StabilizerState.from_stabilizer_list(stabilizers)
 
     # ------------------------------------------------------------------ #
     #  Circuit Construction
@@ -383,8 +385,13 @@ class QiskitIntegration:
         # Add noise based on noise model
         if qkdpy_channel.noise_level > 0:
             if qkdpy_channel.noise_model == "depolarizing":
-                error = depolarizing_error(qkdpy_channel.noise_level, 1)
-                noise_model.add_all_qubit_quantum_error(error, ["id", "x", "h", "cx"])
+                # 1-qubit depolarizing for 1-qubit gates
+                error_1q = depolarizing_error(qkdpy_channel.noise_level, 1)
+                noise_model.add_all_qubit_quantum_error(error_1q, ["id", "x", "h"])
+                # Separate 2-qubit depolarizing for multi-qubit gates
+                if qkdpy_channel.noise_level > 0:
+                    error_2q = depolarizing_error(qkdpy_channel.noise_level, 2)
+                    noise_model.add_all_qubit_quantum_error(error_2q, ["cx"])
             elif qkdpy_channel.noise_model == "bit_flip":
                 error = pauli_error(
                     [

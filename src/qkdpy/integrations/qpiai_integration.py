@@ -8,15 +8,8 @@ try:
     import numpy as np
     from qpiai_quantum import (
         Circuit,
-        Statevector,
-        Backend,
         JobManager,
-    )
-    from qpiai_quantum.state_preparation import (
-        BellStateGenerator,
-        GHZStateGenerator,
-        WStateGenerator,
-        ClusterStateGenerator,
+        Statevector,
     )
 
     QPIAI_AVAILABLE = True
@@ -75,9 +68,7 @@ class QpiAIIntegration:
         state = qpiai_state.data
         return Qubit(state[0], state[1])
 
-    def statevector_from_array(
-        self, data: list[complex] | np.ndarray
-    ) -> Statevector:
+    def statevector_from_array(self, data: list[complex] | np.ndarray) -> Statevector:
         """Create a QpiAI Statevector from an array of amplitudes (local, no cloud).
 
         Args:
@@ -279,9 +270,7 @@ class QpiAIIntegration:
     #  Simulation & Execution
     # ------------------------------------------------------------------ #
 
-    def simulate(
-        self, circuit: Circuit, shots: int = 1024
-    ) -> dict[str, Any]:
+    def simulate(self, circuit: Circuit, shots: int = 1024) -> dict[str, Any]:
         """Run a circuit on the QpiAI local simulator.
 
         Requires API_KEY set in environment for cloud simulation.
@@ -363,9 +352,7 @@ class QpiAIIntegration:
     #  QKD Protocol Helpers
     # ------------------------------------------------------------------ #
 
-    def calculate_qber(
-        self, alice_bits: list[int], bob_bits: list[int]
-    ) -> float:
+    def calculate_qber(self, alice_bits: list[int], bob_bits: list[int]) -> float:
         """Calculate Quantum Bit Error Rate from measurement outcomes.
 
         Args:
@@ -378,7 +365,10 @@ class QpiAIIntegration:
         if len(alice_bits) != len(bob_bits):
             raise ValueError("Bit strings must have equal length")
 
-        mismatches = sum(1 for a, b in zip(alice_bits, bob_bits) if a != b)
+        # strict=False: bits have already been checked to be equal length above.
+        mismatches = sum(
+            1 for a, b in zip(alice_bits, bob_bits, strict=False) if a != b
+        )
         return mismatches / len(alice_bits) if len(alice_bits) > 0 else 0.0
 
     def compute_chsh_value(self, angle_settings: list[float]) -> float:
@@ -398,7 +388,7 @@ class QpiAIIntegration:
             """Compute ⟨Z₀Z₁⟩ for a Bell state with RY-rotated measurements."""
             # For |Φ+⟩ = (|00⟩+|11⟩)/√2 with RY rotations and Z measurements:
             # E(a,b) = cos(a-b)
-            return np.cos(a - b)
+            return float(np.cos(a - b))
 
         a, a_prime, b, b_prime = angle_settings
 

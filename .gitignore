@@ -41,3 +41,17 @@ test_file.txt
 test_file.txt.enc
 project.toml.backup
 issues.txt
+
+# ── Architecture diagrams (rendered images) ───────
+docs/diagrams/*.svg
+docs/diagrams/*.png
+docs/diagrams/*.mmd
+docs/diagrams/*.pdf
+docs/diagrams/render_diagrams.py
+
+# ── Generated test artifacts ────────────────────
+test_*.png
+test_final_*.txt
+test_output_*.txt
+pennylane_test.py
+tmpbr98isxb.py

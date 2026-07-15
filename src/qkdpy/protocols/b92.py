@@ -120,22 +120,24 @@ class B92(BaseProtocol):
         alice_sifted = []
         bob_sifted = []
 
-        # In our simplified implementation, all measurements are considered conclusive
+        # B92 sifting rule:
+        #   Alice sends |0> (bit 0) or |+> (bit 1). Bob measures in Hadamard.
+        #   - |+> always yields result 0  -> conclusive: Alice sent bit 1
+        #   - |0> yields result 1 with 50% prob -> conclusive: Alice sent bit 0
+        #   - |0> yielding result 0 is INCONCLUSIVE and discarded.
+        # Therefore the only conclusive outcome is result == 1, which tells us
+        # Alice sent bit 0. The agreed secret bit at that position is 0.
         for i in range(self.num_qubits):
             # Skip if Bob didn't receive the qubit
             if self.bob_results[i] is None:
                 continue
 
-            # For B92, we only keep bits where Bob's measurement gives a specific result
-            # In our simplified model, we'll keep all bits where Bob got result 1
-            # This is because in B92, when Bob gets result 1, he knows Alice must have sent |+>
-            if self.bob_results[i] is not None and self.bob_results[i] == 1:
-                alice_sifted.append(self.alice_bits[i])
-                # We already checked that self.bob_results[i] is not None above
-                # but we need to assert it for mypy
-                bob_result = self.bob_results[i]
-                if bob_result is not None:
-                    bob_sifted.append(bob_result)
+            # Conclusive outcome: Bob measured 1 -> Alice sent |0> (bit 0)
+            if self.bob_results[i] == 1:
+                # Both parties agree on the secret bit = 0 (Alice sent |0>,
+                # which is the conclusive interpretation of Bob's result 1).
+                alice_sifted.append(0)
+                bob_sifted.append(0)
 
         return alice_sifted, bob_sifted
 

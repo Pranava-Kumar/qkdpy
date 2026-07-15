@@ -102,17 +102,13 @@ class E91(BaseProtocol):
                 gate_idx = secure_randint(1, 3)
                 self.channel.error_count += 1
                 if gate_idx == 1:  # X
-                    bell_pair.apply_gate(
-                        np.array([[0, 1], [1, 0]], dtype=complex), 1
-                    )
+                    bell_pair.apply_gate(np.array([[0, 1], [1, 0]], dtype=complex), 1)
                 elif gate_idx == 2:  # Y
                     bell_pair.apply_gate(
                         np.array([[0, -1j], [1j, 0]], dtype=complex), 1
                     )
                 elif gate_idx == 3:  # Z
-                    bell_pair.apply_gate(
-                        np.array([[1, 0], [0, -1]], dtype=complex), 1
-                    )
+                    bell_pair.apply_gate(np.array([[1, 0], [0, -1]], dtype=complex), 1)
 
             # 3. Alice Measures
             a_idx = self.alice_settings[i]

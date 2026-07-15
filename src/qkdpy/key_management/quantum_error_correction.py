@@ -4,7 +4,7 @@ import numpy as np
 
 from ..core import Qubit
 from ..core.gates import PauliX, PauliZ
-from ..core.secure_random import secure_random, secure_randint, secure_choice
+from ..core.secure_random import secure_choice, secure_randint, secure_random
 
 
 class QuantumErrorCorrection:

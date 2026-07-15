@@ -36,12 +36,15 @@ class CirqIntegration:
             qkdpy_qubit: QKDpy Qubit object
 
         Returns:
-            Cirq state representing the same quantum state
+            Cirq-compatible state (raw numpy state vector in Cirq 1.x, which
+            can be passed directly to `cirq.Simulator().simulate(...,
+            initial_state=...)` instead of the removed
+            `StateVectorSimulationState(state_vector=...)` constructor.
         """
         # Extract the state vector from QKDpy Qubit
         state = qkdpy_qubit.state
-        # Create Cirq state
-        return cirq.StateVectorSimulationState(state_vector=state)
+        # Return raw state vector (Cirq 1.x accepts ndarray for initial_state)
+        return np.asarray(state, dtype=complex)
 
     def cirq_to_qubit(self, cirq_state: Any) -> Qubit:
         """Convert a Cirq state to a QKDpy Qubit.
@@ -52,8 +55,14 @@ class CirqIntegration:
         Returns:
             QKDpy Qubit representing the same quantum state
         """
-        # Extract the state vector from Cirq state
-        state = cirq_state.state_vector()
+        # Cirq 1.x dropped .state_vector(); callers should pass the raw np
+        # state vector, but we keep a small adaptation layer for backward
+        # compatibility with anything that may still hold a Cirq state.
+        state = (
+            cirq_state.state_vector()
+            if hasattr(cirq_state, "state_vector")
+            else np.asarray(cirq_state)
+        )
         # Create QKDpy Qubit
         return Qubit(state[0], state[1])
 
@@ -171,7 +180,7 @@ class CirqIntegration:
         Returns:
             List of Cirq gates representing the same channel characteristics
         """
-        noise_gates = []
+        noise_gates: list[Any] = []
 
         # Add loss as amplitude damping (simplified model)
         if qkdpy_channel.loss > 0:

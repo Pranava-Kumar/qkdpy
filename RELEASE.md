@@ -1,6 +1,6 @@
 # Release Notes
 
-## v0.5.0 — 2026-07-14
+## v0.6.0 — 2026-07-15
 
 ### Highlights
 - **389 passing tests** — full test suite passes with zero failures
@@ -17,7 +17,7 @@
 - `EfficientQKDPredictor.predict()` now consistently returns `float32` (fixes dtype mismatch)
 - Removed stale `test_results.txt`, empty `AGENTS.md`, and spurious `package.json`/`package-lock.json`
 - Fixed placeholder `yourusername` URLs in `CONTRIBUTING.md` and `installation.md`
-- Synced `docs/conf.py` release version with `pyproject.toml` (0.5.0)
+- Synced `docs/conf.py` release version with `pyproject.toml` (0.6.0)
 
 ---
 

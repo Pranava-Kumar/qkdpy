@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-389_passing-brightgreen.svg)](#-quick-start)
+[![Tests](https://img.shields.io/badge/tests-561_passing-brightgreen.svg)](#-quick-start)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 **A production-grade Python library for Quantum Key Distribution at the intersection of Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**
@@ -12,6 +12,100 @@
 [Features](#-features) • [Satellite QKD](#-satellite-qkd) • [ML Integration](#-ml-integration) • [Observability](#-observability--instrumentation) • [Product Tiers](#-product-tiers) • [Quantum-Safe Migration](#-quantum-safe-migration-toolkit) • [Quick Start](#-quick-start)
 
 </div>
+
+---
+
+## 🏗️ Architecture Overview
+
+> Detailed architecture diagrams are available in [`docs/diagrams/`](docs/diagrams/). Each diagram below is a high-level summary — click through to the linked file for full detail.
+
+### High-Level Module Architecture
+
+The system is organized into 9 modular layers. Arrows represent dependency direction.
+
+![High-Level Architecture](docs/diagrams/01-high-level-architecturea.png)
+
+*[Full diagram →](docs/diagrams/01-high-level-architecture.md) — complete module breakdown with dependency graph and directory structure*
+
+### Protocol Execution Flow
+
+All QKD protocols follow a template-method pattern defined in `BaseProtocol.execute()`:
+
+![BB84 Protocol Flow](docs/diagrams/02-protocol-execution-flowa.png)
+
+*[Full diagram →](docs/diagrams/02-protocol-execution-flow.md) — BB84, E91, and CV-QKD sequence diagrams with detailed state transitions*
+
+| Phase | Description |
+|-------|-------------|
+| **1. State Preparation** | Alice encodes random bits in random bases (computational, hadamard, circular) |
+| **2. Quantum Transmission** | Qubits sent through `QuantumChannel` with configurable noise, loss, and eavesdropping |
+| **3. Measurement** | Bob measures received qubits in random bases |
+| **4. Basis Sifting** | Alice & Bob compare bases publicly, keep matching results (~50%) |
+| **5. QBER Estimation** | Sample of sifted key compared publicly; abort if above threshold |
+| **6. Error Correction** | Cascade/Winnow/LDPC to reconcile discrepancies |
+| **7. Privacy Amplification** | Universal/Toeplitz hashing to remove Eve's partial information |
+
+### Core Quantum Stack
+
+![Core Quantum Stack](docs/diagrams/03-core-quantum-stacka.png)
+
+*[Full diagram →](docs/diagrams/03-core-quantum-stack.md) — class hierarchy, Bloch sphere, noise models, security analysis*
+
+| Component | Role |
+|-----------|------|
+| `Qubit` | Single qubit statevector `[α, β]` with gate application, measurement, Bloch sphere |
+| `Qudit` | d-dimensional quantum system with unitary operations and partial trace |
+| `MultiQubitState` | n-qubit statevector with entanglement entropy, GHZ/W-state preparation |
+| `QuantumGate` | 18 gate implementations: Pauli, Hadamard, rotation, CNOT, CZ, SWAP, etc. |
+| `QuantumChannel` | Physical channel with loss, noise, eavesdropping, and atmospheric effects |
+| `Measurement` | Basis measurement, tomography, fidelity, purity, entanglement witnesses |
+
+### Key Management Pipeline
+
+![Key Management Pipeline](docs/diagrams/04-key-management-pipelinea.png)
+
+*[Full diagram →](docs/diagrams/04-key-management-pipeline.md) — Cascade protocol, LDPC belief propagation, Toeplitz hashing details*
+
+| Stage | Methods | Output |
+|-------|---------|--------|
+| Error Correction | Cascade, Winnow, LDPC, BCH, Reed-Solomon | Identical reconciled keys |
+| Privacy Amplification | Universal Hashing, Toeplitz, Cryptographic Hash, Bennett-Brassard | Shortened secure key |
+
+### Network & Satellite QKD
+
+![Satellite QKD Architecture](docs/diagrams/05-network-satellite-qkda.png)
+
+*[Full diagram →](docs/diagrams/05-network-satellite-qkd.md) — pass simulation, multi-party network, routing*
+
+### Framework Integrations
+
+![Integration Layer](docs/diagrams/06-integration-layera.png)
+
+*[Full diagram →](docs/diagrams/06-integration-layer.md) — Qiskit, PennyLane, Cirq, QpiAI conversion flows*
+
+### Cryptographic & Enterprise Module
+
+![Crypto & Enterprise](docs/diagrams/07-crypto-enterprisea.png)
+
+*[Full diagram →](docs/diagrams/07-crypto-enterprise.md) — QuantumHash, ZK proofs, HSM, compliance, audit*
+
+### ML Optimization Pipeline
+
+![ML Pipeline](docs/diagrams/08-ml-optimizationa.png)
+
+*[Full diagram →](docs/diagrams/08-ml-optimization.md) — Bayesian/genetic optimization, neural prediction, edge deployment*
+
+### End-to-End Data Flow
+
+![Data Flow](docs/diagrams/09-data-flowa.png)
+
+*[Full diagram →](docs/diagrams/09-data-flow.md) — input→output trace, type conversions, key sizes, instrumentation*
+
+### API Surface & Usage Patterns
+
+![API Surface](docs/diagrams/10-api-surfacea.png)
+
+*[Full diagram →](docs/diagrams/10-api-surface.md) — public API overview, sequence diagrams, import map, configuration system*
 
 ---
 

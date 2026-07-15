@@ -1,0 +1,186 @@
+# 2. Protocol Execution Flow
+
+## BaseProtocol.execute() — Template Method Pattern
+
+```mermaid
+sequenceDiagram
+    participant Alice as Alice (Sender)
+    participant Protocol as BaseProtocol.execute()
+    participant Channel as QuantumChannel
+    participant Bob as Bob (Receiver)
+    participant EC as Error Correction
+    participant PA as Privacy Amplification
+
+    Note over Alice, PA: Full QKD Protocol Lifecycle
+
+    Alice->>Protocol: prepare_states()
+    Note right of Alice: Encodes random bits in random bases<br/>(computational, hadamard, circular)
+
+    Protocol->>Channel: transmit_batch(qubits)
+    Note over Channel: Applies noise, loss,<br/>eavesdropping effects
+
+    Channel->>Bob: received_qubits (some may be None)
+
+    Bob->>Protocol: measure_states(received)
+    Note right of Bob: Measures in random bases<br/>Records results + basis choices
+
+    Protocol->>Protocol: sift_keys()
+    Note over Protocol: Compare bases publicly<br/>Keep only matching bases
+
+    Protocol->>Protocol: estimate_qber()
+    Note over Protocol: Compare sample of sifted bits<br/>QBER = errors / total
+
+    alt QBER > Security Threshold
+        Protocol->>Protocol: Abort — channel insecure
+    else QBER <= Security Threshold
+        Protocol->>EC: error_correction(alice_key, bob_key)
+        Note over EC: Cascade, Winnow, or LDPC<br/>Alice and Bob reconcile errors
+        EC-->>Protocol: corrected_keys (identical)
+
+        Protocol->>PA: privacy_amplification(corrected_key, leak)
+        Note over PA: Universal hashing, Toeplitz,<br/>or cryptographic hash
+        PA-->>Protocol: final_key (shortened, secure)
+
+        Protocol->>Protocol: is_secure = True
+        Protocol-->>User: Result {final_key, qber, stats}
+    end
+```
+
+## BB84 Protocol (Prepare-and-Measure)
+
+```mermaid
+flowchart TD
+    START(["BB84 Execution"])
+
+    subgraph Prepare["Alice: State Preparation"]
+        A1["Generate random bits: secure_randint(0,2)"]
+        A2["Choose random bases: secure_choice(['computational', 'hadamard'])"]
+        A3["Prepare qubit states<br/>bit=0, comp → |0⟩<br/>bit=1, comp → |1⟩<br/>bit=0, hadamard → |+⟩<br/>bit=1, hadamard → |−⟩"]
+        A1 --> A2 --> A3
+    end
+
+    subgraph Channel["Quantum Channel Transmission"]
+        C1["Loss: Beer-Lambert exp(-α·d)"]
+        C2["Noise: Depolarizing / Bit-flip / Phase-flip"]
+        C3["Eavesdropping: Intercept-resend / Entanglement"]
+        C4["Physical effects: Polarization drift, Phase fluctuations"]
+        C1 --> C2 --> C3 --> C4
+    end
+
+    subgraph Measure["Bob: Measurement"]
+        M1["Choose random bases"]
+        M2["Measure qubit in chosen basis"]
+        M3["Record result + basis"]
+        M1 --> M2 --> M3
+    end
+
+    subgraph Sifting["Sifting (Public Discussion)"]
+        S1["Alice and Bob announce bases publicly"]
+        S2["Keep bits where bases match"]
+        S3["Discard mismatched bases (~50%)"]
+        S1 --> S2 --> S3
+    end
+
+    subgraph QBER["QBER Estimation"]
+        Q1["Alice and Bob compare a subset publicly"]
+        Q2["Count disagreements / total compared"]
+        Q3["If QBER > 11%: abort (eavesdropper detected)"]
+        Q1 --> Q2 --> Q3
+    end
+
+    subgraph PostProc["Post-Processing"]
+        P1["Error Correction (Cascade):<br/>Parity checks on blocks<br/>Binary search for errors"]
+        P2["Privacy Amplification:<br/>Toeplitz hashing<br/>Universal hashing"]
+        P3["Secure Final Key ✓"]
+        P1 --> P2 --> P3
+    end
+
+    Prepare --> Channel --> Measure --> Sifting --> QBER --> PostProc
+
+    style Prepare fill:#bbdefb,stroke:#1565c0
+    style Channel fill:#ffe0b2,stroke:#e65100
+    style Measure fill:#c8e6c9,stroke:#2e7d32
+    style Sifting fill:#f8bbd0,stroke:#c2185b
+    style QBER fill:#ffccbc,stroke:#bf360c
+    style PostProc fill:#d1c4e9,stroke:#4527a0
+```
+
+## E91 Protocol (Entanglement-Based)
+
+```mermaid
+flowchart TD
+    START(["E91 Execution"])
+
+    subgraph Source["Entanglement Source"]
+        EP1["Create N Bell pairs: (|00⟩ + |11⟩)/√2"]
+        EP2["Split pairs: send half to Alice, half to Bob"]
+        EP1 --> EP2
+    end
+
+    subgraph AliceMeas["Alice Measurements"]
+        AM1["Choose random angle: 0, π/4, or π/2"]
+        AM2["Apply Ry(angle) to her qubit"]
+        AM3["Measure in computational basis"]
+        AM1 --> AM2 --> AM3
+    end
+
+    subgraph BobMeas["Bob Measurements"]
+        BM1["Choose random angle: π/4, π/2, or 3π/4"]
+        BM2["Apply Ry(angle) to his qubit"]
+        BM3["Measure in computational basis"]
+        BM1 --> BM2 --> BM3
+    end
+
+    subgraph BellTest["Bell Inequality Test"]
+        BT1["Correlate settings and outcomes"]
+        BT2["CHSH S = E(A1,B1) - E(A1,B3) + E(A3,B1) + E(A3,B3)"]
+        BT3["If |S| > 2: Bell violation → channel secure"]
+        BT4["If |S| ≤ 2: Possible eavesdropper → abort"]
+        BT1 --> BT2 --> BT3 --> BT4
+    end
+
+    subgraph KeyGen["Key Generation"]
+        KG1["Keep pairs with same angle (π/4 or π/2)"]
+        KG2["Error correction on matching bits"]
+        KG3["Privacy amplification"]
+        KG4["Final secure key"]
+        KG1 --> KG2 --> KG3 --> KG4
+    end
+
+    Source --> AliceMeas
+    Source --> BobMeas
+    AliceMeas --> BellTest
+    BobMeas --> BellTest
+    AliceMeas --> KeyGen
+    BobMeas --> KeyGen
+
+    style Source fill:#e1bee7,stroke:#6a1b9a
+    style AliceMeas fill:#bbdefb,stroke:#1565c0
+    style BobMeas fill:#c8e6c9,stroke:#2e7d32
+    style BellTest fill:#ffccbc,stroke:#bf360c
+    style KeyGen fill:#d1c4e9,stroke:#4527a0
+```
+
+## CV-QKD Protocol (Continuous Variable)
+
+```mermaid
+flowchart LR
+    subgraph Alice_CV["Alice (CV-QKD)"]
+        A_CV1["Generate coherent states<br/>Gaussian modulated"]
+        A_CV2["Send quadrature states<br/>X and P amplitudes"]
+    end
+
+    subgraph Channel_CV["Fiber/Freespace Channel"]
+        C_CV1["Phase noise"]
+        C_CV2["Excess noise ξ"]
+        C_CV3["Channel transmittance T"]
+    end
+
+    subgraph Bob_CV["Bob (Homodyne Detection)"]
+        B_CV1["Randomly choose X or P quadrature"]
+        B_CV2["Homodyne/heterodyne detection"]
+        B_CV3["Reverse reconciliation"]
+    end
+
+    A_CV1 --> A_CV2 --> Channel_CV --> B_CV1 --> B_CV2 --> B_CV3
+```

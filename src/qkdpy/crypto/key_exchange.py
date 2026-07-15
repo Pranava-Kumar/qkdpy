@@ -4,8 +4,6 @@ import json
 import time
 from typing import Any
 
-import numpy as np
-
 from ..core import QuantumChannel
 from ..core.secure_random import secure_randint
 from ..protocols import BB84, E91

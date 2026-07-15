@@ -1,10 +1,10 @@
 # QpiAI Quantum SDK -- Architecture Audit for QKDPy Enhancement
 
-**Date:** 2026-07-14  
-**SDK Version:** 0.1.42 (from `pyproject.toml`, commit `829b162`)  
-**Repository:** `E:/opensource/qpiai-quantum-sdk/`  
-**License:** Apache-2.0  
-**Python:** 3.10+ required, supports 3.13/3.14  
+**Date:** 2026-07-14
+**SDK Version:** 0.1.42 (from `pyproject.toml`, commit `829b162`)
+**Repository:** `E:/opensource/qpiai-quantum-sdk/`
+**License:** Apache-2.0
+**Python:** 3.10+ required, supports 3.13/3.14
 
 ---
 
@@ -33,12 +33,12 @@ qpiai_quantum/
   utils/                      # Encoders, optimizers, visualization helpers
 ```
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\__init__.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\__init__.py`
 Exports the package-level public API.
 
 ### 1.2 Circuit System
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\circuit\circuit.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\circuit\circuit.py`
 **Class:** `Circuit`
 
 The central abstraction. Wraps an `IntermediateCircuitRepresentation` (ICR). Constructed with:
@@ -89,14 +89,14 @@ Circuit(qreg, creg)           # explicit registers
 
 ### 1.3 The ICR Layer
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\icr\icr.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\icr\icr.py`
 **Class:** `IntermediateCircuitRepresentation`
 
 - Holds `QuantumRegister` list, `ClassicalRegister` list
 - Stores operations in `CircuitEvolutionList` (list subclass)
 - `_add_operation(op)`, `_remove_operation(n)`, `to_json()`
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\icr\circuitoperation.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\icr\circuitoperation.py`
 **Class:** `CircuitOperation` with auto-registration via `__init_subclass__`
 
 **OperationType enum:**
@@ -129,7 +129,7 @@ N_QUBIT_NON_PARAMETRIC, N_QUBIT_PARAMETRIC, MEASURE, BARRIER, SWAP, OPERATION
 
 ### 1.4 Backend/Simulator System
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\jobmanager\backend.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\jobmanager\backend.py`
 **Class:** `Backend` (Enum)
 
 | Enum Value | Device Name | Description |
@@ -159,11 +159,11 @@ Plus Lite variants: `QpiAI-QSV-Lite`, `QpiAI-QDM-Lite`.
 
 ### 2.1 All Gate Types
 
-**Single-qubit non-parametric:** H, X, Y, Z, ID, S, SDG, T, TDG, SX  
-**Single-qubit parametric:** RX(theta), RY(theta), RZ(theta), P(theta)  
-**Two-qubit non-parametric:** CX, CY, CZ, SWAP, ISWAP  
-**Two-qubit parametric:** CP(theta), RZZ(theta)  
-**Three-qubit:** CCX (Toffoli), CSWAP (Fredkin), MCX (arbitrary controls)  
+**Single-qubit non-parametric:** H, X, Y, Z, ID, S, SDG, T, TDG, SX
+**Single-qubit parametric:** RX(theta), RY(theta), RZ(theta), P(theta)
+**Two-qubit non-parametric:** CX, CY, CZ, SWAP, ISWAP
+**Two-qubit parametric:** CP(theta), RZZ(theta)
+**Three-qubit:** CCX (Toffoli), CSWAP (Fredkin), MCX (arbitrary controls)
 **Special:** Barrier, Measure, Operation (generic composite)
 
 ### 2.2 Circuit Construction Patterns
@@ -253,7 +253,7 @@ Pure-math module with all gate matrix definitions. Key matrices:
 
 ### 3.1 Statevector
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\quantum_info\statevector.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\quantum_info\statevector.py`
 **Class:** `Statevector`
 
 **Constructor:**
@@ -279,7 +279,7 @@ Statevector(data, dims=None, experiment_name="...", device_name="QpiAI-QSV-Local
 
 ### 3.2 DensityMatrix
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\quantum_info\density_matrix.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\quantum_info\density_matrix.py`
 **Class:** `DensityMatrix` (extends `BaseDensityMatrix`)
 
 **Constructor:** Same pattern as Statevector (list, ndarray, Circuit, copy)
@@ -299,7 +299,7 @@ Statevector(data, dims=None, experiment_name="...", device_name="QpiAI-QSV-Local
 
 ### 3.3 Formalism DensityMatrix (Advanced)
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\formalism\density_matrix\density_matrix.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\formalism\density_matrix\density_matrix.py`
 **Class:** `formalism.DensityMatrix`
 
 Contains advanced operations:
@@ -363,7 +363,7 @@ Convert between them via `quantum_info.DensityMatrix.to_formalism()` and `Densit
 
 ### 5.2 Algorithm Base Class
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\algorithms\base.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\algorithms\base.py`
 **Class:** `QuantumAlgorithm` (ABC)
 
 ```python
@@ -425,7 +425,7 @@ class QuantumPhaseEstimation(QuantumAlgorithm):
 
 ### 6.1 Authentication
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\authentication\auth.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\authentication\auth.py`
 **Class:** `QpiAIQuantumAuth`
 
 ```python
@@ -465,7 +465,7 @@ result = circuit.run(
 
 ### 6.3 Job Management
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\jobmanager\jobmanager.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\jobmanager\jobmanager.py`
 **Class:** `JobManager`
 
 Key methods:
@@ -484,7 +484,7 @@ Key methods:
 
 ### 6.4 Job Result
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\jobmanager\job_result.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\jobmanager\job_result.py`
 **Class:** `JobResult` (aliased as `JobExecutionResult`)
 
 Properties: `counts`, `statevector`, `probabilities`, `density_matrix`, `execution_time`, `shots`, `job_id`, `job_status`, `method`, `credits_used`, `job_metadata`
@@ -506,7 +506,7 @@ Circuit.list_jobs(...)
 
 ### 6.6 QASM Exporter
 
-**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\iem\qasm\v2\exporter.py`  
+**File:** `E:\opensource\qpiai-quantum-sdk\qpiai_quantum\iem\qasm\v2\exporter.py`
 **Class:** `QASM2`
 
 ```python

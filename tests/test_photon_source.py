@@ -64,7 +64,7 @@ class TestPhotonSource(unittest.TestCase):
         source = PhotonSource(timing_jitter=1e-9, efficiency=1.0, pulse_rate=1e9)
         times = [source.generate_photon_pulse(0.0)[1] for _ in range(50)]
         # At least some should differ from the nominal time
-        unique_times = len(set(round(t, 12) for t in times))
+        unique_times = len({round(t, 12) for t in times})
         self.assertGreater(unique_times, 1)
 
 
@@ -113,7 +113,11 @@ class TestWeakCoherentSource(unittest.TestCase):
     def test_sum_of_probabilities_is_one(self):
         """Probabilities should sum to approximately 1."""
         stats = self.source.get_photon_statistics(num_pulses=1000)
-        total = stats["vacuum_probability"] + stats["single_photon_probability"] + stats["multi_photon_probability"]
+        total = (
+            stats["vacuum_probability"]
+            + stats["single_photon_probability"]
+            + stats["multi_photon_probability"]
+        )
         self.assertAlmostEqual(total, 1.0, places=1)
 
 
@@ -169,7 +173,9 @@ class TestDecoyStateSource(unittest.TestCase):
         self.assertIn("signal_probability", stats)
         self.assertIn("decoy_probability", stats)
         self.assertIn("decoy_probabilities_by_type", stats)
-        self.assertAlmostEqual(stats["signal_probability"] + stats["decoy_probability"], 1.0, places=1)
+        self.assertAlmostEqual(
+            stats["signal_probability"] + stats["decoy_probability"], 1.0, places=1
+        )
 
     def test_custom_rng(self):
         """A custom numpy Generator can be passed."""

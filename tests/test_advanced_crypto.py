@@ -179,7 +179,9 @@ class TestQuantumZeroKnowledge(unittest.TestCase):
         modulus = 2**255 - 19
         public = pow(2, secret, modulus)
         challenge, response = QuantumZeroKnowledge.schnorr_proof(secret, public)
-        is_valid = QuantumZeroKnowledge.verify_schnorr_proof(public, challenge, response)
+        is_valid = QuantumZeroKnowledge.verify_schnorr_proof(
+            public, challenge, response
+        )
         self.assertTrue(is_valid)
 
     def test_verify_schnorr_wrong_secret(self):
@@ -190,7 +192,9 @@ class TestQuantumZeroKnowledge(unittest.TestCase):
         public = pow(2, secret, modulus)
         wrong_public = pow(2, wrong_secret, modulus)
         challenge, response = QuantumZeroKnowledge.schnorr_proof(secret, public)
-        is_valid = QuantumZeroKnowledge.verify_schnorr_proof(wrong_public, challenge, response)
+        is_valid = QuantumZeroKnowledge.verify_schnorr_proof(
+            wrong_public, challenge, response
+        )
         self.assertFalse(is_valid)
 
     def test_hash_based_commitment_returns_tuple(self):
@@ -210,7 +214,9 @@ class TestQuantumZeroKnowledge(unittest.TestCase):
     def test_verify_hash_commitment_wrong_value(self):
         """Wrong value should fail hash commitment verification."""
         commitment, path = QuantumZeroKnowledge.hash_based_commitment("real_value")
-        is_valid = QuantumZeroKnowledge.verify_hash_commitment(commitment, "wrong_value", path)
+        is_valid = QuantumZeroKnowledge.verify_hash_commitment(
+            commitment, "wrong_value", path
+        )
         self.assertFalse(is_valid)
 
     def test_verify_hash_commitment_empty_path(self):

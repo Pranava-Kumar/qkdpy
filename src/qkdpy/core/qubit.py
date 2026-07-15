@@ -112,7 +112,10 @@ class Qubit:
             h_gate = np.array([[1, 1], [1, -1]], dtype=complex) / math.sqrt(2)
             rotated = h_gate @ self._state
             prob_0 = abs(rotated[0]) ** 2
-            prob_1 = abs(rotated[1]) ** 2
+            # prob_1 is computed for mathematical clarity; not used because
+            # secure_random() is sampled against prob_0 (the complementary
+            # probability is implicit and avoids double-sampling drift).
+            _prob_1 = abs(rotated[1]) ** 2
             result = 0 if secure_random() < prob_0 else 1
             self.collapse_state(result, basis)
 
@@ -124,7 +127,6 @@ class Qubit:
             y_rot = h_gate @ phase_gate  # transforms Z-basis to Y-basis
             rotated = y_rot @ self._state
             prob_0 = abs(rotated[0]) ** 2
-            prob_1 = abs(rotated[1]) ** 2
             result = 0 if secure_random() < prob_0 else 1
             self.collapse_state(result, basis)
         else:

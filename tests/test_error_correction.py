@@ -21,7 +21,7 @@ class TestErrorCorrectionCascade(unittest.TestCase):
     def test_cascade_corrects_single_error(self):
         """Cascade should correct a single bit error."""
         alice = [0, 1, 0, 1, 1, 0, 1, 0]
-        bob =    [0, 1, 0, 0, 1, 0, 1, 0]  # error at index 3
+        bob = [0, 1, 0, 0, 1, 0, 1, 0]  # error at index 3
         corrected_a, corrected_b = ErrorCorrection.cascade(
             alice, bob, iterations=4, random_permute=False
         )
@@ -31,7 +31,7 @@ class TestErrorCorrectionCascade(unittest.TestCase):
     def test_cascade_corrects_multiple_errors(self):
         """Cascade should correct multiple bit errors."""
         alice = [0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1]
-        bob =   [0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1]  # errors at 2, 6
+        bob = [0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 0, 1, 0, 1, 1]  # errors at 2, 6
         corrected_a, corrected_b = ErrorCorrection.cascade(
             alice, bob, iterations=4, random_permute=False
         )
@@ -45,7 +45,7 @@ class TestErrorCorrectionCascade(unittest.TestCase):
     def test_cascade_random_permutation(self):
         """Cascade with random permutation should converge."""
         alice = [0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1]
-        bob =   [0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1]  # error at 4
+        bob = [0, 1, 0, 1, 0, 0, 1, 0, 0, 1, 1, 0, 1, 0, 0, 1]  # error at 4
         corrected_a, corrected_b = ErrorCorrection.cascade(
             alice, bob, iterations=4, random_permute=True
         )
@@ -60,7 +60,7 @@ class TestErrorCorrectionCascade(unittest.TestCase):
     def test_cascade_custom_block_sizes(self):
         """Cascade with custom block sizes should work."""
         alice = [0, 1, 0, 1, 1, 0, 1, 0]
-        bob =   [0, 1, 0, 0, 1, 0, 1, 0]
+        bob = [0, 1, 0, 0, 1, 0, 1, 0]
         corrected_a, corrected_b = ErrorCorrection.cascade(
             alice, bob, block_sizes=[2, 4], iterations=2, random_permute=False
         )
@@ -68,17 +68,77 @@ class TestErrorCorrectionCascade(unittest.TestCase):
 
     def test_cascade_longer_key(self):
         """Cascade should work on longer keys (64 bits)."""
-        alice = [0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1,
-                 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1,
-                 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1,
-                 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1]
+        alice = [
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+        ]
         bob = alice.copy()
         bob[5] = 1 - bob[5]
         bob[23] = 1 - bob[23]
         bob[47] = 1 - bob[47]
-        corrected_a, corrected_b = ErrorCorrection.cascade(
-            alice, bob, iterations=4
-        )
+        corrected_a, corrected_b = ErrorCorrection.cascade(alice, bob, iterations=4)
         self.assertEqual(corrected_a, corrected_b)
 
 
@@ -96,7 +156,7 @@ class TestErrorCorrectionWinnow(unittest.TestCase):
     def test_winnow_corrects_single_error(self):
         """Winnow should correct single bit errors."""
         alice = [0, 1, 0, 1, 1, 0, 1, 0]
-        bob =   [0, 1, 0, 0, 1, 0, 1, 0]  # error at 3
+        bob = [0, 1, 0, 0, 1, 0, 1, 0]  # error at 3
         corrected_a, corrected_b = ErrorCorrection.winnow(
             alice, bob, iterations=4, random_permute=False
         )
@@ -127,7 +187,7 @@ class TestErrorCorrectionBiconf(unittest.TestCase):
     def test_biconf_corrects_errors(self):
         """BICONF should correct errors in keys."""
         alice = [0, 1, 0, 1, 1, 0, 1, 0]
-        bob =   [0, 1, 0, 0, 1, 0, 1, 0]  # error at 3
+        bob = [0, 1, 0, 0, 1, 0, 1, 0]  # error at 3
         corrected_a, corrected_b = ErrorCorrection.biconf(
             alice, bob, max_iterations=5, error_rate_estimate=0.2
         )

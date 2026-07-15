@@ -2,8 +2,6 @@
 
 import unittest
 
-import numpy as np
-
 try:
     import cirq
 except ImportError:
@@ -42,15 +40,18 @@ class TestCirqBB84Circuit(unittest.TestCase):
         )
         # Count Hadamard gates: one per X basis in Alice + one per X basis in Bob
         h_count = sum(
-            1 for op in circuit.all_operations()
-            if isinstance(op.gate, cirq.HPowGate)
+            1 for op in circuit.all_operations() if isinstance(op.gate, cirq.HPowGate)
         )
         self.assertEqual(h_count, 4)  # 2 from Alice (X) + 2 from Bob (X)
 
     def test_create_bb84_circuit_has_measurements(self):
         """Circuit should contain measurement operations for each qubit."""
         circuit = self.integration.create_bb84_circuit(num_qubits=3)
-        measure_ops = [op for op in circuit.all_operations() if isinstance(op.gate, cirq.MeasurementGate)]
+        measure_ops = [
+            op
+            for op in circuit.all_operations()
+            if isinstance(op.gate, cirq.MeasurementGate)
+        ]
         self.assertEqual(len(measure_ops), 3)
 
     def test_create_bb84_circuit_measurement_keys(self):
@@ -112,7 +113,9 @@ class TestCirqSimulateBB84(unittest.TestCase):
     def test_simulate_bb84_result_types(self):
         """Alice bits, Bob bits, and matching bases should have correct lengths."""
         n = 20
-        alice_bits, bob_bits, matching = self.integration.simulate_bb84_with_cirq(num_qubits=n)
+        alice_bits, bob_bits, matching = self.integration.simulate_bb84_with_cirq(
+            num_qubits=n
+        )
         self.assertEqual(len(alice_bits), n)
         self.assertEqual(len(bob_bits), n)
         self.assertEqual(len(matching), n)
@@ -170,15 +173,17 @@ class TestCirqChannelConversion(unittest.TestCase):
     """Test converting QKDpy channels to Cirq noise gates."""
 
     def setUp(self):
-        from qkdpy.integrations.cirq_integration import CirqIntegration
         from qkdpy.core import QuantumChannel
+        from qkdpy.integrations.cirq_integration import CirqIntegration
 
         self.integration = CirqIntegration()
         self.channel_cls = QuantumChannel
 
     def test_convert_depolarizing_channel(self):
         """Depolarizing channel should produce depolarize gate."""
-        channel = self.channel_cls(loss=0.0, noise_model="depolarizing", noise_level=0.1)
+        channel = self.channel_cls(
+            loss=0.0, noise_model="depolarizing", noise_level=0.1
+        )
         gates = self.integration.convert_channel_to_cirq(channel)
         self.assertGreaterEqual(len(gates), 1)
         self.assertIsInstance(gates[0], cirq.DepolarizingChannel)
@@ -199,7 +204,9 @@ class TestCirqChannelConversion(unittest.TestCase):
 
     def test_convert_noiseless_channel(self):
         """Noiseless channel should return empty list."""
-        channel = self.channel_cls(loss=0.0, noise_model="depolarizing", noise_level=0.0)
+        channel = self.channel_cls(
+            loss=0.0, noise_model="depolarizing", noise_level=0.0
+        )
         gates = self.integration.convert_channel_to_cirq(channel)
         self.assertEqual(len(gates), 0)
 

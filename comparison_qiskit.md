@@ -246,7 +246,7 @@ if np.random.random() < self.noise_level:
 2. **Incorrect operation:** When damping occurs, the state is collapsed to |0> regardless of the original state's |0> amplitude. The correct Kraus operators for amplitude damping are:
    - K0 = [[1, 0], [0, sqrt(1-gamma)]]
    - K1 = [[0, sqrt(gamma)], [0, 0]]
-   
+
    So the non-jump evolution (K0) preserves the |0> component: K0|psi> = alpha|0> + sqrt(1-gamma)*beta|1>, NOT |0>.
 
 ### What Qiskit does
@@ -289,10 +289,10 @@ Replace the current implementation with:
 def _amplitude_damping_noise(self, qubit: Qubit) -> Qubit:
     gamma = self.noise_level
     alpha, beta = qubit.state
-    
+
     # Roll the dice for a quantum jump
     jump_prob = min(1.0, gamma * abs(beta)**2)
-    
+
     if np.random.random() < jump_prob:
         # Quantum jump: K1|psi> / norm -> |0>
         qubit._state = np.array([1.0 + 0j, 0.0 + 0j])
@@ -303,7 +303,7 @@ def _amplitude_damping_noise(self, qubit: Qubit) -> Qubit:
         new_beta = np.sqrt(1 - gamma) * beta
         norm = np.sqrt(abs(new_alpha)**2 + abs(new_beta)**2)
         qubit._state = np.array([new_alpha / norm, new_beta / norm])
-    
+
     return qubit
 ```
 

@@ -5,7 +5,7 @@ from typing import Any, Protocol
 
 import numpy as np
 
-from .secure_random import secure_random, secure_randint
+from .secure_random import secure_randint, secure_random
 
 
 class PhotonSourceState(Enum):

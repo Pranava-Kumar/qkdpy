@@ -193,7 +193,11 @@ class QKDLogger:
         merged = {**self._context, **kwargs}
 
         if STRUCTLOG_AVAILABLE and self._logger is not None:
-            getattr(self._logger, level.lower())(event, **merged)
+            # Map custom levels to nearest standard structlog method
+            structlog_level = level.lower()
+            if structlog_level == "security":
+                structlog_level = "warning"
+            getattr(self._logger, structlog_level)(event, **merged)
         else:
             if merged:
                 msg = f"{event} | {merged}"

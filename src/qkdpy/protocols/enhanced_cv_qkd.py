@@ -6,7 +6,7 @@ from typing import cast
 import numpy as np
 
 from ..core import QuantumChannel, Qubit, Qudit
-from ..core.secure_random import secure_normal, secure_randint
+from ..core.secure_random import secure_normal, secure_randint, secure_random
 from .base import BaseProtocol
 
 
@@ -69,6 +69,11 @@ class EnhancedCVQKD(BaseProtocol):
         on both quadratures. For compatibility with the base protocol,
         we encode the continuous information in qubit states.
 
+        Alice's bit value is encoded into the sign of her X-quadrature
+        modulation so that Bob's sign-based bit inference (sign of his
+        X-quadrature measurement) is correlated with Alice's bit. Without
+        this, the sifted-key QBER is decorrelated and unphysical.
+
         Returns:
             List of qubits to be sent through the quantum channel
         """
@@ -82,8 +87,11 @@ class EnhancedCVQKD(BaseProtocol):
             bit = secure_randint(0, 2)
             self.alice_bits.append(bit)
 
-            # Alice generates Gaussian modulations - secure random
-            modulation_x = secure_normal(0, np.sqrt(self.modulation_variance))
+            # Alice generates Gaussian modulations - secure random.
+            # X quadrature sign carries the bit; magnitude is Gaussian(|x|).
+            sign = 1.0 if bit == 0 else -1.0
+            x_magnitude = abs(secure_normal(0, np.sqrt(self.modulation_variance)))
+            modulation_x = sign * x_magnitude
             modulation_p = secure_normal(0, np.sqrt(self.modulation_variance))
 
             self.alice_modulations_x.append(modulation_x)
@@ -162,10 +170,18 @@ class EnhancedCVQKD(BaseProtocol):
             self.bob_measurements_p.append(final_p)
 
         # For compatibility with the base protocol, return discrete measurements
-        # based on the sign of the X quadrature measurements
+        # based on the sign of the X quadrature measurements, with a
+        # chance of error that grows with the channel's noise level.
+        # In the CV model this captures the bit-error rate from phase noise
+        # that wouldn't be reflected by pure Gaussian-quadrature variance.
+        base_error_rate = max(0.0, min(1.0, float(self.excess_noise)))
         discrete_measurements = []
         for x_measurement in self.bob_measurements_x:
-            discrete_measurements.append(0 if x_measurement >= 0 else 1)
+            sign_bit = 0 if x_measurement >= 0 else 1
+            # Occasional bit flip to model noisy transmission
+            if secure_random() < base_error_rate:
+                sign_bit ^= 1
+            discrete_measurements.append(sign_bit)
 
         return discrete_measurements
 
@@ -204,9 +220,11 @@ class EnhancedCVQKD(BaseProtocol):
             ):
                 alice_sifted.append(self.alice_bits[i])
 
-                # Bob generates bit from his measurements
-                # In a real implementation, this would be more sophisticated
+                # Bob generates bit from his measurements - same noise model
+                # as in measure_states so QBER reflects the channel's noise level.
                 bob_bit = 0 if self.bob_measurements_x[i] > 0 else 1
+                if secure_random() < max(0.0, min(1.0, float(self.excess_noise))):
+                    bob_bit ^= 1
                 bob_sifted.append(bob_bit)
 
         self.alice_key = alice_sifted

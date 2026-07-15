@@ -3,16 +3,15 @@
 import math
 import random
 from collections.abc import Callable
-from typing import Any, cast
 
 import numpy as np
 
-from .secure_random import secure_random
 from .gate_utils import GateUtils
-from .gates import Identity, PauliX, PauliY, PauliZ
+from .gates import PauliX, PauliY, PauliZ
 from .measurements import Measurement
 from .qubit import Qubit
 from .qudit import Qudit
+from .secure_random import secure_random
 
 
 class QuantumChannel:

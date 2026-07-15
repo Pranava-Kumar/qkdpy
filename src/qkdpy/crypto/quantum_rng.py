@@ -1,6 +1,5 @@
 """Quantum random number generation utilities."""
 
-import os
 import secrets
 import time
 
@@ -68,8 +67,7 @@ class QuantumRandomNumberGenerator:
         if len(self.entropy_pool) < num_bits:
             # Generate additional secure random bits
             additional_bits = [
-                secure_randint(0, 2)
-                for _ in range(num_bits - len(self.entropy_pool))
+                secure_randint(0, 2) for _ in range(num_bits - len(self.entropy_pool))
             ]
             self.entropy_pool.extend(additional_bits)
 

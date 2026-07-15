@@ -174,8 +174,10 @@ class QuantumDetector:
         self.afterpulses_detected = 0
         self.last_detection_time = -np.inf
         self.in_dead_time = False
-        if hasattr(self, "_last_dark_check_time"):
-            delattr(self, "_last_dark_check_time")
+        # Re-initialize the dark-count tracking field rather than deleting it,
+        # since __init__ sets it and detect() reads it. Deleting it caused
+        # AttributeError on the first detect() call after a reset().
+        self._last_dark_check_time = None
 
 
 class DetectorArray:

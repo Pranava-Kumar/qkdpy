@@ -279,7 +279,7 @@ The conversion layer from qkdpy's channel model to PennyLane's noise model does 
 
 1. **MEDIUM** -- Implement `pennylane_qkd_channel()` that converts qkdpy's physical channel parameters (loss, polarization drift, phase fluctuations, thermal noise, misalignment) into equivalent PennyLane operations. Each qkdpy noise type maps to a PennyLane channel:
    - `polarization_drift` -> `qml.RY(angle, wires=w)` or use `NoiseModel` with conditional rotations
-   - `phase_fluctuations` -> `qml.PhaseDamping(gamma, wires=w)` 
+   - `phase_fluctuations` -> `qml.PhaseDamping(gamma, wires=w)`
    - `misalignment_error` -> `qml.DepolarizingChannel(p, wires=w)` with small p
    - `thermal_noise` -> `qml.GeneralizedAmplitudeDamping(gamma, p, wires=w)`
 
@@ -365,7 +365,7 @@ The quantum logic of both protocols is mathematically correct. The E91 has desig
 
 PennyLane's `qml.math` module provides:
 - `qml.math.purity(dm, indices)` -- works on density matrices with subsystem support
-- `qml.math.vn_entropy(dm, indices)` -- works on density matrices with subsystem support  
+- `qml.math.vn_entropy(dm, indices)` -- works on density matrices with subsystem support
 - `qml.math.fidelity(dm1, dm2)` -- works on both pure and mixed states
 - `qml.math.trace_distance(dm1, dm2)` -- trace distance
 
@@ -504,24 +504,24 @@ def entanglement_entropy(self, subsystem_qubits: list[int]) -> float:
         q < 0 or q >= self._num_qubits for q in subsystem_qubits
     ):
         raise ValueError("Invalid subsystem qubit indices")
-    
+
     # Compute reduced density matrix via partial trace
     # Identify qubits NOT in the subsystem (traced out)
     all_qubits = set(range(self._num_qubits))
     subsystem_set = set(subsystem_qubits)
     traced_qubits = sorted(all_qubits - subsystem_set)
-    
+
     if not traced_qubits:
         # Subsystem is the full system; entropy = 0 for pure state
         return 0.0
-    
+
     # Compute reduced density matrix via partial trace
     rho = self.density_matrix()  # 2^n x 2^n
     dim = 2 ** len(traced_qubits)
     sub_dim = 2 ** len(subsystem_qubits)
-    
+
     rho_reduced = np.zeros((sub_dim, sub_dim), dtype=complex)
-    
+
     # Sum over traced-out basis states
     for i in range(dim):
         for j in range(dim):
@@ -529,12 +529,12 @@ def entanglement_entropy(self, subsystem_qubits: list[int]) -> float:
             # This is a simplified implementation; real code needs
             # careful index mapping
             rho_reduced += ...  # partial trace summation
-    
+
     # Von Neumann entropy of reduced density matrix
     eigenvalues = np.linalg.eigvalsh(rho_reduced)
     eigenvalues = eigenvalues[eigenvalues > 1e-10]
     entropy = -np.sum(eigenvalues * np.log2(eigenvalues))
-    
+
     return float(entropy)
 ```
 

@@ -29,10 +29,12 @@ class AuditEventType(Enum):
     KEY_ROTATED = "key_rotated"
     KEY_ACCESSED = "key_accessed"
     KEY_EXPIRED = "key_expired"
+    KEY_DISTRIBUTED = "key_distributed"
 
     # Protocol events
     PROTOCOL_STARTED = "protocol_started"
     PROTOCOL_COMPLETED = "protocol_completed"
+    PROTOCOL_EXECUTED = "protocol_executed"
     PROTOCOL_FAILED = "protocol_failed"
     PROTOCOL_ABORTED = "protocol_aborted"
 

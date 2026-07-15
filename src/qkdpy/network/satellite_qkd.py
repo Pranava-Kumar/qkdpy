@@ -17,8 +17,8 @@ from typing import Any
 
 import numpy as np
 
-from ..core.secure_random import secure_random
 from ..core.channels import QuantumChannel
+from ..core.secure_random import secure_random
 from ..utils.logging_config import get_logger
 from .protocols import ChannelPredictor
 

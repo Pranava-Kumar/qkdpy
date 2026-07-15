@@ -1,7 +1,7 @@
 # qkdpy vs QpiAI Quantum SDK: Core Quantum Logic Comparison
 
-**Date:** 2026-07-14  
-**Scope:** Mathematical/physical correctness audit comparing qkdpy's implementations against QpiAI's hardware-verified, cloud-tested implementations.  
+**Date:** 2026-07-14
+**Scope:** Mathematical/physical correctness audit comparing qkdpy's implementations against QpiAI's hardware-verified, cloud-tested implementations.
 **Note:** This is NOT a code-change request. Pure analysis only.
 
 ---

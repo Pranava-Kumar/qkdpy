@@ -166,15 +166,15 @@ class QpiAIIntegration:
     def __init__(self):
         from qpiai_quantum import Circuit, Backend
         self.Circuit = Circuit
-        
+
     def qubit_to_qpiai(self, qkdpy_qubit):
         """Convert QKDpy Qubit to QpiAI circuit state."""
         ...
-    
+
     def qpiai_to_qubit(self, qpiai_state):
         """Extract QKDpy Qubit from QpiAI simulation."""
         ...
-    
+
     def create_bb84_circuit(self, num_qubits, alice_bases, bob_bases):
         """Create QpiAI circuit for BB84."""
         circuit = self.Circuit(num_qubits * 2)
@@ -195,7 +195,7 @@ def qkdpy_channel_to_framework_noise(
     """Convert QKDpy QuantumChannel parameters to framework noise objects."""
     noise_level = channel_params.get("noise_level", 0.0)
     noise_model = channel_params.get("noise_model", "none")
-    
+
     if framework == "pennylane":
         # Return PennyLane noise channels
         return {
@@ -215,15 +215,15 @@ class TestFrameworkIntegration:
     def test_bb84_roundtrip(self):
         """BB84 protocol executes correctly on framework simulator."""
         ...
-    
+
     def test_noise_simulation(self):
         """Channel noise matches expected QBER."""
         ...
-    
+
     def test_entanglement_generation(self):
         """Bell pairs are correctly generated and verified."""
         ...
-    
+
     def test_benchmark_vs_native_qkdpy(self):
         """Framework simulation produces comparable results."""
         ...

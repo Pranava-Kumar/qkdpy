@@ -4,8 +4,6 @@ import hashlib
 import random
 import secrets
 
-import numpy as np
-
 from .privacy_amplification import PrivacyAmplification
 
 

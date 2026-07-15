@@ -5,9 +5,9 @@ from collections.abc import Callable
 
 import numpy as np
 
-from .secure_random import secure_random
 from .gates import Identity, PauliX, PauliY, PauliZ
 from .qubit import Qubit
+from .secure_random import secure_random
 
 
 class ExtendedQuantumChannel:

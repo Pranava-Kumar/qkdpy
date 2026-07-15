@@ -255,9 +255,7 @@ class Qudit:
         total_subsystem_dim = self.dimension // subsystem_dimension
 
         # Reshape statevector into (d1, d2) tensor for bipartite system
-        state_tensor = self._state.reshape(
-            (subsystem_dimension, total_subsystem_dim)
-        )
+        state_tensor = self._state.reshape((subsystem_dimension, total_subsystem_dim))
 
         # Partial trace via tensordot over the traced-out axis
         if subsystem_index == 0:
@@ -274,7 +272,7 @@ class Qudit:
 
         # Extract statevector if pure (Qudit cannot represent mixed states)
         eigenvalues = np.linalg.eigvalsh(rho_reduced)
-        purity = float(np.sum(eigenvalues ** 2))
+        purity = float(np.sum(eigenvalues**2))
         if abs(purity - 1.0) > 1e-10:  # Mixed state
             raise ValueError(
                 "Partial trace of entangled state produces mixed density matrix, "

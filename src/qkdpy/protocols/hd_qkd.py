@@ -177,28 +177,42 @@ class HDQKD(BaseProtocol):
         return True
 
     def _construct_mubs_prime(self, p: int) -> list[np.ndarray]:
-        """Construct MUBs for prime dimension p using the standard construction.
+        """Construct MUBs for prime dimension p via Weyl-Heisenberg.
+
+        For odd prime p we use the canonical construction
+
+            F_a[m, n] = (1/√p) · ω^{a·m² + 2·m·n}   with ω = e^{2πi/p}
+
+        which is well-defined because 2 is invertible modulo odd primes.
+        For each a in 1..p this gives one of the p mutual unbiased bases
+        (the computational basis I_p is the a=0 member, total p+1 bases).
 
         Args:
-            p: Prime dimension
+            p: Prime dimension (only called for odd p >= 3)
 
         Returns:
-            List of p+1 MUBs
+            List of p+1 MUBs, each of shape (p, p).
         """
-        mubs = []
+        if p == 2:
+            # Should not reach here (handled in _generate_mubs), but keep
+            # a hard fallback for qubits using the canonical 3 MUBs.
+            return [
+                np.eye(2, dtype=complex),
+                np.array([[1, 1], [1, -1]], dtype=complex) / np.sqrt(2),
+                np.array([[1, -1j], [1, 1j]], dtype=complex) / np.sqrt(2),
+            ]
 
-        # Computational basis (standard basis)
-        computational_basis = np.eye(p, dtype=complex)
-        mubs.append(computational_basis)
+        omega = np.exp(2j * np.pi / p)
+        mubs: list[np.ndarray] = [np.eye(p, dtype=complex)]
 
-        # Remaining p bases
-        for a in range(p):  # a = 0, 1, ..., p-1
+        for a in range(1, p + 1):
             basis_matrix = np.zeros((p, p), dtype=complex)
             for m in range(p):
                 for n in range(p):
-                    # Element |m+a*n> in the a-th basis, where arithmetic is mod p
-                    idx = (m + a * n) % p
-                    basis_matrix[m, n] = np.exp(2j * np.pi * idx / p) / np.sqrt(p)
+                    # Use 2*m*n (instead of m*n) to keep the inverse-of-2
+                    # implicit; for odd p, 2 is invertible mod p.
+                    exponent = (a * m * m + 2 * m * n) % p
+                    basis_matrix[m, n] = omega**exponent / np.sqrt(p)
             mubs.append(basis_matrix)
 
         return mubs

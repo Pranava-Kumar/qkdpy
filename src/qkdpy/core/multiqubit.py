@@ -351,7 +351,8 @@ class MultiQubitState:
         # Contract the state tensor with its conjugate over the traced-out axes
         state_tensor = self._state.reshape([2] * self._num_qubits)
         rho_reduced = np.tensordot(
-            state_tensor, np.conj(state_tensor),
+            state_tensor,
+            np.conj(state_tensor),
             axes=(trace_out_qubits, trace_out_qubits),
         )
         # Reshape to 2^k x 2^k density matrix and normalize

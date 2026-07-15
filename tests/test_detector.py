@@ -64,7 +64,9 @@ class TestQuantumDetector(unittest.TestCase):
         """measure_state returns a (int | None, float) tuple."""
         detector = QuantumDetector()
         qubit = Qubit.zero()
-        result, timestamp = detector.measure_state(qubit, basis="computational", timestamp=0.0)
+        result, timestamp = detector.measure_state(
+            qubit, basis="computational", timestamp=0.0
+        )
         self.assertIsInstance(result, (int, type(None)))
         self.assertIsInstance(timestamp, float)
 
@@ -72,7 +74,9 @@ class TestQuantumDetector(unittest.TestCase):
         """Measuring |0> in computational basis should give 0."""
         detector = QuantumDetector(efficiency=1.0, dark_count_rate=0.0)
         qubit = Qubit.zero()
-        result, timestamp = detector.measure_state(qubit, basis="computational", timestamp=0.0)
+        result, timestamp = detector.measure_state(
+            qubit, basis="computational", timestamp=0.0
+        )
         if result is not None:
             self.assertIn(result, (0, 1))
 
@@ -119,7 +123,9 @@ class TestDetectorArray(unittest.TestCase):
     def test_measure_in_basis_returns_int(self):
         """measure_in_basis returns an integer result."""
         qubit = Qubit.zero()
-        result = self.array.measure_in_basis(qubit, basis="computational", timestamp=0.0)
+        result = self.array.measure_in_basis(
+            qubit, basis="computational", timestamp=0.0
+        )
         self.assertIsInstance(result, int)
         self.assertIn(result, (0, 1))
 

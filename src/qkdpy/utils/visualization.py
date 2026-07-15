@@ -564,7 +564,8 @@ class KeyRateAnalyzer:
         all_y_values = [
             y for _, (_, y_values) in protocol_data.items() for y in y_values
         ]
-        if max(all_y_values) / min(all_y_values) > 100:
+        min_y = min(all_y_values)
+        if min_y > 0 and max(all_y_values) / min_y > 100:
             ax.set_yscale("log")
 
         return fig

@@ -5,7 +5,6 @@ import unittest
 import numpy as np
 
 from qkdpy.key_management.key_distillation import KeyDistillation
-from qkdpy.key_management.error_correction import ErrorCorrection
 from qkdpy.key_management.privacy_amplification import PrivacyAmplification
 
 
@@ -47,7 +46,7 @@ class TestKeyDistillationBasic(unittest.TestCase):
     def test_distill_corrects_errors(self):
         """Distill should correct errors and produce matching final keys."""
         alice = [0, 1, 0, 1, 1, 0, 1, 0]
-        bob =   [0, 1, 0, 0, 1, 0, 1, 0]  # Error at position 3
+        bob = [0, 1, 0, 0, 1, 0, 1, 0]  # Error at position 3
         distiller = KeyDistillation()
         result = distiller.distill(alice, bob, qber=0.2)
         self.assertEqual(result["alice_key"], result["bob_key"])
@@ -136,7 +135,40 @@ class TestKeyDistillationDifferentMethods(unittest.TestCase):
         """Distill with LDPC + universal hashing should work (smoke test)."""
         import warnings
 
-        alice = [0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1]
+        alice = [
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            1,
+            0,
+            1,
+            1,
+            0,
+            0,
+            1,
+            0,
+            1,
+            1,
+        ]
         bob = alice.copy()
         distiller = KeyDistillation(
             error_correction_method="ldpc",
@@ -196,7 +228,9 @@ class TestPrivacyAmplification(unittest.TestCase):
     def test_bennett_brassard_hashing(self):
         """Bennett-Brassard hashing should work with error rate."""
         key = [0, 1, 0, 1, 1, 0, 1, 0, 0, 1, 0, 1, 1, 0, 1, 0]
-        result = PrivacyAmplification.bennett_brassard_hashing(key, output_length=8, error_rate=0.05)
+        result = PrivacyAmplification.bennett_brassard_hashing(
+            key, output_length=8, error_rate=0.05
+        )
         self.assertGreater(len(result), 0)
         self.assertLessEqual(len(result), 8)
 

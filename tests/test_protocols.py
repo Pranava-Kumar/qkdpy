@@ -107,7 +107,10 @@ class TestE91(unittest.TestCase):
         # Check that Bell's inequality is violated (|S| > 2)
         # With 500 entangled pairs, the CHSH test uses ~220 samples across
         # 4 angle combinations, giving sufficient statistics for S > 2.
-        self.assertTrue(bell_results["s_value"] > 2.0, msg=f"CHSH S={bell_results['s_value']:.3f} should exceed 2")
+        self.assertTrue(
+            bell_results["s_value"] > 2.0,
+            msg=f"CHSH S={bell_results['s_value']:.3f} should exceed 2",
+        )
 
     def test_e91_security_threshold(self):
         """Test the security threshold of E91."""
