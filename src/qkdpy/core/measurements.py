@@ -81,7 +81,7 @@ class Measurement:
         if bases is None:
             bases = ["computational", "hadamard"]
 
-        basis = np.random.choice(bases)
+        basis = secure_choice(bases)
         result = Measurement.measure_in_basis(qubit, basis)
         return result, basis
 

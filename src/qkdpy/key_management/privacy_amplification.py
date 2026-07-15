@@ -4,6 +4,8 @@ import hashlib
 
 import numpy as np
 
+from ..core.secure_random import secure_randint
+
 
 class PrivacyAmplification:
     """Provides various privacy amplification methods for QKD protocols.
@@ -33,15 +35,14 @@ class PrivacyAmplification:
         if output_length <= 0:
             return []
 
-        # Set the seed for reproducibility
-        if seed is not None:
-            np.random.seed(seed)
-
         # Convert the key to a binary string
         key_str = "".join(map(str, key))
 
         # Generate a random binary matrix for the hash function
-        hash_matrix = np.random.randint(0, 2, size=(output_length, len(key)))
+        hash_matrix = [
+            [secure_randint(0, 2) for _ in range(len(key))]
+            for _ in range(output_length)
+        ]
 
         # Apply the hash function
         result = []
@@ -75,18 +76,14 @@ class PrivacyAmplification:
         if output_length <= 0:
             return []
 
-        # Set the seed for reproducibility
-        if seed is not None:
-            np.random.seed(seed)
-
         # Convert the key to a binary string
         key_str = "".join(map(str, key))
 
         # Generate a random binary vector for the first row of the Toeplitz matrix
-        first_row = np.random.randint(0, 2, size=len(key))
+        first_row = [secure_randint(0, 2) for _ in range(len(key))]
 
         # Generate a random binary vector for the first column of the Toeplitz matrix (excluding the first element)
-        first_col = np.random.randint(0, 2, size=output_length)
+        first_col = [secure_randint(0, 2) for _ in range(output_length)]
 
         # Construct the Toeplitz matrix
         toeplitz = np.zeros((output_length, len(key)), dtype=int)

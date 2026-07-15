@@ -5,6 +5,7 @@ from collections.abc import Callable
 
 import numpy as np
 
+from .secure_random import secure_random
 from .gates import Identity, PauliX, PauliY, PauliZ
 from .qubit import Qubit
 
@@ -52,7 +53,7 @@ class ExtendedQuantumChannel:
         self.transmitted_count += 1
 
         # Check if the qubit is lost
-        if np.random.random() < self.loss:
+        if secure_random() < self.loss:
             self.lost_count += 1
             return None
 
@@ -83,7 +84,7 @@ class ExtendedQuantumChannel:
 
     def _depolarizing_noise(self, qubit: Qubit) -> Qubit:
         """Apply depolarizing noise to a qubit."""
-        if np.random.random() < self.noise_level:
+        if secure_random() < self.noise_level:
             # Apply a random Pauli operator
             gates = [
                 Identity().matrix,
@@ -99,23 +100,23 @@ class ExtendedQuantumChannel:
 
     def _bit_flip_noise(self, qubit: Qubit) -> Qubit:
         """Apply bit flip noise to a qubit."""
-        if np.random.random() < self.noise_level:
+        if secure_random() < self.noise_level:
             qubit.apply_gate(PauliX().matrix)
             self.error_count += 1
         return qubit
 
     def _phase_flip_noise(self, qubit: Qubit) -> Qubit:
         """Apply phase flip noise to a qubit."""
-        if np.random.random() < self.noise_level:
+        if secure_random() < self.noise_level:
             qubit.apply_gate(PauliZ().matrix)
             self.error_count += 1
         return qubit
 
     def _amplitude_damping_noise(self, qubit: Qubit) -> Qubit:
         """Apply amplitude damping noise to a qubit."""
-        if np.random.random() < self.noise_level:
+        if secure_random() < self.noise_level:
             gamma = self.noise_level
-            if qubit.probabilities[1] > 0 and np.random.random() < gamma:
+            if qubit.probabilities[1] > 0 and secure_random() < gamma:
                 # Simulate amplitude damping by collapsing to |0> with probability gamma
                 qubit._state = np.array([1, 0], dtype=complex)
                 self.error_count += 1
@@ -123,23 +124,23 @@ class ExtendedQuantumChannel:
 
     def _phase_damping_noise(self, qubit: Qubit) -> Qubit:
         """Apply phase damping noise to a qubit."""
-        if np.random.random() < self.noise_level:
+        if secure_random() < self.noise_level:
             # Phase damping affects only the off-diagonal elements of the density matrix
             # This is a simplified model where we apply a phase flip with probability noise_level/2
-            if np.random.random() < self.noise_level / 2:
+            if secure_random() < self.noise_level / 2:
                 qubit.apply_gate(PauliZ().matrix)
                 self.error_count += 1
         return qubit
 
     def _generalized_amplitude_damping_noise(self, qubit: Qubit) -> Qubit:
         """Apply generalized amplitude damping noise to a qubit."""
-        if np.random.random() < self.noise_level:
+        if secure_random() < self.noise_level:
             # This combines amplitude damping with a thermal environment
             # We'll model this as a combination of amplitude damping and bit flip
-            if np.random.random() < 0.5:
+            if secure_random() < 0.5:
                 # Apply amplitude damping
                 gamma = self.noise_level
-                if qubit.probabilities[1] > 0 and np.random.random() < gamma:
+                if qubit.probabilities[1] > 0 and secure_random() < gamma:
                     qubit._state = np.array([1, 0], dtype=complex)
                     self.error_count += 1
             else:

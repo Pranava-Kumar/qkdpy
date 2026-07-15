@@ -5,6 +5,8 @@ from typing import Any, Protocol
 
 import numpy as np
 
+from .secure_random import secure_random, secure_randint
+
 
 class PhotonSourceState(Enum):
     """Enum for different photon source states."""
@@ -83,7 +85,7 @@ class PhotonSource(PhotonPulseGenerator):
 
         # Determine if a photon is generated based on power/energy
         # For now, assume a simple model where photons are regularly generated
-        photon_present = np.random.random() < self.efficiency
+        photon_present = secure_random() < self.efficiency
 
         return photon_present, actual_time
 
@@ -263,7 +265,7 @@ class DecoyStateSource(PhotonSource):
         Returns:
             Tuple of (photon_state, actual_time_with_jitter, pulse_type)
         """
-        if np.random.random() < self.decoy_probability:
+        if secure_random() < self.decoy_probability:
             # Generate decoy pulse
             return self.generate_decoy_pulse(time)
         else:
@@ -283,9 +285,9 @@ class DecoyStateSource(PhotonSource):
         decoy_counts = [0] * len(self.decoy_mean_photon_numbers)
 
         for _ in range(num_pulses):
-            if np.random.random() < self.decoy_probability:
+            if secure_random() < self.decoy_probability:
                 # Determine which decoy type
-                idx = np.random.randint(len(self.decoy_mean_photon_numbers))
+                idx = secure_randint(0, len(self.decoy_mean_photon_numbers))
                 decoy_counts[idx] += 1
             else:
                 signal_count += 1
@@ -327,12 +329,15 @@ class ParametricDownConversionSource(PhotonSource):
         """
         # Calculate mean photon number based on pair generation rate
         mean_photon_number = pair_generation_rate / pulse_rate
+        h = 6.626e-34  # Planck constant
+        c = 299792458  # Speed of light
+        photon_energy = h * c / wavelength
         super().__init__(
             name,
             pulse_rate,
             wavelength,
             timing_jitter,
-            power=mean_photon_number * self._calculate_photon_energy() * pulse_rate,
+            power=mean_photon_number * photon_energy * pulse_rate,
             efficiency=efficiency,
         )
 
@@ -355,18 +360,18 @@ class ParametricDownConversionSource(PhotonSource):
         actual_time = time + np.random.normal(0, self.timing_jitter)
 
         # Determine if a pair is generated
-        pair_generated = np.random.random() < self.heralding_probability
+        pair_generated = secure_random() < self.heralding_probability
 
         additional_info: dict[str, bool] = {}
         photon_present = False
 
         if pair_generated:
             # Determine if the heralding photon is detected
-            herald_detected = np.random.random() < self.heralding_efficiency
+            herald_detected = secure_random() < self.heralding_efficiency
 
             if herald_detected:
                 # The signal photon is available with coupling efficiency
-                photon_present = np.random.random() < self.efficiency
+                photon_present = secure_random() < self.efficiency
                 additional_info = {
                     "pair_generated": True,
                     "herald_detected": True,

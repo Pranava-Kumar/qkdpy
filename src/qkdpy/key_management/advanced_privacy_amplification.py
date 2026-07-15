@@ -1,6 +1,7 @@
 """Advanced privacy amplification methods for QKD protocols."""
 
 import hashlib
+import random
 import secrets
 
 import numpy as np
@@ -25,10 +26,6 @@ class AdvancedPrivacyAmplification:
         if not key:
             return []
 
-        # Set the seed for reproducibility
-        if seed is not None:
-            np.random.seed(seed)
-
         # Determine output length (typically half the input length)
         output_length = max(1, len(key) // 2)
 
@@ -37,7 +34,7 @@ class AdvancedPrivacyAmplification:
         for _ in range(output_length):
             # XOR a random subset of bits
             subset_size = max(1, len(key) // (output_length * 2))
-            subset_indices = np.random.choice(len(key), size=subset_size, replace=False)
+            subset_indices = random.sample(range(len(key)), subset_size)
             xor_result = 0
             for idx in subset_indices:
                 xor_result ^= key[idx]

@@ -25,6 +25,8 @@ except ImportError:
     np = None  # type: ignore[assignment]
 
 
+from qkdpy.core.secure_random import secure_choice, secure_randint
+
 from ..core import Qubit
 
 
@@ -146,11 +148,11 @@ class QpiAIIntegration:
             QpiAI Circuit for BB84
         """
         if alice_bases is None:
-            alice_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+            alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
         if bob_bases is None:
-            bob_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+            bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
         if alice_bits is None:
-            alice_bits = [np.random.randint(0, 2) for _ in range(num_qubits)]
+            alice_bits = [secure_randint(0, 2) for _ in range(num_qubits)]
 
         circuit = Circuit(num_qubits, num_qubits)
 
@@ -240,9 +242,9 @@ class QpiAIIntegration:
             QpiAI Circuit for E91
         """
         if alice_bases is None:
-            alice_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+            alice_bases = [secure_choice(["Z", "X", "W"]) for _ in range(num_pairs)]
         if bob_bases is None:
-            bob_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+            bob_bases = [secure_choice(["Z", "X", "W"]) for _ in range(num_pairs)]
 
         circuit = Circuit(num_pairs * 2, num_pairs * 2)
 

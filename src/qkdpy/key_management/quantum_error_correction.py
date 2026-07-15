@@ -4,6 +4,7 @@ import numpy as np
 
 from ..core import Qubit
 from ..core.gates import PauliX, PauliZ
+from ..core.secure_random import secure_random, secure_randint, secure_choice
 
 
 class QuantumErrorCorrection:
@@ -180,9 +181,9 @@ class QuantumErrorCorrection:
 
         # For simulation, we'll randomly "detect" and "correct" an error
         if (
-            len(qubits) > 0 and np.random.random() < 0.3
+            len(qubits) > 0 and secure_random() < 0.3
         ):  # 30% chance of detecting an error
-            error_position = np.random.randint(0, len(qubits))
+            error_position = secure_randint(0, len(qubits))
 
             # Apply the inverse error to correct it
             if error_type == "X":
@@ -231,9 +232,9 @@ class QuantumErrorCorrection:
         # 2. Simulate errors
         errored_qubits = []
         for qubit in encoded_qubits:
-            if np.random.random() < error_probability:
+            if secure_random() < error_probability:
                 # Apply a random error
-                error_type = np.random.choice(["X", "Z", "Y"])
+                error_type = secure_choice(["X", "Z", "Y"])
                 if error_type == "X":
                     qubit.apply_gate(PauliX().matrix)
                 elif error_type == "Z":
@@ -245,7 +246,7 @@ class QuantumErrorCorrection:
 
         # 3. Detect and correct errors
         corrected_qubits = QuantumErrorCorrection.detect_and_correct_error(
-            errored_qubits, np.random.choice(["X", "Z", "Y"])
+            errored_qubits, secure_choice(["X", "Z", "Y"])
         )
 
         # 4. Decode the qubit
@@ -312,8 +313,12 @@ class QuantumErrorCorrection:
 
         for _ in range(num_trials):
             # Create a random initial qubit
-            alpha = complex(np.random.randn() + 1j * np.random.randn())
-            beta = complex(np.random.randn() + 1j * np.random.randn())
+            alpha_real = secure_random() * 2 - 1
+            alpha_imag = secure_random() * 2 - 1
+            beta_real = secure_random() * 2 - 1
+            beta_imag = secure_random() * 2 - 1
+            alpha = complex(alpha_real, alpha_imag)
+            beta = complex(beta_real, beta_imag)
             # Normalize
             norm = np.sqrt(abs(alpha) ** 2 + abs(beta) ** 2)
             alpha /= norm

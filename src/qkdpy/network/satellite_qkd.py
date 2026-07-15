@@ -17,6 +17,7 @@ from typing import Any
 
 import numpy as np
 
+from ..core.secure_random import secure_random
 from ..core.channels import QuantumChannel
 from ..utils.logging_config import get_logger
 from .protocols import ChannelPredictor
@@ -533,9 +534,9 @@ def simulate_satellite_qkd(
     for _i in range(num_passes):
         # Vary atmospheric conditions
         atmosphere = AtmosphericProfile(
-            visibility_km=15 + 10 * np.random.random(),
-            turbulence_cn2=1e-14 * (0.5 + np.random.random()),
-            aerosol_optical_depth=0.05 + 0.1 * np.random.random(),
+            visibility_km=15 + 10 * secure_random(),
+            turbulence_cn2=1e-14 * (0.5 + secure_random()),
+            aerosol_optical_depth=0.05 + 0.1 * secure_random(),
         )
 
         results = sat_qkd.simulate_pass(atmosphere=atmosphere)

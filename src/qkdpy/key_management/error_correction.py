@@ -361,11 +361,11 @@ class ErrorCorrection:
             # Update variable-to-check messages
             for i in range(n):
                 for j in range(m):
-                    if H[i, j] == 1:
+                    if H[j, i] == 1:
                         # Sum all incoming check messages except from check j
                         total = llr[i]
                         for j_prime in range(m):
-                            if j_prime != j and H[i, j_prime] == 1:
+                            if j_prime != j and H[j_prime, i] == 1:
                                 total += check_to_var[j_prime, i]
                         var_to_check[i, j] = total
 
@@ -432,7 +432,7 @@ class ErrorCorrection:
         # Fill matrix with random 1s maintaining regularity
         for col in range(n):
             # Choose j positions randomly for the 1s in this column
-            rows = np.random.choice(m, size=j, replace=False)
+            rows = random.sample(range(m), j)
             H[rows, col] = 1
 
         # Check if each row has the expected number of 1s on average
@@ -444,7 +444,7 @@ class ErrorCorrection:
                 zeros = np.where(H[row] == 0)[0]
                 if len(zeros) > 0:
                     add_count = min(k - row_sum, len(zeros))
-                    chosen_cols = np.random.choice(zeros, size=add_count, replace=False)
+                    chosen_cols = random.sample(list(zeros), add_count)
                     H[row, chosen_cols] = 1
 
         return H
@@ -484,7 +484,7 @@ class ErrorCorrection:
             # Fill the matrix with 1s to satisfy the constraints
             for j in range(n):
                 # Randomly choose 3 rows to put 1s in this column
-                rows = np.random.choice(m, size=3, replace=False)
+                rows = random.sample(range(m), 3)
                 parity_check_matrix[rows, j] = 1
 
             # Ensure each row has approximately 6 ones
@@ -492,7 +492,7 @@ class ErrorCorrection:
                 row_sum = np.sum(parity_check_matrix[i])
                 if row_sum < 6:
                     # Randomly choose additional columns to put 1s
-                    cols = np.random.choice(n, size=6 - row_sum, replace=False)
+                    cols = random.sample(range(n), 6 - row_sum)
                     parity_check_matrix[i, cols] = 1
 
         # Convert keys to numpy arrays

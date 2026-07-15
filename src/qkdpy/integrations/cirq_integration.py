@@ -12,6 +12,8 @@ except ImportError:
 
 import numpy as np
 
+from qkdpy.core.secure_random import secure_choice, secure_randint
+
 from ..core import QuantumChannel, Qubit
 from ..protocols.bb84 import BB84
 
@@ -73,10 +75,10 @@ class CirqIntegration:
         """
         if alice_bases is None:
             # Randomly choose bases for Alice
-            alice_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+            alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
         if bob_bases is None:
             # Randomly choose bases for Bob
-            bob_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+            bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
 
         # Create qubits
         qubits = [cirq.LineQubit(i) for i in range(num_qubits)]
@@ -114,9 +116,9 @@ class CirqIntegration:
             Tuple of (alice_bits, bob_bits, matching_bases)
         """
         # Randomly generate Alice's bits and bases
-        alice_bits = [np.random.randint(0, 2) for _ in range(num_qubits)]
-        alice_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
-        bob_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+        alice_bits = [secure_randint(0, 2) for _ in range(num_qubits)]
+        alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
+        bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
 
         # Create qubits
         qubits = [cirq.LineQubit(i) for i in range(num_qubits)]
@@ -153,8 +155,7 @@ class CirqIntegration:
         # Extract Bob's measurement results
         bob_bits = []
         for i in range(num_qubits):
-            measurement = result.measurements[f"result_{i}"][0]
-            bob_bits.append(int(measurement))
+            bob_bits.append(int(result.measurements[f"result_{i}"][0, 0]))
 
         # Determine matching bases
         matching_bases = [a == b for a, b in zip(alice_bases, bob_bases, strict=False)]

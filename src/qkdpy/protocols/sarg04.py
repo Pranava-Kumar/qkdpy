@@ -1,5 +1,6 @@
 """SARG04 QKD protocol implementation."""
 
+import random
 from collections.abc import Sequence
 
 import numpy as np
@@ -233,7 +234,7 @@ class SARG04(BaseProtocol):
             return 1.0
 
         sample_size = max(1, int(len(alice_sifted) * 0.2))
-        indices = np.random.choice(len(alice_sifted), size=sample_size, replace=False)
+        indices = random.sample(range(len(alice_sifted)), sample_size)
 
         errors = 0
         for idx in indices:

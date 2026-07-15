@@ -7,6 +7,7 @@ from typing import Any
 
 import numpy as np
 
+from ..core.secure_random import secure_randint
 from ..utils import bits_to_bytes, bytes_to_bits
 
 
@@ -163,7 +164,7 @@ class QuantumCommitment:
 
         # Generate a unique commitment ID
         commitment_id = (
-            f"commit_{int(time.time() * 1000000)}_{np.random.randint(10000)}"
+            f"commit_{int(time.time() * 1000000)}_{secure_randint(0, 10000)}"
         )
 
         # Store the commitment
@@ -322,14 +323,16 @@ class QuantumZeroKnowledge:
         Returns:
             True if proof is valid, False otherwise
         """
-        # Compute g^response mod p
+        # Standard Schnorr verification:
+        # g^response ≡ commitment * public^challenge (mod p)
+        # Recover commitment: commitment' = g^response * public^(-challenge) mod p
         left_side = pow(generator, response, modulus)
+        public_inv = pow(public, challenge, modulus)
+        commitment_recovered = (left_side * pow(public_inv, -1, modulus)) % modulus
 
-        # Compute commitment * public^challenge mod p
-        commitment = pow(generator, response - challenge * (modulus - 1), modulus)
-        right_side = (commitment * pow(public, challenge, modulus)) % modulus
-
-        return left_side == right_side
+        # Check that reconstructed challenge matches
+        expected_challenge = (commitment_recovered + public) % modulus
+        return expected_challenge == challenge
 
     @staticmethod
     def hash_based_commitment(value: str) -> tuple[str, list[str]]:

@@ -233,40 +233,63 @@ class Qudit:
     def partial_trace(self, subsystem_index: int, subsystem_dimension: int) -> "Qudit":
         """Perform partial trace over a subsystem.
 
+        Uses statevector tensordot (same approach as MultiQubitState).
+        Only works for bipartite systems where the result is a pure state
+        (i.e., the original bipartite state is separable across the partition).
+
         Args:
-            subsystem_index: Index of the subsystem to trace out (0 or 1 for bipartite systems)
+            subsystem_index: Index of the subsystem to trace out (0 or 1)
             subsystem_dimension: Dimension of the subsystem to trace out
 
         Returns:
-            Qudit representing the remaining subsystem
+            Qudit representing the remaining subsystem's pure state
+
+        Raises:
+            ValueError: If the reduced state is mixed (entangled original state)
         """
-        # This is a simplified implementation for a bipartite system
-        # More complex implementation would be needed for multipartite systems
         if self.dimension % subsystem_dimension != 0:
             raise ValueError(
                 "System dimension must be divisible by subsystem dimension"
             )
 
-        # Reshape the state vector to a matrix
         total_subsystem_dim = self.dimension // subsystem_dimension
+
+        # Reshape statevector into (d1, d2) tensor for bipartite system
+        state_tensor = self._state.reshape(
+            (subsystem_dimension, total_subsystem_dim)
+        )
+
+        # Partial trace via tensordot over the traced-out axis
         if subsystem_index == 0:
-            # Trace out first subsystem, keep second
-            reshaped_state = self._state.reshape(
-                subsystem_dimension, total_subsystem_dim
+            rho_reduced = np.tensordot(
+                state_tensor, np.conj(state_tensor), axes=([0], [0])
             )
-            reduced_state = np.zeros(total_subsystem_dim, dtype=complex)
-            for i in range(total_subsystem_dim):
-                for j in range(subsystem_dimension):
-                    reduced_state[i] += reshaped_state[j, i]
         else:
-            # Trace out second subsystem, keep first
-            reshaped_state = self._state.reshape(
-                total_subsystem_dim, subsystem_dimension
+            rho_reduced = np.tensordot(
+                state_tensor, np.conj(state_tensor), axes=([1], [1])
             )
-            reduced_state = np.zeros(total_subsystem_dim, dtype=complex)
-            for i in range(total_subsystem_dim):
-                for j in range(subsystem_dimension):
-                    reduced_state[i] += reshaped_state[i, j]
+
+        # Normalize
+        rho_reduced = rho_reduced / np.trace(rho_reduced)
+
+        # Extract statevector if pure (Qudit cannot represent mixed states)
+        eigenvalues = np.linalg.eigvalsh(rho_reduced)
+        purity = float(np.sum(eigenvalues ** 2))
+        if abs(purity - 1.0) > 1e-10:  # Mixed state
+            raise ValueError(
+                "Partial trace of entangled state produces mixed density matrix, "
+                "cannot represent as Qudit statevector"
+            )
+
+        # Extract the dominant eigenvector as the pure state
+        eigvals, eigvecs = np.linalg.eigh(rho_reduced)
+        max_idx = int(np.argmax(eigvals))
+        reduced_state = eigvecs[:, max_idx].astype(complex)
+        # Fix global phase so the first non-zero element is real-positive
+        for coeff in reduced_state:
+            if abs(coeff) > 1e-10:
+                reduced_state *= np.conj(coeff) / abs(coeff)
+                break
 
         return Qudit(reduced_state, total_subsystem_dim)
 

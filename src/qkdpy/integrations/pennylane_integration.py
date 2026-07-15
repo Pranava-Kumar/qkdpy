@@ -14,6 +14,8 @@ except ImportError:
 
 import numpy as np
 
+from qkdpy.core.secure_random import secure_choice, secure_randint
+
 from ..core import QuantumChannel, Qubit
 from ..protocols.bb84 import BB84
 
@@ -275,9 +277,9 @@ class PennyLaneIntegration:
             QNode implementing E91
         """
         if alice_bases is None:
-            alice_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+            alice_bases = [secure_choice(["Z", "X", "W"]) for _ in range(num_pairs)]
         if bob_bases is None:
-            bob_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+            bob_bases = [secure_choice(["Z", "X", "W"]) for _ in range(num_pairs)]
 
         dev = qml.device("default.qubit", wires=2 * num_pairs, shots=1)
 
@@ -349,10 +351,10 @@ class PennyLaneIntegration:
         """
         if alice_bases is None:
             # Randomly choose bases for Alice
-            alice_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+            alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
         if bob_bases is None:
             # Randomly choose bases for Bob
-            bob_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+            bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
 
         # Create device
         dev = qml.device("default.qubit", wires=num_qubits)
@@ -393,9 +395,9 @@ class PennyLaneIntegration:
             Tuple of (alice_bits, bob_bits, matching_bases)
         """
         # Randomly generate Alice's bits and bases
-        alice_bits = [np.random.randint(0, 2) for _ in range(num_qubits)]
-        alice_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
-        bob_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+        alice_bits = [secure_randint(0, 2) for _ in range(num_qubits)]
+        alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
+        bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
 
         # Create device
         dev = qml.device("default.qubit", wires=num_qubits)

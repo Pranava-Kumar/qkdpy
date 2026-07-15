@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 
 from ..core import QuantumChannel
+from ..core.secure_random import secure_randint
 from ..protocols import BB84, E91
 from .quantum_auth import QuantumAuthenticator
 
@@ -47,7 +48,7 @@ class QuantumKeyExchange:
             Session identifier if successful, None otherwise
         """
         # Generate a unique session identifier
-        session_id = f"exchange_{int(time.time() * 1000000)}_{np.random.randint(10000)}"
+        session_id = f"exchange_{int(time.time() * 1000000)}_{secure_randint(0, 10000)}"
 
         # Register both parties for authentication
         if not self.authenticator.register_party(party_a, key_length):

@@ -7,6 +7,7 @@ import time
 import numpy as np
 
 from ..core import QuantumChannel
+from ..core.secure_random import secure_randint
 from ..protocols import BB84
 
 
@@ -65,17 +66,12 @@ class QuantumRandomNumberGenerator:
 
         # 3. Use numpy random with additional entropy
         if len(self.entropy_pool) < num_bits:
-            # Add some additional entropy from system time and process ID
-            additional_entropy = (
-                int(time.time() * 1000000) ^ os.getpid() ^ secrets.randbelow(2**32)
-            )
-            np.random.seed(additional_entropy)
-
-            numpy_random_bits = [
-                int(np.random.randint(0, 2))
+            # Generate additional secure random bits
+            additional_bits = [
+                secure_randint(0, 2)
                 for _ in range(num_bits - len(self.entropy_pool))
             ]
-            self.entropy_pool.extend(numpy_random_bits)
+            self.entropy_pool.extend(additional_bits)
 
         # 4. Apply a randomness extractor to ensure quality
         if len(self.entropy_pool) >= num_bits:
@@ -85,7 +81,7 @@ class QuantumRandomNumberGenerator:
         else:
             # If we don't have enough bits, generate more
             needed_bits = num_bits - len(self.entropy_pool)
-            additional_bits = [int(np.random.randint(0, 2)) for _ in range(needed_bits)]
+            additional_bits = [secure_randint(0, 2) for _ in range(needed_bits)]
             all_bits = self.entropy_pool + additional_bits
             extracted_bits = self._xor_extractor(all_bits)
             self.entropy_pool = []

@@ -7,6 +7,7 @@ import numpy as np
 import scipy.stats as stats
 
 from ..core import QuantumChannel, Qubit
+from ..core.secure_random import secure_random
 from ..protocols import BaseProtocol
 
 
@@ -119,7 +120,7 @@ class QuantumSimulator:
             )
 
             # Set eavesdropper with specified probability
-            if np.random.random() < eavesdropping_probability:
+            if secure_random() < eavesdropping_probability:
                 channel.set_eavesdropper(QuantumChannel.intercept_resend_attack)
 
             # Update protocol with new channel

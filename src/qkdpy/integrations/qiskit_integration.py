@@ -28,6 +28,8 @@ except ImportError:
 
 import numpy as np
 
+from qkdpy.core.secure_random import secure_choice, secure_randint
+
 from ..core import QuantumChannel, Qubit
 from ..protocols.bb84 import BB84
 
@@ -251,10 +253,10 @@ class QiskitIntegration:
         """
         if alice_bases is None:
             # Randomly choose bases for Alice
-            alice_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+            alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
         if bob_bases is None:
             # Randomly choose bases for Bob
-            bob_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+            bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
 
         # Create quantum and classical registers
         qreg = QuantumRegister(num_qubits, "q")
@@ -296,9 +298,9 @@ class QiskitIntegration:
         from qiskit_aer import AerSimulator
 
         # Randomly generate Alice's bits and bases
-        alice_bits = [np.random.randint(0, 2) for _ in range(num_qubits)]
-        alice_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
-        bob_bases = [np.random.choice(["Z", "X"]) for _ in range(num_qubits)]
+        alice_bits = [secure_randint(0, 2) for _ in range(num_qubits)]
+        alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
+        bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
 
         # Create quantum circuit
         qreg = QuantumRegister(num_qubits, "q")
@@ -419,9 +421,9 @@ class QiskitIntegration:
             Qiskit QuantumCircuit implementing E91
         """
         if alice_bases is None:
-            alice_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+            alice_bases = [secure_choice(["Z", "X", "W"]) for _ in range(num_pairs)]
         if bob_bases is None:
-            bob_bases = [np.random.choice(["Z", "X", "W"]) for _ in range(num_pairs)]
+            bob_bases = [secure_choice(["Z", "X", "W"]) for _ in range(num_pairs)]
 
         # Create quantum registers for Alice and Bob
         qreg_alice = QuantumRegister(num_pairs, "alice")
@@ -478,8 +480,8 @@ class QiskitIntegration:
         # For standard E91/Ekert91, we usually use 3 bases.
         # Here we use a simplified set for demonstration.
         bases_options = ["Z", "X", "W"]  # W is for intermediate angle
-        alice_bases = [np.random.choice(bases_options) for _ in range(num_pairs)]
-        bob_bases = [np.random.choice(bases_options) for _ in range(num_pairs)]
+        alice_bases = [secure_choice(bases_options) for _ in range(num_pairs)]
+        bob_bases = [secure_choice(bases_options) for _ in range(num_pairs)]
 
         circuit = self.create_e91_circuit(num_pairs, alice_bases, bob_bases)
 

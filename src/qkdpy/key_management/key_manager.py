@@ -7,6 +7,7 @@ from typing import Any
 import numpy as np
 
 from ..core import QuantumChannel
+from ..core.secure_random import secure_randint
 from ..protocols import BB84
 
 
@@ -58,7 +59,7 @@ class QuantumKeyManager:
                 return None
 
             # Generate a unique key identifier
-            key_id = f"key_{int(time.time() * 1000000)}_{np.random.randint(10000)}"
+            key_id = f"key_{int(time.time() * 1000000)}_{secure_randint(0, 10000)}"
 
             # Store the key
             self.key_store[key_id] = {

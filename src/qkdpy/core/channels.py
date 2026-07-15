@@ -7,6 +7,7 @@ from typing import Any, cast
 
 import numpy as np
 
+from .secure_random import secure_random
 from .gate_utils import GateUtils
 from .gates import Identity, PauliX, PauliY, PauliZ
 from .measurements import Measurement
@@ -127,7 +128,7 @@ class QuantumChannel:
         self.transmitted_count += 1
 
         # Check if the qubit is lost due to channel loss
-        if np.random.random() < self.loss:
+        if secure_random() < self.loss:
             self.lost_count += 1
             return None
 
@@ -212,7 +213,7 @@ class QuantumChannel:
             Qubit after potential depolarization
         """
         p = self.noise_level
-        if p > 0 and np.random.random() < p:
+        if p > 0 and secure_random() < p:
             # Apply a random Pauli (X, Y, or Z) — NOT Identity
             gate = random.choice(
                 [
@@ -227,14 +228,14 @@ class QuantumChannel:
 
     def _bit_flip_noise(self, qubit: Qubit) -> Qubit:
         """Apply bit flip noise to a qubit."""
-        if np.random.random() < self.noise_level:
+        if secure_random() < self.noise_level:
             qubit.apply_gate(PauliX().matrix)
             self.error_count += 1
         return qubit
 
     def _phase_flip_noise(self, qubit: Qubit) -> Qubit:
         """Apply phase flip noise to a qubit."""
-        if np.random.random() < self.noise_level:
+        if secure_random() < self.noise_level:
             qubit.apply_gate(PauliZ().matrix)
             self.error_count += 1
         return qubit
@@ -264,7 +265,7 @@ class QuantumChannel:
         # Probability of quantum jump (|1> → |0>)
         jump_prob = gamma * (abs(beta) ** 2)
 
-        if jump_prob > 0 and np.random.random() < jump_prob:
+        if jump_prob > 0 and secure_random() < jump_prob:
             # K1: quantum jump — collapse to |0>
             qubit._state = np.array([1.0 + 0.0j, 0.0 + 0.0j])
             self.error_count += 1
@@ -379,16 +380,16 @@ class QuantumChannel:
         # Apply a CNOT operation with the qubit as control and an ancilla as target
         # Here we'll simulate this with a probabilistic operation
 
-        if np.random.random() < 0.5:  # 50% chance of entangling
+        if secure_random() < 0.5:  # 50% chance of entangling
             # Apply a random rotation to simulate the effect of entanglement
-            theta = np.random.random() * np.pi
-            phi = np.random.random() * 2 * np.pi
+            theta = secure_random() * np.pi
+            phi = secure_random() * 2 * np.pi
             gate = GateUtils.unitary_from_angles(theta, phi, 0)
             if isinstance(qubit, Qubit):
                 qubit.apply_gate(gate)
             else:
                 pass  # Qudit does not have apply_gate directly
-            detected = np.random.random() < 0.5
+            detected = secure_random() < 0.5
         else:
             detected = False
 
@@ -453,10 +454,10 @@ class QuantumChannel:
             The qubit with applied misalignment
 
         """
-        if np.random.random() < self.misalignment_error:
+        if secure_random() < self.misalignment_error:
             # Apply small random rotation to simulate basis misalignment
             # Use SU(2) Ry gate with halved angle for Bloch sphere correctness
-            angle = np.random.uniform(-0.1, 0.1)  # Small angle in radians
+            angle = -0.1 + secure_random() * 0.2  # Small angle in radians
             misalignment_matrix = np.array(
                 [
                     [np.cos(angle / 2), -np.sin(angle / 2)],
@@ -479,7 +480,7 @@ class QuantumChannel:
             The qubit with applied thermal noise
 
         """
-        if np.random.random() < self.thermal_noise_factor:
+        if secure_random() < self.thermal_noise_factor:
             # Apply random non-trivial Pauli to simulate thermal noise
             # (Identity is never applied since it's not an error)
             gate = random.choice(
