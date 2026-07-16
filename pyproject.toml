@@ -94,6 +94,13 @@ cirq = [
 pennylane = [
     "pennylane>=0.35.0",
 ]
+qiskit = [
+    "qiskit>=1.0.0",
+    "qiskit-aer>=0.13.0",
+]
+qpiai = [
+    "qpiai-quantum>=0.1.0",
+]
 
 [project.urls]
 Homepage = "https://github.com/Pranava-Kumar/qkdpy"

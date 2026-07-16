@@ -25,16 +25,15 @@ repos:
         entry: isort --profile black
         language: system
         types: [python]
-        # scripts/blackbox/test_utils_api.py is a 1700-line blackbox
-        # diagnostic that places imports inside print / try blocks;
-        # isort+black disagree on the long-wrap and end up oscillating.
-        # Skip lint auto-format on it; ruff still checks it via the
-        # per-file-ignores in pyproject.toml.
-        exclude: ^scripts/blackbox/test_utils_api\.py$
+        # scripts/blackbox/*.py are 1700-line blackbox diagnostic scripts that
+        # place imports inside print / try blocks; isort+black disagree on the
+        # long-wrap and oscillate. Skip format on them; ruff still checks them
+        # via the per-file-ignores in pyproject.toml.
+        exclude: ^scripts/blackbox/.*\.py$
 
       - id: ruff
         name: ruff
         entry: ruff check --fix
         language: system
         types: [python]
-        exclude: ^scripts/blackbox/test_utils_api\.py$
+        exclude: ^scripts/blackbox/.*\.py$

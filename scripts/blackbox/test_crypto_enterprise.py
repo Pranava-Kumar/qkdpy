@@ -1141,8 +1141,7 @@ else:
 # =====================================================================
 section("TEST SUMMARY")
 
-print(
-    """
+print("""
 Tests executed:
   1.  QuantumHash (SHA3-256, SHAKE-256, Merkle tree, hash chain)
   2.  QuantumCommitment (commit, open, verify, info)
@@ -1159,7 +1158,6 @@ Tests executed:
   13. Licensing (FREE/ENTERPRISE/PREMIUM tiers, feature gating)
   14. QuantumSafe (profile, roadmap, assessment)
   15. QuantumAuthenticator (party registration, auth, signatures)
-"""
-)
+""")
 
 print("Test script completed successfully.")

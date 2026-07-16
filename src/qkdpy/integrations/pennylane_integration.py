@@ -5,11 +5,40 @@ from typing import Any
 try:
     import pennylane as qml
     from pennylane import numpy as pnp
+    from pennylane.noise import add_noise, op_in
 
     PENNYLANE_AVAILABLE = True
+
+    # Map a noise_model name to a template that inserts the matching channel
+    # after every gate it is called on. PennyLane's NoiseModel expects each
+    # conditional value to be a callable ``noise_fn(op, **kwargs) -> None``.
+    def _make_noise_channel(kind: str, level: float) -> object:
+        """Return a template callable inserting a noise channel of ``kind``.
+
+        Args:
+            kind: One of "depolarizing", "bit_flip", "phase_flip",
+                "amplitude_damping". Defaults to depolarizing.
+            level: Error probability for the channel.
+        """
+
+        def _channel(op: object, **_: object) -> None:
+            wire = op.wires[0]  # type: ignore[attr-defined]
+            if kind == "bit_flip":
+                qml.BitFlip(level, wires=wire)
+            elif kind == "phase_flip":
+                qml.PhaseFlip(level, wires=wire)
+            elif kind == "amplitude_damping":
+                qml.AmplitudeDamping(level, wires=wire)
+            else:
+                qml.DepolarizingChannel(level, wires=wire)
+
+        return _channel
+
 except ImportError:
     PENNYLANE_AVAILABLE = False
     pnp = None
+    add_noise = None
+    op_in = None
 
 
 import numpy as np
@@ -20,6 +49,52 @@ from ..core import QuantumChannel, Qubit
 from ..protocols.bb84 import BB84
 
 _CHSH_QNODE: Any = None
+
+
+def _build_bb84_noise(
+    num_qubits: int, noise_model: str, noise_level: float
+) -> tuple[Any, Any]:
+    """Build a noisy device + NoiseModel for BB84, or (None, None) if unsupported.
+
+    PennyLane runs mixed-state channels only on ``default.mixed``, and applies
+    them through the ``add_noise`` transform with a ``NoiseModel`` of
+    conditionals -> channel templates. The noise API differs across PennyLane
+    versions, so any failure degrades gracefully to the noiseless path.
+
+    Args:
+        num_qubits: Number of wires for the simulation.
+        noise_model: Noise kind ("depolarizing", "bit_flip", "phase_flip",
+            "amplitude_damping"). Unknown values fall back to depolarizing.
+        noise_level: Error probability / strength of the channel.
+
+    Returns:
+        ``(device, noise_model_obj)`` when noise is supported, else
+        ``(None, None)``.
+    """
+    if add_noise is None or op_in is None:
+        return None, None
+
+    try:
+        channel = _make_noise_channel(noise_model, noise_level)
+        gates = [
+            qml.Hadamard,
+            qml.PauliX,
+            qml.PauliY,
+            qml.PauliZ,
+            qml.CNOT,
+            qml.CZ,
+            qml.RX,
+            qml.RY,
+            qml.RZ,
+            qml.Rot,
+            qml.I,
+        ]
+        model_map = {op_in(gate): channel for gate in gates}
+        pl_noise_model = qml.NoiseModel(model_map, meas_map=None)
+        dev = qml.device("default.mixed", wires=num_qubits, shots=1)
+        return dev, pl_noise_model
+    except Exception:  # noqa: BLE001 - degrade across PennyLane versions
+        return None, None
 
 
 def _get_chsh_qnode() -> Any:
@@ -404,11 +479,17 @@ class PennyLaneIntegration:
         # Legacy line kept for reference; PL 0.40 rejects analytic `qml.sample`
         # dev = qml.device("default.qubit", wires=num_qubits)
 
-        # Add noise if specified
+        # Real noise: build a mixed-state device + NoiseModel applying a channel
+        # after every gate. PennyLane moves the noise API across versions, so
+        # the helper degrades gracefully to (None, None) -> noiseless path.
         if noise_model and noise_level > 0:
-            # PennyLane handles noise differently, typically through noisy devices
-            # For simplicity, we'll add noise to the device
-            pass
+            noisy_dev, noise_model_obj = _build_bb84_noise(
+                num_qubits, str(noise_model), float(noise_level)
+            )
+            if noisy_dev is not None:
+                dev = noisy_dev
+        else:
+            noise_model_obj = None
 
         @qml.qnode(dev)  # type: ignore
         def bb84_circuit() -> list[Any]:
@@ -429,6 +510,10 @@ class PennyLaneIntegration:
                 if basis == "X":
                     qml.Hadamard(wires=i)
             return [qml.sample(wires=i) for i in range(num_qubits)]
+
+        # Wrap with the noise transform only when a model was successfully built.
+        if noise_model_obj is not None and add_noise is not None:
+            bb84_circuit = add_noise(bb84_circuit, noise_model_obj, level="user")
 
         # Run the circuit
         raw = bb84_circuit()

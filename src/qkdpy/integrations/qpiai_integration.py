@@ -291,9 +291,23 @@ class QpiAIIntegration:
         if self._api_key:
             try:
                 sv = Statevector(circuit)
+                amplitudes = np.asarray(sv.data, dtype=np.complex128)
+                probs = np.abs(amplitudes) ** 2
+                probs = probs / probs.sum()
+                # Sample `shots` computational-basis outcomes by probability.
+                outcomes = np.random.default_rng(secure_randint(0, 2**31)).choice(
+                    len(probs), size=shots, p=probs
+                )
+                sampled = [
+                    format(int(outcome), f"0{sv.num_qubits}b") for outcome in outcomes
+                ]
                 return {
+                    "simulation": "local_statevector",
                     "statevector": sv.data,
+                    "probabilities": probs.tolist(),
                     "num_qubits": sv.num_qubits,
+                    "shots": shots,
+                    "samples": sampled,
                 }
             except TypeError as exc:
                 # Statevector from circuit may fail if circuit has unresolved parameters
