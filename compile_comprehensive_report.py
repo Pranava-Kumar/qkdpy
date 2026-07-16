@@ -797,7 +797,8 @@ w("=" * 80)
 w("  BUGS AND ISSUES SUMMARY")
 w("=" * 80)
 
-w("""
+w(
+    """
 CRITICAL (affects correctness):
   P1. B92 Protocol: QBER calculation bug — always >= 0.886, never secure
   P2. HD-QKD (d=3, d=5): Non-unitary MUB matrices crash with ValueError
@@ -819,7 +820,8 @@ MINOR (cosmetic/workarounds):
   P14. LDPC error correction: simplified implementation cannot correct
   P15. QEC codes: encode/decode simplified (no true entanglement)
   P16. KnowledgeDistillation: temperature parameter has no effect (regression)
-""")
+"""
+)
 
 w("=" * 80)
 w("  COVERAGE SUMMARY")
