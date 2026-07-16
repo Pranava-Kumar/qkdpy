@@ -5,8 +5,14 @@ import os
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
 
-OUTPUT_DIR = "E:/opensource/qkdpy"
+# Compile scripts can sit at repo root; OUTPUT_DIR is the repo root.
+ROOT = Path(__file__).resolve().parent
+OUTPUT_DIR = str(ROOT)
+# Inputs (test_output_*.txt, test_final_*.txt) live in the
+# blackbox output drop-zone after the 0.6.0 layout cleanup.
+INPUTS_DIR = str(ROOT / "scripts" / "blackbox" / "outputs")
 sys.path.insert(0, os.path.join(OUTPUT_DIR, "src"))
 try:
     from qkdpy import __version__ as QKDPY_VERSION
@@ -68,7 +74,7 @@ def tail(lines, n=3):
 
 # Process each file
 for fname in FILES:
-    fpath = os.path.join(OUTPUT_DIR, fname)
+    fpath = os.path.join(INPUTS_DIR, fname)
     if not os.path.exists(fpath):
         REPORT.append(f"\n{'='*60}")
         REPORT.append(f"  {fname} — FILE NOT FOUND")
@@ -178,7 +184,7 @@ summary = {
         "Protocols",
         (
             "PASS"
-            if os.path.getsize(os.path.join(OUTPUT_DIR, "test_output_protocols.txt"))
+            if os.path.getsize(os.path.join(INPUTS_DIR, "test_output_protocols.txt"))
             > 0
             else "FAIL"
         ),

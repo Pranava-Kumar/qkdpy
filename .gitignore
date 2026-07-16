@@ -70,12 +70,13 @@ docs/diagrams/*.mmd
 docs/diagrams/*.pdf
 docs/diagrams/render_diagrams.py
 
-# ─── Generated / diagnostic test artifacts at the repo root ─
-# (the actual root-level blackbox test_*.py scripts are
-# tracked; only the output artefacts they emit are ignored.)
+# ─── Generated / diagnostic test artifacts ──────────────────
+# (root-level blackbox scripts are tracked; only their output
+# artefacts are ignored. The scripts themselves live under
+# scripts/blackbox/ now; their PNG / TXT outputs land in
+# scripts/blackbox/outputs/, also ignored.)
 test_*.png
 test_final_*.txt
 test_output_*.txt
-pennylane_test.py
-tmpbr98isxb.py
 TEST_RESULTS_COMPREHENSIVE.txt
+scripts/blackbox/outputs/

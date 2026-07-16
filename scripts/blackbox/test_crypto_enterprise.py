@@ -2,6 +2,7 @@
 """Test script for qkdpy modules — UTF-8 safe for Windows consoles."""
 
 import sys
+from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -26,7 +27,7 @@ os.environ["QKDPY_PRODUCT_TIER"] = "premium"
 os.environ["QKDPY_HSM_ENABLED"] = "true"
 
 # Insert source path
-sys.path.insert(0, "E:/opensource/qkdpy/src")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 print(f"Python: {sys.version}")
 print("sys.path includes: E:/opensource/qkdpy/src")
 
@@ -1140,8 +1141,7 @@ else:
 # =====================================================================
 section("TEST SUMMARY")
 
-print(
-    """
+print("""
 Tests executed:
   1.  QuantumHash (SHA3-256, SHAKE-256, Merkle tree, hash chain)
   2.  QuantumCommitment (commit, open, verify, info)
@@ -1158,7 +1158,6 @@ Tests executed:
   13. Licensing (FREE/ENTERPRISE/PREMIUM tiers, feature gating)
   14. QuantumSafe (profile, roadmap, assessment)
   15. QuantumAuthenticator (party registration, auth, signatures)
-"""
-)
+""")
 
 print("Test script completed successfully.")

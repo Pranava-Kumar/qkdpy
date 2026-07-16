@@ -2,6 +2,7 @@
 """Test script for qkdpy modules — UTF-8 safe for Windows consoles."""
 
 import sys
+from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -27,12 +28,11 @@ Reports EVERY numerical value.
 """
 
 import math
-import os
 import random
 import sys
 import time
 
-sys.path.insert(0, os.path.abspath("E:/opensource/qkdpy/src"))
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 import numpy as np
 

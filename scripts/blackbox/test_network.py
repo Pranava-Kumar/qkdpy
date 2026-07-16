@@ -2,6 +2,7 @@
 """Test script for qkdpy modules — UTF-8 safe for Windows consoles."""
 
 import sys
+from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -28,7 +29,7 @@ import sys
 
 import numpy as np
 
-sys.path.insert(0, "E:/opensource/qkdpy/src")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from qkdpy.core import QuantumChannel
 from qkdpy.ml import EfficientQKDPredictor
@@ -817,8 +818,7 @@ print()
 print(SEP)
 print("TEST COMPLETE - ALL MODULES EXERCISED")
 print(SEP)
-print(
-    """
+print("""
 Modules tested:
   - satellite_qkd.py:  SatelliteQKD, FreeSpaceOpticalChannel,
                        AtmosphericProfile, SatellitePosition,
@@ -832,5 +832,4 @@ Modules tested:
 External:
   - CelesTrak TLE fetch (with graceful fallback to simulated TLE)
   - sgp4 satellite propagation
-"""
-)
+""")

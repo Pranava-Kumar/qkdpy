@@ -2,6 +2,7 @@
 """Test script for qkdpy modules — UTF-8 safe for Windows consoles."""
 
 import sys
+from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -24,7 +25,7 @@ import numpy as np
 # ---------------------------------------------------------------------------
 # Setup: add source to path, import everything we can
 # ---------------------------------------------------------------------------
-SRC = "E:/opensource/qkdpy/src"
+SRC = str(Path(__file__).resolve().parents[1] / "src")
 sys.path.insert(0, SRC)
 
 IMPORT_ERRORS: list[str] = []

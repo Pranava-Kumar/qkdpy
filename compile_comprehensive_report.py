@@ -5,8 +5,14 @@ import os
 import re
 import sys
 from datetime import datetime
+from pathlib import Path
 
-OUTPUT_DIR = "E:/opensource/qkdpy"
+# Compile scripts can sit at repo root; OUTPUT_DIR is the repo root.
+ROOT = Path(__file__).resolve().parent
+OUTPUT_DIR = str(ROOT)
+# Inputs (test_output_*.txt, test_final_*.txt) live in the
+# blackbox output drop-zone after the 0.6.0 layout cleanup.
+INPUTS_DIR = str(ROOT / "scripts" / "blackbox" / "outputs")
 sys.path.insert(0, os.path.join(OUTPUT_DIR, "src"))
 try:
     from qkdpy import __version__ as QKDPY_VERSION
@@ -797,8 +803,7 @@ w("=" * 80)
 w("  BUGS AND ISSUES SUMMARY")
 w("=" * 80)
 
-w(
-    """
+w("""
 CRITICAL (affects correctness):
   P1. B92 Protocol: QBER calculation bug — always >= 0.886, never secure
   P2. HD-QKD (d=3, d=5): Non-unitary MUB matrices crash with ValueError
@@ -820,8 +825,7 @@ MINOR (cosmetic/workarounds):
   P14. LDPC error correction: simplified implementation cannot correct
   P15. QEC codes: encode/decode simplified (no true entanglement)
   P16. KnowledgeDistillation: temperature parameter has no effect (regression)
-"""
-)
+""")
 
 w("=" * 80)
 w("  COVERAGE SUMMARY")

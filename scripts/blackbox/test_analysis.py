@@ -2,6 +2,7 @@
 """Test script for qkdpy modules — UTF-8 safe for Windows consoles."""
 
 import sys
+from pathlib import Path
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -16,7 +17,7 @@ import sys
 
 import numpy as np
 
-sys.path.insert(0, r"E:/opensource/qkdpy/src")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 np.set_printoptions(precision=6, suppress=True)
 
 from qkdpy import (

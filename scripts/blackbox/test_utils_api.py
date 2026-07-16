@@ -2,6 +2,9 @@
 """Test script for qkdpy modules — UTF-8 safe for Windows consoles."""
 
 import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
 
 if hasattr(sys.stdout, "reconfigure"):
     try:
@@ -22,7 +25,7 @@ numerical value obtained.
 import os
 import sys
 
-SRC = "E:/opensource/qkdpy/src"
+SRC = str(Path(__file__).resolve().parents[1] / "src")
 sys.path.insert(0, SRC)
 
 import warnings
@@ -336,7 +339,7 @@ try:
     qubit = Qubit.plus()
     ax = BlochSphere.plot_qubit(qubit, title="Test Bloch Sphere")
     fig = ax.figure
-    path_bloch = "E:/opensource/qkdpy/test_bloch.png"
+    path_bloch = "$ROOT/scripts/blackbox/outputs/test_bloch.png"
     fig.savefig(path_bloch, dpi=100)
     import matplotlib.pyplot as plt
 
@@ -347,7 +350,7 @@ try:
     # Multiple qubits on Bloch sphere
     qubits = [Qubit.zero(), Qubit.one(), Qubit.plus(), Qubit.minus()]
     fig2 = BlochSphere.plot_multiple_qubits(qubits, title="Multiple Qubits")
-    path_multi = "E:/opensource/qkdpy/test_bloch_multi.png"
+    path_multi = "$ROOT/scripts/blackbox/outputs/test_bloch_multi.png"
     fig2.savefig(path_multi, dpi=100)
     plt.close(fig2)
     print("\n  BlochSphere.plot_multiple_qubits:")
@@ -366,7 +369,7 @@ try:
     fig3 = QuantumStateVisualizer.plot_quantum_state_histogram(
         states_list, measurement_axis="Z", title="Test Histogram"
     )
-    path_hist = "E:/opensource/qkdpy/test_histogram.png"
+    path_hist = "$ROOT/scripts/blackbox/outputs/test_histogram.png"
     fig3.savefig(path_hist, dpi=100)
     plt.close(fig3)
     print("\n  QuantumStateVisualizer.plot_quantum_state_histogram:")
@@ -396,7 +399,7 @@ try:
     fig4 = ProtocolVisualizer.plot_bb84_protocol(
         alice_bits, alice_bases, bob_bases, bob_results
     )
-    path_bb84 = "E:/opensource/qkdpy/test_bb84.png"
+    path_bb84 = "$ROOT/scripts/blackbox/outputs/test_bb84.png"
     fig4.savefig(path_bb84, dpi=100)
     plt.close(fig4)
     print("\n  ProtocolVisualizer.plot_bb84_protocol:")
@@ -406,7 +409,7 @@ try:
     fig5 = ProtocolVisualizer.plot_e91_protocol(
         [0, 1, 2], [0, 1, 0], [0, 1, 2], [1, 0, 1]
     )
-    path_e91 = "E:/opensource/qkdpy/test_e91.png"
+    path_e91 = "$ROOT/scripts/blackbox/outputs/test_e91.png"
     fig5.savefig(path_e91, dpi=100)
     plt.close(fig5)
     print("\n  ProtocolVisualizer.plot_e91_protocol:")
@@ -420,7 +423,7 @@ try:
         [0, 1, 1, 0],
         [0, 1, 0, 1],
     )
-    path_sarg = "E:/opensource/qkdpy/test_sarg04.png"
+    path_sarg = "$ROOT/scripts/blackbox/outputs/test_sarg04.png"
     fig6.savefig(path_sarg, dpi=100)
     plt.close(fig6)
     print("\n  ProtocolVisualizer.plot_sarg04_protocol:")
@@ -432,7 +435,7 @@ try:
         [0.9, 0.7, 0.5, 0.3, 0.15, 0.05, 0.0],
         "BB84",
     )
-    path_kr_qber = "E:/opensource/qkdpy/test_keyrate_qber.png"
+    path_kr_qber = "$ROOT/scripts/blackbox/outputs/test_keyrate_qber.png"
     fig7.savefig(path_kr_qber, dpi=100)
     plt.close(fig7)
     print("\n  KeyRateAnalyzer.plot_key_rate_vs_qber:")
@@ -441,7 +444,7 @@ try:
     fig8 = KeyRateAnalyzer.plot_key_rate_vs_distance(
         [10, 20, 50, 100, 150, 200], [0.8, 0.6, 0.3, 0.08, 0.02, 0.005], "BB84"
     )
-    path_kr_dist = "E:/opensource/qkdpy/test_keyrate_distance.png"
+    path_kr_dist = "$ROOT/scripts/blackbox/outputs/test_keyrate_distance.png"
     fig8.savefig(path_kr_dist, dpi=100)
     plt.close(fig8)
     print("\n  KeyRateAnalyzer.plot_key_rate_vs_distance:")
@@ -454,7 +457,7 @@ try:
             "E91": ([0.01, 0.05, 0.09, 0.11], [0.85, 0.45, 0.08, 0.01]),
         }
     )
-    path_comp = "E:/opensource/qkdpy/test_protocol_compare.png"
+    path_comp = "$ROOT/scripts/blackbox/outputs/test_protocol_compare.png"
     fig9.savefig(path_comp, dpi=100)
     plt.close(fig9)
     print("\n  KeyRateAnalyzer.compare_protocols:")
@@ -464,7 +467,7 @@ try:
     fig10 = QuantumStateVisualizer.plot_density_matrix(
         qubit, title="Density Matrix Test"
     )
-    path_dm = "E:/opensource/qkdpy/test_density_matrix.png"
+    path_dm = "$ROOT/scripts/blackbox/outputs/test_density_matrix.png"
     fig10.savefig(path_dm, dpi=100)
     plt.close(fig10)
     print("\n  QuantumStateVisualizer.plot_density_matrix:")
@@ -475,7 +478,7 @@ try:
     fig11 = QuantumStateVisualizer.plot_bloch_vector_evolution(
         evolved, time_points=[0, 1, 2], title="Bloch Evolution"
     )
-    path_bve = "E:/opensource/qkdpy/test_bloch_evolution.png"
+    path_bve = "$ROOT/scripts/blackbox/outputs/test_bloch_evolution.png"
     fig11.savefig(path_bve, dpi=100)
     plt.close(fig11)
     print("\n  QuantumStateVisualizer.plot_bloch_vector_evolution:")
@@ -506,7 +509,7 @@ try:
     fig_adv1 = AdvancedProtocolVisualizer.plot_quantum_state_evolution(
         qubits_evol, title="State Evolution"
     )
-    path_adv1 = "E:/opensource/qkdpy/test_adv_state_evolution.png"
+    path_adv1 = "$ROOT/scripts/blackbox/outputs/test_adv_state_evolution.png"
     fig_adv1.savefig(path_adv1, dpi=100)
     plt.close(fig_adv1)
     print("\n  AdvancedProtocolVisualizer.plot_quantum_state_evolution:")
@@ -521,7 +524,7 @@ try:
         },
         metric="key_rate",
     )
-    path_adv2 = "E:/opensource/qkdpy/test_adv_protocol_compare.png"
+    path_adv2 = "$ROOT/scripts/blackbox/outputs/test_adv_protocol_compare.png"
     fig_adv2.savefig(path_adv2, dpi=100)
     plt.close(fig_adv2)
     print("\n  AdvancedProtocolVisualizer.plot_protocol_comparison:")
@@ -531,7 +534,7 @@ try:
     fig_adv3 = AdvancedProtocolVisualizer.plot_security_bounds(
         [0.01 * i for i in range(26)], title="Security Bounds"
     )
-    path_adv3 = "E:/opensource/qkdpy/test_adv_security_bounds.png"
+    path_adv3 = "$ROOT/scripts/blackbox/outputs/test_adv_security_bounds.png"
     fig_adv3.savefig(path_adv3, dpi=100)
     plt.close(fig_adv3)
     print("\n  AdvancedProtocolVisualizer.plot_security_bounds:")
@@ -544,7 +547,7 @@ try:
             "s_value": 2.4,
         },
     )
-    path_adv4 = "E:/opensource/qkdpy/test_adv_entanglement.png"
+    path_adv4 = "$ROOT/scripts/blackbox/outputs/test_adv_entanglement.png"
     fig_adv4.savefig(path_adv4, dpi=100)
     plt.close(fig_adv4)
     print("\n  AdvancedProtocolVisualizer.plot_entanglement_verification:")
@@ -556,7 +559,7 @@ try:
         "channel_loss",
         [0.0, 0.1, 0.2, 0.3, 0.4, 0.5],
     )
-    path_adv5 = "E:/opensource/qkdpy/test_adv_keyrate_params.png"
+    path_adv5 = "$ROOT/scripts/blackbox/outputs/test_adv_keyrate_params.png"
     fig_adv5.savefig(path_adv5, dpi=100)
     plt.close(fig_adv5)
     print("\n  AdvancedKeyRateAnalyzer.plot_key_rate_vs_parameters:")
@@ -570,7 +573,7 @@ try:
             "SARG04": {"key_rate": 0.5, "qber": 0.08, "distance": 30},
         }
     )
-    path_adv6 = "E:/opensource/qkdpy/test_adv_multi_dim.png"
+    path_adv6 = "$ROOT/scripts/blackbox/outputs/test_adv_multi_dim.png"
     fig_adv6.savefig(path_adv6, dpi=100)
     plt.close(fig_adv6)
     print("\n  AdvancedKeyRateAnalyzer.plot_multi_dimensional_analysis:")
@@ -601,7 +604,7 @@ try:
     fig_aqv1 = ProtocolExecutionVisualizer.plot_protocol_execution_timeline(
         None, title="Execution Timeline"
     )
-    path_aqv1 = "E:/opensource/qkdpy/test_aqv_timeline.png"
+    path_aqv1 = "$ROOT/scripts/blackbox/outputs/test_aqv_timeline.png"
     fig_aqv1.savefig(path_aqv1, dpi=100)
     plt.close(fig_aqv1)
     print("\n  ProtocolExecutionVisualizer.plot_protocol_execution_timeline:")
@@ -613,7 +616,7 @@ try:
         [0.5, 1.2, 2.5],
         [0.03, 0.05, 0.07],
     )
-    path_aqv2 = "E:/opensource/qkdpy/test_aqv_key_perf.png"
+    path_aqv2 = "$ROOT/scripts/blackbox/outputs/test_aqv_key_perf.png"
     fig_aqv2.savefig(path_aqv2, dpi=100)
     plt.close(fig_aqv2)
     print("\n  ProtocolExecutionVisualizer.plot_key_generation_performance:")
@@ -624,7 +627,7 @@ try:
         [0.02, 0.05, 0.08, 0.12, 0.15, 0.03, 0.06],
         secure_threshold=0.11,
     )
-    path_aqv3 = "E:/opensource/qkdpy/test_aqv_security.png"
+    path_aqv3 = "$ROOT/scripts/blackbox/outputs/test_aqv_security.png"
     fig_aqv3.savefig(path_aqv3, dpi=100)
     plt.close(fig_aqv3)
     print("\n  ProtocolExecutionVisualizer.plot_security_analysis:")
@@ -637,7 +640,7 @@ try:
             "E91": {"key_rate": 0.6, "qber": 0.03, "execution_time": 1.5},
         },
     )
-    path_aqv4 = "E:/opensource/qkdpy/test_aqv_protocol_comp.png"
+    path_aqv4 = "$ROOT/scripts/blackbox/outputs/test_aqv_protocol_comp.png"
     fig_aqv4.savefig(path_aqv4, dpi=100)
     plt.close(fig_aqv4)
     print("\n  ProtocolExecutionVisualizer.plot_protocol_comparison:")
@@ -647,7 +650,7 @@ try:
     fig_aqv5 = InteractiveQuantumVisualizer.create_interactive_bloch_sphere(
         Qubit.plus(), title="Interactive Bloch"
     )
-    path_aqv5 = "E:/opensource/qkdpy/test_aqv_interactive_bloch.png"
+    path_aqv5 = "$ROOT/scripts/blackbox/outputs/test_aqv_interactive_bloch.png"
     fig_aqv5.savefig(path_aqv5, dpi=100)
     plt.close(fig_aqv5)
     print("\n  InteractiveQuantumVisualizer.create_interactive_bloch_sphere:")
@@ -658,7 +661,7 @@ try:
     fig_aqv6 = InteractiveQuantumVisualizer.animate_qubit_evolution(
         states_anim, title="Animated Evolution"
     )
-    path_aqv6 = "E:/opensource/qkdpy/test_aqv_animation.png"
+    path_aqv6 = "$ROOT/scripts/blackbox/outputs/test_aqv_animation.png"
     fig_aqv6.savefig(path_aqv6, dpi=100)
     plt.close(fig_aqv6)
     print("\n  InteractiveQuantumVisualizer.animate_qubit_evolution:")
@@ -669,7 +672,7 @@ try:
     fig_aqv7 = QuantumStateVisualizer.plot_quantum_channel_characteristics(
         ch, title="Channel Characteristics"
     )
-    path_aqv7 = "E:/opensource/qkdpy/test_aqv_channel.png"
+    path_aqv7 = "$ROOT/scripts/blackbox/outputs/test_aqv_channel.png"
     fig_aqv7.savefig(path_aqv7, dpi=100)
     plt.close(fig_aqv7)
     print("\n  QuantumStateVisualizer.plot_quantum_channel_characteristics:")

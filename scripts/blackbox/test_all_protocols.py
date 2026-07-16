@@ -9,8 +9,9 @@ and handles errors gracefully so all 10 protocols are attempted.
 import sys
 import time
 import traceback
+from pathlib import Path
 
-sys.path.insert(0, "E:/opensource/qkdpy/src")
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "src"))
 
 from qkdpy.core import QuantumChannel
 from qkdpy.protocols import (
@@ -402,4 +403,4 @@ total_elapsed = time.perf_counter() - total_start
 section("SUMMARY - All Protocols Completed")
 print(f"  Total runtime: {total_elapsed:.4f} s")
 print(f"  Python: {sys.version}")
-print("  Script: E:/opensource/qkdpy/test_all_protocols.py")
+print("  Script: scripts/blackbox/test_all_protocols.py")
