@@ -36,7 +36,7 @@ Based on deep architectural audits of **Qiskit** (826 lines), **PennyLane** (793
 - `create_entanglement_circuit()` — Bell pair generation
 - `benchmark_qkdpy_vs_cirq()` — performance comparison
 
-**Gaps:** No custom noise model beyond default, no channel simulation, no E91 protocol, no MEAS/Prepare circuits, no qudit support, no serialization.
+**Gaps:** No custom noise model beyond default, no channel simulation, no MEAS/Prepare circuits, no qudit support, no serialization. E91 protocol now implemented via `e91_with_cirq()` (added v0.6.1).
 
 ### PennyLane (`qkdpy/integrations/pennylane_integration.py`)
 - `PennyLaneIntegration` class
@@ -47,10 +47,10 @@ Based on deep architectural audits of **Qiskit** (826 lines), **PennyLane** (793
 - `create_entanglement_circuit()` — basic Bell pair creation
 - `benchmark_qkdpy_vs_pennylane()` — performance comparison
 
-**Gaps:** No `DefaultMixed` with full noise channels, no `NoiseModel` transform, no QNode-based protocol, no ML pipeline integration (`TorchLayer`), no optimizers, no CHSH test for DI-QKD.
+**Gaps:** DefaultMixed + NoiseModel transform now implemented (v0.6.2). No QNode-based protocol, no ML pipeline integration (`TorchLayer`), no optimizers, no CHSH test for DI-QKD.
 
 ### QpiAI Quantum SDK
-- **No integration exists.** This would be entirely new.
+- Integration created with `QpiAIIntegration` class (v0.6.1), including circuit conversion, BB84/E91 circuits, statevector simulation with probability sampling (v0.6.2). Cloud execution stubs remain.
 
 ---
 

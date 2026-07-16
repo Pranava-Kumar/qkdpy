@@ -38,6 +38,17 @@
    :show-inheritance:
 ```
 
+### Secure Random
+
+```{eval-rst}
+.. automodule:: qkdpy.core.secure_random
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+CSPRNG-backed `secure_sample` and `secure_shuffle` helpers for security-critical paths (v0.6.1).
+
 ## Protocols Module
 
 ### BB84
@@ -136,6 +147,17 @@
    :show-inheritance:
 ```
 
+### Key Distillation
+
+```{eval-rst}
+.. automodule:: qkdpy.key_management.key_distillation
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+Post-processing pipeline including the binary entropy Eve bound (`h(QBER)`) fix applied in v0.6.1.
+
 ## Network Module
 
 ### Quantum Network
@@ -196,6 +218,8 @@
    :show-inheritance:
 ```
 
+Includes `e91_with_cirq()` for entanglement-based E91 protocol simulation (added v0.6.1).
+
 ### PennyLane Integration
 
 ```{eval-rst}
@@ -204,6 +228,19 @@
    :undoc-members:
    :show-inheritance:
 ```
+
+Noise model support via `qml.NoiseModel` with `DepolarizingChannel` on `default.mixed` device (v0.6.2).
+
+### QpiAI Integration
+
+```{eval-rst}
+.. automodule:: qkdpy.integrations.qpiai_integration
+   :members:
+   :undoc-members:
+   :show-inheritance:
+```
+
+QpiAI Quantum SDK bridge with circuit conversion, BB84/E91 circuits, and statevector simulation with CSPRNG-backed probability sampling (v0.6.1, v0.6.2).
 
 ## Satellite Module
 
@@ -262,3 +299,7 @@
    :undoc-members:
    :show-inheritance:
 ```
+
+## Project Files
+
+- `CHANGELOG.md` — Release history in Keep-a-Changelog format (added v0.6.2)

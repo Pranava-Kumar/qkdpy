@@ -1,5 +1,34 @@
 # Release Notes
 
+## v0.6.2 — 2026-07-17
+
+### Highlights
+- **Coverage raised** from 73% to 78% overall; visualization 13%→97%, network modules 58-83%.
+- **Integration gaps closed**: PennyLane now uses real `NoiseModel` with `DepolarizingChannel`; QpiAI `simulate()` performs full statevector probability sampling.
+- **New CHANGELOG.md** with Keep-a-Changelog format.
+
+### Added
+- `tests/test_visualization_coverage.py` (9 tests) — exercises BlochSphere, ProtocolVisualizer, KeyRateAnalyzer
+- `tests/test_network_coverage.py` (25 tests) — QuantumNetwork, RealisticQuantumNetwork, MultiPartyQKD, SatelliteQKD
+- `CHANGELOG.md` — Keep-a-Changelog format with [0.6.1], [0.6.0], [0.2.0] entries
+- `pyproject.toml`: qiskit and qpiai optional dependency extras
+
+### Fixed
+- **PennyLane** (`pennylane_integration.py`): replaced noise no-op with real `qml.NoiseModel({AllWires(): DepolarizingChannel(noise_level)})` on `default.mixed` device
+- **QpiAI** (`qpiai_integration.py`): `simulate()` now computes amplitudes → probabilities → samples `shots` bitstrings via CSPRNG-backed `np.random.choice`
+- **Pre-commit**: widened exclude to `^scripts/blackbox/.*\.py` to skip reformatting diagnostic scripts
+
+### Removed
+- Orphaned root-level diagnostic artifacts: `benchmarks/ml_vs_bruteforce.py`, `compile_comprehensive_report.py`, `compile_results.py`
+
+### Verification
+- **610 tests passed** (`uv run pytest -q`)
+- **mypy** (strict): no issues in 77 source files
+- **ruff**: all checks passed
+- **Coverage**: 78% (`pytest --cov=qkdpy`)
+
+---
+
 ## v0.6.1 — 2026-07-16
 
 ### Highlights
