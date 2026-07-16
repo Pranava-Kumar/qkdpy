@@ -198,12 +198,14 @@ def secure_weighted_choice(
 def secure_sample(population: list[int], k: int) -> list[int]:
     """Cryptographically secure sample without replacement, using secrets.SystemRandom."""
     import secrets as _secrets
+
     return _secrets.SystemRandom().sample(population, k)
 
 
 def secure_shuffle(items: list[Any]) -> None:
     """In-place cryptographically secure shuffle using secrets.SystemRandom."""
     import secrets as _secrets
+
     _secrets.SystemRandom().shuffle(items)
 
 

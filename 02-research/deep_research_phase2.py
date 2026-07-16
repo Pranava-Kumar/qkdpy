@@ -71,9 +71,9 @@ QUERIES = [
 
 
 def run_search(query: str) -> dict:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Q: {query}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     try:
         result = exa.search(
             query,
@@ -147,7 +147,7 @@ def run_search(query: str) -> dict:
 if __name__ == "__main__":
     results = {}
     for i, q in enumerate(QUERIES):
-        print(f"\n[{i+1}/{len(QUERIES)}] ", end="")
+        print(f"\n[{i + 1}/{len(QUERIES)}] ", end="")
         results[q] = run_search(q)
 
     # Save

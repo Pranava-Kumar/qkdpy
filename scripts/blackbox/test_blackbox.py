@@ -84,7 +84,7 @@ for trial in range(1000):
 pct_same = 100.0 * same / 1000
 pct_diff = 100.0 * diff / 1000
 print(f"  same={same} ({pct_same:.1f}%), diff={diff} ({pct_diff:.1f}%)")
-print(f"  P(same) vs P(different):  {same/1000:.4f}  vs  {diff/1000:.4f}")
+print(f"  P(same) vs P(different):  {same / 1000:.4f}  vs  {diff / 1000:.4f}")
 print("  Perfect correlation (quantum prediction): 100% same")
 
 # Also show what happens WITHOUT proper collapse (the "wrong" way)
@@ -104,7 +104,7 @@ for trial in range(1000):
 pct_same2 = 100.0 * same2 / 1000
 pct_diff2 = 100.0 * diff2 / 1000
 print(f"  same={same2} ({pct_same2:.1f}%), diff={diff2} ({pct_diff2:.1f}%)")
-print(f"  P(same) vs P(different):  {same2/1000:.4f}  vs  {diff2/1000:.4f}")
+print(f"  P(same) vs P(different):  {same2 / 1000:.4f}  vs  {diff2 / 1000:.4f}")
 print("  (Note: library does not collapse original state in-place)")
 print("  (Proper quantum mechanical prediction: 100% same)")
 

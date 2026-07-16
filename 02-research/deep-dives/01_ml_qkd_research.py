@@ -20,7 +20,7 @@ QUERIES = [
 ]
 
 for i, q in enumerate(QUERIES):
-    print(f"\n{'='*60}\n[{i+1}/{len(QUERIES)}] {q}\n{'='*60}")
+    print(f"\n{'=' * 60}\n[{i + 1}/{len(QUERIES)}] {q}\n{'=' * 60}")
     try:
         r = exa.search(
             q,

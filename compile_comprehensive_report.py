@@ -803,7 +803,8 @@ w("=" * 80)
 w("  BUGS AND ISSUES SUMMARY")
 w("=" * 80)
 
-w("""
+w(
+    """
 CRITICAL (affects correctness):
   P1. B92 Protocol: QBER calculation bug — always >= 0.886, never secure
   P2. HD-QKD (d=3, d=5): Non-unitary MUB matrices crash with ValueError
@@ -825,7 +826,8 @@ MINOR (cosmetic/workarounds):
   P14. LDPC error correction: simplified implementation cannot correct
   P15. QEC codes: encode/decode simplified (no true entanglement)
   P16. KnowledgeDistillation: temperature parameter has no effect (regression)
-""")
+"""
+)
 
 w("=" * 80)
 w("  COVERAGE SUMMARY")
@@ -845,7 +847,7 @@ for fn in root_tests:
         all_tests.append(p)
 
 total_test_size = sum(os.path.getsize(f) for f in all_tests)
-w(f"  Total test files: {len(all_tests)} ({total_test_size//1024} KB)")
+w(f"  Total test files: {len(all_tests)} ({total_test_size // 1024} KB)")
 w(
     f"  Phase 1 (test/ directory): {sum(1 for f in phase1_tests if os.path.exists(os.path.join(OUTPUT_DIR, f)))} files"
 )
@@ -853,7 +855,7 @@ w(
     f"  Phase 2 (agent-created): {sum(1 for f in root_tests if os.path.exists(os.path.join(OUTPUT_DIR, f)))} new files"
 )
 w(
-    f"  Output data collected: {sum(os.path.getsize(os.path.join(OUTPUT_DIR, f[0])) for f in FILES if os.path.exists(os.path.join(OUTPUT_DIR, f[0])))//1024} KB"
+    f"  Output data collected: {sum(os.path.getsize(os.path.join(OUTPUT_DIR, f[0])) for f in FILES if os.path.exists(os.path.join(OUTPUT_DIR, f[0]))) // 1024} KB"
 )
 w("  Bugs found: 16 (3 critical, 9 moderate, 4 minor)")
 

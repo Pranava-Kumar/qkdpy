@@ -30,9 +30,9 @@ QUERIES = [
 
 def run_deep_search(query: str) -> dict:
     """Run a deep search with synthesis."""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"Query: {query}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     result = exa.search(
         query,

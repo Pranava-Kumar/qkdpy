@@ -44,8 +44,7 @@ def _derive_aes_key(key_material: bytes, salt: bytes) -> bytes:
     """
     if len(salt) != _PBKDF2_SALT_BYTES:
         raise HSMError(
-            f"PBKDF2 salt must be {_PBKDF2_SALT_BYTES} bytes, "
-            f"got {len(salt)}"
+            f"PBKDF2 salt must be {_PBKDF2_SALT_BYTES} bytes, got {len(salt)}"
         )
     kdf = PBKDF2HMAC(
         algorithm=hashes.SHA256(),

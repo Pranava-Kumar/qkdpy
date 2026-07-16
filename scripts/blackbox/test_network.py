@@ -104,9 +104,9 @@ total_bits = pass_clear["total_key_bits"]
 print(
     f"  elevation_angles  - min: {min(angles):.4f} deg, "
     f"max: {max(angles):.4f} deg, "
-    f"at_zenith: {angles[len(angles)//2]:.4f} deg"
+    f"at_zenith: {angles[len(angles) // 2]:.4f} deg"
 )
-print(f"  channel_losses_db - min: {min(losses):.2f} dB, " f"max: {max(losses):.2f} dB")
+print(f"  channel_losses_db - min: {min(losses):.2f} dB, max: {max(losses):.2f} dB")
 print(
     f"  key_rates_bps     - min: {min(rates):.2f}, "
     f"max: {max(rates):.2f}, "
@@ -377,7 +377,7 @@ for i, p in enumerate(passes_found[:5]):
         (p["los_time"] - p["aos_time"]).total_seconds() / 60.0 if p["los_time"] else 0
     )
     print(
-        f"    Pass {i+1}: AOS={aos_str}  LOS={los_str}  "
+        f"    Pass {i + 1}: AOS={aos_str}  LOS={los_str}  "
         f"duration={dur_min:.1f} min  max_elev={p['max_elev']:.1f} deg"
     )
 
@@ -805,7 +805,7 @@ for trial in range(50):
 deg_stats = rqn2.get_network_statistics()
 print("  Key establishment attempts: 50")
 print(f"  Successful:                 {success_count}")
-print(f"  Success rate:               {success_count/50:.4f}")
+print(f"  Success rate:               {success_count / 50:.4f}")
 print(f"  Total keys generated:       {deg_stats['total_keys_generated']}")
 print(f"  Average node health:        {deg_stats['average_node_health']:.4f}")
 print(f"  Network status:             {deg_stats['network_status']}")
@@ -818,7 +818,8 @@ print()
 print(SEP)
 print("TEST COMPLETE - ALL MODULES EXERCISED")
 print(SEP)
-print("""
+print(
+    """
 Modules tested:
   - satellite_qkd.py:  SatelliteQKD, FreeSpaceOpticalChannel,
                        AtmosphericProfile, SatellitePosition,
@@ -832,4 +833,5 @@ Modules tested:
 External:
   - CelesTrak TLE fetch (with graceful fallback to simulated TLE)
   - sgp4 satellite propagation
-""")
+"""
+)

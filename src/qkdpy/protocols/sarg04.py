@@ -8,7 +8,11 @@ from ..core import (
     Qubit,
     Qudit,
 )
-from ..core.secure_random import secure_choice, secure_randint, secure_sample
+from ..core.secure_random import (
+    secure_choice,
+    secure_randint,
+    secure_sample,
+)
 from .base import BaseProtocol
 
 

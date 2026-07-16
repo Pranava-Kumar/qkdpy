@@ -357,10 +357,10 @@ pred_q_off.fit(X_train, y_train, epochs=50, learning_rate=0.01, batch_size=64)
 size_on = pred_q_on.get_model_size_bytes()
 size_off = pred_q_off.get_model_size_bytes()
 print(
-    f"     Quant ON  -- hidden layers: {pred_q_on.hidden_layers},  model size: {size_on} bytes ({size_on/1024:.2f} KB)"
+    f"     Quant ON  -- hidden layers: {pred_q_on.hidden_layers},  model size: {size_on} bytes ({size_on / 1024:.2f} KB)"
 )
 print(
-    f"     Quant OFF -- hidden layers: {pred_q_off.hidden_layers}, model size: {size_off} bytes ({size_off/1024:.2f} KB)"
+    f"     Quant OFF -- hidden layers: {pred_q_off.hidden_layers}, model size: {size_off} bytes ({size_off / 1024:.2f} KB)"
 )
 # R^2 comparison
 if SKLEARN_AVAIL:
@@ -382,8 +382,10 @@ np.random.seed(42)
 pred_prune_off.fit(X_train, y_train, epochs=50, learning_rate=0.01, batch_size=64)
 sparsity_on = pred_prune_on.get_sparsity()
 sparsity_off = pred_prune_off.get_sparsity()
-print(f"     Prune ON  -- sparsity: {sparsity_on:.4f} ({sparsity_on*100:.2f}% zeros)")
-print(f"     Prune OFF -- sparsity: {sparsity_off:.4f} ({sparsity_off*100:.2f}% zeros)")
+print(f"     Prune ON  -- sparsity: {sparsity_on:.4f} ({sparsity_on * 100:.2f}% zeros)")
+print(
+    f"     Prune OFF -- sparsity: {sparsity_off:.4f} ({sparsity_off * 100:.2f}% zeros)"
+)
 size_prune_on = pred_prune_on.get_model_size_bytes()
 size_prune_off = pred_prune_off.get_model_size_bytes()
 print(f"     Model size (ON):  {size_prune_on} bytes")
@@ -407,7 +409,7 @@ t_per_sample = t_infer / N_infer * 1e6  # microseconds per sample
 print(f"     Hidden layers:   {pred_edge.hidden_layers}")
 print(
     f"     Model size:      {pred_edge.get_model_size_bytes()} bytes "
-    f"({pred_edge.get_model_size_bytes()/1024:.2f} KB)"
+    f"({pred_edge.get_model_size_bytes() / 1024:.2f} KB)"
 )
 print(f"     Num weights:     {sum(w.size for w in pred_edge.weights)}")
 print(f"     Sparsity:        {pred_edge.get_sparsity():.4f}")
@@ -449,7 +451,7 @@ for mem in memory_configs:
     )
     print(
         f"     Memory={mem:>3d} MB  hidden={str(p.hidden_layers):<15s}  "
-        f"size={p.get_model_size_bytes()/1024:>8.2f} KB  "
+        f"size={p.get_model_size_bytes() / 1024:>8.2f} KB  "
         f"R^2={r2:.6f}  time={t_fit:.3f}s  epochs={res['epochs_trained']}"
     )
 
@@ -473,7 +475,7 @@ print(f"     Quantization:         {opt_pred.enable_quantization}")
 print(f"     Pruning:              {opt_pred.enable_pruning}")
 print(
     f"     Model size:           {opt_pred.get_model_size_bytes()} bytes "
-    f"({opt_pred.get_model_size_bytes()/1024:.2f} KB)"
+    f"({opt_pred.get_model_size_bytes() / 1024:.2f} KB)"
 )
 
 # Train the optimally-created predictor
@@ -667,11 +669,11 @@ s_params = sum(w.size for w in student_scratch.weights) + sum(
     b.size for b in student_scratch.biases
 )
 s_bytes = student_scratch.get_model_size_bytes()
-print(f"     Teacher: {t_params} params, {t_bytes} bytes ({t_bytes/1024:.2f} KB)")
-print(f"     Student: {s_params} params, {s_bytes} bytes ({s_bytes/1024:.2f} KB)")
+print(f"     Teacher: {t_params} params, {t_bytes} bytes ({t_bytes / 1024:.2f} KB)")
+print(f"     Student: {s_params} params, {s_bytes} bytes ({s_bytes / 1024:.2f} KB)")
 print(
-    f"     Reduction: {(1 - s_params/t_params)*100:.1f}% params, "
-    f"{(1 - s_bytes/t_bytes)*100:.1f}% memory"
+    f"     Reduction: {(1 - s_params / t_params) * 100:.1f}% params, "
+    f"{(1 - s_bytes / t_bytes) * 100:.1f}% memory"
 )
 
 
@@ -733,9 +735,9 @@ for mem in [64, 128, 256]:
     print(
         f"     mem={mem:>3d}MB  hidden={str(p.hidden_layers):<20s}  "
         f"params={sum(w.size for w in p.weights):>5d}  "
-        f"size={p.get_model_size_bytes()/1024:>7.2f}KB  "
+        f"size={p.get_model_size_bytes() / 1024:>7.2f}KB  "
         f"R^2={r2:.6f}  train={t_fit:.3f}s  "
-        f"infer_500={t_inf*1e3:.3f}ms"
+        f"infer_500={t_inf * 1e3:.3f}ms"
     )
 
 
@@ -745,17 +747,18 @@ for mem in [64, 128, 256]:
 print("\n" + "=" * 72)
 print("  TEST SUMMARY")
 print("=" * 72)
-print(f"""
+print(
+    f"""
 1. QKDOptimizer
-   Bayesian  best: {bayes_result['best_objective_value']:.4e}  ({t_bayes:.3f}s)
-   Genetic   best: {ga_result['best_objective_value']:.4e}  ({t_ga:.3f}s)
-   Neural    best: {nn_result['best_objective_value']:.4e}  ({t_nn:.3f}s)
-   AnomalyDetector: {report['total_detections']:.0f} detections, rates={report['anomaly_rates']}
+   Bayesian  best: {bayes_result["best_objective_value"]:.4e}  ({t_bayes:.3f}s)
+   Genetic   best: {ga_result["best_objective_value"]:.4e}  ({t_ga:.3f}s)
+   Neural    best: {nn_result["best_objective_value"]:.4e}  ({t_nn:.3f}s)
+   AnomalyDetector: {report["total_detections"]:.0f} detections, rates={report["anomaly_rates"]}
 
 2. EfficientQKDPredictor
-   Train loss:  {train_result['final_train_loss']:.6e}
+   Train loss:  {train_result["final_train_loss"]:.6e}
    R^2:          {r2 if SKLEARN_AVAIL else r2_manual:.6f}
-   Model size:  {predictor.get_model_size_bytes()/1024:.2f} KB
+   Model size:  {predictor.get_model_size_bytes() / 1024:.2f} KB
    Sparsity:    {predictor.get_sparsity():.4f}
 
 3. AdaptiveModelSelector
@@ -767,12 +770,13 @@ print(f"""
    Teacher R^2:        {teacher_r2:.6f}
    Student scratch R^2:{scratch_r2:.6f}
    Student distilled  R^2: {distilled_r2:.6f}   (improv: {distilled_r2 - scratch_r2:+.6f})
-   Temp sweep: {[(t['T'], round(t['R^2'], 6)) for t in temp_results]}
+   Temp sweep: {[(t["T"], round(t["R^2"], 6)) for t in temp_results]}
 
 5. EfficientModels
    Archs tested: {len(arch_results)} memory levels
-   Best R^2: {max(a['r2'] for a in arch_results):.6f}  @ {max(a['mem'] for a in arch_results)}MB
-""")
+   Best R^2: {max(a["r2"] for a in arch_results):.6f}  @ {max(a["mem"] for a in arch_results)}MB
+"""
+)
 print("=" * 72)
 print("  ALL TESTS COMPLETE")
 print("=" * 72)

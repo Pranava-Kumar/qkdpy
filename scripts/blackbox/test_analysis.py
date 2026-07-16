@@ -109,8 +109,8 @@ print(
     f"{Es_chsh[2]:+.4f} + {Es_chsh[3]:+.4f}"
 )
 print(f"  S = {S_chsh:.6f}")
-print(f"  2*sqrt(2) = {2*math.sqrt(2):.6f}")
-print(f"  Deviation: {abs(S_chsh - 2*math.sqrt(2)):.6f}")
+print(f"  2*sqrt(2) = {2 * math.sqrt(2):.6f}")
+print(f"  Deviation: {abs(S_chsh - 2 * math.sqrt(2)):.6f}")
 print(f"  Bell violation (|S| > 2)? {abs(S_chsh) > 2}")
 
 # =====================================================================
@@ -193,7 +193,7 @@ for i in range(5):
     bb84 = BB84(ch, key_length=50)
     r = bb84.execute()
     print(
-        f"  run {i+1}: QBER={r['qber']:.4f}  secure={r['is_secure']}  "
+        f"  run {i + 1}: QBER={r['qber']:.4f}  secure={r['is_secure']}  "
         f"final_key_len={len(r['final_key'])}"
     )
 

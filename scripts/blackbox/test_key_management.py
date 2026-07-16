@@ -340,10 +340,10 @@ try:
     elapsed = time.time() - ts
     print(f"  Input size: {len(reconciled_key)} bits")
     print(f"  Output size: {len(pa_key)} bits")
-    print(f"  Compression ratio: {len(pa_key)/len(reconciled_key):.4f}")
+    print(f"  Compression ratio: {len(pa_key) / len(reconciled_key):.4f}")
     print(f"  Time: {elapsed:.6f}s")
     print(f"  Output bit count-0: {pa_key.count(0)}, count-1: {pa_key.count(1)}")
-    print(f"  Balance: {pa_key.count(1)/len(pa_key):.4f}")
+    print(f"  Balance: {pa_key.count(1) / len(pa_key):.4f}")
 
     # --- 3b. Toeplitz Hashing ---
     print("\n--- 3b. Toeplitz Hashing ---")
@@ -352,10 +352,10 @@ try:
     elapsed = time.time() - ts
     print(f"  Input size: {len(reconciled_key)} bits")
     print(f"  Output size: {len(pa_key_t)} bits")
-    print(f"  Compression ratio: {len(pa_key_t)/len(reconciled_key):.4f}")
+    print(f"  Compression ratio: {len(pa_key_t) / len(reconciled_key):.4f}")
     print(f"  Time: {elapsed:.6f}s")
     print(f"  Output bit count-0: {pa_key_t.count(0)}, count-1: {pa_key_t.count(1)}")
-    print(f"  Balance: {pa_key_t.count(1)/len(pa_key_t):.4f}")
+    print(f"  Balance: {pa_key_t.count(1) / len(pa_key_t):.4f}")
 
     # --- 3c. Cryptographic Hash ---
     print("\n--- 3c. Cryptographic Hash (SHA-256) ---")
@@ -368,7 +368,7 @@ try:
         print(f"  Algorithm: {algo}")
         print(f"    Output size: {len(pa_key_c)} bits")
         print(f"    Time: {elapsed:.6f}s")
-        print(f"    Balance: {pa_key_c.count(1)/len(pa_key_c):.4f}")
+        print(f"    Balance: {pa_key_c.count(1) / len(pa_key_c):.4f}")
 
     # --- 3d. Bennett-Brassard 1984-style ---
     print("\n--- 3d. Bennett-Brassard (1984-style) Hashing ---")
@@ -404,7 +404,7 @@ try:
         result = PA.extract_randomness(reconciled_key, output_length=128, method=method)
         elapsed = time.time() - ts
         print(
-            f"  Method: {method} -> output={len(result)} bits, time={elapsed:.6f}s, balance={result.count(1)/len(result):.4f}"
+            f"  Method: {method} -> output={len(result)} bits, time={elapsed:.6f}s, balance={result.count(1) / len(result):.4f}"
         )
 
 except ImportError as e:
@@ -432,7 +432,7 @@ try:
     result = APA.xor_extract(test_key)
     elapsed = time.time() - ts
     print(f"  Input: {len(test_key)} bits, Output: {len(result)} bits")
-    print(f"  Time: {elapsed:.6f}s, Balance: {result.count(1)/len(result):.4f}")
+    print(f"  Time: {elapsed:.6f}s, Balance: {result.count(1) / len(result):.4f}")
 
     # 4b. AES hash extract
     print("\n--- 4b. AES Hash Extraction ---")
@@ -440,7 +440,7 @@ try:
     result = APA.aes_hash_extract(test_key, output_length=128)
     elapsed = time.time() - ts
     print(f"  Input: {len(test_key)} bits, Output: {len(result)} bits")
-    print(f"  Time: {elapsed:.6f}s, Balance: {result.count(1)/len(result):.4f}")
+    print(f"  Time: {elapsed:.6f}s, Balance: {result.count(1) / len(result):.4f}")
 
     # 4c. Randomness extractor (all modes)
     print("\n--- 4c. Randomness Extractor ---")
@@ -449,7 +449,7 @@ try:
         result = APA.randomness_extractor(test_key, output_length=128, method=method)
         elapsed = time.time() - ts
         print(
-            f"  Method: {method} -> output={len(result)} bits, time={elapsed:.6f}s, balance={result.count(1)/len(result):.4f}"
+            f"  Method: {method} -> output={len(result)} bits, time={elapsed:.6f}s, balance={result.count(1) / len(result):.4f}"
         )
 
     # 4d. Strong extractor
@@ -461,7 +461,7 @@ try:
         )
         elapsed = time.time() - ts
         print(
-            f"  min_entropy={min_entropy}: output={len(result)} bits, time={elapsed:.6f}s, balance={result.count(1)/len(result):.4f}"
+            f"  min_entropy={min_entropy}: output={len(result)} bits, time={elapsed:.6f}s, balance={result.count(1) / len(result):.4f}"
         )
 
     # 4e. Seeded extractor
@@ -472,7 +472,7 @@ try:
     elapsed = time.time() - ts
     print(f"  Seed length: {len(seed)} bits")
     print(
-        f"  Output: {len(result)} bits, time={elapsed:.6f}s, balance={result.count(1)/len(result):.4f}"
+        f"  Output: {len(result)} bits, time={elapsed:.6f}s, balance={result.count(1) / len(result):.4f}"
     )
 
     # 4f. Multiple independent extractors
@@ -484,7 +484,7 @@ try:
     elapsed = time.time() - ts
     print("  Num extractors: 3")
     print(
-        f"  Output: {len(result)} bits, time={elapsed:.6f}s, balance={result.count(1)/len(result):.4f}"
+        f"  Output: {len(result)} bits, time={elapsed:.6f}s, balance={result.count(1) / len(result):.4f}"
     )
 
 except ImportError as e:
@@ -582,7 +582,7 @@ try:
             if key_data:
                 print(
                     f"  Key len={key_len}: id={key_id}, actual_len={len(key_data)}, "
-                    f"balance={key_data.count(1)/len(key_data):.4f}"
+                    f"balance={key_data.count(1) / len(key_data):.4f}"
                 )
             else:
                 print(f"  Key len={key_len}: id={key_id}, retrieved=None")
@@ -641,7 +641,7 @@ try:
     elapsed = time.time() - ts_start
     print(f"  Generated {len(key_ids)}/{n_keys} keys in {elapsed:.4f}s")
     if elapsed > 0:
-        print(f"  Throughput: {len(key_ids)/elapsed:.2f} keys/s")
+        print(f"  Throughput: {len(key_ids) / elapsed:.2f} keys/s")
 
     # Cleanup throughput test
     for kid in key_ids:
@@ -681,7 +681,7 @@ try:
     for trial in range(10):
         initial = Qubit.zero()
         encoded = QEC.shor_code_encode(initial)
-        print(f"  Trial {trial+1}: {len(encoded)} qubits encoded")
+        print(f"  Trial {trial + 1}: {len(encoded)} qubits encoded")
         # Apply X error to qubit 0
         encoded[0].apply_gate(PauliX().matrix)
         corrected = QEC.detect_and_correct_error(encoded, error_type="X")

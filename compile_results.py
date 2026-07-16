@@ -76,9 +76,9 @@ def tail(lines, n=3):
 for fname in FILES:
     fpath = os.path.join(INPUTS_DIR, fname)
     if not os.path.exists(fpath):
-        REPORT.append(f"\n{'='*60}")
+        REPORT.append(f"\n{'=' * 60}")
         REPORT.append(f"  {fname} — FILE NOT FOUND")
-        REPORT.append(f"{'='*60}")
+        REPORT.append(f"{'=' * 60}")
         continue
 
     with open(fpath, encoding="utf-8", errors="replace") as f:
@@ -93,10 +93,10 @@ for fname in FILES:
         fname.replace("test_output_", "").replace(".txt", "").replace("_", " ").title()
     )
 
-    REPORT.append(f"\n{'='*60}")
+    REPORT.append(f"\n{'=' * 60}")
     REPORT.append(f"  MODULE: {test_name}")
     REPORT.append(f"  File: {fname} ({size_kb:.1f} KB, {nlines} lines)")
-    REPORT.append(f"{'='*60}")
+    REPORT.append(f"{'=' * 60}")
 
     # Extract section headers
     sections = []
@@ -104,14 +104,14 @@ for fname in FILES:
         m = re.match(r"^=+\s*$", l)
         if m and i + 1 < nlines and lines_s[i + 1].strip():
             sections.append(lines_s[i + 1].strip())
-            sections.append(f"  (line {i+1})")
+            sections.append(f"  (line {i + 1})")
 
     if sections:
         REPORT.append("  Sections found:")
         for s in sections[:10]:
             REPORT.append(f"    - {s}")
         if len(sections) > 10:
-            REPORT.append(f"    ... and {len(sections)//2 - 5} more")
+            REPORT.append(f"    ... and {len(sections) // 2 - 5} more")
 
     # Check exit status (last lines)
     exit_lines = [l for l in lines_s if "EXIT=" in l]
@@ -150,7 +150,7 @@ for fname in FILES:
     if metrics.get("runtimes"):
         runs = [float(x) for x in metrics["runtimes"]]
         REPORT.append(
-            f"  Runtimes: min={min(runs):.4f}s max={max(runs):.4f}s avg={sum(runs)/len(runs):.4f}s ({len(runs)} samples)"
+            f"  Runtimes: min={min(runs):.4f}s max={max(runs):.4f}s avg={sum(runs) / len(runs):.4f}s ({len(runs)} samples)"
         )
 
     # Count key numerical outputs

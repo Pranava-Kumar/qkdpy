@@ -210,7 +210,7 @@ data_empty = b""
 h_empty = qh.sha3_256_hash(data_empty)
 print(f"  Input bytes       : {data_empty!r}")
 print(f"  Output hash (hex) : {h_empty.hex()}")
-print(f"  Hash length       : {len(h_empty)} bytes ({len(h_empty)*8} bits)")
+print(f"  Hash length       : {len(h_empty)} bytes ({len(h_empty) * 8} bits)")
 assert len(h_empty) == 32, "SHA3-256 should be 32 bytes"
 
 # 1b. SHA3-256 with small message
@@ -219,7 +219,7 @@ data_small = b"Hello, QKD World!"
 h_small = qh.sha3_256_hash(data_small)
 print(f"  Input bytes       : {data_small!r}")
 print(f"  Output hash (hex) : {h_small.hex()}")
-print(f"  Hash length       : {len(h_small)} bytes ({len(h_small)*8} bits)")
+print(f"  Hash length       : {len(h_small)} bytes ({len(h_small) * 8} bits)")
 
 # 1c. SHA3-256 with large message
 subsection("1c. SHA3-256 large message (100KB)")
@@ -227,7 +227,7 @@ data_large = os.urandom(102400)
 h_large = qh.sha3_256_hash(data_large)
 print(f"  Input bytes       : {len(data_large)} bytes")
 print(f"  Output hash (hex) : {h_large.hex()}")
-print(f"  Hash length       : {len(h_large)} bytes ({len(h_large)*8} bits)")
+print(f"  Hash length       : {len(h_large)} bytes ({len(h_large) * 8} bits)")
 
 # 1d. SHAKE-256 with variable length
 subsection("1d. SHAKE-256 extendable output")
@@ -452,7 +452,7 @@ ciphertext, remaining_key = otp_enc.encrypt(plaintext, key_bits)
 print(f"  Plaintext          : {plaintext!r}")
 print(f"  Plaintext chars    : {len(plaintext)}")
 print(f"  Plaintext bits     : {len(plaintext_bits)}")
-print(f"  Key bits used      : {len(key_bits[:len(plaintext_bits)])}")
+print(f"  Key bits used      : {len(key_bits[: len(plaintext_bits)])}")
 print(f"  Ciphertext bits    : {len(ciphertext)}")
 print(f"  Ciphertext (first 32): {ciphertext[:32]}")
 print(f"  Remaining key bits : {len(remaining_key)}")
@@ -588,7 +588,7 @@ total = len(all_bits_from_bytes)
 print(f"\n  Frequency test on {total} bits:")
 print(f"    Ones  count      : {ones}")
 print(f"    Zeros count      : {zeros}")
-print(f"    Ratio (ones/total): {ones/total:.6f}")
+print(f"    Ratio (ones/total): {ones / total:.6f}")
 print("    Expected ~=       : 0.5")
 
 # Chi-square test for uniform distribution
@@ -801,7 +801,7 @@ for std_name, std_checks in sorted(by_standard.items()):
     n_pass = sum(1 for c in std_checks if c.passed)
     n_fail = len(std_checks) - n_pass
     print(
-        f"    {std_name}: {n_pass}/{len(std_checks)} passed ({n_pass/len(std_checks)*100:.0f}%)"
+        f"    {std_name}: {n_pass}/{len(std_checks)} passed ({n_pass / len(std_checks) * 100:.0f}%)"
     )
 
 # Detailed failures
@@ -1141,7 +1141,8 @@ else:
 # =====================================================================
 section("TEST SUMMARY")
 
-print("""
+print(
+    """
 Tests executed:
   1.  QuantumHash (SHA3-256, SHAKE-256, Merkle tree, hash chain)
   2.  QuantumCommitment (commit, open, verify, info)
@@ -1158,6 +1159,7 @@ Tests executed:
   13. Licensing (FREE/ENTERPRISE/PREMIUM tiers, feature gating)
   14. QuantumSafe (profile, roadmap, assessment)
   15. QuantumAuthenticator (party registration, auth, signatures)
-""")
+"""
+)
 
 print("Test script completed successfully.")

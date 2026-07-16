@@ -945,7 +945,7 @@ try:
     def fn_not_empty(items):
         return len(items)
 
-    print(f"    fn_not_empty([1,2,3]) = {fn_not_empty([1,2,3])}")
+    print(f"    fn_not_empty([1,2,3]) = {fn_not_empty([1, 2, 3])}")
     try:
         fn_not_empty([])
     except ParameterError as e:
@@ -1040,12 +1040,12 @@ try:
     print(f"    bits_to_bytes({test_bits}) = {b} (len={len(b)})")
     bits_back = bytes_to_bits(b)
     print(f"    bytes_to_bits({b}) = {bits_back}")
-    print(f"    Round-trip match: {test_bits == bits_back[:len(test_bits)]}")
+    print(f"    Round-trip match: {test_bits == bits_back[: len(test_bits)]}")
 
     test_bits2 = [1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 0, 0, 0, 0]
     b2 = bits_to_bytes(test_bits2)
     bits_back2 = bytes_to_bits(b2)
-    print(f"    16-bit round-trip match: {test_bits2 == bits_back2[:len(test_bits2)]}")
+    print(f"    16-bit round-trip match: {test_bits2 == bits_back2[: len(test_bits2)]}")
 
     print("\n  --- bits_to_int / int_to_bits ---")
     val = bits_to_int([1, 0, 1, 0])

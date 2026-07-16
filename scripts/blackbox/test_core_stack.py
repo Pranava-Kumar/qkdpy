@@ -268,10 +268,7 @@ if Qudit is not None:
         q = Qudit.uniform_superposition(3)
         outcomes.append(q.measure_computational())
     counts = [outcomes.count(i) for i in range(3)]
-    print(
-        f"  Counts: 0={counts[0]}, 1={counts[1]}, 2={counts[2]}  "
-        f"(expected ~33 each)"
-    )
+    print(f"  Counts: 0={counts[0]}, 1={counts[1]}, 2={counts[2]}  (expected ~33 each)")
 
     # Partial trace
     subsec("  Partial trace (d=4 bipartite separable)")

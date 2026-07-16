@@ -54,7 +54,7 @@ NOISE_PARAMS = {"loss": 0.1, "noise_model": "depolarizing", "noise_level": 0.05}
 #  1. QISKIT INTEGRATION
 # ================================================================== #
 print(SEP)
-print("  1. QISKIT INTEGRATION  (qiskit " f"{__import__('qiskit').__version__})")
+print(f"  1. QISKIT INTEGRATION  (qiskit {__import__('qiskit').__version__})")
 print(SEP)
 
 try:
@@ -378,7 +378,7 @@ except Exception as e:
 #  3. CIRQ INTEGRATION
 # ================================================================== #
 print("\n" + SEP)
-print("  3. CIRQ INTEGRATION  (cirq " f"{__import__('cirq').__version__})")
+print(f"  3. CIRQ INTEGRATION  (cirq {__import__('cirq').__version__})")
 print(SEP)
 
 try:
