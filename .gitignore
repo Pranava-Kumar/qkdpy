@@ -1,4 +1,4 @@
-# ── Python ──────────────────────────────────────────
+# ─── Python ─────────────────────────────────────────────
 __pycache__/
 *.py[oc]
 *.so
@@ -7,14 +7,27 @@ dist/
 wheels/
 *.egg-info
 
-# ── Virtual environments ───────────────────────────
-.venv
+# ─── Tool caches ─────────────────────────────────────────
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+
+# ─── Virtual environments ────────────────────────────────
 .venv/
+venv/
+env/
 
-# ── Environment & secrets ──────────────────────────
+# ─── Environment & secrets ───────────────────────────────
 .env
+.env.*
+!.env.example
 
-# ── IDE / Editor ───────────────────────────────────
+# ─── IDE / Editor ────────────────────────────────────────
 .idea/
 .vscode/
 *.swp
@@ -23,16 +36,22 @@ wheels/
 .DS_Store
 Thumbs.db
 
-# ── AI / Agent config ──────────────────────────────
+# ─── AI / Agent config ───────────────────────────────────
 .agents/
 .openclaude/
 .crush/
+.aider*
 
-# ── Build artifacts ────────────────────────────────
+# ─── uv / Python build artifacts ─────────────────────────
+.venv.bak/
+.python-version.bak
+src/*.egg-info/
+
+# ─── Build / Docs output ─────────────────────────────────
 docs/_build/
 node_modules/
 
-# ── Research drafts (personal) ─────────────────────
+# ─── Personal / research drafts (not part of the release) ─
 GEMINI.md
 QWEN.md
 QKDpy_Research.md
@@ -41,17 +60,22 @@ test_file.txt
 test_file.txt.enc
 project.toml.backup
 issues.txt
+*.tmp
+*.bak
 
-# ── Architecture diagrams (rendered images) ───────
+# ─── Architecture diagrams (rendered images / scripts) ────
 docs/diagrams/*.svg
 docs/diagrams/*.png
 docs/diagrams/*.mmd
 docs/diagrams/*.pdf
 docs/diagrams/render_diagrams.py
 
-# ── Generated test artifacts ────────────────────
+# ─── Generated / diagnostic test artifacts at the repo root ─
+# (the actual root-level blackbox test_*.py scripts are
+# tracked; only the output artefacts they emit are ignored.)
 test_*.png
 test_final_*.txt
 test_output_*.txt
 pennylane_test.py
 tmpbr98isxb.py
+TEST_RESULTS_COMPREHENSIVE.txt
