@@ -5,7 +5,12 @@ from collections.abc import Callable
 
 import numpy as np
 
-from .gates import Identity, PauliX, PauliY, PauliZ
+from .gates import (
+    Identity,
+    PauliX,
+    PauliY,
+    PauliZ,
+)
 from .qubit import Qubit
 from .secure_random import secure_random
 

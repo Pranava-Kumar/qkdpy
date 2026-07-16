@@ -19,8 +19,17 @@ import numpy as np
 sys.path.insert(0, r"E:/opensource/qkdpy/src")
 np.set_printoptions(precision=6, suppress=True)
 
-from qkdpy import BB84, MultiQubitState, QuantumChannel, Qubit
-from qkdpy.core.gates import CNOT, Hadamard, Ry
+from qkdpy import (
+    BB84,
+    MultiQubitState,
+    QuantumChannel,
+    Qubit,
+)
+from qkdpy.core.gates import (
+    CNOT,
+    Hadamard,
+    Ry,
+)
 from qkdpy.core.measurements import Measurement as Meas
 
 print("=" * 72)

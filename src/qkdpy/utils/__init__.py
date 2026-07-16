@@ -50,7 +50,11 @@ from .validation import (
     validate_type,
     validate_unitary,
 )
-from .visualization import BlochSphere, KeyRateAnalyzer, ProtocolVisualizer
+from .visualization import (
+    BlochSphere,
+    KeyRateAnalyzer,
+    ProtocolVisualizer,
+)
 
 __all__ = [
     "BlochSphere",

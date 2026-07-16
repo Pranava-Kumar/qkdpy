@@ -1,7 +1,11 @@
 """Example of a full QKD scenario using QKDpy."""
 
 from qkdpy.core import QuantumChannel
-from qkdpy.crypto import OneTimePad, OneTimePadDecrypt, QuantumAuth
+from qkdpy.crypto import (
+    OneTimePad,
+    OneTimePadDecrypt,
+    QuantumAuth,
+)
 from qkdpy.protocols import BB84
 
 

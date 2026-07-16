@@ -10,7 +10,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Import QKDpy modules
-from qkdpy import BB84, E91, QuantumChannel, Qubit
+from qkdpy import (
+    BB84,
+    E91,
+    QuantumChannel,
+    Qubit,
+)
 from qkdpy.utils import BlochSphere
 
 

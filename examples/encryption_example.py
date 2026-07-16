@@ -1,6 +1,10 @@
 """Example of using quantum keys for encryption."""
 
-from qkdpy import BB84, OneTimePad, QuantumChannel
+from qkdpy import (
+    BB84,
+    OneTimePad,
+    QuantumChannel,
+)
 from qkdpy.crypto.decryption import OneTimePadDecrypt
 
 

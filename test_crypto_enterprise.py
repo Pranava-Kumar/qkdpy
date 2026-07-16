@@ -750,7 +750,12 @@ section("11. COMPLIANCE")
 
 subsection("11a. Create ComplianceChecker with multiple standards")
 # Use a custom config that passes all enterprise checks
-from qkdpy.config import EnterpriseConfig, LoggingConfig, QKDConfig, SecurityConfig
+from qkdpy.config import (
+    EnterpriseConfig,
+    LoggingConfig,
+    QKDConfig,
+    SecurityConfig,
+)
 
 test_config = QKDConfig(
     logging=LoggingConfig(redact_secrets=True, audit_enabled=True),
@@ -901,7 +906,11 @@ security_events = audit.get_events(event_type=AuditEventType.ACCESS_DENIED)
 print(f"  ACCESS_DENIED events : {len(security_events)}")
 
 subsection("12c. Query by time range")
-from datetime import UTC, datetime, timedelta
+from datetime import (
+    UTC,
+    datetime,
+    timedelta,
+)
 
 recent = audit.get_events(since=datetime.now(UTC) - timedelta(hours=1))
 print(f"  Events in last hour : {len(recent)}")

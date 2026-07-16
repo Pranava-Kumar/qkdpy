@@ -47,7 +47,7 @@ print()
 from qkdpy.core import QuantumChannel, Qubit
 from qkdpy.protocols.bb84 import BB84
 
-NOISE_PARAMS = dict(loss=0.1, noise_model="depolarizing", noise_level=0.05)
+NOISE_PARAMS = {"loss": 0.1, "noise_model": "depolarizing", "noise_level": 0.05}
 
 # ================================================================== #
 #  1. QISKIT INTEGRATION
@@ -70,7 +70,11 @@ print(
     f"\n[1.2] NoiseModel from channel "
     f"(loss={channel.loss}, noise={channel.noise_model}={channel.noise_level}):"
 )
-from qiskit_aer.noise import NoiseModel, amplitude_damping_error, depolarizing_error
+from qiskit_aer.noise import (
+    NoiseModel,
+    amplitude_damping_error,
+    depolarizing_error,
+)
 
 nm_manual = NoiseModel()
 if channel.loss > 0:

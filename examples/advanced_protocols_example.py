@@ -1,7 +1,12 @@
 """Example of using advanced protocols."""
 
 from qkdpy.core import QuantumChannel
-from qkdpy.protocols import B92, CVQKD, DeviceIndependentQKD, TwistedPairQKD
+from qkdpy.protocols import (
+    B92,
+    CVQKD,
+    DeviceIndependentQKD,
+    TwistedPairQKD,
+)
 
 
 def advanced_protocols_example():

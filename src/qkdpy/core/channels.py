@@ -7,7 +7,11 @@ from collections.abc import Callable
 import numpy as np
 
 from .gate_utils import GateUtils
-from .gates import PauliX, PauliY, PauliZ
+from .gates import (
+    PauliX,
+    PauliY,
+    PauliZ,
+)
 from .measurements import Measurement
 from .qubit import Qubit
 from .qudit import Qudit

@@ -7,7 +7,11 @@ inputs, ensuring type safety, and catching invalid parameters early.
 import functools
 import inspect
 from collections.abc import Callable, Sequence
-from typing import Any, ParamSpec, TypeVar
+from typing import (
+    Any,
+    ParamSpec,
+    TypeVar,
+)
 
 import numpy as np
 

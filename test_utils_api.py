@@ -71,7 +71,11 @@ print(f"  is_debug_mode() -> {qkdpy.is_debug_mode()}")
 print(f"  is_production_mode() -> {qkdpy.is_production_mode()}")
 
 # set_config -- modify and read back
-from qkdpy.config import LogLevel, QKDConfig, reset_config
+from qkdpy.config import (
+    LogLevel,
+    QKDConfig,
+    reset_config,
+)
 
 new_cfg = QKDConfig()
 new_cfg.logging.level = LogLevel.DEBUG
@@ -847,7 +851,11 @@ print("=" * 72)
 try:
     import numpy as np
 
-    from qkdpy.exceptions import ParameterError, RangeError, TypeValidationError
+    from qkdpy.exceptions import (
+        ParameterError,
+        RangeError,
+        TypeValidationError,
+    )
     from qkdpy.utils.validation import (
         validate_binary_key,
         validate_density_matrix,
@@ -1378,7 +1386,13 @@ try:
 
     import numpy as np
 
-    from qkdpy.core import CNOT, Hadamard, MultiQubitState, QuantumChannel, Qubit
+    from qkdpy.core import (
+        CNOT,
+        Hadamard,
+        MultiQubitState,
+        QuantumChannel,
+        Qubit,
+    )
 
     # Create a Bell state |Phi+> = (|00> + |11>) / sqrt(2) using circuit
     print("\n  --- Bell state creation ---")

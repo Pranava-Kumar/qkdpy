@@ -4,7 +4,11 @@ import pytest
 
 from qkdpy.core import QuantumChannel
 from qkdpy.core.secure_random import secure_choice, secure_randint
-from qkdpy.protocols import BB84, CVQKD, E91
+from qkdpy.protocols import (
+    BB84,
+    CVQKD,
+    E91,
+)
 
 
 class TestExploratory:

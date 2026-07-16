@@ -5,7 +5,11 @@ This script demonstrates how to simulate quantum networks with QKDpy.
 """
 
 # Import QKDpy modules
-from qkdpy import BB84, E91, QuantumChannel
+from qkdpy import (
+    BB84,
+    E91,
+    QuantumChannel,
+)
 from qkdpy.network import MultiPartyQKDNetwork, QuantumNetwork
 
 

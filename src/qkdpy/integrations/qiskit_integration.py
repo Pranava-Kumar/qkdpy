@@ -5,7 +5,11 @@ from __future__ import annotations
 from typing import Any, cast
 
 try:
-    from qiskit import ClassicalRegister, QuantumCircuit, QuantumRegister
+    from qiskit import (
+        ClassicalRegister,
+        QuantumCircuit,
+        QuantumRegister,
+    )
     from qiskit.quantum_info import (
         DensityMatrix,
         StabilizerState,
@@ -319,7 +323,11 @@ class QiskitIntegration:
 
         # Add noise if specified
         if noise_model and noise_level > 0:
-            from qiskit_aer.noise import NoiseModel, depolarizing_error, pauli_error
+            from qiskit_aer.noise import (
+                NoiseModel,
+                depolarizing_error,
+                pauli_error,
+            )
 
             noise_model_obj = NoiseModel()
             if noise_model == "bit_flip":
@@ -367,7 +375,11 @@ class QiskitIntegration:
         Returns:
             Qiskit NoiseModel representing the same channel characteristics
         """
-        from qiskit_aer.noise import NoiseModel, depolarizing_error, pauli_error
+        from qiskit_aer.noise import (
+            NoiseModel,
+            depolarizing_error,
+            pauli_error,
+        )
 
         noise_model = NoiseModel()
 

@@ -5,8 +5,16 @@ from typing import cast
 
 import numpy as np
 
-from ..core import QuantumChannel, Qubit, Qudit
-from ..core.secure_random import secure_normal, secure_randint, secure_random
+from ..core import (
+    QuantumChannel,
+    Qubit,
+    Qudit,
+)
+from ..core.secure_random import (
+    secure_normal,
+    secure_randint,
+    secure_random,
+)
 from .base import BaseProtocol
 
 

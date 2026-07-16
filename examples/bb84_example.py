@@ -3,7 +3,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from qkdpy import BB84, KeyRateAnalyzer, ProtocolVisualizer, QuantumChannel
+from qkdpy import (
+    BB84,
+    KeyRateAnalyzer,
+    ProtocolVisualizer,
+    QuantumChannel,
+)
 
 
 def bb84_example():

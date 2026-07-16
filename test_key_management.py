@@ -665,7 +665,11 @@ print("SECTION 7: QUANTUM ERROR CORRECTION")
 print("=" * 72)
 
 try:
-    from qkdpy.core import PauliX, PauliZ, Qubit
+    from qkdpy.core import (
+        PauliX,
+        PauliZ,
+        Qubit,
+    )
     from qkdpy.key_management.quantum_error_correction import (
         QuantumErrorCorrection as QEC,
     )

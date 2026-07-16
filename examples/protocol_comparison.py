@@ -9,7 +9,12 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # Import QKDpy modules
-from qkdpy import BB84, E91, SARG04, QuantumChannel
+from qkdpy import (
+    BB84,
+    E91,
+    SARG04,
+    QuantumChannel,
+)
 from qkdpy.protocols.cv_qkd import CVQKD
 from qkdpy.protocols.hd_qkd import HDQKD
 

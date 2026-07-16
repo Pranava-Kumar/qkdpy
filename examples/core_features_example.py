@@ -4,7 +4,12 @@ import sys
 
 import matplotlib.pyplot as plt
 
-from qkdpy.core import Measurement, QuantumChannel, QuantumGate, Qubit
+from qkdpy.core import (
+    Measurement,
+    QuantumChannel,
+    QuantumGate,
+    Qubit,
+)
 from qkdpy.utils import BlochSphere
 
 

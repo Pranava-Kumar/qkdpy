@@ -257,7 +257,11 @@ except Exception as e:
     print("  Using simulated TLE (sgp4-based propagation)")
     tle_line1 = tle_line2 = None
 
-from datetime import UTC, datetime, timedelta
+from datetime import (
+    UTC,
+    datetime,
+    timedelta,
+)
 
 from sgp4.api import Satrec
 

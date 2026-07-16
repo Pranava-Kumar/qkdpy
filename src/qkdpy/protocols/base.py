@@ -3,7 +3,11 @@
 from abc import ABC, abstractmethod
 from collections.abc import Sequence
 
-from ..core import QuantumChannel, Qubit, Qudit
+from ..core import (
+    QuantumChannel,
+    Qubit,
+    Qudit,
+)
 from ..core.secure_random import secure_bits
 
 

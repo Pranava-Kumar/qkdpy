@@ -2,7 +2,12 @@
 
 import unittest
 
-from qkdpy import BB84, E91, SARG04, QuantumChannel
+from qkdpy import (
+    BB84,
+    E91,
+    SARG04,
+    QuantumChannel,
+)
 
 
 class TestBB84(unittest.TestCase):

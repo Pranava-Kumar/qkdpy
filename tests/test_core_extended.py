@@ -4,7 +4,11 @@ import unittest
 
 import numpy as np
 
-from qkdpy.core import ExtendedQuantumChannel, MultiQubitState, Qubit
+from qkdpy.core import (
+    ExtendedQuantumChannel,
+    MultiQubitState,
+    Qubit,
+)
 
 
 class TestMultiQubitState(unittest.TestCase):

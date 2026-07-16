@@ -6,7 +6,11 @@ concrete ML implementations, enabling test stubs and model swaps.
 
 from __future__ import annotations
 
-from typing import Any, Protocol, runtime_checkable
+from typing import (
+    Any,
+    Protocol,
+    runtime_checkable,
+)
 
 import numpy as np
 

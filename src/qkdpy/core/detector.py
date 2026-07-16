@@ -5,7 +5,11 @@ from typing import Any
 import numpy as np
 
 from .qubit import Qubit
-from .secure_random import secure_choice, secure_normal, secure_random
+from .secure_random import (
+    secure_choice,
+    secure_normal,
+    secure_random,
+)
 
 
 class QuantumDetector:

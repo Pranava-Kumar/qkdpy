@@ -9,7 +9,11 @@ This module provides enterprise-grade features including:
 - Quantum-safe migration toolkit (PREMIUM tier)
 """
 
-from .audit import AuditEvent, AuditEventType, AuditLogger
+from .audit import (
+    AuditEvent,
+    AuditEventType,
+    AuditLogger,
+)
 from .compliance import (
     ComplianceChecker,
     ComplianceReport,

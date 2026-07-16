@@ -25,9 +25,15 @@ repos:
         entry: isort --profile black
         language: system
         types: [python]
+        # test_utils_api.py is a 1700-line blackbox diagnostic that places
+        # imports inside print / try blocks; isort+black disagree on the
+        # long-wrap and end up oscillating. Skip lint auto-format on it;
+        # ruff still checks for non-import parity.
+        exclude: ^test_utils_api\.py$
 
       - id: ruff
         name: ruff
         entry: ruff check --fix
         language: system
         types: [python]
+        exclude: ^test_utils_api\.py$

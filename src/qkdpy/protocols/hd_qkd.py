@@ -4,7 +4,11 @@ from collections.abc import Sequence
 
 import numpy as np
 
-from ..core import QuantumChannel, Qubit, Qudit
+from ..core import (
+    QuantumChannel,
+    Qubit,
+    Qudit,
+)
 from ..core.secure_random import secure_randint
 from .base import BaseProtocol
 

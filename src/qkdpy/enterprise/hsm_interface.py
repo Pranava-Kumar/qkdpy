@@ -15,7 +15,11 @@ from typing import Any
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-from ..exceptions import HSMError, HSMNotAvailableError, KeyNotFoundError
+from ..exceptions import (
+    HSMError,
+    HSMNotAvailableError,
+    KeyNotFoundError,
+)
 from ..utils.logging_config import get_logger
 
 logger = get_logger(__name__)

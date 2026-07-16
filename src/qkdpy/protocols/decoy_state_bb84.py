@@ -2,8 +2,17 @@
 
 from collections.abc import Sequence
 
-from ..core import Measurement, QuantumChannel, Qubit, Qudit
-from ..core.secure_random import secure_choice, secure_randint, secure_random
+from ..core import (
+    Measurement,
+    QuantumChannel,
+    Qubit,
+    Qudit,
+)
+from ..core.secure_random import (
+    secure_choice,
+    secure_randint,
+    secure_random,
+)
 from .base import BaseProtocol
 
 

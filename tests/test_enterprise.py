@@ -7,7 +7,11 @@ import unittest
 
 from qkdpy.enterprise.audit import AuditEventType, AuditLogger
 from qkdpy.enterprise.compliance import ComplianceChecker
-from qkdpy.enterprise.hsm_interface import HSMError, KeyNotFoundError, SoftwareHSM
+from qkdpy.enterprise.hsm_interface import (
+    HSMError,
+    KeyNotFoundError,
+    SoftwareHSM,
+)
 
 
 class TestSoftwareHSM(unittest.TestCase):

@@ -1,7 +1,11 @@
 """Example of using the QKD protocols in QKDpy."""
 
 from qkdpy.core import QuantumChannel
-from qkdpy.protocols import BB84, E91, SARG04
+from qkdpy.protocols import (
+    BB84,
+    E91,
+    SARG04,
+)
 
 
 def protocols_example() -> None:

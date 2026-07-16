@@ -44,7 +44,7 @@ except ImportError:
     print("[WARN] sklearn not available -- some tests will use fallbacks")
 
 try:
-    import psutil
+    import psutil  # noqa: F401
 
     PSUTIL_AVAIL = True
 except ImportError:

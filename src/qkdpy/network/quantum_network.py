@@ -574,7 +574,12 @@ class QuantumNetwork:
         # This requires a 'global' state manager for the network simulation
         # For this method, we will create a temporary MultiQubitState to simulate the event
 
-        from ..core.gates import CNOT, Hadamard, PauliX, PauliZ
+        from ..core.gates import (
+            CNOT,
+            Hadamard,
+            PauliX,
+            PauliZ,
+        )
         from ..core.multiqubit import MultiQubitState
 
         # Create a 4-qubit system initialized to |0000>

@@ -3,7 +3,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-from qkdpy import B92, KeyRateAnalyzer, QuantumChannel
+from qkdpy import (
+    B92,
+    KeyRateAnalyzer,
+    QuantumChannel,
+)
 
 
 def b92_example():

@@ -136,8 +136,40 @@ ignore = [
     "E501",  # line too long, handled by formatter
 ]
 
+# Root-level diagnostic / blackbox scripts are stand-alone, introduce
+# sys.path hacks to find the package, and use `for trial in range(n)`-style
+# loop scaffolding. Allow E402 (imports after path-hack) and B007 (unused
+# loop control variable used as a counter). They are not part of the test
+# suite discovered by pytest, just human-runnable inspection scripts.
+[tool.ruff.lint.per-file-ignores]
+"test_analysis.py" = ["E402", "B007", "B905"]
+"test_blackbox.py" = ["E402", "B007", "B905"]
+"test_all_protocols.py" = ["E402", "B007", "B905"]
+"test_core_stack.py" = ["E402", "B007", "B905"]
+"test_crypto_enterprise.py" = ["E402", "B007", "B905"]
+"test_integrations.py" = ["E402", "B007", "B905", "C408"]
+"test_key_management.py" = ["E402", "B007", "B905"]
+"test_ml_module.py" = ["E402", "B007", "B905"]
+"test_network.py" = ["E402", "B007", "B905", "E741"]
+"test_utils_api.py" = ["E402", "B007", "B905"]
+"benchmarks/*" = ["E402", "B007", "B905", "E741"]
+"compile_results.py" = ["E402", "B007", "B905", "E741"]
+"compile_comprehensive_report.py" = ["E402", "B007", "B905", "E741"]
+
 [tool.ruff.lint.isort]
 known-first-party = ["qkdpy"]
+
+# isort config (read by both `pre-commit run isort` and `ruff check --fix`
+# when present in the isort namespace). These keys align isort v8 with
+# black's wrapping so long `from qkdpy.exceptions import (...)` statements
+# stop oscillating between the two formatters.
+[tool.isort]
+known_first_party = ["qkdpy"]
+# force_grid_wrap=3 forces wrapping when an import otherwise exceeds the
+# line length, matching black's parenthesized-wrap behaviour for long
+# `from x import (...)` statements.
+force_grid_wrap = 3
+split_on_trailing_comma = true
 
 [tool.ruff.format]
 quote-style = "double"

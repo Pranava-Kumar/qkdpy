@@ -1,5 +1,10 @@
 from qkdpy.core import QuantumChannel
-from qkdpy.protocols import BB84, CVQKD, E91, HDQKD
+from qkdpy.protocols import (
+    BB84,
+    CVQKD,
+    E91,
+    HDQKD,
+)
 
 
 class TestSmokeSanity:
