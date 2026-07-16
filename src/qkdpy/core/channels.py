@@ -1,7 +1,6 @@
 """Quantum channel simulation for QKD protocols."""
 
 import math
-import random
 from collections.abc import Callable
 
 import numpy as np
@@ -15,7 +14,7 @@ from .gates import (
 from .measurements import Measurement
 from .qubit import Qubit
 from .qudit import Qudit
-from .secure_random import secure_random
+from .secure_random import secure_choice, secure_random
 
 
 class QuantumChannel:
@@ -218,7 +217,7 @@ class QuantumChannel:
         p = self.noise_level
         if p > 0 and secure_random() < p:
             # Apply a random Pauli (X, Y, or Z) — NOT Identity
-            gate = random.choice(
+            gate = secure_choice(
                 [
                     PauliX().matrix,
                     PauliY().matrix,
@@ -337,7 +336,7 @@ class QuantumChannel:
 
         """
         if basis == "random":
-            basis = random.choice(["computational", "hadamard", "circular"])
+            basis = secure_choice(["computational", "hadamard", "circular"])
 
         # Make a copy of the original state
         original_state = qubit.state.copy()
@@ -486,7 +485,7 @@ class QuantumChannel:
         if secure_random() < self.thermal_noise_factor:
             # Apply random non-trivial Pauli to simulate thermal noise
             # (Identity is never applied since it's not an error)
-            gate = random.choice(
+            gate = secure_choice(
                 [
                     PauliX().matrix,
                     PauliY().matrix,

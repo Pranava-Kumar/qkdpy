@@ -20,6 +20,27 @@ from ..utils.logging_config import get_logger
 logger = get_logger(__name__)
 
 
+# Truthfulness guard for HSM-backed compliance checks.
+#
+# ``config.enterprise.enable_hsm`` only records that the operator *requested* HSM
+# support. It does NOT tell us whether a real, hardware-backed HSM is actually in
+# use: in this build the only available provider is ``HSMProvider.SOFTWARE`` — an
+# in-memory simulation that is explicitly NOT production-grade. We therefore must
+# not auto-mark "FIPS/HSM compliant" from the config flag alone. A compliant
+# FIPS/ETSI result requires a hardware-backed provider, which does not exist here.
+def _hsm_is_hardware_backed(config: QKDConfig) -> bool:
+    """Return True only if an actual hardware-backed HSM is in use.
+
+    Returns False in this build because only ``HSMProvider.SOFTWARE`` (a sim)
+    is implemented. Placeholder for when real providers are added: they would be
+    checked here and must fail closed (False) until proven hardware-backed.
+    """
+    if not config.enterprise.enable_hsm:
+        return False
+    # SoftwareHSM is a simulation, never hardware. Fail closed.
+    return False
+
+
 class ComplianceStandard(Enum):
     """Supported compliance standards."""
 

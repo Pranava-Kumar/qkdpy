@@ -5,6 +5,7 @@ with security standards and regulations.
 """
 
 import hashlib
+import hmac
 import json
 import os
 import secrets
@@ -16,6 +17,13 @@ from typing import Any
 from ..utils.logging_config import get_logger
 
 logger = get_logger(__name__)
+
+# Keyed secret for the audit hash chain. A plain SHA-256 chain only detects
+# *accidental* corruption: anyone with write access to the log can recompute
+# every ``previous_hash`` and produce a valid chain. Using a keyed HMAC means
+# a tamperer cannot forge chain links without this in-process secret, turning
+# the chain from corruption-evident into tamper-resistant.
+_CHAIN_SECRET = secrets.token_bytes(32)
 
 
 class AuditEventType(Enum):
@@ -78,9 +86,9 @@ class AuditEvent:
         return data
 
     def compute_hash(self) -> str:
-        """Compute hash of the event for chain integrity."""
-        data = json.dumps(self.to_dict(), sort_keys=True)
-        return hashlib.sha256(data.encode()).hexdigest()
+        """Compute the keyed-HMAC of the event for tamper-resistant chaining."""
+        data = json.dumps(self.to_dict(), sort_keys=True).encode()
+        return hmac.new(_CHAIN_SECRET, data, hashlib.sha256).hexdigest()
 
 
 class AuditLogger:
@@ -287,7 +295,7 @@ class AuditLogger:
         )
 
     def verify_chain_integrity(self) -> tuple[bool, list[str]]:
-        """Verify the integrity of the audit chain.
+        """Verify the keyed-HMAC integrity of the audit chain.
 
         Returns:
             Tuple of (is_valid, list of error messages)
@@ -303,7 +311,7 @@ class AuditLogger:
                     errors.append("First event has non-null previous_hash")
             else:
                 expected_hash = self._events[i - 1].compute_hash()
-                if event.previous_hash != expected_hash:
+                if not hmac.compare_digest(event.previous_hash or "", expected_hash):
                     errors.append(
                         f"Chain broken at event {i} ({event.event_id}): "
                         f"expected {expected_hash}, got {event.previous_hash}"

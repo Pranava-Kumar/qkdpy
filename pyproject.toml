@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qkdpy"
-version = "0.6.0"
+version = "0.6.1"
 description = "A Python Package for Quantum Key Distribution"
 readme = "README.md"
 license = "Apache-2.0"
@@ -53,6 +53,7 @@ dependencies = [
     "matplotlib>=3.7.0",
     "scipy>=1.10.0",
     "structlog>=23.0.0",
+    "colorama>=0.4.6; sys_platform == 'win32'",
     "cryptography>=41.0.0",
 ]
 

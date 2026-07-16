@@ -1,9 +1,9 @@
 """Advanced privacy amplification methods for QKD protocols."""
 
 import hashlib
-import random
 import secrets
 
+from ..core.secure_random import secure_sample
 from .privacy_amplification import PrivacyAmplification
 
 
@@ -32,7 +32,7 @@ class AdvancedPrivacyAmplification:
         for _ in range(output_length):
             # XOR a random subset of bits
             subset_size = max(1, len(key) // (output_length * 2))
-            subset_indices = random.sample(range(len(key)), subset_size)
+            subset_indices = secure_sample(list(range(len(key))), subset_size)
             xor_result = 0
             for idx in subset_indices:
                 xor_result ^= key[idx]

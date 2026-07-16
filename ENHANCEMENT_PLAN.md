@@ -21,11 +21,12 @@ Based on deep architectural audits of **Qiskit** (826 lines), **PennyLane** (793
 - `qubit_to_qiskit()` / `qiskit_to_qubit()` conversion between QKDpy `Qubit` and `Statevector`
 - `create_bb84_circuit()` — BB84 encode+measure circuits
 - `simulate()` — runs `AerSimulator` (requires qiskit-aer)
-- `entanglement_swap()` and `bell_state_measurement()`
-- `calculate_qber()` from measurement counts
-- `compute_state_fidelity()` via `state_fidelity`
+- `convert_channel_to_qiskit()` — bridges `QuantumChannel` loss into `amplitude_damping_error`
+- Real entanglement measures via `quantum_info` (`concurrence`, `negativity`, `partial_trace`, `schmidt`)
 
-**Gaps:** No noise modeling, no transpilation, no quantum_info entanglement measures, no Pauli/Clifford utilities, no circuit synthesis, no primitive-based execution, no mid-circuit measurement.
+**Noise modeling & transpilation — SUPPORTED:** `simulate()` accepts a `noise_model` parameter (`bit_flip` / `phase_flip` / `depolarizing`) and builds a `NoiseModel`; circuits are run through `qiskit.compiler.transpile` before execution on the noisy `AerSimulator`. (Earlier plan notes claiming "no noise modeling, no transpilation" are stale and incorrect.)
+
+**Remaining Gaps (verified against code):** no Pauli/Clifford utility helpers, no circuit-synthesis layer, no primitive-based (`Estimator`/`Sampler`) execution path, no mid-circuit measurement.
 
 ### Cirq (`qkdpy/integrations/cirq_integration.py`)
 - `CirqIntegration` class

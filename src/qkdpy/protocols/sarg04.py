@@ -1,6 +1,5 @@
 """SARG04 QKD protocol implementation."""
 
-import random
 from collections.abc import Sequence
 
 from ..core import (
@@ -9,7 +8,7 @@ from ..core import (
     Qubit,
     Qudit,
 )
-from ..core.secure_random import secure_choice, secure_randint
+from ..core.secure_random import secure_choice, secure_randint, secure_sample
 from .base import BaseProtocol
 
 
@@ -237,7 +236,7 @@ class SARG04(BaseProtocol):
             return 1.0
 
         sample_size = max(1, int(len(alice_sifted) * 0.2))
-        indices = random.sample(range(len(alice_sifted)), sample_size)
+        indices = secure_sample(list(range(len(alice_sifted))), sample_size)
 
         errors = 0
         for idx in indices:

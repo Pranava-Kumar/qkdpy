@@ -1,8 +1,8 @@
 """Error correction methods for QKD protocols."""
 
-import random
-
 import numpy as np
+
+from ..core.secure_random import secure_sample, secure_shuffle
 
 
 class ErrorCorrection:
@@ -55,7 +55,7 @@ class ErrorCorrection:
             if random_permute:
                 # Create a random permutation for this iteration
                 perm = list(range(len(alice_corrected)))
-                random.shuffle(perm)
+                secure_shuffle(perm)
 
                 # Apply permutation to both keys
                 alice_corrected = [alice_corrected[i] for i in perm]
@@ -157,7 +157,7 @@ class ErrorCorrection:
             # Randomly permute keys between iterations
             if random_permute and iteration > 0:  # Skip permutation in first iteration
                 perm = list(range(len(alice_corrected)))
-                random.shuffle(perm)
+                secure_shuffle(perm)
 
                 # Apply permutation to both keys
                 alice_corrected = [alice_corrected[i] for i in perm]
@@ -432,7 +432,7 @@ class ErrorCorrection:
         # Fill matrix with random 1s maintaining regularity
         for col in range(n):
             # Choose j positions randomly for the 1s in this column
-            rows = random.sample(range(m), j)
+            rows = secure_sample(list(range(m)), j)
             H[rows, col] = 1
 
         # Check if each row has the expected number of 1s on average
@@ -444,7 +444,7 @@ class ErrorCorrection:
                 zeros = np.where(H[row] == 0)[0]
                 if len(zeros) > 0:
                     add_count = min(k - row_sum, len(zeros))
-                    chosen_cols = random.sample(list(zeros), add_count)
+                    chosen_cols = secure_sample(list(zeros), add_count)
                     H[row, chosen_cols] = 1
 
         return H
@@ -484,7 +484,7 @@ class ErrorCorrection:
             # Fill the matrix with 1s to satisfy the constraints
             for j in range(n):
                 # Randomly choose 3 rows to put 1s in this column
-                rows = random.sample(range(m), 3)
+                rows = secure_sample(list(range(m)), 3)
                 parity_check_matrix[rows, j] = 1
 
             # Ensure each row has approximately 6 ones
@@ -492,7 +492,7 @@ class ErrorCorrection:
                 row_sum = np.sum(parity_check_matrix[i])
                 if row_sum < 6:
                     # Randomly choose additional columns to put 1s
-                    cols = random.sample(range(n), 6 - row_sum)
+                    cols = secure_sample(list(range(n)), 6 - row_sum)
                     parity_check_matrix[i, cols] = 1
 
         # Convert keys to numpy arrays

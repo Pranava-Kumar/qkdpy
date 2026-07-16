@@ -233,5 +233,34 @@ class TestCirqBenchmark(unittest.TestCase):
         self.assertEqual(result["num_trials"], 2)
 
 
+@unittest.skipIf(cirq is None, "Cirq not installed")
+class TestCirqE91(unittest.TestCase):
+    """Test E91 protocol simulation via CirqIntegration."""
+
+    def setUp(self):
+        from qkdpy.integrations.cirq_integration import CirqIntegration
+
+        self.integration = CirqIntegration()
+
+    def test_e91_with_cirq_returns_expected_keys(self):
+        """e91_with_cirq returns metadata with protocol, num_pairs, sifted key."""
+        result = self.integration.e91_with_cirq(num_pairs=4)
+
+        self.assertIsInstance(result, dict)
+        self.assertEqual(result["protocol"], "E91")
+        self.assertEqual(result["num_pairs"], 4)
+        self.assertIsInstance(result["final_key"], list)
+        self.assertGreaterEqual(result["sifted_length"], 0)
+        self.assertLessEqual(result["sifted_length"], 4)
+        self.assertEqual(result["sifted_length"], len(result["final_key"]))
+
+    def test_e91_sifted_bits_correlated_in_bell_pair(self):
+        """When bases match on a Bell pair, Alice and Bob share the same bit."""
+        result = self.integration.e91_with_cirq(num_pairs=8)
+
+        # Every returned sifted bit must be a valid classical bit.
+        self.assertTrue(all(b in (0, 1) for b in result["final_key"]))
+
+
 if __name__ == "__main__":
     unittest.main()

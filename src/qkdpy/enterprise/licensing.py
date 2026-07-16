@@ -95,6 +95,12 @@ def set_active_tier(tier: ProductTier) -> None:
 
     Calling this with a non-FREE tier is the equivalent of activating an
     enterprise or premium license key.
+
+    WARNING: This build performs NO cryptographic verification of any license
+    key. The tier is an in-memory runtime variable controlled entirely by the
+    caller (or the ``QKDPY_PRODUCT_TIER`` env var). Any operator can set a
+    non-FREE tier without a valid key. Treat this as a local demo gate only —
+    it provides feature availability, not license enforcement or anti-piracy.
     """
     global _active_tier
     _active_tier = tier

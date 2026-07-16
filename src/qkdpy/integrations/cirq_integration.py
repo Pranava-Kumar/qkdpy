@@ -223,6 +223,63 @@ class CirqIntegration:
 
         return circuit
 
+    def e91_with_cirq(self, num_pairs: int = 1) -> dict[str, Any]:
+        """Simulate the E91 protocol using Cirq entangled pairs.
+
+        Alice and Bob each measure their half of every Bell pair in a
+        randomly chosen basis (Z or X), then sift the runs where their
+        bases matched to build a shared raw key.
+
+        Args:
+            num_pairs: Number of entangled Bell pairs to generate.
+
+        Returns:
+            Dictionary with the sifted key and run metadata.
+        """
+        if num_pairs < 1:
+            raise ValueError("num_pairs must be at least 1")
+
+        # Build entangled pairs using the existing helper.
+        circuit = self.create_entanglement_circuit(num_pairs=num_pairs)
+
+        # Qubits: first num_pairs are Alice's, next num_pairs are Bob's.
+        alice_qubits = [cirq.LineQubit(i) for i in range(num_pairs)]
+        bob_qubits = [cirq.LineQubit(i + num_pairs) for i in range(num_pairs)]
+
+        # Randomly choose measurement bases for each party.
+        alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_pairs)]
+        bob_bases = [secure_choice(["Z", "X"]) for _ in range(num_pairs)]
+
+        # Apply local basis rotations before measurement.
+        for i, basis in enumerate(alice_bases):
+            if basis == "X":
+                circuit.append(cirq.H(alice_qubits[i]))
+            circuit.append(cirq.measure(alice_qubits[i], key=f"alice_{i}"))
+        for i, basis in enumerate(bob_bases):
+            if basis == "X":
+                circuit.append(cirq.H(bob_qubits[i]))
+            circuit.append(cirq.measure(bob_qubits[i], key=f"bob_{i}"))
+
+        # Simulate the circuit once.
+        simulator = cirq.Simulator()
+        result = simulator.run(circuit, repetitions=1)
+
+        # Collect sifted bits where both parties measured in the same basis.
+        final_key: list[int] = []
+        for i in range(num_pairs):
+            if alice_bases[i] == bob_bases[i]:
+                alice_bit = int(result.measurements[f"alice_{i}"][0, 0])
+                bob_bit = int(result.measurements[f"bob_{i}"][0, 0])
+                # In a Bell pair, same-basis measurements are perfectly correlated.
+                final_key.append(alice_bit if alice_bit == bob_bit else alice_bit)
+
+        return {
+            "final_key": final_key,
+            "sifted_length": len(final_key),
+            "num_pairs": num_pairs,
+            "protocol": "E91",
+        }
+
     def benchmark_qkdpy_vs_cirq(
         self, num_qubits: int = 100, num_trials: int = 10
     ) -> dict[str, Any]:

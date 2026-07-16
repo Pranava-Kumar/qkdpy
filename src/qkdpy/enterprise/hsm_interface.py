@@ -4,16 +4,17 @@ This module provides an abstract HSM interface and implementations for
 secure key storage and management in enterprise environments.
 """
 
-import hashlib
 import os
 import secrets
 from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from typing import Any
 
+from cryptography.hazmat.primitives import hashes
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 from ..exceptions import (
     HSMError,
@@ -25,33 +26,67 @@ from ..utils.logging_config import get_logger
 logger = get_logger(__name__)
 
 
-# AES-256-GCM requires a 32-byte key. HSM-stored key material can have any length;
-# we deterministically derive a 32-byte AES key via SHA-256. A real HSM provider
-# would store keys of the correct size already and we would not be re-deriving.
-def _derive_aes_key(key_material: bytes) -> bytes:
-    """Derive a 32-byte AES-256 key from arbitrary-length HSM key material."""
-    return hashlib.sha256(key_material + b"qkdpy.hsm.aesgcm").digest()
+# PBKDF2 iteration count. 100k HMAC-SHA256 is the OWASP floor for PBKDF2 today;
+# a real HSM would not derive keys this way at all (it holds the raw key), but for
+# this software simulation we must not use a raw-digest "KDF" (a single SHA-256 of
+# key||constant is reversible-in-strength-equivalent to no KDF and offers no
+# defense against offline brute force if key material ever leaves memory).
+_PBKDF2_ITERATIONS = 100_000
+_PBKDF2_SALT_BYTES = 16
+
+
+def _derive_aes_key(key_material: bytes, salt: bytes) -> bytes:
+    """Derive a 32-byte AES-256 key from key material using PBKDF2-HMAC-SHA256.
+
+    The salt MUST be unique per key (see ``SoftwareHSM``). It is stored alongside
+    the key handle so the same key material + salt always reproduces the same
+    derived key for decrypt/unwrap, while a different salt yields a different key.
+    """
+    if len(salt) != _PBKDF2_SALT_BYTES:
+        raise HSMError(
+            f"PBKDF2 salt must be {_PBKDF2_SALT_BYTES} bytes, "
+            f"got {len(salt)}"
+        )
+    kdf = PBKDF2HMAC(
+        algorithm=hashes.SHA256(),
+        length=32,
+        salt=salt,
+        iterations=_PBKDF2_ITERATIONS,
+    )
+    return kdf.derive(key_material)
 
 
 class HSMProvider(Enum):
-    """Supported HSM providers."""
+    """Supported HSM providers.
 
-    SOFTWARE = "software"  # Software-based HSM for testing
-    PKCS11 = "pkcs11"  # PKCS#11 compatible HSMs
-    AWS_CLOUDHSM = "aws_cloudhsm"
-    AZURE_HSM = "azure_hsm"
-    GOOGLE_CLOUD_HSM = "google_cloud_hsm"
+    Only ``SOFTWARE`` is implemented in this build. It is an in-memory
+    simulation intended for development and testing only — it is NOT
+    hardware-backed and MUST NOT be used in production. The cloud/PKCS#11
+    providers were previously advertised as stubs; that over-promised support
+    that does not exist, so they have been removed rather than shipped as
+    NotImplementedError traps.
+    """
+
+    SOFTWARE = "software"  # Software-based in-memory simulation (NOT production-grade)
 
 
 @dataclass
 class HSMKeyHandle:
-    """Handle to a key stored in the HSM."""
+    """Handle to a key stored in the HSM.
+
+    ``key_salt`` is the per-key PBKDF2 salt used to derive the AES wrapping
+    key from the stored key material. It is public (non-secret) but MUST be
+    persisted with the handle, or wrapped-key exports cannot be unwrapped.
+    """
 
     key_id: str
     key_type: str
     created_at: datetime
     expires_at: datetime | None
     metadata: dict[str, Any]
+    key_salt: bytes = field(
+        default_factory=lambda: secrets.token_bytes(_PBKDF2_SALT_BYTES)
+    )
 
     def is_expired(self) -> bool:
         """Check if the key has expired."""
@@ -279,7 +314,16 @@ class SoftwareHSM(HSMInterface):
     def __init__(self) -> None:
         """Initialize software HSM."""
         self._initialized = False
-        self._keys: dict[str, tuple[bytes, HSMKeyHandle]] = {}
+        # Stored form per key: (wrapped_key_material, salt). The raw key material
+        # is never kept in plaintext; it is wrapped under a per-session master KEK
+        # (see ``_wrap_material`` / ``_unwrap_material``). ``salt`` is the per-key
+        # PBKDF2 salt used to derive the AES data-encryption key on encrypt/decrypt.
+        self._keys: dict[str, tuple[bytes, bytes, HSMKeyHandle]] = {}
+        # Session master KEK used to wrap stored key material. It is purely an
+        # in-memory obfuscation layer for the software simulation and provides NO
+        # real security — a process inspector can read it. Documented so nobody
+        # mistakes this for hardware-backed key isolation.
+        self._master_kek = secrets.token_bytes(32)
         logger.warning(
             "SoftwareHSM initialized - NOT FOR PRODUCTION USE",
             provider=HSMProvider.SOFTWARE.value,
@@ -298,6 +342,25 @@ class SoftwareHSM(HSMInterface):
         """Raise if HSM not available."""
         if not self._initialized:
             raise HSMNotAvailableError("HSM not initialized")
+
+    def _wrap_material(self, key_material: bytes) -> tuple[bytes, bytes]:
+        """Wrap raw key material so it is never stored as plaintext.
+
+        Returns ``(wrapped, salt)`` where ``wrapped`` is AES-256-GCM
+        ciphertext of the material under the per-session master KEK. ``salt``
+        is a random per-key PBKDF2 salt used to derive the data-encryption key.
+        """
+        salt = secrets.token_bytes(_PBKDF2_SALT_BYTES)
+        nonce = os.urandom(12)
+        wrapped = AESGCM(self._master_kek).encrypt(nonce, key_material, None)
+        return nonce + wrapped, salt
+
+    def _unwrap_material(self, wrapped: bytes, salt: bytes) -> bytes:
+        """Reverse of :meth:`_wrap_material`."""
+        if len(wrapped) < 12:
+            raise HSMError("Wrapped key material is malformed")
+        nonce, body = wrapped[:12], wrapped[12:]
+        return AESGCM(self._master_kek).decrypt(nonce, body, None)
 
     def generate_key(
         self,
@@ -332,7 +395,8 @@ class SoftwareHSM(HSMInterface):
             metadata=metadata or {},
         )
 
-        self._keys[key_id] = (key_material, handle)
+        wrapped, salt = self._wrap_material(key_material)
+        self._keys[key_id] = (wrapped, salt, handle)
 
         logger.audit(
             "hsm_key_generated",
@@ -372,7 +436,8 @@ class SoftwareHSM(HSMInterface):
             metadata=metadata or {},
         )
 
-        self._keys[key_id] = (key_material, handle)
+        wrapped, salt = self._wrap_material(key_material)
+        self._keys[key_id] = (wrapped, salt, handle)
 
         logger.audit(
             "hsm_key_imported",
@@ -384,13 +449,17 @@ class SoftwareHSM(HSMInterface):
         return handle
 
     def get_key_handle(self, key_id: str) -> HSMKeyHandle:
-        """Get handle to a key."""
+        """Get handle to a key.
+
+        The handle intentionally exposes NO key bytes — only metadata and the
+        (non-secret) PBKDF2 salt. Raw key material is never returned.
+        """
         self._check_available()
 
         if key_id not in self._keys:
             raise KeyNotFoundError(f"Key {key_id} not found")
 
-        return self._keys[key_id][1]
+        return self._keys[key_id][2]
 
     def delete_key(self, key_id: str) -> bool:
         """Delete a key."""
@@ -427,8 +496,11 @@ class SoftwareHSM(HSMInterface):
         if key_id not in self._keys:
             raise KeyNotFoundError(f"Key {key_id} not found")
 
-        key_material = self._keys[key_id][0]
-        aes_key = _derive_aes_key(key_material)
+        wrapped, salt, _handle = self._keys[key_id]
+        key_material = self._unwrap_material(wrapped, salt)
+        # PBKDF2-HMAC-SHA256 (100k iters) derives the data key from the key
+        # material + this key's unique salt. Different salt -> different key.
+        aes_key = _derive_aes_key(key_material, salt)
 
         # 96-bit nonce is the AES-GCM-recommended size.
         nonce = os.urandom(12)
@@ -462,8 +534,9 @@ class SoftwareHSM(HSMInterface):
         if len(ciphertext) < 12 + 16:
             raise HSMError("Ciphertext too short")
 
-        key_material = self._keys[key_id][0]
-        aes_key = _derive_aes_key(key_material)
+        wrapped, salt, _handle = self._keys[key_id]
+        key_material = self._unwrap_material(wrapped, salt)
+        aes_key = _derive_aes_key(key_material, salt)
 
         nonce = ciphertext[:12]
         body = ciphertext[12:]
@@ -494,7 +567,7 @@ class SoftwareHSM(HSMInterface):
     def list_keys(self) -> list[HSMKeyHandle]:
         """List all keys."""
         self._check_available()
-        return [handle for _, handle in self._keys.values()]
+        return [handle for _, _, handle in self._keys.values()]
 
     def close(self) -> None:
         """Close and clear all keys."""
@@ -524,17 +597,11 @@ def get_hsm(
         hsm.initialize(config or {})
         return hsm
 
-    elif provider == HSMProvider.PKCS11:
-        # Check if PKCS#11 library is available
-        try:
-            import pkcs11  # noqa: F401
-
-            raise NotImplementedError("PKCS#11 HSM not yet implemented")
-        except ImportError:
-            raise HSMNotAvailableError(
-                "PKCS#11 support requires the 'python-pkcs11' package. "
-                "Install with: pip install qkdpy[enterprise]"
-            ) from None
-
     else:
-        raise HSMNotAvailableError(f"HSM provider {provider} not available")
+        # Only HSMProvider.SOFTWARE is implemented. Cloud HSM (AWS/Azure/GCP)
+        # and PKCS#11 providers were previously advertised but never implemented;
+        # we fail closed instead of pretending support exists.
+        raise HSMNotAvailableError(
+            f"HSM provider {provider.value!r} is not implemented in this "
+            "software-simulation build. Only HSMProvider.SOFTWARE is available."
+        )

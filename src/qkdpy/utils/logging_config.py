@@ -28,6 +28,18 @@ except ImportError:
     STRUCTLOG_AVAILABLE = False
     structlog = None  # type: ignore
 
+# structlog's ConsoleRenderer(colors=True) on Windows requires colorama to be
+# initialized, otherwise import raises SystemError. Initialize it (when present)
+# before structlog is configured so a Windows `import qkdpy` does not crash.
+# Use importlib so mypy does not require colorama type stubs.
+if STRUCTLOG_AVAILABLE:
+    try:
+        import importlib
+
+        importlib.import_module("colorama").init()
+    except ImportError:
+        pass
+
 
 # Log levels with security-specific addition
 LOG_LEVELS = {

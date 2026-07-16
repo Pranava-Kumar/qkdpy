@@ -1,5 +1,6 @@
 """Key distillation methods for QKD protocols."""
 
+from ..utils.helpers import binary_entropy
 from .error_correction import ErrorCorrection
 from .privacy_amplification import PrivacyAmplification
 
@@ -137,12 +138,12 @@ class KeyDistillation:
             Estimated fraction of information leaked to Eve
 
         """
-        # This is a simplified model
-        # In a real implementation, this would depend on the specific protocol and attack model
-
-        # For BB84, the relationship between QBER and Eve's information is well-studied
-        # For simplicity, we'll use a linear model here
-        return min(1.0, qber * 2)
+        # For an intercept-resend style attack on matched bits, Eve's mutual
+        # information about each bit is bounded by the binary entropy of the
+        # QBER. A linear bound (qber*2) underestimates Eve's knowledge at low
+        # QBER, leaking key bits into the final key via privacy amplification,
+        # so we use h(QBER) instead, capped at 1.0.
+        return min(1.0, binary_entropy(qber))
 
     def get_statistics(self) -> dict[str, int | float]:
         """Get distillation statistics.

@@ -6,7 +6,7 @@ implementing various QKD protocols, quantum simulators, and cryptographic tools.
 
 # ruff: noqa: F403, F405 — star imports intentional for public API re-export
 
-__version__ = "0.6.0"
+__version__ = "0.6.1"
 __author__ = "Pranava Kumar"
 __email__ = "pranavakumar.it@gmail.com"
 
