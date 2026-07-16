@@ -817,7 +817,8 @@ print()
 print(SEP)
 print("TEST COMPLETE - ALL MODULES EXERCISED")
 print(SEP)
-print("""
+print(
+    """
 Modules tested:
   - satellite_qkd.py:  SatelliteQKD, FreeSpaceOpticalChannel,
                        AtmosphericProfile, SatellitePosition,
@@ -831,4 +832,5 @@ Modules tested:
 External:
   - CelesTrak TLE fetch (with graceful fallback to simulated TLE)
   - sgp4 satellite propagation
-""")
+"""
+)

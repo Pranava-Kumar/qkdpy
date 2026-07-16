@@ -744,7 +744,8 @@ for mem in [64, 128, 256]:
 print("\n" + "=" * 72)
 print("  TEST SUMMARY")
 print("=" * 72)
-print(f"""
+print(
+    f"""
 1. QKDOptimizer
    Bayesian  best: {bayes_result['best_objective_value']:.4e}  ({t_bayes:.3f}s)
    Genetic   best: {ga_result['best_objective_value']:.4e}  ({t_ga:.3f}s)
@@ -771,7 +772,8 @@ print(f"""
 5. EfficientModels
    Archs tested: {len(arch_results)} memory levels
    Best R^2: {max(a['r2'] for a in arch_results):.6f}  @ {max(a['mem'] for a in arch_results)}MB
-""")
+"""
+)
 print("=" * 72)
 print("  ALL TESTS COMPLETE")
 print("=" * 72)
