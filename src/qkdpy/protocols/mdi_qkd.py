@@ -95,9 +95,7 @@ class MDIQKD(BaseProtocol):
         if not self.alice_bits:
             self.generate_keys()
         return [
-            self.prepare_pulse(
-                b, basis  # type: ignore[arg-type]
-            )
+            self.prepare_pulse(b, basis)  # type: ignore[arg-type]
             for b, basis in zip(self.alice_bits, self.alice_bases, strict=True)
         ]
 
