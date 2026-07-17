@@ -183,6 +183,9 @@ class DecoyStateBB84(BaseProtocol):
         alice_sifted = []
         bob_sifted = []
 
+        if not self.bob_bases or not self.bob_results:
+            return alice_sifted, bob_sifted
+
         for i in range(self.num_pulses):
             # Skip if Bob didn't receive the qubit
             if self.bob_bases[i] is None or self.bob_results[i] is None:
