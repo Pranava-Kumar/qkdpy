@@ -22,6 +22,8 @@ References:
     * Rytov variance: a standard measure of the strength of optical turbulence.
 """
 
+from typing import Any
+
 import numpy as np
 
 from ..channels import QuantumChannel
@@ -95,7 +97,7 @@ def von_karman_spectrum(
     term = (kappa**2 + k0**2) ** (11.0 / 6.0)
     # Kolmogorov core scaled by the von Karman inner/outer cutoffs.
     spectrum = 0.033 * cn2 * np.exp(-(kappa**2) / (k1**2)) / term
-    return spectrum
+    return np.asarray(spectrum)
 
 
 def fried_parameter(
@@ -236,7 +238,7 @@ class AtmosphericTurbulenceChannel(QuantumChannel):
         outer_scale: float = 10.0,
         inner_scale: float = 0.01,
         grid_size: int = 128,
-        **kwargs: object,
+        **kwargs: Any,
     ) -> None:
         """Initialize the turbulence channel with atmospheric parameters."""
         super().__init__(distance=distance, **kwargs)
@@ -285,7 +287,7 @@ class AtmosphericTurbulenceChannel(QuantumChannel):
         )
         if self.path_length_m <= 0:
             return float(values[0])
-        return float(np.trapz(values, altitudes) / self.path_length_m)
+        return float(np.trapezoid(values, altitudes) / self.path_length_m)
 
     def get_turbulence_metrics(self) -> dict:
         """Return the computed turbulence metrics for inspection."""

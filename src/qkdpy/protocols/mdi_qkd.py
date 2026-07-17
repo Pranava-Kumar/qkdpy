@@ -32,6 +32,7 @@ References:
 
 from ..core import QuantumChannel
 from ..core.qubit import Qubit
+from ..core.qudit import Qudit
 from ..core.secure_random import secure_choice, secure_random
 from .base import BaseProtocol
 
@@ -89,12 +90,14 @@ class MDIQKD(BaseProtocol):
             return Qubit.plus() if bit == 0 else Qubit.minus()
         return Qubit.zero() if bit == 0 else Qubit.one()
 
-    def prepare_states(self) -> list[Qubit]:
+    def prepare_states(self) -> list[Qubit | Qudit]:
         """Prepare Alice's raw pulse train (Bob mirrors this internally)."""
         if not self.alice_bits:
             self.generate_keys()
         return [
-            self.prepare_pulse(b, basis)
+            self.prepare_pulse(
+                b, basis  # type: ignore[arg-type]
+            )
             for b, basis in zip(self.alice_bits, self.alice_bases, strict=True)
         ]
 
@@ -128,8 +131,8 @@ class MDIQKD(BaseProtocol):
         if secure_random() < self.misalignment_error:
             correlated = not correlated  # basis/misalignment flip
         if correlated:
-            return secure_choice(["phi_plus", "phi_minus"])
-        return secure_choice(["psi_plus", "psi_minus"])
+            return secure_choice(["phi_plus", "phi_minus"])  # type: ignore[no-any-return]
+        return secure_choice(["psi_plus", "psi_minus"])  # type: ignore[no-any-return]
 
     def generate_keys(self) -> tuple[list[int], list[int]]:
         """Generate Alice and Bob's raw bit strings and basis choices."""
@@ -147,14 +150,14 @@ class MDIQKD(BaseProtocol):
             bob_bases = ["Z"] * self.num_qubits
         self.alice_bits = alice_bits
         self.bob_bits = bob_bits
-        self.alice_bases = alice_bases
-        self.bob_bases = bob_bases
+        self.alice_bases = alice_bases  # type: ignore[assignment]
+        self.bob_bases = bob_bases  # type: ignore[assignment]
         return alice_bits, bob_bits
 
     alice_bits: list[int] = []
     bob_bits: list[int] = []
-    alice_bases: list[str] = []
-    bob_bases: list[str] = []
+    alice_bases: list[int | str | None] = []
+    bob_bases: list[int | str | None] = []
 
     def sift_keys(self) -> tuple[list[int], list[int]]:
         """Sift on matching bases and successful BSM outcomes."""
@@ -167,18 +170,22 @@ class MDIQKD(BaseProtocol):
                 continue
             # Each party sends her/his pulse; channels model loss/noise.
             qa = self.channel_alice.transmit(
-                self.prepare_pulse(self.alice_bits[i], self.alice_bases[i])
+                self.prepare_pulse(
+                    self.alice_bits[i], self.alice_bases[i]  # type: ignore[arg-type]
+                )
             )
             qb = self.channel_bob.transmit(
-                self.prepare_pulse(self.bob_bits[i], self.bob_bases[i])
+                self.prepare_pulse(
+                    self.bob_bits[i], self.bob_bases[i]  # type: ignore[arg-type]
+                )
             )
             if qa is None or qb is None:
                 continue  # lost at the channel, never reaches Charlie
             # Measure the (possibly channel-degraded) pulses in their bases.
             meas_basis_a = "computational" if self.alice_bases[i] == "Z" else "hadamard"
             meas_basis_b = "computational" if self.bob_bases[i] == "Z" else "hadamard"
-            a_meas = qa.measure(meas_basis_a)
-            b_meas = qb.measure(meas_basis_b)
+            a_meas = qa.measure(meas_basis_a)  # type: ignore[arg-type]
+            b_meas = qb.measure(meas_basis_b)  # type: ignore[arg-type]
 
             # Ideal (noise-free) reconciliation from the prepared bits.
             ideal_outcome = self.bell_state_measurement(

@@ -99,7 +99,7 @@ class PNSAttack:
         self.vacuum_pulses = 0
         self.detected_events = 0
 
-    def __call__(self, qubit: _Pulse) -> tuple[_Pulse, bool]:
+    def __call__(self, qubit: _Pulse) -> tuple[_Pulse | None, bool]:
         """Apply the PNS beam-splitter strategy to a transmitted pulse.
 
         Returns:
@@ -145,7 +145,7 @@ class PNSAttack:
             return 0.0
         return self.multi_photon_probability / non_vacuum
 
-    def as_callable(self) -> Callable[[_Pulse], tuple[_Pulse, bool]]:
+    def as_callable(self) -> Callable[[_Pulse], tuple[_Pulse | None, bool]]:
         """Return self as a plain callable for ``set_eavesdropper``."""
         return self
 
@@ -155,7 +155,7 @@ def photon_number_splitting_attack(
     mean_photon_number: float = 0.1,
     beam_splitter_transmission: float = 0.99,
     block_single_photon: bool = True,
-) -> tuple[_Pulse, bool]:
+) -> tuple[_Pulse | None, bool]:
     """Stateless PNS attack compatible with ``QuantumChannel`` staticmethods.
 
     Mirrors ``QuantumChannel.intercept_resend_attack`` so callers can plug it in

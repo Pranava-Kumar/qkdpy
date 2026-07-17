@@ -180,8 +180,8 @@ class DecoyStateBB84(BaseProtocol):
             Tuple of (alice_sifted_key, bob_sifted_key)
 
         """
-        alice_sifted = []
-        bob_sifted = []
+        alice_sifted: list[int] = []
+        bob_sifted: list[int] = []
 
         if not self.bob_bases or not self.bob_results:
             return alice_sifted, bob_sifted

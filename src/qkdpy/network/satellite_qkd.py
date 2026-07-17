@@ -250,7 +250,7 @@ class FreeSpaceOpticalChannel(QuantumChannel):
         )
 
         # Convert to loss fraction
-        return 1.0 - max(0.0, min(1.0, total_efficiency))
+        return float(1.0 - max(0.0, min(1.0, total_efficiency)))
 
     def _fried_parameter(self) -> float:
         """Calculate Fried parameter (r0) for atmospheric coherence.
@@ -271,7 +271,7 @@ class FreeSpaceOpticalChannel(QuantumChannel):
         r0 = (0.423 * k**2 * integrated_cn2) ** (-3 / 5)
         return float(max(0.01, r0))  # Minimum 1 cm
 
-    def get_channel_metrics(self) -> dict[str, float]:
+    def get_channel_metrics(self) -> dict[str, Any]:
         """Get detailed channel metrics."""
         return {
             "slant_range_km": self.satellite_position.slant_range_km,
