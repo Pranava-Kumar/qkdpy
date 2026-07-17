@@ -32,7 +32,6 @@ from qkdpy.utils.validation import (
     validate_unitary,
 )
 
-
 # -- Helper functions for testing decorators ---------------------
 
 
@@ -222,9 +221,7 @@ class TestValidateDensityMatrix(unittest.TestCase):
     def test_non_square(self):
         """Non-square matrix raises ParameterError."""
         with self.assertRaises(ParameterError):
-            validate_density_matrix(
-                np.array([[0.5, 0, 0], [0, 0.5, 0]])
-            )
+            validate_density_matrix(np.array([[0.5, 0, 0], [0, 0.5, 0]]))
 
     def test_non_hermitian(self):
         """Non-Hermitian matrix raises ParameterError."""
@@ -279,8 +276,11 @@ class TestValidateRangeEdgeCases(unittest.TestCase):
         """Both boundaries exclusive."""
 
         @validate_range(
-            "x", min_value=0, max_value=10,
-            min_inclusive=False, max_inclusive=False,
+            "x",
+            min_value=0,
+            max_value=10,
+            min_inclusive=False,
+            max_inclusive=False,
         )
         def _both_exclusive(x: float) -> float:
             return x
@@ -316,41 +316,31 @@ class TestExtractParamValue(unittest.TestCase):
 
     def test_found_in_kwargs(self):
         """Parameter found in kwargs."""
-        value, found = _extract_param_value(
-            "b", _dummy_func, (), {"b": "hello"}
-        )
+        value, found = _extract_param_value("b", _dummy_func, (), {"b": "hello"})
         self.assertTrue(found)
         self.assertEqual(value, "hello")
 
     def test_found_in_positional_args(self):
         """Parameter found in positional args."""
-        value, found = _extract_param_value(
-            "a", _dummy_func, (42, "hello"), {}
-        )
+        value, found = _extract_param_value("a", _dummy_func, (42, "hello"), {})
         self.assertTrue(found)
         self.assertEqual(value, 42)
 
     def test_not_found(self):
         """Parameter not provided -- found is False."""
-        value, found = _extract_param_value(
-            "c", _dummy_func, (42, "hello"), {}
-        )
+        value, found = _extract_param_value("c", _dummy_func, (42, "hello"), {})
         self.assertFalse(found)
         self.assertIsNone(value)
 
     def test_kwargs_precedence(self):
         """kwargs should take precedence over positional args."""
-        value, found = _extract_param_value(
-            "a", _dummy_func, (99, "hello"), {"a": 42}
-        )
+        value, found = _extract_param_value("a", _dummy_func, (99, "hello"), {"a": 42})
         self.assertTrue(found)
         self.assertEqual(value, 42)
 
     def test_none_in_kwargs_is_found(self):
         """None passed explicitly in kwargs yields found=True."""
-        value, found = _extract_param_value(
-            "b", _dummy_func, (), {"b": None}
-        )
+        value, found = _extract_param_value("b", _dummy_func, (), {"b": None})
         self.assertTrue(found)
         self.assertIsNone(value)
 

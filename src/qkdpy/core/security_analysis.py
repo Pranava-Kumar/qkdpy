@@ -489,7 +489,9 @@ class QBERAnalysis:
                 trend_direction = (
                     "increasing"
                     if slope > 0.001
-                    else "decreasing" if slope < -0.001 else "stable"
+                    else "decreasing"
+                    if slope < -0.001
+                    else "stable"
                 )
             else:
                 slope = 0.0

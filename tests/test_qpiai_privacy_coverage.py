@@ -83,9 +83,7 @@ class TestCreateEntanglementCircuit:
     @pytest.mark.parametrize(
         "state_type", ["|\u03a8+>", "|\u03a8->", "|\u03a6+>", "|\u03a6->"]
     )
-    def test_all_bell_states(
-        self, qpiai: QpiAIIntegration, state_type: str
-    ) -> None:
+    def test_all_bell_states(self, qpiai: QpiAIIntegration, state_type: str) -> None:
         circuit, desc = qpiai.create_entanglement_circuit(state_type)
         assert circuit is not None
         assert isinstance(desc, str)
@@ -128,9 +126,7 @@ class TestStateConversion:
     def test_statevector_from_array(self, qpiai: QpiAIIntegration) -> None:
         from qpiai_quantum import Statevector
 
-        sv = qpiai.statevector_from_array(
-            [1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j]
-        )
+        sv = qpiai.statevector_from_array([1 + 0j, 0 + 0j, 0 + 0j, 0 + 0j])
         assert isinstance(sv, Statevector)
 
 
@@ -179,9 +175,7 @@ class TestQuantumMeasures:
 
 
 class TestSimulate:
-    def test_simulate_without_key(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_simulate_without_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """No API_KEY -> returns circuit metadata dict."""
         monkeypatch.delenv("API_KEY", raising=False)
         inst = QpiAIIntegration.__new__(QpiAIIntegration)
@@ -194,9 +188,7 @@ class TestSimulate:
         assert isinstance(result, dict)
         assert "num_qubits" in result
 
-    def test_simulate_with_key(
-        self, monkeypatch: pytest.MonkeyPatch
-    ) -> None:
+    def test_simulate_with_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """With API_KEY -> runs local statevector simulation."""
         monkeypatch.setenv("API_KEY", "test-key-xxxx")
         inst = QpiAIIntegration.__new__(QpiAIIntegration)
@@ -238,9 +230,7 @@ class TestCalculateQBER:
         assert inst.calculate_qber([0, 1, 0], [1, 0, 1]) == 1.0
 
     def test_half_mismatch(self, inst: QpiAIIntegration) -> None:
-        result = inst.calculate_qber(
-            [0, 0, 1, 1], [0, 1, 0, 1]
-        )
+        result = inst.calculate_qber([0, 0, 1, 1], [0, 1, 0, 1])
         assert result == 0.5
 
     def test_empty(self, inst: QpiAIIntegration) -> None:
@@ -315,9 +305,7 @@ class TestXorExtract:
 
 class TestAesHashExtract:
     def test_zero_output_length(self) -> None:
-        result = AdvancedPrivacyAmplification.aes_hash_extract(
-            [1, 0, 1], 0
-        )
+        result = AdvancedPrivacyAmplification.aes_hash_extract([1, 0, 1], 0)
         assert result == []
 
     def test_typical(self) -> None:
@@ -327,9 +315,7 @@ class TestAesHashExtract:
         assert all(b in (0, 1) for b in result)
 
     def test_single_bit_output(self) -> None:
-        result = AdvancedPrivacyAmplification.aes_hash_extract(
-            [1, 0, 1, 1, 0], 1
-        )
+        result = AdvancedPrivacyAmplification.aes_hash_extract([1, 0, 1, 1, 0], 1)
         assert len(result) == 1
         assert result[0] in (0, 1)
 
@@ -395,9 +381,7 @@ class TestStrongExtractor:
     def test_low_entropy_fallback(self) -> None:
         """When min_entropy is too low, falls back to small output."""
         key = np.random.randint(0, 2, 20).tolist()
-        result = AdvancedPrivacyAmplification.strong_extractor(
-            key, 20, min_entropy=2.0
-        )
+        result = AdvancedPrivacyAmplification.strong_extractor(key, 20, min_entropy=2.0)
         assert len(result) <= 8  # fallback length
         assert all(b in (0, 1) for b in result)
 
@@ -409,9 +393,7 @@ class TestStrongExtractor:
 
     def test_very_small_key(self) -> None:
         """Key of length 1 with low entropy."""
-        result = AdvancedPrivacyAmplification.strong_extractor(
-            [1], 4, min_entropy=1.0
-        )
+        result = AdvancedPrivacyAmplification.strong_extractor([1], 4, min_entropy=1.0)
         # Should still produce some output (fallback)
         assert all(b in (0, 1) for b in result)
 
@@ -420,16 +402,12 @@ class TestSeededExtractor:
     def test_normal_case(self) -> None:
         key = np.random.randint(0, 2, 100).tolist()
         seed = np.random.randint(0, 2, 50).tolist()
-        result = AdvancedPrivacyAmplification.seeded_extractor(
-            key, seed, 20
-        )
+        result = AdvancedPrivacyAmplification.seeded_extractor(key, seed, 20)
         assert 0 < len(result) <= 20
         assert all(b in (0, 1) for b in result)
 
     def test_zero_output_length(self) -> None:
-        result = AdvancedPrivacyAmplification.seeded_extractor(
-            [1, 0, 1], [0, 1], 0
-        )
+        result = AdvancedPrivacyAmplification.seeded_extractor([1, 0, 1], [0, 1], 0)
         assert result == []
 
 

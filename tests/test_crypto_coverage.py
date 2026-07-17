@@ -1,4 +1,5 @@
 """Coverage tests for crypto modules."""
+
 import os
 import tempfile
 
@@ -145,5 +146,11 @@ class TestQuantumAuth:
     def test_verify_commitment(self):
         key = [1, 0] * 64
         r = QuantumAuth.generate_commitment("my_value", key)
-        assert QuantumAuth.verify_commitment("my_value", r["commitment"], key, r["nonce"]) is True
-        assert QuantumAuth.verify_commitment("wrong", r["commitment"], key, r["nonce"]) is False
+        assert (
+            QuantumAuth.verify_commitment("my_value", r["commitment"], key, r["nonce"])
+            is True
+        )
+        assert (
+            QuantumAuth.verify_commitment("wrong", r["commitment"], key, r["nonce"])
+            is False
+        )

@@ -63,9 +63,9 @@ def benchmark_sarg04():
         )
 
     assert qber < 0.05, "QBER too high"
-    assert (
-        sifting_efficiency > 0.15 and sifting_efficiency < 0.35
-    ), "Sifting efficiency deviation"
+    assert sifting_efficiency > 0.15 and sifting_efficiency < 0.35, (
+        "Sifting efficiency deviation"
+    )
 
 
 if __name__ == "__main__":

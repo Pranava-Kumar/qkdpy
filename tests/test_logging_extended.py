@@ -33,7 +33,9 @@ class TestStructlogNotAvailable(unittest.TestCase):
     def test_qkd_logger_stdlib_fallback_init(self):
         """QKDLogger.__init__ creates stdlib logger with handler when structlog missing."""
         with patch("qkdpy.utils.logging_config.STRUCTLOG_AVAILABLE", False):
-            with patch("qkdpy.utils.logging_config.logging.getLogger") as mock_get_logger:
+            with patch(
+                "qkdpy.utils.logging_config.logging.getLogger"
+            ) as mock_get_logger:
                 mock_stdlib = MagicMock(spec=logging.Logger)
                 mock_stdlib.handlers = []
                 mock_get_logger.return_value = mock_stdlib
@@ -91,6 +93,7 @@ class TestImportErrorPaths(unittest.TestCase):
     def test_get_version_returns_unknown_on_import_error(self):
         """_get_version returns unknown when qkdpy.__version__ is inaccessible."""
         import qkdpy
+
         _get_version.cache_clear()
         saved = qkdpy.__version__
         try:
@@ -104,7 +107,9 @@ class TestImportErrorPaths(unittest.TestCase):
     def test_colorama_import_error_does_not_crash(self):
         """Missing colorama does not crash when structlog is available."""
         with patch("qkdpy.utils.logging_config.STRUCTLOG_AVAILABLE", True):
-            with patch("importlib.import_module", side_effect=ImportError("no colorama")):
+            with patch(
+                "importlib.import_module", side_effect=ImportError("no colorama")
+            ):
                 logger = get_logger("test.colorama")
                 logger.info("still working without colorama")
 
@@ -200,7 +205,9 @@ class TestConvenienceFunctions(unittest.TestCase):
 
             log_security("security event", ip="10.0.0.1")
 
-            mock_logger.security.assert_called_once_with("security event", ip="10.0.0.1")
+            mock_logger.security.assert_called_once_with(
+                "security event", ip="10.0.0.1"
+            )
 
 
 if __name__ == "__main__":

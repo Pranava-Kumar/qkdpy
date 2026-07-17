@@ -36,7 +36,9 @@ class TestRandomUnitary:
     def test_is_unitary(self):
         for _ in range(10):
             u = GateUtils.random_unitary()
-            assert GateUtils.is_unitary(u), "random_unitary should produce unitary matrices"
+            assert GateUtils.is_unitary(u), (
+                "random_unitary should produce unitary matrices"
+            )
 
     def test_shape(self):
         u = GateUtils.random_unitary()

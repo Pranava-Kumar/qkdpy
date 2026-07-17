@@ -124,8 +124,10 @@ class TestProtocolTimingManager:
         manager = ProtocolTimingManager(ts, ptm_model, qta)
 
         emitted, bases = manager.send_photon_sequence(
-            start_time=0.0, pulse_interval=1e-9, num_photons=5,
-            basis_sequence=["Z", "X", "Z", "X", "Z"]
+            start_time=0.0,
+            pulse_interval=1e-9,
+            num_photons=5,
+            basis_sequence=["Z", "X", "Z", "X", "Z"],
         )
         assert len(emitted) == 5
         assert len(bases) == 5

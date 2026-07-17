@@ -54,9 +54,9 @@ class TestSmokeSanity:
         bb84_2 = BB84(channel, key_length=20)
         res2 = bb84_2.execute()
 
-        assert (
-            res1["final_key"] != res2["final_key"]
-        ), "Keys should be random and different"
+        assert res1["final_key"] != res2["final_key"], (
+            "Keys should be random and different"
+        )
 
     def test_sanity_privacy_amplification(self):
         """Sanity check for privacy amplification with new secure seeding."""

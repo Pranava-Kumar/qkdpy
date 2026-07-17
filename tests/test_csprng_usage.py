@@ -33,9 +33,9 @@ class TestCSPRNGUsage:
         val2_random = secure_random()
 
         # Check that they are different
-        assert (
-            val1_random != val2_random
-        ), "secure_random() should not be deterministic with np.random.seed"
+        assert val1_random != val2_random, (
+            "secure_random() should not be deterministic with np.random.seed"
+        )
 
     def test_secure_randint_range(self):
         """Verify secure_randint respects the range."""

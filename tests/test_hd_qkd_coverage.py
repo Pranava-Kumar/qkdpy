@@ -19,9 +19,9 @@ from unittest.mock import MagicMock, patch
 
 import numpy as np
 
-from qkdpy.protocols.hd_qkd import HDQKD
-from qkdpy.core.qudit import Qudit as RealQudit
 from qkdpy.core import QuantumChannel as RealQuantumChannel
+from qkdpy.core.qudit import Qudit as RealQudit
+from qkdpy.protocols.hd_qkd import HDQKD
 
 
 def _make_mock_channel():
@@ -32,6 +32,7 @@ def _make_mock_channel():
 # ===================================================================
 #  Pure-math tests - no mocking needed beyond QuantumChannel for init
 # ===================================================================
+
 
 class TestHDQKDIsPrimePower(unittest.TestCase):
     """Cover _is_prime_power: n<=1, prime, composite, actual prime power."""
@@ -66,8 +67,9 @@ class TestHDQKDIsPrimePower(unittest.TestCase):
             with self.subTest(n=n, base=base):
                 self.assertTrue(
                     proto._is_prime_power(n),
-                    "%d = %d^k should be a prime power" % (n, base),
+                    f"{n} = {base}^k should be a prime power",
                 )
+
 
 class TestHDQKDIsPrime(unittest.TestCase):
     """Cover _is_prime: n<=1, n=2/3, even, 6k+-1 check."""
@@ -110,6 +112,7 @@ class TestHDQKDIsPrime(unittest.TestCase):
         self.assertFalse(proto._is_prime(121))
         self.assertTrue(proto._is_prime(97))
 
+
 class TestHDQKDGenerateMUBs(unittest.TestCase):
     """Cover every branch of _generate_mubs(d)."""
 
@@ -124,10 +127,10 @@ class TestHDQKDGenerateMUBs(unittest.TestCase):
         mubs = proto._generate_mubs(2)
         self.assertEqual(len(mubs), 3)
         for i, m in enumerate(mubs):
-            self.assertEqual(m.shape, (2, 2), msg="MUB %d shape mismatch" % i)
+            self.assertEqual(m.shape, (2, 2), msg=f"MUB {i} shape mismatch")
             self.assertTrue(
                 np.allclose(m @ m.conj().T, np.eye(2), atol=1e-8),
-                "MUB %d at d=2 is not unitary" % i,
+                f"MUB {i} at d=2 is not unitary",
             )
 
     def test_prime_dimension_3(self):
@@ -190,6 +193,7 @@ class TestHDQKDGenerateMUBs(unittest.TestCase):
             self.assertEqual(m.shape, (10, 10))
             self.assertTrue(np.allclose(m @ m.conj().T, np.eye(10), atol=1e-8))
 
+
 class TestHDQKDConstructMubsPrime(unittest.TestCase):
     """Cover _construct_mubs_prime: d=2 fallback, d=3/5/7 Weyl-Heisenberg."""
 
@@ -215,10 +219,10 @@ class TestHDQKDConstructMubsPrime(unittest.TestCase):
         self.assertEqual(len(mubs), 4)
         self.assertTrue(np.allclose(mubs[0], np.eye(3), atol=1e-8))
         for i, m in enumerate(mubs):
-            self.assertEqual(m.shape, (3, 3), msg="MUB %d shape" % i)
+            self.assertEqual(m.shape, (3, 3), msg=f"MUB {i} shape")
             self.assertTrue(
                 np.allclose(m @ m.conj().T, np.eye(3), atol=1e-8),
-                "MUB %d at d=3 is not unitary" % i,
+                f"MUB {i} at d=3 is not unitary",
             )
 
     def test_d5_weyl_heisenberg(self):
@@ -229,7 +233,7 @@ class TestHDQKDConstructMubsPrime(unittest.TestCase):
         for i, m in enumerate(mubs):
             self.assertTrue(
                 np.allclose(m @ m.conj().T, np.eye(5), atol=1e-8),
-                "MUB %d at d=5 not unitary" % i,
+                f"MUB {i} at d=5 not unitary",
             )
 
     def test_d7_weyl_heisenberg(self):
@@ -240,8 +244,9 @@ class TestHDQKDConstructMubsPrime(unittest.TestCase):
         for i, m in enumerate(mubs):
             self.assertTrue(
                 np.allclose(m @ m.conj().T, np.eye(7), atol=1e-8),
-                "MUB %d at d=7 not unitary" % i,
+                f"MUB {i} at d=7 not unitary",
             )
+
 
 class TestHDQKDDimensionEfficiency(unittest.TestCase):
     """Cover get_dimension_efficiency."""
@@ -252,12 +257,8 @@ class TestHDQKDDimensionEfficiency(unittest.TestCase):
     def test_returns_log2_dimension(self):
         for d, expected in [(2, 1.0), (4, 2.0), (8, 3.0), (16, 4.0)]:
             with self.subTest(d=d):
-                proto = HDQKD(
-                    self._mock_channel, key_length=10, dimension=d
-                )
-                self.assertAlmostEqual(
-                    proto.get_dimension_efficiency(), expected
-                )
+                proto = HDQKD(self._mock_channel, key_length=10, dimension=d)
+                self.assertAlmostEqual(proto.get_dimension_efficiency(), expected)
 
     def test_dim1_returns_zero(self):
         proto = HDQKD(self._mock_channel, key_length=10, dimension=1)
@@ -267,6 +268,7 @@ class TestHDQKDDimensionEfficiency(unittest.TestCase):
 # ===================================================================
 #  Protocol-operation tests (prepare, measure, sift, estimate, dist)
 # ===================================================================
+
 
 class BaseHDQKDTest(unittest.TestCase):
     """Shared setUp / tearDown for protocol-operation tests."""
@@ -296,8 +298,8 @@ class TestHDQKDPrepareStates(BaseHDQKDTest):
         # secure_randint is called alternately: symbol, basis, symbol, basis, ...
         interleaved = []
         for i in range(n):
-            interleaved.append(i % 2)   # symbol: 0, 1, 0, 1, ...
-            interleaved.append(i % 3)   # basis:  0, 1, 2, 0, 1, 2, ...
+            interleaved.append(i % 2)  # symbol: 0, 1, 0, 1, ...
+            interleaved.append(i % 3)  # basis:  0, 1, 2, 0, 1, 2, ...
         mock_randint.side_effect = interleaved
 
         mock_q = MagicMock()
@@ -325,7 +327,7 @@ class TestHDQKDPrepareStates(BaseHDQKDTest):
 
         interleaved = []
         for i in range(n):
-            interleaved.append(i % 4)       # symbol: 0, 1, 2, 3, 0, ...
+            interleaved.append(i % 4)  # symbol: 0, 1, 2, 3, 0, ...
             interleaved.append(i % n_mubs)  # basis:  0, 1, 2, 3, 4, 0, ...
         mock_randint.side_effect = interleaved
 
@@ -357,6 +359,7 @@ class TestHDQKDPrepareStates(BaseHDQKDTest):
         self.assertEqual(mock_comp_basis.call_count, n)
         mock_comp_basis.assert_called_with(0, 3)
 
+
 class TestHDQKDMeasureStates(BaseHDQKDTest):
     """Cover measure_states: None, Qudit instances, non-Qudit, mixed."""
 
@@ -380,9 +383,7 @@ class TestHDQKDMeasureStates(BaseHDQKDTest):
             q.collapse_state = MagicMock()
             qudits.append(q)
 
-        with patch(
-            "qkdpy.protocols.hd_qkd.secure_randint"
-        ) as mock_randint:
+        with patch("qkdpy.protocols.hd_qkd.secure_randint") as mock_randint:
             mock_randint.side_effect = [2, 1, 0]
             results = proto.measure_states(qudits)
 
@@ -400,9 +401,7 @@ class TestHDQKDMeasureStates(BaseHDQKDTest):
 
         qudits = ["not_a_qudit", 42, 3.14]
 
-        with patch(
-            "qkdpy.protocols.hd_qkd.secure_randint"
-        ) as mock_randint:
+        with patch("qkdpy.protocols.hd_qkd.secure_randint") as mock_randint:
             mock_randint.return_value = 0
             results = proto.measure_states(qudits)
 
@@ -420,9 +419,7 @@ class TestHDQKDMeasureStates(BaseHDQKDTest):
 
         qudits = [None, real_q, "string"]
 
-        with patch(
-            "qkdpy.protocols.hd_qkd.secure_randint"
-        ) as mock_randint:
+        with patch("qkdpy.protocols.hd_qkd.secure_randint") as mock_randint:
             mock_randint.side_effect = [0, 0]
             results = proto.measure_states(qudits)
 
@@ -437,6 +434,7 @@ class TestHDQKDMeasureStates(BaseHDQKDTest):
         results = proto.measure_states(qudits)
         self.assertEqual(results, [])
         self.assertIsInstance(results, list)
+
 
 class TestHDQKDSiftKeys(BaseHDQKDTest):
     """Cover sift_keys: matching, mismatch, bob_bases=None, alice_bases=None."""
@@ -509,6 +507,7 @@ class TestHDQKDSiftKeys(BaseHDQKDTest):
         for val in alice_s + bob_s:
             self.assertIsInstance(val, int)
 
+
 class TestHDQKDEstimateQBER(BaseHDQKDTest):
     """Cover estimate_qber: <10 bits, 0 errors, some errors."""
 
@@ -560,6 +559,7 @@ class TestHDQKDEstimateQBER(BaseHDQKDTest):
 
         self.assertAlmostEqual(proto.estimate_qber(), 1.0)
 
+
 class TestHDQKDBasisDistribution(BaseHDQKDTest):
     """Cover get_basis_distribution."""
 
@@ -603,6 +603,7 @@ class TestHDQKDBasisDistribution(BaseHDQKDTest):
         self.assertIn("dimension", dist)
         self.assertEqual(dist["dimension"], 8)
 
+
 class TestHDQKDEndToEnd(BaseHDQKDTest):
     """Short end-to-end flows with mocked internals."""
 
@@ -611,8 +612,6 @@ class TestHDQKDEndToEnd(BaseHDQKDTest):
     def test_prepare_sift_with_key_length_1(self, mock_cb, mock_randint):
         """key_length=1: prepare_states then sift_keys."""
         proto = self._make(dim=2, key_length=1)
-        n_mubs = len(proto.mubs)
-
         # Interleaved: symbol, basis, symbol, basis, symbol, basis
         # alice_symbols becomes [0, 0, 0], alice_bases becomes [1, 0, 1]
         mock_randint.side_effect = [0, 1, 0, 0, 0, 1]
@@ -649,6 +648,7 @@ class TestHDQKDEndToEnd(BaseHDQKDTest):
 #  Edge cases
 # ===================================================================
 
+
 class TestHDQKDEdgeCases(BaseHDQKDTest):
     """dimension=1, dimension=7, security_threshold=0, key_length=1."""
 
@@ -665,9 +665,7 @@ class TestHDQKDEdgeCases(BaseHDQKDTest):
         proto = self._make(dim=7, key_length=10)
         self.assertEqual(len(proto.mubs), 8)
         for m in proto.mubs:
-            self.assertTrue(
-                np.allclose(m @ m.conj().T, np.eye(7), atol=1e-8)
-            )
+            self.assertTrue(np.allclose(m @ m.conj().T, np.eye(7), atol=1e-8))
 
     def test_security_threshold_zero(self):
         """security_threshold = 0.0."""

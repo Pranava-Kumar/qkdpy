@@ -541,9 +541,7 @@ def test_conference_key_agreement_three_participants() -> None:
     net.add_node("charlie")
     net.add_connection("alice", "bob")
     net.add_connection("bob", "charlie")
-    result = MultiPartyQKD.conference_key_agreement(
-        net, ["alice", "bob", "charlie"]
-    )
+    result = MultiPartyQKD.conference_key_agreement(net, ["alice", "bob", "charlie"])
     if result is not None:
         assert "alice" in result
         assert "bob" in result
@@ -576,9 +574,7 @@ def test_conference_key_agreement_hub_unreachable() -> None:
     net.add_node("charlie")
     net.add_connection("alice", "bob")
     # charlie is disconnected, so hub (alice) cant reach him
-    result = MultiPartyQKD.conference_key_agreement(
-        net, ["alice", "bob", "charlie"]
-    )
+    result = MultiPartyQKD.conference_key_agreement(net, ["alice", "bob", "charlie"])
     assert result is None
 
 

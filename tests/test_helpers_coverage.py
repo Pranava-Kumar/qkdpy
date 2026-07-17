@@ -50,10 +50,7 @@ class TestBitsToBytes:
 
     def test_multi_byte(self):
         """0x01 0x02 → [0,0,0,0,0,0,0,1, 0,0,0,0,0,0,1,0]."""
-        bits = (
-            [0, 0, 0, 0, 0, 0, 0, 1]
-            + [0, 0, 0, 0, 0, 0, 1, 0]
-        )
+        bits = [0, 0, 0, 0, 0, 0, 0, 1] + [0, 0, 0, 0, 0, 0, 1, 0]
         assert bits_to_bytes(bits) == b"\x01\x02"
 
     def test_partial_byte_dropped(self):
@@ -79,9 +76,7 @@ class TestBytesToBits:
 
     def test_multi_byte(self):
         result = bytes_to_bits(b"\x01\x02")
-        assert result == (
-            [0, 0, 0, 0, 0, 0, 0, 1] + [0, 0, 0, 0, 0, 0, 1, 0]
-        )
+        assert result == ([0, 0, 0, 0, 0, 0, 0, 1] + [0, 0, 0, 0, 0, 0, 1, 0])
 
     def test_empty(self):
         assert bytes_to_bits(b"") == []

@@ -65,9 +65,7 @@ class TestExtendedQuantumChannel:
         ],
     )
     def test_transmit_with_noise(self, noise_model: str) -> None:
-        ch = ExtendedQuantumChannel(
-            loss=0.0, noise_model=noise_model, noise_level=1.0
-        )
+        ch = ExtendedQuantumChannel(loss=0.0, noise_model=noise_model, noise_level=1.0)
         q = Qubit(1.0, 0.0)
         result = ch.transmit(q)
         # At noise_level=1.0 the qubit may be altered, but should still
