@@ -267,7 +267,7 @@ class PennyLaneIntegration:
     ) -> float:
         """Compute the CHSH correlation value for DI-QKD verification.
 
-        The CHSH inequality |⟨S⟩| ≤ 2 is violated by quantum mechanics.
+        The CHSH inequality ``|⟨S⟩| ≤ 2`` is violated by quantum mechanics.
         A value > 2 indicates non-local correlations suitable for DI-QKD.
 
         Uses exact analytic expectation values (shots parameter is accepted

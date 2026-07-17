@@ -20,6 +20,7 @@ htmlcov/
 
 # ─── Virtual environments ────────────────────────────────
 .venv/
+.venv-wsl/
 venv/
 env/
 
@@ -63,6 +64,9 @@ project.toml.backup
 issues.txt
 *.tmp
 *.bak
+
+# ─── Mutation testing (mutmut) ────────────────────────────
+mutants/
 
 # ─── Architecture diagrams (rendered images / scripts) ────
 docs/diagrams/*.svg

@@ -9,7 +9,7 @@ class Qudit:
     """Represents a d-dimensional quantum system (qudit) with state manipulation capabilities.
 
     A qudit state is represented as a complex vector in a d-dimensional Hilbert space:
-    |ψ> = Σ α_i |i> where i ∈ {0, 1, ..., d-1} and Σ |α_i|² = 1
+    ``|ψ> = Σ α_i |i>`` where i ∈ {0, 1, ..., d-1} and ``Σ |α_i|² = 1``
     """
 
     def __init__(self, state: np.ndarray, dimension: int = 2) -> None:
@@ -37,7 +37,7 @@ class Qudit:
 
     @classmethod
     def computational_basis(cls, level: int, dimension: int) -> "Qudit":
-        """Create a qudit in a computational basis state |level>.
+        """Create a qudit in a computational basis state ``|level>``.
 
         Args:
             level: Computational basis level (0 to dimension-1)
@@ -189,7 +189,7 @@ class Qudit:
             raise ValueError(f"Result must be between 0 and {self.dimension - 1}")
 
         if basis_matrix is None:
-            # Collapses to computational basis state |result>
+            # Collapses to computational basis state ``|result>``
             new_state = np.zeros(self.dimension, dtype=complex)
             new_state[result] = 1.0
             self._state = new_state

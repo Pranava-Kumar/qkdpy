@@ -242,26 +242,6 @@ Noise model support via `qml.NoiseModel` with `DepolarizingChannel` on `default.
 
 QpiAI Quantum SDK bridge with circuit conversion, BB84/E91 circuits, and statevector simulation with CSPRNG-backed probability sampling (v0.6.1, v0.6.2).
 
-## Satellite Module
-
-### Satellite QKD
-
-```{eval-rst}
-.. automodule:: qkdpy.satellite.satellite_qkd
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
-### Atmospheric Models
-
-```{eval-rst}
-.. automodule:: qkdpy.satellite.atmospheric_models
-   :members:
-   :undoc-members:
-   :show-inheritance:
-```
-
 ## Crypto Module
 
 ### Encryption

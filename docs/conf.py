@@ -28,7 +28,7 @@ extensions = [
 ]
 
 templates_path = ["_templates"]
-exclude_patterns = []
+exclude_patterns = ["source/*", "source/**/*"]
 
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output

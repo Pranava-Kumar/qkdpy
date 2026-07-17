@@ -30,7 +30,7 @@ class QuantumSimulator:
         Args:
             channel: Quantum channel to simulate
             num_trials: Number of simulation trials
-            initial_state: Initial qubit state (default: |0>)
+            initial_state: Initial qubit state (default: ``|0>``)
 
         Returns:
             Dictionary with simulation results

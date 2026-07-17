@@ -60,14 +60,14 @@ class SARG04(BaseProtocol):
         to form a non-orthogonal set for announcement.
 
         Mapping:
-        - Bit 0: |0> (Z) or |+> (X)
-        - Bit 1: |1> (Z) or |-> (X)
+        - Bit 0: ``|0>`` (Z) or ``|+>`` (X)
+        - Bit 1: ``|1>`` (Z) or ``|->`` (X)
 
         Announcement Pairs (one sent, one partner with opposite bit):
-        - If sending |0> (Bit 0), partner is |-> (Bit 1). Set: {|0>, |->}
-        - If sending |1> (Bit 1), partner is |+> (Bit 0). Set: {|1>, |+>}
-        - If sending |+> (Bit 0), partner is |1> (Bit 1). Set: {|+>, |1>}
-        - If sending |-> (Bit 1), partner is |0> (Bit 0). Set: {|->, |0>}
+        - If sending ``|0>`` (Bit 0), partner is ``|->`` (Bit 1). Set: ``{|0>, |->}``
+        - If sending ``|1>`` (Bit 1), partner is ``|+>`` (Bit 0). Set: ``{|1>, |+>}``
+        - If sending ``|+>`` (Bit 0), partner is ``|1>`` (Bit 1). Set: ``{|+>, |1>}``
+        - If sending ``|->`` (Bit 1), partner is ``|0>`` (Bit 0). Set: ``{|->, |0>}``
 
         Returns:
             List of quantum states (qubits or qudits) to be sent through the quantum channel

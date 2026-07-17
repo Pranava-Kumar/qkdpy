@@ -63,7 +63,7 @@ class MultiQubitState:
 
     @classmethod
     def zeros(cls, num_qubits: int) -> "MultiQubitState":
-        """Create a multi-qubit state |00...0>.
+        """Create a multi-qubit state ``|00...0>``.
 
         Args:
             num_qubits: Number of qubits
@@ -82,7 +82,7 @@ class MultiQubitState:
     def ghz(cls, num_qubits: int) -> "MultiQubitState":
         """Create a GHZ (Greenberger-Horne-Zeilinger) state.
 
-        The GHZ state is (|00...0> + |11...1>) / sqrt(2)
+        The GHZ state is ``(|00...0> + |11...1>) / sqrt(2)``
 
         Args:
             num_qubits: Number of qubits
@@ -102,7 +102,7 @@ class MultiQubitState:
     def w_state(cls, num_qubits: int) -> "MultiQubitState":
         """Create a W state.
 
-        The W state is (|100...0> + |010...0> + ... + |000...1>) / sqrt(n)
+        The W state is ``(|100...0> + |010...0> + ... + |000...1>) / sqrt(n)``
 
         Args:
             num_qubits: Number of qubits

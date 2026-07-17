@@ -323,7 +323,7 @@ class TestQuantumStateTomography:
     def test_zero_state(self):
         """Tomography of |0> should reconstruct near-perfect rho."""
         q = Qubit.zero()
-        result = Measurement.quantum_state_tomography(q, num_measurements=200)
+        result = Measurement.quantum_state_tomography(q, num_measurements=1000)
         assert result["rho_00"] == pytest.approx(1.0, abs=0.05)
         assert result["rho_01"] == pytest.approx(0.0, abs=0.05)
         assert result["rho_10"] == pytest.approx(0.0, abs=0.05)
