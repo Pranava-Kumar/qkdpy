@@ -176,9 +176,9 @@ class QuantumNetwork:
 
         # Network properties
         self.loss_budget: dict[tuple[str, str], float] = {}  # Track loss per connection
-        self.latency_budget: dict[
-            tuple[str, str], float
-        ] = {}  # Track latency per connection
+        self.latency_budget: dict[tuple[str, str], float] = (
+            {}
+        )  # Track latency per connection
 
     def add_node(
         self,
@@ -268,9 +268,9 @@ class QuantumNetwork:
             distance * 5.0e-6
         )  # 5 microsec/km approx
         if has_repeater:
-            self.loss_budget[(node1_id, node2_id)] /= (
-                2  # Simplified model for repeaters
-            )
+            self.loss_budget[
+                (node1_id, node2_id)
+            ] /= 2  # Simplified model for repeaters
 
         # Update node connections
         self.nodes[node1_id].add_neighbor(node2_id, channel)

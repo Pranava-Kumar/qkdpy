@@ -47,6 +47,6 @@ class TestPerformance:
 
         # Just ensure it doesn't explode (e.g., > 100MB for 500 bits)
         # 500 bits is tiny, so overhead dominates.
-        assert size_after < 10 * 1024 * 1024, (
-            "Memory usage seems excessive for small simulation"
-        )
+        assert (
+            size_after < 10 * 1024 * 1024
+        ), "Memory usage seems excessive for small simulation"
