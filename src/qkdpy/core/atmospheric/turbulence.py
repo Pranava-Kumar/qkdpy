@@ -287,7 +287,16 @@ class AtmosphericTurbulenceChannel(QuantumChannel):
         )
         if self.path_length_m <= 0:
             return float(values[0])
-        return float(np.trapezoid(values, altitudes) / self.path_length_m)
+        # Trapezoidal average along the slant path. Uses a manual sum rather
+        # than np.trapz/np.trapezoid so the code works on every NumPy release.
+        if n > 1:
+            h = altitudes[1] - altitudes[0]
+            integral = (
+                0.5 * values[0] + 0.5 * values[-1] + float(np.sum(values[1:-1]))
+            ) * h
+        else:
+            integral = float(values[0])
+        return float(integral / self.path_length_m)
 
     def get_turbulence_metrics(self) -> dict:
         """Return the computed turbulence metrics for inspection."""
