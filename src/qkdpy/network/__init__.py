@@ -1,5 +1,10 @@
 """Network simulation for QKD."""
 
+from .atmospheric_physics import (
+    background_stray_count_rate,
+    link_direction_factor,
+    modtran_band_transmittance,
+)
 from .multiparty_qkd import MultiPartyQKDNetwork
 from .protocols import ChannelPredictor
 from .quantum_network import (
@@ -32,4 +37,8 @@ __all__ = [
     "AtmosphericProfile",
     "OrbitType",
     "simulate_satellite_qkd",
+    # Atmospheric physics helpers
+    "modtran_band_transmittance",
+    "background_stray_count_rate",
+    "link_direction_factor",
 ]

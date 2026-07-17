@@ -1,5 +1,15 @@
 """Core components for quantum simulations."""
 
+from .atmospheric import (
+    AtmosphericTurbulenceChannel,
+    fried_parameter,
+    generate_phase_screen,
+    hufnagel_valley_cn2,
+    rytov_variance,
+    scintillation_index,
+    von_karman_spectrum,
+)
+from .attacks import PNSAttack, photon_number_splitting_attack
 from .channels import QuantumChannel
 from .detector import DetectorArray, QuantumDetector
 from .extended_channels import ExtendedQuantumChannel
@@ -49,6 +59,15 @@ from .timing import (
 __all__ = [
     "Qubit",
     "Qudit",
+    "PNSAttack",
+    "photon_number_splitting_attack",
+    "AtmosphericTurbulenceChannel",
+    "von_karman_spectrum",
+    "hufnagel_valley_cn2",
+    "fried_parameter",
+    "rytov_variance",
+    "scintillation_index",
+    "generate_phase_screen",
     "QuantumChannel",
     "QuantumDetector",
     "DetectorArray",

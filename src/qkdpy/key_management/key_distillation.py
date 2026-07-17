@@ -64,6 +64,12 @@ class KeyDistillation:
             alice_corrected, bob_corrected = ErrorCorrection.winnow(alice_key, bob_key)
         elif self.error_correction_method == "ldpc":
             alice_corrected, bob_corrected = ErrorCorrection.ldpc(alice_key, bob_key)
+        elif self.error_correction_method == "ldpc_blind":
+            # Blind LDPC: size the code against an inflated QBER so reconciliation
+            # survives when the true QBER exceeds the parameter-estimate.
+            alice_corrected, bob_corrected, _ = ErrorCorrection.ldpc_blind(
+                alice_key, bob_key, estimated_qber=qber
+            )
         else:
             raise ValueError(
                 f"Unknown error correction method: {self.error_correction_method}"

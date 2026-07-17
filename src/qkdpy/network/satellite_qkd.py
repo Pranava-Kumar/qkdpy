@@ -20,6 +20,11 @@ import numpy as np
 from ..core.channels import QuantumChannel
 from ..core.secure_random import secure_random
 from ..utils.logging_config import get_logger
+from .atmospheric_physics import (
+    background_stray_count_rate,
+    link_direction_factor,
+    modtran_band_transmittance,
+)
 from .protocols import ChannelPredictor
 
 logger = get_logger(__name__)
@@ -123,6 +128,8 @@ class FreeSpaceOpticalChannel(QuantumChannel):
         wavelength_nm: float = 850.0,
         telescope_diameter_m: float = 0.3,
         pointing_error_urad: float = 1.0,
+        is_night: bool = True,
+        link_direction: str = "downlink",
         **kwargs: Any,
     ) -> None:
         """Initialize free-space optical channel.
@@ -133,6 +140,10 @@ class FreeSpaceOpticalChannel(QuantumChannel):
             wavelength_nm: Wavelength of photons in nanometers
             telescope_diameter_m: Receiving telescope diameter
             pointing_error_urad: RMS pointing error in microradians
+            is_night: Day (``False``) vs night (``True``) operation; controls
+                background stray-photon counts and the atmospheric profile.
+            link_direction: ``"downlink"`` (satellite -> ground) or ``"uplink"``
+                (ground -> satellite); models the propagation asymmetry.
             **kwargs: Additional arguments for base QuantumChannel
         """
         self.satellite_position = satellite_position
@@ -141,6 +152,20 @@ class FreeSpaceOpticalChannel(QuantumChannel):
         self.wavelength_m = wavelength_nm * 1e-9
         self.telescope_diameter = telescope_diameter_m
         self.pointing_error = pointing_error_urad * 1e-6
+        self.is_night = is_night
+        self.link_direction = link_direction
+
+        # MODTRAN-style band transmittance for this wavelength.
+        self.modtran_transmittance = modtran_band_transmittance(wavelength_nm)
+        # Day/night background stray-photon count rate (raises the QBER floor).
+        self.stray_count_rate = background_stray_count_rate(
+            wavelength_nm, is_night=is_night
+        )
+        # Uplink/downlink asymmetry factor on residual (turbulence + pointing)
+        # loss.
+        self.direction_factor = link_direction_factor(
+            link_direction, satellite_position.elevation_angle
+        )
 
         # Calculate total channel loss
         total_loss = self._calculate_total_loss()
@@ -195,19 +220,25 @@ class FreeSpaceOpticalChannel(QuantumChannel):
         atmospheric_transmittance = math.exp(
             -(rayleigh_coeff + mie_coeff) * atm_path_km
         )
+        # Fold in the MODTRAN-style band transmittance for this wavelength so
+        # that wavelengths inside an atmospheric window transmit better.
+        atmospheric_transmittance *= self.modtran_transmittance
 
         # 3. Cloud attenuation
         cloud_transmittance = math.exp(-self.atmosphere.cloud_optical_depth)
 
-        # 4. Pointing loss
-        pointing_loss = math.exp(-2 * (self.pointing_error / diffraction_angle) ** 2)
+        # 4. Pointing loss (scaled by the uplink/downlink asymmetry factor).
+        pointing_loss = math.exp(
+            -2 * (self.pointing_error / diffraction_angle) ** 2
+        ) ** (1.0 / self.direction_factor)
 
-        # 5. Turbulence effects (Strehl ratio approximation)
+        # 5. Turbulence effects (Strehl ratio approximation), also scaled by the
+        # link-direction factor so an uplink suffers slightly more scintillation.
         r0 = self._fried_parameter()
         strehl = (
             math.exp(-((self.telescope_diameter / r0) ** (5 / 3))) if r0 > 0 else 0.1
         )
-        strehl = max(0.1, min(1.0, strehl))
+        strehl = max(0.1, min(1.0, strehl)) ** (1.0 / self.direction_factor)
 
         # Total efficiency
         total_efficiency = (
@@ -251,6 +282,11 @@ class FreeSpaceOpticalChannel(QuantumChannel):
             * self.wavelength_m
             / self._fried_parameter()
             * 206265,
+            "modtran_transmittance": self.modtran_transmittance,
+            "stray_count_rate": self.stray_count_rate,
+            "link_direction": self.link_direction,
+            "is_night": self.is_night,
+            "direction_factor": self.direction_factor,
         }
 
 

@@ -403,6 +403,79 @@ class ErrorCorrection:
         return alice_key, bob_key, max_iterations
 
     @staticmethod
+    def ldpc_blind(
+        alice_key: list[int],
+        bob_key: list[int],
+        estimated_qber: float = 0.1,
+        code_rate: float = 0.5,
+        max_iterations: int = 100,
+        underestimation_margin: float = 0.03,
+    ) -> tuple[list[int], list[int], bool]:
+        """LDPC error correction with robustness to QBER underestimation.
+
+        Standard LDPC + cascade reconciliation assumes the *estimated* QBER is
+        accurate. In practice (see Fig. 10 of recent decoy-state analyses) the
+        true QBER can spike above the estimate -- e.g. because of finite-size
+        fluctuations or a partially-active adversary. When the estimated QBER
+        is *low*, the blind protocol treats the estimate as a lower bound and
+        inflates the syndrome redundancy (lower code rate) and the decoder
+        iterations proportionally to ``underestimation_margin``. This costs
+        extra communication overhead but keeps the reconciliation failure rate
+        bounded when the true QBER exceeds the estimate.
+
+        Args:
+            alice_key: Alice's binary key.
+            bob_key: Bob's binary key.
+            estimated_qber: QBER reported by parameter estimation.
+            code_rate: Nominal code rate (lowered internally under the margin).
+            max_iterations: Nominal decoder iteration cap (raised internally).
+            underestimation_margin: How much higher the true QBER may be than
+                the estimate; larger margin -> more redundancy.
+
+        Returns:
+            Tuple ``(corrected_alice, corrected_bob, success)``.
+        """
+        if len(alice_key) != len(bob_key):
+            raise ValueError("Alice's and Bob's keys must have the same length")
+
+        # More redundancy (lower code rate) when the margin is larger, so the
+        # code can still converge if the true QBER exceeds the estimate.
+        # Cap redundancy so the generated parity-check matrix stays valid
+        # (m = n - k must remain well below n for the Gallager generator).
+        blind_code_rate = max(code_rate - underestimation_margin, 0.25)
+        blind_iterations = int(max_iterations * (1 + 2.0 * underestimation_margin))
+
+        success = False
+        alice_corr, bob_corr = alice_key, bob_key
+        # Blind pass: more redundancy + iterations. If the underlying BP decoder
+        # fails (or raises on an edge-case matrix), fall back to the nominal code
+        # and finally to cascade, so distillation never aborts.
+        try:
+            alice_corr, bob_corr, _ = ErrorCorrection.low_density_parity_check(
+                alice_key,
+                bob_key,
+                code_rate=blind_code_rate,
+                max_iterations=blind_iterations,
+            )
+            success = np.array_equal(np.array(alice_corr), np.array(bob_corr))
+        except Exception:
+            success = False
+
+        if not success:
+            try:
+                alice_corr, bob_corr = ErrorCorrection.ldpc(
+                    alice_key, bob_key, max_iterations=max_iterations
+                )
+                success = np.array_equal(np.array(alice_corr), np.array(bob_corr))
+            except Exception:
+                success = False
+
+        if not success:
+            alice_corr, bob_corr = ErrorCorrection.cascade(alice_key, bob_key)
+            success = np.array_equal(np.array(alice_corr), np.array(bob_corr))
+        return alice_corr, bob_corr, success
+
+    @staticmethod
     def _generate_ldpc_matrix(n: int, m: int) -> np.ndarray:
         """Generate a regular LDPC parity-check matrix using a simplified approach.
 

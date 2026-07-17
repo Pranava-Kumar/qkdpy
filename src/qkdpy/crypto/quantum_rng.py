@@ -1,5 +1,6 @@
 """Quantum random number generation utilities."""
 
+import hashlib
 import secrets
 import time
 
@@ -73,15 +74,14 @@ class QuantumRandomNumberGenerator:
 
         # 4. Apply a randomness extractor to ensure quality
         if len(self.entropy_pool) >= num_bits:
-            # Use a simple XOR-based extractor
-            extracted_bits = self._xor_extractor(self.entropy_pool[:num_bits])
+            extracted_bits = self._extract_bits(self.entropy_pool[:num_bits])
             self.entropy_pool = self.entropy_pool[num_bits:]
         else:
             # If we don't have enough bits, generate more
             needed_bits = num_bits - len(self.entropy_pool)
             additional_bits = [secure_randint(0, 2) for _ in range(needed_bits)]
             all_bits = self.entropy_pool + additional_bits
-            extracted_bits = self._xor_extractor(all_bits)
+            extracted_bits = self._extract_bits(all_bits)
             self.entropy_pool = []
 
         self.bits_generated += len(extracted_bits)
@@ -168,24 +168,54 @@ class QuantumRandomNumberGenerator:
 
         return random_string
 
-    def _xor_extractor(self, bits: list[int]) -> list[int]:
-        """Simple XOR-based randomness extractor.
+    def _extract_bits(self, bits: list[int]) -> list[int]:
+        """Length-preserving randomness extractor.
+
+        The entropy pool already combines OS ``secrets`` entropy, CSPRNG
+        draws, and (optionally) quantum key material, so a single call to a
+        cryptographic hash function is a valid strong extractor here. Using a
+        hash (SHA3-256) instead of pairwise XOR preserves the output length:
+        ``generate_random_bits(n)`` now returns exactly ``n`` bits rather than
+        ``n // 2``.
 
         Args:
             bits: Input bits to extract from
 
         Returns:
-            Extracted random bits
+            Extracted random bits (same length as the input)
         """
-        if len(bits) < 2:
-            return bits
+        if not bits:
+            return []
 
-        # Apply pairwise XOR to reduce bias
-        extracted = []
-        for i in range(0, len(bits) - 1, 2):
-            extracted.append(bits[i] ^ bits[i + 1])
+        # Pack bits into bytes (MSB-first) before hashing.
+        out: list[int] = []
+        counter = 0
+        produced = 0
+        while produced < len(bits):
+            digest = hashlib.sha3_256(
+                bytes([(len(bits) >> 8) & 0xFF, len(bits) & 0xFF])
+                + bytes([counter])
+                + bytes(self._pack_bits(bits, produced))
+            ).digest()
+            for byte in digest:
+                for shift in range(7, -1, -1):
+                    if produced >= len(bits):
+                        break
+                    out.append((byte >> shift) & 1)
+                    produced += 1
+            counter += 1
 
-        return extracted
+        return out
+
+    @staticmethod
+    def _pack_bits(bits: list[int], offset: int) -> list[int]:
+        """Pack the remaining bits into whole bytes, zero-padded to the end."""
+        grouped: list[int] = []
+        chunk = bits[offset:]
+        for i in range(0, len(chunk), 8):
+            byte_bits = chunk[i : i + 8]
+            grouped.append(sum(bit << (7 - j) for j, bit in enumerate(byte_bits)))
+        return grouped
 
     def add_entropy(self, entropy_source: list[int]) -> None:
         """Add external entropy to the pool.
