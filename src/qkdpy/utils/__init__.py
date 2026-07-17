@@ -29,6 +29,7 @@ from .instrumentation import (
 from .logging_config import (
     QKDLogger,
     configure_default_logger,
+    configure_logging,
     get_logger,
     log_debug,
     log_error,
@@ -82,6 +83,7 @@ __all__ = [
     "QKDLogger",
     "get_logger",
     "configure_default_logger",
+    "configure_logging",
     "log_debug",
     "log_info",
     "log_warning",

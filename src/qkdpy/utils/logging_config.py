@@ -11,6 +11,7 @@ structlog globally.
 """
 
 import logging
+import os
 import sys
 from collections.abc import MutableMapping
 from datetime import UTC, datetime
@@ -113,6 +114,35 @@ def _configure_structlog() -> None:
     if not STRUCTLOG_AVAILABLE:
         return
 
+    # Ensure a stdout handler exists on the root logger.
+    # logging.basicConfig is a no-op on subsequent calls, so this is safe.
+    logging.basicConfig(format="%(message)s", stream=sys.stdout)
+
+    # Read configuration from environment.
+    level = os.getenv("QKDPY_LOGGING_LEVEL", "WARNING")
+    json_str = os.getenv("QKDPY_LOGGING_JSON", "").lower()
+    json_output = json_str in ("true", "1", "yes", "on")
+
+    configure_logging(level=level, json_output=json_output)
+
+
+def configure_logging(level: str = "WARNING", json_output: bool = False) -> None:
+    """Reconfigure structlog logging at runtime.
+
+    Can be called after import to dynamically change the log level or
+    switch between console and JSON output.  When called without arguments,
+    resets to the library default (WARNING, colored console).
+
+    Args:
+        level: Minimum log level name (DEBUG, INFO, WARNING, ERROR, CRITICAL).
+        json_output: If True, output JSON-formatted logs instead of colored console.
+    """
+    if not STRUCTLOG_AVAILABLE:
+        return
+
+    log_level = LOG_LEVELS.get(level.upper(), logging.WARNING)
+    logging.getLogger().setLevel(log_level)
+
     processors: list[Processor] = [
         structlog.stdlib.filter_by_level,
         add_timestamp,
@@ -130,8 +160,12 @@ def _configure_structlog() -> None:
         structlog.processors.StackInfoRenderer(),
         structlog.processors.format_exc_info,
         structlog.processors.UnicodeDecoder(),
-        structlog.dev.ConsoleRenderer(colors=True),
     ]
+
+    if json_output:
+        processors.append(structlog.processors.JSONRenderer())
+    else:
+        processors.append(structlog.dev.ConsoleRenderer(colors=True))
 
     structlog.configure(
         processors=processors,
@@ -139,12 +173,6 @@ def _configure_structlog() -> None:
         context_class=dict,
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
-    )
-
-    logging.basicConfig(
-        format="%(message)s",
-        stream=sys.stdout,
-        level=logging.INFO,
     )
 
 
@@ -308,12 +336,13 @@ def configure_default_logger(
     """Configure the default module-level logger.
 
     Args:
-        level: Minimum log level (stdlib fallback only; structlog uses global config)
-        json_output: Whether to output JSON format (stdlib fallback only)
+        level: Minimum log level name (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+        json_output: Whether to output JSON format instead of colored console
 
     Returns:
         Configured default logger
     """
+    configure_logging(level=level, json_output=json_output)
     global _default_logger
     _default_logger = get_logger("qkdpy")
     return _default_logger
