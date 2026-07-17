@@ -1,0 +1,552 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.utils.validation &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.utils.validation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.utils.validation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Input validation utilities for QKDpy.</span>
+
+<span class="sd">This module provides decorators and utilities for validating function</span>
+<span class="sd">inputs, ensuring type safety, and catching invalid parameters early.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">functools</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">inspect</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span><span class="p">,</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Any</span><span class="p">,</span>
+    <span class="n">ParamSpec</span><span class="p">,</span>
+    <span class="n">TypeVar</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ParameterError</span><span class="p">,</span>
+    <span class="n">RangeError</span><span class="p">,</span>
+    <span class="n">TypeValidationError</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">P</span> <span class="o">=</span> <span class="n">ParamSpec</span><span class="p">(</span><span class="s2">&quot;P&quot;</span><span class="p">)</span>
+<span class="n">R</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;R&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_extract_param_value</span><span class="p">(</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+    <span class="n">args</span><span class="p">:</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="n">kwargs</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Extract a parameter value and a found flag from args or kwargs.</span>
+
+<span class="sd">    Returns ``(value, found)``.  ``found`` is False when ``param_name`` was</span>
+<span class="sd">    neither in kwargs nor in the positional args, which distinguishes &quot;the</span>
+<span class="sd">    parameter was not supplied&quot; from &quot;the parameter was supplied as None&quot;.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">kwargs</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">kwargs</span><span class="p">[</span><span class="n">param_name</span><span class="p">],</span> <span class="kc">True</span>
+
+    <span class="n">sig</span> <span class="o">=</span> <span class="n">inspect</span><span class="o">.</span><span class="n">signature</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+    <span class="n">params</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">sig</span><span class="o">.</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">param_name</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">args</span><span class="p">[</span><span class="n">idx</span><span class="p">],</span> <span class="kc">True</span>
+    <span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+        <span class="k">pass</span>
+    <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="validate_range">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_range">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_range</span><span class="p">(</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">min_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">min_inclusive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">max_inclusive</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to validate numeric parameter is within range.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param_name: Name of parameter to validate</span>
+<span class="sd">        min_value: Minimum allowed value (None for no minimum)</span>
+<span class="sd">        max_value: Maximum allowed value (None for no maximum)</span>
+<span class="sd">        min_inclusive: Whether minimum is inclusive</span>
+<span class="sd">        max_inclusive: Whether maximum is inclusive</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Decorator function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]:</span>
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
+            <span class="n">value</span><span class="p">,</span> <span class="n">found</span> <span class="o">=</span> <span class="n">_extract_param_value</span><span class="p">(</span><span class="n">param_name</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">found</span> <span class="ow">and</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">_validate_numeric_range</span><span class="p">(</span>
+                    <span class="n">param_name</span><span class="p">,</span>
+                    <span class="n">value</span><span class="p">,</span>
+                    <span class="n">min_value</span><span class="p">,</span>
+                    <span class="n">max_value</span><span class="p">,</span>
+                    <span class="n">min_inclusive</span><span class="p">,</span>
+                    <span class="n">max_inclusive</span><span class="p">,</span>
+                <span class="p">)</span>
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="validate_type">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_type">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_type</span><span class="p">(</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">expected_types</span><span class="p">:</span> <span class="nb">type</span> <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">type</span><span class="p">,</span> <span class="o">...</span><span class="p">],</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">allow_none</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to validate parameter type.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param_name: Name of parameter to validate</span>
+<span class="sd">        expected_types: Expected type or tuple of types</span>
+<span class="sd">        allow_none: Whether None is allowed</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Decorator function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]:</span>
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
+            <span class="n">value</span><span class="p">,</span> <span class="n">found</span> <span class="o">=</span> <span class="n">_extract_param_value</span><span class="p">(</span><span class="n">param_name</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">found</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">allow_none</span><span class="p">:</span>
+                    <span class="k">pass</span>
+                <span class="k">elif</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">value</span><span class="p">,</span> <span class="n">expected_types</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="n">TypeValidationError</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; must be </span><span class="si">{</span><span class="n">expected_types</span><span class="si">}</span><span class="s2">, &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">value</span><span class="p">)</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="n">parameter</span><span class="o">=</span><span class="n">param_name</span><span class="p">,</span>
+                        <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                        <span class="n">expected</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">expected_types</span><span class="p">),</span>
+                    <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="validate_positive">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_positive">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_positive</span><span class="p">(</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">allow_zero</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to validate parameter is positive.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param_name: Name of parameter to validate</span>
+<span class="sd">        allow_zero: Whether zero is allowed</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Decorator function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">validate_range</span><span class="p">(</span>
+        <span class="n">param_name</span><span class="p">,</span>
+        <span class="n">min_value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">min_inclusive</span><span class="o">=</span><span class="n">allow_zero</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_probability">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_probability">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_probability</span><span class="p">(</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to validate parameter is a valid probability [0, 1].</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param_name: Name of parameter to validate</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Decorator function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">validate_range</span><span class="p">(</span><span class="n">param_name</span><span class="p">,</span> <span class="n">min_value</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">max_value</span><span class="o">=</span><span class="mf">1.0</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_not_empty">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_not_empty">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_not_empty</span><span class="p">(</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]],</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator to validate sequence parameter is not empty.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        param_name: Name of parameter to validate</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Decorator function</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[</span><span class="n">P</span><span class="p">,</span> <span class="n">R</span><span class="p">]:</span>
+        <span class="nd">@functools</span><span class="o">.</span><span class="n">wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">P</span><span class="o">.</span><span class="n">kwargs</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">R</span><span class="p">:</span>
+            <span class="n">value</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">_extract_param_value</span><span class="p">(</span><span class="n">param_name</span><span class="p">,</span> <span class="n">func</span><span class="p">,</span> <span class="n">args</span><span class="p">,</span> <span class="n">kwargs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">value</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; cannot be empty&quot;</span><span class="p">,</span>
+                    <span class="n">parameter</span><span class="o">=</span><span class="n">param_name</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;non-empty sequence&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="k">return</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<span class="c1"># === Utility Functions ===</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_validate_numeric_range</span><span class="p">(</span>
+    <span class="n">param_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">min_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">max_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">min_inclusive</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">max_inclusive</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate numeric value is within range.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">min_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">min_inclusive</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;</span> <span class="n">min_value</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RangeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; must be &gt;= </span><span class="si">{</span><span class="n">min_value</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">parameter</span><span class="o">=</span><span class="n">param_name</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">expected</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&gt;= </span><span class="si">{</span><span class="n">min_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&lt;=</span> <span class="n">min_value</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RangeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; must be &gt; </span><span class="si">{</span><span class="n">min_value</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">parameter</span><span class="o">=</span><span class="n">param_name</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">expected</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&gt; </span><span class="si">{</span><span class="n">min_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">max_value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">max_inclusive</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="n">max_value</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RangeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; must be &lt;= </span><span class="si">{</span><span class="n">max_value</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">parameter</span><span class="o">=</span><span class="n">param_name</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">expected</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&lt;= </span><span class="si">{</span><span class="n">max_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;=</span> <span class="n">max_value</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="n">RangeError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Parameter &#39;</span><span class="si">{</span><span class="n">param_name</span><span class="si">}</span><span class="s2">&#39; must be &lt; </span><span class="si">{</span><span class="n">max_value</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                    <span class="n">parameter</span><span class="o">=</span><span class="n">param_name</span><span class="p">,</span>
+                    <span class="n">value</span><span class="o">=</span><span class="n">value</span><span class="p">,</span>
+                    <span class="n">expected</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;&lt; </span><span class="si">{</span><span class="n">max_value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">)</span>
+
+
+<div class="viewcode-block" id="validate_key_length">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_key_length">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_key_length</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">min_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate key has sufficient length.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        key: Binary key to validate</span>
+<span class="sd">        min_length: Minimum required length</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ParameterError: If key is too short</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">min_length</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Key must have at least </span><span class="si">{</span><span class="n">min_length</span><span class="si">}</span><span class="s2"> bits, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;key&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span><span class="si">}</span><span class="s2"> bits]&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;length &gt;= </span><span class="si">{</span><span class="n">min_length</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_binary_key">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_binary_key">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_binary_key</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate key contains only binary values (0 or 1).</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        key: Key to validate</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ParameterError: If key contains non-binary values</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">key</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">bit</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Key must contain only 0 and 1, found </span><span class="si">{</span><span class="n">bit</span><span class="si">}</span><span class="s2"> at position </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;key&quot;</span><span class="p">,</span>
+                <span class="n">value</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;bit=</span><span class="si">{</span><span class="n">bit</span><span class="si">}</span><span class="s2"> at index=</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;0 or 1&quot;</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_qber">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_qber">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_qber</span><span class="p">(</span><span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate QBER value is in valid range [0, 0.5].</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        qber: QBER value to validate</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        RangeError: If QBER is out of valid range</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">qber</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">qber</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">RangeError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;QBER must be in range [0, 0.5], got </span><span class="si">{</span><span class="n">qber</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;qber&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="n">qber</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;0 &lt;= qber &lt;= 0.5&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_unitary">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_unitary">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_unitary</span><span class="p">(</span><span class="n">matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate matrix is unitary.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        matrix: Matrix to validate</span>
+<span class="sd">        atol: Absolute tolerance for comparison</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ParameterError: If matrix is not unitary</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="s2">&quot;Matrix must be 2-dimensional&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;matrix&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;2D array&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="s2">&quot;Matrix must be square&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;matrix&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;shape=</span><span class="si">{</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;square matrix&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="n">identity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+    <span class="n">product</span> <span class="o">=</span> <span class="n">matrix</span> <span class="o">@</span> <span class="n">matrix</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">product</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="s2">&quot;Matrix must be unitary (U @ U† = I)&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;matrix&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;unitary matrix&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_normalized_state">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_normalized_state">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_normalized_state</span><span class="p">(</span><span class="n">state</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate quantum state is normalized.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        state: State vector to validate</span>
+<span class="sd">        atol: Absolute tolerance for comparison</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ParameterError: If state is not normalized</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">norm</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;State must be normalized (|α|² + |β|² = 1), got norm=</span><span class="si">{</span><span class="n">norm</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;state&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;norm=</span><span class="si">{</span><span class="n">norm</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;normalized state (norm=1)&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="validate_density_matrix">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.validate_density_matrix">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">validate_density_matrix</span><span class="p">(</span><span class="n">rho</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">atol</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validate density matrix properties.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        rho: Density matrix to validate</span>
+<span class="sd">        atol: Absolute tolerance for comparison</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        ParameterError: If matrix is not a valid density matrix</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">rho</span><span class="o">.</span><span class="n">ndim</span> <span class="o">!=</span> <span class="mi">2</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="s2">&quot;Density matrix must be 2-dimensional&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;rho&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;2D array&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">!=</span> <span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="s2">&quot;Density matrix must be square&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;rho&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;shape=</span><span class="si">{</span><span class="n">rho</span><span class="o">.</span><span class="n">shape</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;square matrix&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Check Hermiticity</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">rho</span><span class="p">,</span> <span class="n">rho</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="s2">&quot;Density matrix must be Hermitian (ρ = ρ†)&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;rho&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;Hermitian matrix&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Check trace = 1</span>
+    <span class="n">trace</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">trace</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="n">atol</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;Density matrix must have trace 1, got </span><span class="si">{</span><span class="n">trace</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;rho&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;trace=</span><span class="si">{</span><span class="n">trace</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;trace=1&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+    <span class="c1"># Check positive semi-definiteness</span>
+    <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span><span class="n">eigenvalues</span> <span class="o">&lt;</span> <span class="o">-</span><span class="n">atol</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="n">ParameterError</span><span class="p">(</span>
+            <span class="s2">&quot;Density matrix must be positive semi-definite&quot;</span><span class="p">,</span>
+            <span class="n">parameter</span><span class="o">=</span><span class="s2">&quot;rho&quot;</span><span class="p">,</span>
+            <span class="n">value</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;min_eigenvalue=</span><span class="si">{</span><span class="n">eigenvalues</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">expected</span><span class="o">=</span><span class="s2">&quot;all eigenvalues &gt;= 0&quot;</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

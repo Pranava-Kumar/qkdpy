@@ -1,0 +1,357 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.protocols.twisted_pair &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.protocols.twisted_pair</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.protocols.twisted_pair</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Twisted Pair QKD protocol implementation.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Measurement</span><span class="p">,</span>
+    <span class="n">QuantumChannel</span><span class="p">,</span>
+    <span class="n">Qubit</span><span class="p">,</span>
+    <span class="n">Qudit</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_choice</span><span class="p">,</span> <span class="n">secure_randint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProtocol</span>
+
+
+<div class="viewcode-block" id="TwistedPairQKD">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TwistedPairQKD">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TwistedPairQKD</span><span class="p">(</span><span class="n">BaseProtocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Twisted Pair QKD protocol implementation.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TwistedPairQKD.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TwistedPairQKD.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">,</span>
+        <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">security_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.11</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the Twisted Pair QKD protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: Quantum channel for qubit transmission</span>
+<span class="sd">            key_length: Desired length of the final key</span>
+<span class="sd">            security_threshold: Maximum QBER value considered secure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="p">)</span>
+
+        <span class="c1"># Twisted Pair QKD-specific parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span> <span class="o">=</span> <span class="n">security_threshold</span>
+
+        <span class="c1"># Number of qubits to send</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span> <span class="o">=</span> <span class="n">key_length</span> <span class="o">*</span> <span class="mi">3</span>  <span class="c1"># Send 3x more qubits than needed</span>
+
+        <span class="c1"># Protocol parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;computational&quot;</span><span class="p">,</span> <span class="s2">&quot;hadamard&quot;</span><span class="p">,</span> <span class="s2">&quot;circular&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">twist_factor</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># Number of twists in the protocol</span>
+
+        <span class="c1"># Alice&#39;s and Bob&#39;s data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">twist_indices</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="TwistedPairQKD.prepare_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TwistedPairQKD.prepare_states">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare quantum states for transmission with twisted encoding.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of qubits to be sent through the quantum channel</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">twist_indices</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="c1"># Alice randomly chooses a bit (0 or 1) - secure random</span>
+            <span class="n">bit</span> <span class="o">=</span> <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span>
+
+            <span class="c1"># Alice randomly chooses a basis - secure random</span>
+            <span class="n">basis</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+
+            <span class="c1"># Apply twisting - every twist_factor qubits, we apply a twist</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">twist_factor</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">twist_indices</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+            <span class="c1"># Prepare the qubit in the appropriate state</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;computational&quot;</span><span class="p">:</span>
+                <span class="c1"># Computational basis: |0&gt; or |1&gt;</span>
+                <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span> <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;hadamard&quot;</span><span class="p">:</span>
+                <span class="c1"># Hadamard basis: |+&gt; or |-&gt;</span>
+                <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">plus</span><span class="p">()</span> <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">minus</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># circular basis</span>
+                <span class="c1"># Circular basis: |+i&gt; or |-i&gt;</span>
+                <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="mi">1</span><span class="n">j</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">),</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+
+            <span class="n">qubits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">qubits</span></div>
+
+
+<div class="viewcode-block" id="TwistedPairQKD.measure_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TwistedPairQKD.measure_states">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure received quantum states with twisted decoding.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            states: List of received quantum states (may contain None for lost states)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of measurement results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">quantum_state</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">states</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">quantum_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Qubit was lost in the channel</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Bob randomly chooses a basis - secure random</span>
+            <span class="n">basis</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+
+            <span class="c1"># Apply twisting effect if this is a twist index</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">twist_indices</span><span class="p">:</span>
+                <span class="c1"># In a real implementation, this would apply a specific</span>
+                <span class="c1"># transformation based on the twist</span>
+                <span class="k">pass</span>
+
+            <span class="c1"># Measure in the chosen basis</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">quantum_state</span><span class="p">,</span> <span class="n">Qubit</span><span class="p">):</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">measure_in_basis</span><span class="p">(</span><span class="n">quantum_state</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">quantum_state</span><span class="p">,</span> <span class="n">Qudit</span><span class="p">):</span>
+                <span class="c1"># For qudits, basis needs to be converted if using Qudit.measure</span>
+                <span class="c1"># For simplicity, assuming a default computational measurement</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">quantum_state</span><span class="o">.</span><span class="n">measure_computational</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="c1"># Filter out None values to return only int results</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">result</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span> <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="TwistedPairQKD.sift_keys">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TwistedPairQKD.sift_keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sift_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sift the raw keys to keep only measurements in matching bases.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (alice_sifted_key, bob_sifted_key)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alice_sifted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">bob_sifted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="c1"># Skip if Bob didn&#39;t receive the qubit</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Check if Alice and Bob used the same basis</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="p">):</span>
+                <span class="n">alice_sifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="c1"># We already checked that self.bob_results[i] is not None above</span>
+                <span class="c1"># but we need to assert it for mypy</span>
+                <span class="n">bob_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">bob_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">bob_sifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bob_result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span></div>
+
+
+<div class="viewcode-block" id="TwistedPairQKD.estimate_qber">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TwistedPairQKD.estimate_qber">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate_qber</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate the Quantum Bit Error Rate (QBER).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Estimated QBER value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift_keys</span><span class="p">()</span>
+
+        <span class="c1"># If we don&#39;t have enough bits for estimation, return a high QBER</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Count errors in the sifted key</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">alice_sifted</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">bob_sifted</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">errors</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Calculate QBER</span>
+        <span class="n">qber</span> <span class="o">=</span> <span class="n">errors</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="n">qber</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_security_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the security threshold for the Twisted Pair QKD protocol.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Maximum QBER value considered secure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span>
+
+<div class="viewcode-block" id="TwistedPairQKD.get_twist_efficiency">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TwistedPairQKD.get_twist_efficiency">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_twist_efficiency</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the efficiency of the twisting mechanism.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Fraction of qubits that were twisted</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">twist_indices</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="TwistedPairQKD.get_basis_distribution">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TwistedPairQKD.get_basis_distribution">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_basis_distribution</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze the distribution of measurement bases.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with basis distribution statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alice_basis_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">bob_basis_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Count Alice&#39;s basis choices</span>
+        <span class="k">for</span> <span class="n">basis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">alice_basis_counts</span><span class="p">[</span><span class="n">basis</span><span class="p">]</span> <span class="o">=</span> <span class="n">alice_basis_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># Count Bob&#39;s basis choices</span>
+        <span class="k">for</span> <span class="n">basis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">bob_basis_counts</span><span class="p">[</span><span class="n">basis</span><span class="p">]</span> <span class="o">=</span> <span class="n">bob_basis_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;alice_bases&quot;</span><span class="p">:</span> <span class="n">alice_basis_counts</span><span class="p">,</span>
+            <span class="s2">&quot;bob_bases&quot;</span><span class="p">:</span> <span class="n">bob_basis_counts</span><span class="p">,</span>
+            <span class="s2">&quot;total_qubits&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

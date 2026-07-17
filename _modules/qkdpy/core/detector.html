@@ -1,0 +1,366 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.core.detector &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.core.detector</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.core.detector</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Realistic quantum detector model for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.qubit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qubit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">secure_choice</span><span class="p">,</span>
+    <span class="n">secure_normal</span><span class="p">,</span>
+    <span class="n">secure_random</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="QuantumDetector">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumDetector">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumDetector</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A realistic quantum detector model with physical properties.</span>
+
+<span class="sd">    This class simulates a quantum detector with realistic properties such as:</span>
+<span class="sd">    dark counts, detection efficiency, dead time, timing jitter, and afterpulsing.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumDetector.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumDetector.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">efficiency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># Detection efficiency (0.0 to 1.0)</span>
+        <span class="n">dark_count_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>  <span class="c1"># Dark count rate in Hz</span>
+        <span class="n">dead_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>  <span class="c1"># Dead time in seconds</span>
+        <span class="n">timing_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-10</span><span class="p">,</span>  <span class="c1"># Timing jitter in seconds (std)</span>
+        <span class="n">afterpulse_probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>  <span class="c1"># Probability of afterpulsing</span>
+        <span class="n">reset_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>  <span class="c1"># Time to reset after detection in seconds</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the quantum detector.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            efficiency: Detection efficiency (0.0 to 1.0)</span>
+<span class="sd">            dark_count_rate: Rate of dark count events per second</span>
+<span class="sd">            dead_time: Time after a detection during which detector is insensitive (s)</span>
+<span class="sd">            timing_jitter: Standard deviation of timing measurement uncertainty (s)</span>
+<span class="sd">            afterpulse_probability: Probability of afterpulsing events</span>
+<span class="sd">            reset_time: Time needed to reset the detector after detection (s)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">efficiency</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">efficiency</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dark_count_rate</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dark_count_rate</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dead_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">dead_time</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">timing_jitter</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">afterpulse_probability</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">afterpulse_probability</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset_time</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">reset_time</span><span class="p">)</span>
+
+        <span class="c1"># Internal state tracking</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_detection_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">in_dead_time</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_dark_check_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Statistics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_photons_detected</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dark_counts_detected</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">afterpulses_detected</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">effective_efficiency</span> <span class="o">=</span> <span class="n">efficiency</span></div>
+
+
+<div class="viewcode-block" id="QuantumDetector.detect">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumDetector.detect">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">photon_present</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;computational&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect a photon with realistic behavior.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            photon_present: Whether a photon is present at the detector input</span>
+<span class="sd">            timestamp: Time of photon arrival</span>
+<span class="sd">            basis: Measurement basis</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (measurement_result, detection_time) where measurement_result</span>
+<span class="sd">            is None if no detection occurs, otherwise 0 or 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if detector is in dead time</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">in_dead_time</span> <span class="ow">and</span> <span class="p">(</span>
+            <span class="n">timestamp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_detection_time</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_time</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span><span class="p">,</span> <span class="n">timestamp</span>
+
+        <span class="c1"># Calculate probability of detection based on efficiency</span>
+        <span class="n">detection_occurs</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">measurement_result</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="n">detection_time</span> <span class="o">=</span> <span class="n">timestamp</span>
+
+        <span class="c1"># Check for real photon detection</span>
+        <span class="k">if</span> <span class="n">photon_present</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">efficiency</span><span class="p">:</span>
+                <span class="n">detection_occurs</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="c1"># For simplicity, we&#39;ll consider the measurement result as 0 or 1</span>
+                <span class="c1"># In a more complex implementation, we&#39;d handle the quantum state properly</span>
+                <span class="n">measurement_result</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Check for dark count during this time interval</span>
+        <span class="c1"># Calculate dark count probability based on time since last check</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_dark_check_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">time_since_check</span> <span class="o">=</span> <span class="n">timestamp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_dark_check_time</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">time_since_check</span> <span class="o">=</span> <span class="mf">1e-9</span>  <span class="c1"># Small time interval for first check</span>
+
+        <span class="c1"># Update last check time</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_dark_check_time</span> <span class="o">=</span> <span class="n">timestamp</span>
+
+        <span class="c1"># Calculate probability of dark count</span>
+        <span class="n">p_dark</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark_count_rate</span> <span class="o">*</span> <span class="n">time_since_check</span>
+        <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">p_dark</span><span class="p">:</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">detection_occurs</span><span class="p">:</span>  <span class="c1"># Only count if no real photon was detected</span>
+                <span class="n">detection_occurs</span> <span class="o">=</span> <span class="kc">True</span>
+                <span class="n">measurement_result</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dark_counts_detected</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Both real detection and dark count - model as afterpulse</span>
+                <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">afterpulse_probability</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">afterpulses_detected</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Add timing jitter</span>
+        <span class="n">detection_time</span> <span class="o">+=</span> <span class="n">secure_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">detection_occurs</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">total_photons_detected</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_detection_time</span> <span class="o">=</span> <span class="n">detection_time</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">in_dead_time</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># No detection, so not in dead time anymore</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">in_dead_time</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="n">measurement_result</span><span class="p">,</span> <span class="n">detection_time</span></div>
+
+
+<div class="viewcode-block" id="QuantumDetector.measure_state">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumDetector.measure_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_state</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">,</span> <span class="n">basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;computational&quot;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure a qubit state using the detector model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+<span class="sd">            basis: Measurement basis (&#39;computational&#39;, &#39;hadamard&#39;, &#39;circular&#39;)</span>
+<span class="sd">            timestamp: Time of measurement</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (measurement_result, detection_time)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># First measure in the specified basis (without collapsing)</span>
+        <span class="n">measurement_result_temp</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+
+        <span class="c1"># Use the detector model to determine if detection occurs</span>
+        <span class="c1"># For this simulation, assume photon is present with probability based on state</span>
+        <span class="c1"># In a real implementation, we&#39;d consider the probability based on the state</span>
+        <span class="n">prob_detect</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="n">measurement_result_temp</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="n">photon_present</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">prob_detect</span>
+        <span class="n">detection_result</span><span class="p">,</span> <span class="n">detection_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detect</span><span class="p">(</span><span class="n">photon_present</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span>
+
+        <span class="c1"># Only collapse the state if detection occurred</span>
+        <span class="k">if</span> <span class="n">detection_result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">qubit</span><span class="o">.</span><span class="n">collapse_state</span><span class="p">(</span><span class="n">detection_result</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">detection_result</span><span class="p">,</span> <span class="n">detection_time</span></div>
+
+
+<div class="viewcode-block" id="QuantumDetector.get_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumDetector.get_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get detector statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with detector statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;total_photons_detected&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_photons_detected</span><span class="p">,</span>
+            <span class="s2">&quot;dark_counts_detected&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dark_counts_detected</span><span class="p">,</span>
+            <span class="s2">&quot;afterpulses_detected&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">afterpulses_detected</span><span class="p">,</span>
+            <span class="s2">&quot;detection_efficiency&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">efficiency</span><span class="p">,</span>
+            <span class="s2">&quot;dead_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">dead_time</span><span class="p">,</span>
+            <span class="s2">&quot;timing_jitter&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">,</span>
+            <span class="s2">&quot;afterpulse_probability&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">afterpulse_probability</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="QuantumDetector.reset">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumDetector.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset detector statistics.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">total_photons_detected</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dark_counts_detected</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">afterpulses_detected</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_detection_time</span> <span class="o">=</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">in_dead_time</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># Re-initialize the dark-count tracking field rather than deleting it,</span>
+        <span class="c1"># since __init__ sets it and detect() reads it. Deleting it caused</span>
+        <span class="c1"># AttributeError on the first detect() call after a reset().</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_dark_check_time</span> <span class="o">=</span> <span class="kc">None</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DetectorArray">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DetectorArray">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DetectorArray</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Array of quantum detectors for multi-basis measurements.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DetectorArray.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DetectorArray.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_detectors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">,</span> <span class="o">**</span><span class="n">detector_kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize an array of detectors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_detectors: Number of detectors in the array</span>
+<span class="sd">            **detector_kwargs: Arguments to pass to individual detector constructors</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detectors</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">QuantumDetector</span><span class="p">(</span><span class="o">**</span><span class="n">detector_kwargs</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_detectors</span><span class="p">)</span>
+        <span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="DetectorArray.measure_in_basis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DetectorArray.measure_in_basis">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_in_basis</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">,</span> <span class="n">basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;computational&quot;</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure a qubit in a specific basis using the detector array.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+<span class="sd">            basis: Measurement basis</span>
+<span class="sd">            timestamp: Time of measurement</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Measurement result (0 or 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># For now, just use the first detector</span>
+        <span class="c1"># In a real implementation, we&#39;d use the appropriate detectors for the basis</span>
+        <span class="n">result</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">detectors</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">measure_state</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">basis</span><span class="p">,</span> <span class="n">timestamp</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># If no detection occurred, we might need some error handling or random assignment</span>
+            <span class="c1"># For now, we&#39;ll assume a detection always occurs for protocol execution</span>
+            <span class="c1"># This is a simplification - a real system would handle undetected photons</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="DetectorArray.get_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DetectorArray.get_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get statistics for all detectors.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of dictionaries with statistics for each detector</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">detector</span><span class="o">.</span><span class="n">get_statistics</span><span class="p">()</span> <span class="k">for</span> <span class="n">detector</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detectors</span><span class="p">]</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

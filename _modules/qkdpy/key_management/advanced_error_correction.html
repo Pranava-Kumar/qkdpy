@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.key_management.advanced_error_correction &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.key_management.advanced_error_correction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.key_management.advanced_error_correction</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Advanced error correction methods for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="AdvancedErrorCorrection">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.key_management.advanced_error_correction.AdvancedErrorCorrection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdvancedErrorCorrection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides advanced error correction methods for QKD protocols.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AdvancedErrorCorrection.low_density_parity_check">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.key_management.advanced_error_correction.AdvancedErrorCorrection.low_density_parity_check">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">low_density_parity_check</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Low-Density Parity-Check (LDPC) error correction.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            rate: Code rate (typically 0.5 for QKD)</span>
+<span class="sd">            max_iterations: Maximum number of belief propagation iterations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (corrected_alice_key, corrected_bob_key, success)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Convert to numpy arrays</span>
+        <span class="n">alice_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span>
+        <span class="n">bob_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bob_key</span><span class="p">)</span>
+
+        <span class="c1"># For a real LDPC implementation, we would need:</span>
+        <span class="c1"># 1. A parity check matrix H</span>
+        <span class="c1"># 2. Belief propagation decoding algorithm</span>
+        <span class="c1"># 3. Syndrome calculation and error correction</span>
+
+        <span class="c1"># This is a simplified simulation of LDPC</span>
+        <span class="c1"># In practice, this would involve much more complex operations</span>
+
+        <span class="c1"># Calculate the syndrome (simplified)</span>
+        <span class="c1"># In a real implementation, this would be H * bob_key^T</span>
+        <span class="n">syndrome</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">alice_array</span> <span class="o">!=</span> <span class="n">bob_array</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
+
+        <span class="c1"># If syndrome is 0, no errors detected</span>
+        <span class="k">if</span> <span class="n">syndrome</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">bob_key</span><span class="p">,</span> <span class="kc">True</span>
+
+        <span class="c1"># Simple error correction: flip bits where Alice and Bob differ</span>
+        <span class="c1"># This is NOT how real LDPC works, but serves as a placeholder</span>
+        <span class="n">corrected_bob</span> <span class="o">=</span> <span class="n">bob_array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">error_positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">alice_array</span> <span class="o">!=</span> <span class="n">bob_array</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Flip the errors</span>
+        <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">error_positions</span><span class="p">:</span>
+            <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+
+        <span class="c1"># Check if correction was successful</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">alice_array</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">success</span></div>
+
+
+<div class="viewcode-block" id="AdvancedErrorCorrection.polar_code_error_correction">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.key_management.advanced_error_correction.AdvancedErrorCorrection.polar_code_error_correction">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">polar_code_error_correction</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">noise_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Polar code error correction for QKD.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            noise_level: Estimated noise level in the channel</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (corrected_alice_key, corrected_bob_key, success)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="c1"># For a real polar code implementation, we would need:</span>
+        <span class="c1"># 1. Polar code construction based on channel polarization</span>
+        <span class="c1"># 2. Encoding and decoding algorithms</span>
+        <span class="c1"># 3. Successive cancellation decoding</span>
+
+        <span class="c1"># This is a simplified simulation of polar codes</span>
+        <span class="c1"># In practice, this would involve much more complex operations</span>
+
+        <span class="c1"># Calculate error positions</span>
+        <span class="n">alice_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span>
+        <span class="n">bob_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bob_key</span><span class="p">)</span>
+        <span class="n">error_positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">alice_array</span> <span class="o">!=</span> <span class="n">bob_array</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Simple error correction: flip bits where Alice and Bob differ</span>
+        <span class="c1"># This is NOT how real polar codes work, but serves as a placeholder</span>
+        <span class="n">corrected_bob</span> <span class="o">=</span> <span class="n">bob_array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Flip the errors</span>
+        <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">error_positions</span><span class="p">:</span>
+            <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+
+        <span class="c1"># Check if correction was successful</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">alice_array</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">success</span></div>
+
+
+<div class="viewcode-block" id="AdvancedErrorCorrection.turbo_code_error_correction">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.key_management.advanced_error_correction.AdvancedErrorCorrection.turbo_code_error_correction">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">turbo_code_error_correction</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Turbo code error correction for QKD.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            max_iterations: Maximum number of turbo decoding iterations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (corrected_alice_key, corrected_bob_key, success)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="c1"># For a real turbo code implementation, we would need:</span>
+        <span class="c1"># 1. Parallel concatenation of recursive systematic convolutional codes</span>
+        <span class="c1"># 2. Turbo decoding with iterative exchange of extrinsic information</span>
+        <span class="c1"># 3. Log-MAP or Max-Log-MAP decoding algorithms</span>
+
+        <span class="c1"># This is a simplified simulation of turbo codes</span>
+        <span class="c1"># In practice, this would involve much more complex operations</span>
+
+        <span class="c1"># Calculate error positions</span>
+        <span class="n">alice_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span>
+        <span class="n">bob_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bob_key</span><span class="p">)</span>
+        <span class="n">error_positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">alice_array</span> <span class="o">!=</span> <span class="n">bob_array</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Simple error correction: flip bits where Alice and Bob differ</span>
+        <span class="c1"># This is NOT how real turbo codes work, but serves as a placeholder</span>
+        <span class="n">corrected_bob</span> <span class="o">=</span> <span class="n">bob_array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Flip the errors</span>
+        <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">error_positions</span><span class="p">:</span>
+            <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+
+        <span class="c1"># Check if correction was successful</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">alice_array</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">success</span></div>
+
+
+<div class="viewcode-block" id="AdvancedErrorCorrection.fountain_code_error_correction">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.key_management.advanced_error_correction.AdvancedErrorCorrection.fountain_code_error_correction">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fountain_code_error_correction</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">overhead</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Fountain code error correction for QKD.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            overhead: Additional redundancy added to the key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (corrected_alice_key, corrected_bob_key, success)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="c1"># For a real fountain code implementation, we would need:</span>
+        <span class="c1"># 1. LT codes or Raptor codes encoding</span>
+        <span class="c1"># 2. Belief propagation decoding</span>
+        <span class="c1"># 3. Random linear combinations of input symbols</span>
+
+        <span class="c1"># This is a simplified simulation of fountain codes</span>
+        <span class="c1"># In practice, this would involve much more complex operations</span>
+
+        <span class="c1"># Calculate error positions</span>
+        <span class="n">alice_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span>
+        <span class="n">bob_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bob_key</span><span class="p">)</span>
+        <span class="n">error_positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">alice_array</span> <span class="o">!=</span> <span class="n">bob_array</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Simple error correction: flip bits where Alice and Bob differ</span>
+        <span class="c1"># This is NOT how real fountain codes work, but serves as a placeholder</span>
+        <span class="n">corrected_bob</span> <span class="o">=</span> <span class="n">bob_array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Flip the errors</span>
+        <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">error_positions</span><span class="p">:</span>
+            <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+
+        <span class="c1"># Check if correction was successful</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">alice_array</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">success</span></div>
+
+
+<div class="viewcode-block" id="AdvancedErrorCorrection.neural_network_error_correction">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.key_management.advanced_error_correction.AdvancedErrorCorrection.neural_network_error_correction">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">neural_network_error_correction</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">training_samples</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Neural network-based error correction for QKD.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            training_samples: Number of training samples to use</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (corrected_alice_key, corrected_bob_key, success)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="c1"># For a real neural network implementation, we would need:</span>
+        <span class="c1"># 1. Training data generation with various error patterns</span>
+        <span class="c1"># 2. Neural network architecture design</span>
+        <span class="c1"># 3. Training process</span>
+        <span class="c1"># 4. Inference for error correction</span>
+
+        <span class="c1"># This is a simplified simulation of neural network error correction</span>
+        <span class="c1"># In practice, this would involve much more complex operations</span>
+
+        <span class="c1"># Calculate error positions</span>
+        <span class="n">alice_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span>
+        <span class="n">bob_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bob_key</span><span class="p">)</span>
+        <span class="n">error_positions</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">alice_array</span> <span class="o">!=</span> <span class="n">bob_array</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Simple error correction: flip bits where Alice and Bob differ</span>
+        <span class="c1"># This is NOT how real neural networks work, but serves as a placeholder</span>
+        <span class="n">corrected_bob</span> <span class="o">=</span> <span class="n">bob_array</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Flip the errors</span>
+        <span class="k">for</span> <span class="n">pos</span> <span class="ow">in</span> <span class="n">error_positions</span><span class="p">:</span>
+            <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">corrected_bob</span><span class="p">[</span><span class="n">pos</span><span class="p">]</span>
+
+        <span class="c1"># Check if correction was successful</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">alice_array</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">success</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

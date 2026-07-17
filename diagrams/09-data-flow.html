@@ -1,0 +1,288 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>9. End-to-End Data Flow &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">9. End-to-End Data Flow</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/diagrams/09-data-flow.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="end-to-end-data-flow">
+<h1>9. End-to-End Data Flow<a class="headerlink" href="#end-to-end-data-flow" title="Link to this heading"></a></h1>
+<section id="complete-qkd-pipeline-input-output">
+<h2>Complete QKD Pipeline: Input → Output<a class="headerlink" href="#complete-qkd-pipeline-input-output" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    START([&quot;User calls protocol.execute()&quot;])
+
+    subgraph Input[&quot;Input Phase&quot;]
+        IN1[&quot;Protocol parameters:&lt;br/&gt;• channel (QuantumChannel)&lt;br/&gt;• key_length (int)&lt;br/&gt;• security_threshold (float)&quot;]
+        IN2[&quot;Channel parameters:&lt;br/&gt;• distance (km)&lt;br/&gt;• noise_model&lt;br/&gt;• noise_level&lt;br/&gt;• eavesdropper (optional)&quot;]
+    end
+
+    subgraph Prepare[&quot;State Preparation&quot;]
+        PR1[&quot;Alice generates random bits&lt;br/&gt;secure_randint(0, 2) per qubit&quot;]
+        PR2[&quot;Alice chooses random bases&lt;br/&gt;secure_choice(bases)&quot;]
+        PR3[&quot;Qubits created:&lt;br/&gt;|0⟩, |1⟩, |+⟩, |−⟩, |y+⟩, |y−⟩&quot;]
+
+        PR1 --&gt; PR2 --&gt; PR3
+    end
+
+    subgraph Transmit[&quot;Quantum Transmission&quot;]
+        TR1[&quot;For each qubit:&quot;]
+        TR2{&quot;Loss check&lt;br/&gt;random() &lt; loss_prob?&quot;}
+        TR3[&quot;Apply noise model&quot;]
+        TR4[&quot;Apply eavesdropping&quot;]
+        TR5[&quot;Apply physical effects&lt;br/&gt;(polarization, phase, thermal)&quot;]
+
+        TR1 --&gt; TR2
+        TR2 --&gt;|yes| LOST[&quot;Qubit lost → None&quot;]
+        TR2 --&gt;|no| TR3 --&gt; TR4 --&gt; TR5
+    end
+
+    subgraph Measure[&quot;Measurement Phase&quot;]
+        ME1[&quot;Bob chooses random bases&quot;]
+        ME2[&quot;Measure in chosen basis&quot;]
+        ME3[&quot;Record: (bit_result, basis_choice)&quot;]
+    end
+
+    subgraph PostProc[&quot;Post-Processing&quot;]
+        PP1[&quot;Basis sifting:&lt;br/&gt;Compare bases, keep matches&quot;]
+        PP2[&quot;QBER estimation:&lt;br/&gt;errors in public sample&quot;]
+        PP3{&quot;Is QBER below threshold?&quot;}
+
+        subgraph EC_PP[&quot;Error Correction&quot;]
+            EC1[&quot;Divide into blocks&quot;]
+            EC2[&quot;Cascade: parity + binary search&quot;]
+            EC3[&quot;Keys now identical ✓&quot;]
+        end
+
+        subgraph PA_PP[&quot;Privacy Amplification&quot;]
+            PA1[&quot;Compute Eve info estimate&quot;]
+            PA2[&quot;Apply hash function&quot;]
+            PA3[&quot;Shortened secure key&quot;]
+        end
+
+        PP1 --&gt; PP2 --&gt; PP3
+        PP3 --&gt;|yes| EC_PP --&gt; PA_PP
+        PP3 --&gt;|no| ABORT([&quot;Protocol aborted&lt;br/&gt;Channel insecure&quot;])
+    end
+
+    subgraph Output[&quot;Output Phase&quot;]
+        OUT1[&quot;ProtocolResult:&quot;]
+        OUT2[&quot;• final_key: list[int]&quot;]
+        OUT3[&quot;• qber: float&quot;]
+        OUT4[&quot;• is_secure: bool&quot;]
+        OUT5[&quot;• channel_stats: dict&quot;]
+        OUT6[&quot;• raw_key_length: int&quot;]
+        OUT7[&quot;• sifted_key_length: int&quot;]
+
+        OUT1 --&gt; OUT2
+        OUT1 --&gt; OUT3
+        OUT1 --&gt; OUT4
+        OUT1 --&gt; OUT5
+        OUT1 --&gt; OUT6
+        OUT1 --&gt; OUT7
+    end
+
+    START --&gt; Input --&gt; Prepare --&gt; Transmit --&gt; Measure --&gt; PostProc --&gt; Output
+
+    style Input fill:#e3f2fd,stroke:#1565c0
+    style Prepare fill:#bbdefb,stroke:#0d47a1
+    style Transmit fill:#fff3e0,stroke:#e65100
+    style Measure fill:#c8e6c9,stroke:#2e7d32
+    style PostProc fill:#d1c4e9,stroke:#4527a0
+    style EC_PP fill:#e8f5e9,stroke:#1b5e20
+    style PA_PP fill:#ede7f6,stroke:#311b92
+    style Output fill:#ffe0b2,stroke:#bf360c
+    style ABORT fill:#ffcdd2,stroke:#b71c1c
+</pre></div>
+</div>
+</section>
+<section id="state-evolution-through-pipeline">
+<h2>State Evolution Through Pipeline<a class="headerlink" href="#state-evolution-through-pipeline" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart LR
+    subgraph S1[&quot;Step 1: Raw State&quot;]
+        ALICE_RAW[&quot;Alice raw bits:&lt;br/&gt;[1,0,1,1,0,0,1,0,...]&quot;]
+        ALICE_BASIS[&quot;Alice bases:&lt;br/&gt;[comp, had, had, comp,...]&quot;]
+        BOB_BASIS[&quot;Bob bases:&lt;br/&gt;[had, comp, had, had,...]&quot;]
+        BOB_RAW[&quot;Bob raw results:&lt;br/&gt;[0,0,1,1,0,0,0,1,...]&quot;]
+    end
+
+    subgraph S2[&quot;Step 2: Sifted&quot;]
+        MATCH[&quot;Matching indices:&lt;br/&gt;[✓, ✗, ✓, ✗, ✓, ✗, ✓, ✓]&quot;]
+        ALICE_SIFT[&quot;Alice sifted:&lt;br/&gt;[1, 1, 0, 1, 0]&quot;]
+        BOB_SIFT[&quot;Bob sifted:&lt;br/&gt;[1, 0, 0, 0, 0]&quot;]
+    end
+
+    subgraph S3[&quot;Step 3: Error Corrected&quot;]
+        ALICE_EC[&quot;Alice corrected:&lt;br/&gt;[1, 1, 0, 1, 0]&quot;]
+        BOB_EC[&quot;Bob corrected:&lt;br/&gt;[1, 1, 0, 1, 0]&quot;]
+        NOTE_EC[&quot;Identical after correction ✓&quot;]
+    end
+
+    subgraph S4[&quot;Step 4: Privacy Amplified&quot;]
+        FINAL_KEY[&quot;Final key:&lt;br/&gt;[1, 0, 1, 0]&quot;]
+        NOTE_PA[&quot;Shortened from 5 → 4 bits&lt;br/&gt;Eve&#39;s info removed&quot;]
+    end
+
+    ALICE_RAW --&gt; ALICE_SIFT
+    BOB_RAW --&gt; BOB_SIFT
+    ALICE_SIFT --&gt; ALICE_EC
+    BOB_SIFT --&gt; BOB_EC
+    ALICE_EC --&gt; FINAL_KEY
+
+    style S1 fill:#e3f2fd,stroke:#1565c0
+    style S2 fill:#e1bee7,stroke:#6a1b9a
+    style S3 fill:#c8e6c9,stroke:#2e7d32
+    style S4 fill:#ffe0b2,stroke:#e65100
+</pre></div>
+</div>
+</section>
+<section id="data-type-conversions">
+<h2>Data Type Conversions<a class="headerlink" href="#data-type-conversions" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    subgraph Types[&quot;Data Through the Pipeline&quot;]
+        T1[&quot;Random bits (int: 0/1)&lt;br/&gt;→ encoded as qubit amplitudes (complex)&quot;]
+        T2[&quot;Qubit state [α, β] (np.complex128)&lt;br/&gt;→ transmitted through channel&quot;]
+        T3[&quot;Measured result (int: 0/1)&lt;br/&gt;→ raw key bits&quot;]
+        T4[&quot;Sifted key (list[int])&lt;br/&gt;→ error correction&quot;]
+        T5[&quot;Corrected key (list[int])&lt;br/&gt;→ privacy amplification&quot;]
+        T6[&quot;Final key (list[int])&lt;br/&gt;→ output to user&quot;]
+
+        T1 --&gt; T2 --&gt; T3 --&gt; T4 --&gt; T5 --&gt; T6
+    end
+
+    subgraph KeySizes[&quot;Typical Key Sizes Through Pipeline&quot;]
+        K1[&quot;Raw: N bits&lt;br/&gt;(1000 for 200-bit key)&quot;]
+        K2[&quot;Sifted: ~0.5N bits&lt;br/&gt;(~500 after basis matching)&quot;]
+        K3[&quot;Corrected: ~0.5N bits&lt;br/&gt;(same as sifted)&quot;]
+        K4[&quot;Final: ~0.3N bits&lt;br/&gt;(~300 after privacy amp)&quot;]
+    end
+</pre></div>
+</div>
+</section>
+<section id="instrumentation-observability">
+<h2>Instrumentation &amp; Observability<a class="headerlink" href="#instrumentation-observability" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart LR
+    subgraph Events[&quot;Instrumented Events&quot;]
+        E1[&quot;OperationSpan:&lt;br/&gt;• protocol.execute.BB84&lt;br/&gt;• protocol.execute.E91&lt;br/&gt;• error_correction.cascade&quot;]
+        E2[&quot;record_protocol_execution()&quot;]
+        E3[&quot;record_qber_diagnostic()&quot;]
+    end
+
+    subgraph Metrics[&quot;Collected Metrics&quot;]
+        M1[&quot;Protocol name&quot;]
+        M2[&quot;Key length (requested)&quot;]
+        M3[&quot;QBER value&quot;]
+        M4[&quot;Final key size&quot;]
+        M5[&quot;Is secure&quot;]
+        M6[&quot;Duration (ms)&quot;]
+        M7[&quot;Channel stats&quot;]
+    end
+
+    subgraph OutputObs[&quot;Observability Output&quot;]
+        O1[&quot;Console logging&quot;]
+        O2[&quot;Structured metrics dict&quot;]
+        O3[&quot;Span hierarchy for debugging&quot;]
+    end
+
+    Events --&gt; Metrics --&gt; OutputObs
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

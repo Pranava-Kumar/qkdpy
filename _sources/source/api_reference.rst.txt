@@ -1,0 +1,193 @@
+.. _api_reference:
+
+API Reference
+=============
+
+Top-Level Package
+-----------------
+
+.. automodule:: qkdpy
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.config
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.exceptions
+   :members:
+   :undoc-members:
+
+Core Module
+-----------
+
+.. automodule:: qkdpy.core
+   :members:
+   :undoc-members:
+   :noindex:
+
+.. automodule:: qkdpy.core.qubit
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.qudit
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.gates
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.channels
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.extended_channels
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.detector
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.measurements
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.multiqubit
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.photon_source
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.security_analysis
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.timing
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.core.gate_utils
+   :members:
+   :undoc-members:
+
+Crypto Module
+-------------
+
+.. automodule:: qkdpy.crypto
+   :members:
+   :undoc-members:
+   :noindex:
+
+.. automodule:: qkdpy.crypto.encryption
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.crypto.decryption
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.crypto.authentication
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.crypto.quantum_auth
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.crypto.key_exchange
+   :members:
+   :undoc-members:
+
+Enterprise Module
+-----------------
+
+.. automodule:: qkdpy.enterprise
+   :members:
+   :undoc-members:
+   :noindex:
+
+.. automodule:: qkdpy.enterprise.licensing
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.enterprise.compliance
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.enterprise.quantum_safe
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.enterprise.hsm_interface
+   :members:
+   :undoc-members:
+   :noindex:
+
+.. automodule:: qkdpy.enterprise.audit
+   :members:
+   :undoc-members:
+   :noindex:
+
+ML Module
+---------
+
+.. automodule:: qkdpy.ml
+   :members:
+   :undoc-members:
+   :noindex:
+
+.. automodule:: qkdpy.ml.qkd_optimizer
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.ml.efficient_models
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.ml.knowledge_distillation
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.ml.model_selector
+   :members:
+   :undoc-members:
+
+Network Module
+--------------
+
+.. automodule:: qkdpy.network
+   :members:
+   :undoc-members:
+   :noindex:
+
+.. automodule:: qkdpy.network.satellite_qkd
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.network.quantum_network
+   :members:
+   :undoc-members:
+
+Utils Module
+------------
+
+.. automodule:: qkdpy.utils
+   :members:
+   :undoc-members:
+   :noindex:
+
+.. automodule:: qkdpy.utils.instrumentation
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.utils.logging_config
+   :members:
+   :undoc-members:
+
+.. automodule:: qkdpy.utils.validation
+   :members:
+   :undoc-members:

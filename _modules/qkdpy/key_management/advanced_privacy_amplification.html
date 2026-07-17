@@ -1,0 +1,329 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.key_management.advanced_privacy_amplification &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.key_management.advanced_privacy_amplification</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.key_management.advanced_privacy_amplification</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Advanced privacy amplification methods for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_sample</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.privacy_amplification</span><span class="w"> </span><span class="kn">import</span> <span class="n">PrivacyAmplification</span>
+
+
+<div class="viewcode-block" id="AdvancedPrivacyAmplification">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AdvancedPrivacyAmplification">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AdvancedPrivacyAmplification</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides advanced privacy amplification methods for QKD protocols.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AdvancedPrivacyAmplification.xor_extract">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AdvancedPrivacyAmplification.xor_extract">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">xor_extract</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Privacy amplification using XOR extraction with a seed.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key to be amplified</span>
+<span class="sd">            seed: Seed for the random extraction (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Extracted key with reduced length</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Determine output length (typically half the input length)</span>
+        <span class="n">output_length</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Apply XOR extraction</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_length</span><span class="p">):</span>
+            <span class="c1"># XOR a random subset of bits</span>
+            <span class="n">subset_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">//</span> <span class="p">(</span><span class="n">output_length</span> <span class="o">*</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">subset_indices</span> <span class="o">=</span> <span class="n">secure_sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">))),</span> <span class="n">subset_size</span><span class="p">)</span>
+            <span class="n">xor_result</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">subset_indices</span><span class="p">:</span>
+                <span class="n">xor_result</span> <span class="o">^=</span> <span class="n">key</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xor_result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="AdvancedPrivacyAmplification.aes_hash_extract">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AdvancedPrivacyAmplification.aes_hash_extract">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">aes_hash_extract</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">output_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Privacy amplification using AES-based hash extraction.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key to be amplified</span>
+<span class="sd">            output_length: Desired length of the output key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Extracted key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">output_length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Convert the key to bytes</span>
+        <span class="n">key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Use SHA-256 as a pseudorandom function</span>
+        <span class="n">hash_result</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">(</span><span class="n">key_bytes</span><span class="p">)</span><span class="o">.</span><span class="n">digest</span><span class="p">()</span>
+
+        <span class="c1"># Convert the hash to a binary string</span>
+        <span class="n">hash_bits</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">format</span><span class="p">(</span><span class="n">byte</span><span class="p">,</span> <span class="s2">&quot;08b&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">byte</span> <span class="ow">in</span> <span class="n">hash_result</span><span class="p">)</span>
+
+        <span class="c1"># Truncate to the desired length</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">hash_bits</span><span class="p">[:</span><span class="n">output_length</span><span class="p">]]</span>
+
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="AdvancedPrivacyAmplification.randomness_extractor">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AdvancedPrivacyAmplification.randomness_extractor">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">randomness_extractor</span><span class="p">(</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">output_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;xor&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Extract randomness from a key using various methods.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key to extract randomness from</span>
+<span class="sd">            output_length: Desired length of the output key</span>
+<span class="sd">            method: Method to use for randomness extraction (&#39;xor&#39;, &#39;aes&#39;, &#39;universal&#39;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random bits extracted from the key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">output_length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;xor&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">AdvancedPrivacyAmplification</span><span class="o">.</span><span class="n">xor_extract</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;aes&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">AdvancedPrivacyAmplification</span><span class="o">.</span><span class="n">aes_hash_extract</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">output_length</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;universal&quot;</span><span class="p">:</span>
+            <span class="c1"># Use the existing universal hashing method</span>
+            <span class="k">return</span> <span class="n">PrivacyAmplification</span><span class="o">.</span><span class="n">universal_hashing</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">output_length</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown randomness extraction method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AdvancedPrivacyAmplification.strong_extractor">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AdvancedPrivacyAmplification.strong_extractor">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">strong_extractor</span><span class="p">(</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">output_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">min_entropy</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Strong randomness extractor with formal security guarantees.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key to extract randomness from</span>
+<span class="sd">            output_length: Desired length of the output key</span>
+<span class="sd">            min_entropy: Minimum entropy of the input key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random bits extracted from the key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">output_length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># A strong extractor can produce about min_entropy - 2*log(1/epsilon) bits</span>
+        <span class="c1"># where epsilon is the statistical distance from uniform</span>
+
+        <span class="c1"># For this implementation, we&#39;ll use a simplified approach</span>
+        <span class="c1"># In practice, this would involve more sophisticated constructions</span>
+
+        <span class="c1"># Ensure output length is within theoretical limits</span>
+        <span class="n">max_output_length</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">min_entropy</span> <span class="o">-</span> <span class="mi">10</span><span class="p">)</span>  <span class="c1"># 10 for security parameter</span>
+        <span class="n">actual_output_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">output_length</span><span class="p">,</span> <span class="n">max_output_length</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">actual_output_length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># If we can&#39;t extract securely, return a small number of bits</span>
+            <span class="n">actual_output_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">8</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">//</span> <span class="mi">4</span><span class="p">)</span>
+
+        <span class="c1"># Use universal hashing for the extraction</span>
+        <span class="k">return</span> <span class="n">PrivacyAmplification</span><span class="o">.</span><span class="n">universal_hashing</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">actual_output_length</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AdvancedPrivacyAmplification.seeded_extractor">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AdvancedPrivacyAmplification.seeded_extractor">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">seeded_extractor</span><span class="p">(</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">seed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">output_length</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Seeded randomness extractor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key to extract randomness from</span>
+<span class="sd">            seed: Seed for the extractor</span>
+<span class="sd">            output_length: Desired length of the output key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random bits extracted from the key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">output_length</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Combine the key and seed</span>
+        <span class="n">combined</span> <span class="o">=</span> <span class="n">key</span> <span class="o">+</span> <span class="n">seed</span>
+
+        <span class="c1"># Use the strong extractor with the combined input</span>
+        <span class="c1"># Estimate min-entropy (simplified)</span>
+        <span class="n">min_entropy</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>  <span class="c1"># Assume 50% entropy</span>
+
+        <span class="k">return</span> <span class="n">AdvancedPrivacyAmplification</span><span class="o">.</span><span class="n">strong_extractor</span><span class="p">(</span>
+            <span class="n">combined</span><span class="p">,</span> <span class="n">output_length</span><span class="p">,</span> <span class="n">min_entropy</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AdvancedPrivacyAmplification.multiple_independent_extractors">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AdvancedPrivacyAmplification.multiple_independent_extractors">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">multiple_independent_extractors</span><span class="p">(</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">output_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">num_extractors</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Use multiple independent extractors and combine their outputs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key to extract randomness from</span>
+<span class="sd">            output_length: Desired length of the output key</span>
+<span class="sd">            num_extractors: Number of independent extractors to use</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random bits extracted from the key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">output_length</span> <span class="o">&lt;=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">num_extractors</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="c1"># Generate multiple independent seeds</span>
+        <span class="n">seeds</span> <span class="o">=</span> <span class="p">[</span><span class="n">secrets</span><span class="o">.</span><span class="n">randbelow</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_extractors</span><span class="p">)]</span>
+
+        <span class="c1"># Apply different extractors with different seeds</span>
+        <span class="n">extracted_bits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">seeds</span><span class="p">):</span>
+            <span class="n">method</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;xor&quot;</span><span class="p">,</span> <span class="s2">&quot;aes&quot;</span><span class="p">,</span> <span class="s2">&quot;universal&quot;</span><span class="p">][</span><span class="n">i</span> <span class="o">%</span> <span class="mi">3</span><span class="p">]</span>
+            <span class="n">bits</span> <span class="o">=</span> <span class="n">AdvancedPrivacyAmplification</span><span class="o">.</span><span class="n">randomness_extractor</span><span class="p">(</span>
+                <span class="n">key</span><span class="p">,</span> <span class="n">output_length</span> <span class="o">//</span> <span class="n">num_extractors</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">method</span>
+            <span class="p">)</span>
+            <span class="n">extracted_bits</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+
+        <span class="c1"># Combine the extracted bits using XOR</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">output_length</span><span class="p">):</span>
+            <span class="n">xor_result</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_extractors</span><span class="p">):</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">extracted_bits</span><span class="p">)</span> <span class="o">//</span> <span class="n">num_extractors</span><span class="p">:</span>
+                    <span class="n">idx</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">j</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">extracted_bits</span><span class="p">)</span> <span class="o">//</span> <span class="n">num_extractors</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="n">idx</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">extracted_bits</span><span class="p">):</span>
+                        <span class="n">xor_result</span> <span class="o">^=</span> <span class="n">extracted_bits</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">xor_result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="p">[:</span><span class="n">output_length</span><span class="p">]</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

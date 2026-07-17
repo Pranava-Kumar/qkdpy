@@ -1,0 +1,588 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.enterprise.audit &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.enterprise.audit</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.enterprise.audit</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Audit logging for QKDpy enterprise deployments.</span>
+
+<span class="sd">This module provides tamper-evident audit logging for compliance</span>
+<span class="sd">with security standards and regulations.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hmac</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">asdict</span><span class="p">,</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+<span class="c1"># Keyed secret for the audit hash chain. A plain SHA-256 chain only detects</span>
+<span class="c1"># *accidental* corruption: anyone with write access to the log can recompute</span>
+<span class="c1"># every ``previous_hash`` and produce a valid chain. Using a keyed HMAC means</span>
+<span class="c1"># a tamperer cannot forge chain links without this in-process secret, turning</span>
+<span class="c1"># the chain from corruption-evident into tamper-resistant.</span>
+<span class="n">_CHAIN_SECRET</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="AuditEventType">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditEventType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AuditEventType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Types of auditable events.&quot;&quot;&quot;</span>
+
+    <span class="c1"># Key events</span>
+    <span class="n">KEY_GENERATED</span> <span class="o">=</span> <span class="s2">&quot;key_generated&quot;</span>
+    <span class="n">KEY_IMPORTED</span> <span class="o">=</span> <span class="s2">&quot;key_imported&quot;</span>
+    <span class="n">KEY_EXPORTED</span> <span class="o">=</span> <span class="s2">&quot;key_exported&quot;</span>
+    <span class="n">KEY_DELETED</span> <span class="o">=</span> <span class="s2">&quot;key_deleted&quot;</span>
+    <span class="n">KEY_ROTATED</span> <span class="o">=</span> <span class="s2">&quot;key_rotated&quot;</span>
+    <span class="n">KEY_ACCESSED</span> <span class="o">=</span> <span class="s2">&quot;key_accessed&quot;</span>
+    <span class="n">KEY_EXPIRED</span> <span class="o">=</span> <span class="s2">&quot;key_expired&quot;</span>
+    <span class="n">KEY_DISTRIBUTED</span> <span class="o">=</span> <span class="s2">&quot;key_distributed&quot;</span>
+
+    <span class="c1"># Protocol events</span>
+    <span class="n">PROTOCOL_STARTED</span> <span class="o">=</span> <span class="s2">&quot;protocol_started&quot;</span>
+    <span class="n">PROTOCOL_COMPLETED</span> <span class="o">=</span> <span class="s2">&quot;protocol_completed&quot;</span>
+    <span class="n">PROTOCOL_EXECUTED</span> <span class="o">=</span> <span class="s2">&quot;protocol_executed&quot;</span>
+    <span class="n">PROTOCOL_FAILED</span> <span class="o">=</span> <span class="s2">&quot;protocol_failed&quot;</span>
+    <span class="n">PROTOCOL_ABORTED</span> <span class="o">=</span> <span class="s2">&quot;protocol_aborted&quot;</span>
+
+    <span class="c1"># Security events</span>
+    <span class="n">SECURITY_VIOLATION</span> <span class="o">=</span> <span class="s2">&quot;security_violation&quot;</span>
+    <span class="n">ATTACK_DETECTED</span> <span class="o">=</span> <span class="s2">&quot;attack_detected&quot;</span>
+    <span class="n">QBER_THRESHOLD_EXCEEDED</span> <span class="o">=</span> <span class="s2">&quot;qber_threshold_exceeded&quot;</span>
+    <span class="n">AUTHENTICATION_FAILED</span> <span class="o">=</span> <span class="s2">&quot;authentication_failed&quot;</span>
+
+    <span class="c1"># System events</span>
+    <span class="n">SYSTEM_STARTED</span> <span class="o">=</span> <span class="s2">&quot;system_started&quot;</span>
+    <span class="n">SYSTEM_STOPPED</span> <span class="o">=</span> <span class="s2">&quot;system_stopped&quot;</span>
+    <span class="n">CONFIG_CHANGED</span> <span class="o">=</span> <span class="s2">&quot;config_changed&quot;</span>
+    <span class="n">HSM_CONNECTED</span> <span class="o">=</span> <span class="s2">&quot;hsm_connected&quot;</span>
+    <span class="n">HSM_DISCONNECTED</span> <span class="o">=</span> <span class="s2">&quot;hsm_disconnected&quot;</span>
+
+    <span class="c1"># Access events</span>
+    <span class="n">ACCESS_GRANTED</span> <span class="o">=</span> <span class="s2">&quot;access_granted&quot;</span>
+    <span class="n">ACCESS_DENIED</span> <span class="o">=</span> <span class="s2">&quot;access_denied&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="AuditEvent">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditEvent">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AuditEvent</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents an audit log event.&quot;&quot;&quot;</span>
+
+    <span class="n">event_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">event_type</span><span class="p">:</span> <span class="n">AuditEventType</span>
+    <span class="n">timestamp</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">actor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">resource</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">action</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">result</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">previous_hash</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="AuditEvent.to_dict">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditEvent.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert to dictionary for serialization.&quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">asdict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;event_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_type</span><span class="o">.</span><span class="n">value</span>
+        <span class="n">data</span><span class="p">[</span><span class="s2">&quot;timestamp&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">data</span></div>
+
+
+<div class="viewcode-block" id="AuditEvent.compute_hash">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditEvent.compute_hash">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the keyed-HMAC of the event for tamper-resistant chaining.&quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">to_dict</span><span class="p">(),</span> <span class="n">sort_keys</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">_CHAIN_SECRET</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AuditLogger">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AuditLogger</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Tamper-evident audit logger for QKD operations.</span>
+
+<span class="sd">    Creates a chain of audit events where each event includes</span>
+<span class="sd">    a hash of the previous event, enabling detection of tampering.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="AuditLogger.__init__">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">storage_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">enable_chain_verification</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize audit logger.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            storage_path: Path to store audit logs (None for memory only)</span>
+<span class="sd">            enable_chain_verification: Whether to verify chain integrity</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">storage_path</span> <span class="o">=</span> <span class="n">storage_path</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enable_chain_verification</span> <span class="o">=</span> <span class="n">enable_chain_verification</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">AuditEvent</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_hash</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;AuditLogger initialized&quot;</span><span class="p">,</span>
+            <span class="n">storage_path</span><span class="o">=</span><span class="n">storage_path</span><span class="p">,</span>
+            <span class="n">chain_verification</span><span class="o">=</span><span class="n">enable_chain_verification</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AuditLogger.log_event">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.log_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_event</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">event_type</span><span class="p">:</span> <span class="n">AuditEventType</span><span class="p">,</span>
+        <span class="n">action</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">actor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="n">details</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AuditEvent</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log an audit event.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_type: Type of event</span>
+<span class="sd">            action: Description of the action</span>
+<span class="sd">            actor: Entity performing the action</span>
+<span class="sd">            resource: Resource being acted upon</span>
+<span class="sd">            result: Result of the action</span>
+<span class="sd">            details: Additional event details</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The created audit event</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">event</span> <span class="o">=</span> <span class="n">AuditEvent</span><span class="p">(</span>
+            <span class="n">event_id</span><span class="o">=</span><span class="n">secrets</span><span class="o">.</span><span class="n">token_hex</span><span class="p">(</span><span class="mi">16</span><span class="p">),</span>
+            <span class="n">event_type</span><span class="o">=</span><span class="n">event_type</span><span class="p">,</span>
+            <span class="n">timestamp</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">),</span>
+            <span class="n">actor</span><span class="o">=</span><span class="n">actor</span><span class="p">,</span>
+            <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+            <span class="n">action</span><span class="o">=</span><span class="n">action</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="n">details</span> <span class="ow">or</span> <span class="p">{},</span>
+            <span class="n">previous_hash</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_last_hash</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Update chain</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_hash</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">compute_hash</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+        <span class="c1"># Persist if storage configured</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage_path</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_persist_event</span><span class="p">(</span><span class="n">event</span><span class="p">)</span>
+
+        <span class="c1"># Log to structured logger as well</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;AUDIT: </span><span class="si">{</span><span class="n">event_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">event_id</span><span class="o">=</span><span class="n">event</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span>
+            <span class="n">actor</span><span class="o">=</span><span class="n">actor</span><span class="p">,</span>
+            <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">event</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_persist_event</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event</span><span class="p">:</span> <span class="n">AuditEvent</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Persist event to storage (append + fsync).</span>
+
+<span class="sd">        Each event is appended as a single JSON line.  The file descriptor is</span>
+<span class="sd">        flushed and fsynced after every write to guard against data loss on</span>
+<span class="sd">        crash (the most recent line may still be lost if the OS cannot flush</span>
+<span class="sd">        the disk cache, but no prior content will be corrupt).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">assert</span> <span class="bp">self</span><span class="o">.</span><span class="n">storage_path</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">line</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">to_dict</span><span class="p">())</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">storage_path</span><span class="p">,</span> <span class="s2">&quot;a&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+                <span class="n">f</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">fsync</span><span class="p">(</span><span class="n">f</span><span class="o">.</span><span class="n">fileno</span><span class="p">())</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to persist audit event&quot;</span><span class="p">,</span> <span class="n">error</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+
+<div class="viewcode-block" id="AuditLogger.log_key_event">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.log_key_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_key_event</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">event_type</span><span class="p">:</span> <span class="n">AuditEventType</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">actor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">details</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AuditEvent</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log a key-related event.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_type: Type of key event</span>
+<span class="sd">            key_id: Key identifier</span>
+<span class="sd">            actor: Entity performing the action</span>
+<span class="sd">            result: Result of the action</span>
+<span class="sd">            **details: Additional details</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The created audit event</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_event</span><span class="p">(</span>
+            <span class="n">event_type</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Key operation: </span><span class="si">{</span><span class="n">event_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">actor</span><span class="o">=</span><span class="n">actor</span><span class="p">,</span>
+            <span class="n">resource</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;key:</span><span class="si">{</span><span class="n">key_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="n">details</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AuditLogger.log_protocol_event">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.log_protocol_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_protocol_event</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">event_type</span><span class="p">:</span> <span class="n">AuditEventType</span><span class="p">,</span>
+        <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">actor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">details</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AuditEvent</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log a protocol-related event.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_type: Type of protocol event</span>
+<span class="sd">            protocol_name: Name of the protocol</span>
+<span class="sd">            session_id: Session identifier</span>
+<span class="sd">            actor: Entity performing the action</span>
+<span class="sd">            result: Result of the action</span>
+<span class="sd">            **details: Additional details</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The created audit event</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">resource</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;protocol:</span><span class="si">{</span><span class="n">protocol_name</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="k">if</span> <span class="n">session_id</span><span class="p">:</span>
+            <span class="n">resource</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;:</span><span class="si">{</span><span class="n">session_id</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_event</span><span class="p">(</span>
+            <span class="n">event_type</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Protocol operation: </span><span class="si">{</span><span class="n">event_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">actor</span><span class="o">=</span><span class="n">actor</span><span class="p">,</span>
+            <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="n">result</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="n">details</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AuditLogger.log_security_event">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.log_security_event">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">log_security_event</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">event_type</span><span class="p">:</span> <span class="n">AuditEventType</span><span class="p">,</span>
+        <span class="n">description</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">actor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;high&quot;</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">details</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">AuditEvent</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log a security-related event.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_type: Type of security event</span>
+<span class="sd">            description: Description of the event</span>
+<span class="sd">            actor: Entity involved</span>
+<span class="sd">            resource: Resource involved</span>
+<span class="sd">            severity: Severity level</span>
+<span class="sd">            **details: Additional details</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            The created audit event</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">details</span><span class="p">[</span><span class="s2">&quot;severity&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">severity</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">log_event</span><span class="p">(</span>
+            <span class="n">event_type</span><span class="p">,</span>
+            <span class="n">description</span><span class="p">,</span>
+            <span class="n">actor</span><span class="o">=</span><span class="n">actor</span><span class="p">,</span>
+            <span class="n">resource</span><span class="o">=</span><span class="n">resource</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="s2">&quot;security_alert&quot;</span><span class="p">,</span>
+            <span class="n">details</span><span class="o">=</span><span class="n">details</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AuditLogger.verify_chain_integrity">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.verify_chain_integrity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_chain_integrity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify the keyed-HMAC integrity of the audit chain.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (is_valid, list of error messages)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_chain_verification</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span><span class="p">,</span> <span class="p">[]</span>
+
+        <span class="n">errors</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">event</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">event</span><span class="o">.</span><span class="n">previous_hash</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;First event has non-null previous_hash&quot;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">expected_hash</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">compute_hash</span><span class="p">()</span>
+                <span class="k">if</span> <span class="ow">not</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">event</span><span class="o">.</span><span class="n">previous_hash</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">expected_hash</span><span class="p">):</span>
+                    <span class="n">errors</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="sa">f</span><span class="s2">&quot;Chain broken at event </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2"> (</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">event_id</span><span class="si">}</span><span class="s2">): &quot;</span>
+                        <span class="sa">f</span><span class="s2">&quot;expected </span><span class="si">{</span><span class="n">expected_hash</span><span class="si">}</span><span class="s2">, got </span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">previous_hash</span><span class="si">}</span><span class="s2">&quot;</span>
+                    <span class="p">)</span>
+
+        <span class="n">is_valid</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_valid</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">security</span><span class="p">(</span>
+                <span class="s2">&quot;Audit chain integrity violation detected&quot;</span><span class="p">,</span>
+                <span class="n">error_count</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">errors</span><span class="p">),</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">is_valid</span><span class="p">,</span> <span class="n">errors</span></div>
+
+
+<div class="viewcode-block" id="AuditLogger.get_events">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.get_events">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_events</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">event_type</span><span class="p">:</span> <span class="n">AuditEventType</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">actor</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">resource</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">since</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">until</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">limit</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">AuditEvent</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Query audit events.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_type: Filter by event type</span>
+<span class="sd">            actor: Filter by actor</span>
+<span class="sd">            resource: Filter by resource</span>
+<span class="sd">            since: Events after this time</span>
+<span class="sd">            until: Events before this time</span>
+<span class="sd">            limit: Maximum number of events to return</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Matching audit events</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span>
+
+        <span class="k">if</span> <span class="n">event_type</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">event_type</span> <span class="o">==</span> <span class="n">event_type</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">actor</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">actor</span> <span class="o">==</span> <span class="n">actor</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">resource</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">resource</span> <span class="ow">and</span> <span class="n">resource</span> <span class="ow">in</span> <span class="n">e</span><span class="o">.</span><span class="n">resource</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">since</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">&gt;=</span> <span class="n">since</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">until</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">results</span> <span class="k">if</span> <span class="n">e</span><span class="o">.</span><span class="n">timestamp</span> <span class="o">&lt;=</span> <span class="n">until</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="n">limit</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="o">-</span><span class="n">limit</span><span class="p">:]</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="AuditLogger.export_events">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.export_events">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_events</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="nb">format</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;json&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Export audit events to a string.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            format: Export format (&quot;json&quot;, &quot;cef&quot;, or &quot;leef&quot;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Exported audit log</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">&quot;json&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span>
+                <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">],</span>
+                <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">&quot;cef&quot;</span><span class="p">:</span>
+            <span class="c1"># Common Event Format (for SIEM integration)</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span>
+                <span class="n">severity</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">details</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;severity&quot;</span><span class="p">,</span> <span class="s2">&quot;5&quot;</span><span class="p">)</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;CEF:0|QKDpy|QKD|1.0|</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">|&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">action</span><span class="si">}</span><span class="s2">|</span><span class="si">{</span><span class="n">severity</span><span class="si">}</span><span class="s2">|&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;eventId=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">event_id</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;timestamp=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;actor=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">actor</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;resource=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="si">}</span><span class="s2"> &quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;result=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="nb">format</span> <span class="o">==</span> <span class="s2">&quot;leef&quot;</span><span class="p">:</span>
+            <span class="c1"># Log Event Extended Format (IBM QRadar)</span>
+            <span class="n">lines</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span>
+                <span class="n">line</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;LEEF:1.0|QKDpy|QKD|1.0|</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">event_type</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">|&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;devTime=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">timestamp</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="se">\t</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;usrName=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">actor</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="si">}</span><span class="se">\t</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;resource=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">resource</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">&#39;unknown&#39;</span><span class="si">}</span><span class="se">\t</span><span class="s2">&quot;</span>
+                    <span class="sa">f</span><span class="s2">&quot;result=</span><span class="si">{</span><span class="n">event</span><span class="o">.</span><span class="n">result</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
+            <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported export format: </span><span class="si">{</span><span class="nb">format</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="AuditLogger.get_statistics">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.audit.AuditLogger.get_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get audit statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with audit statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">event</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">:</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="n">event</span><span class="o">.</span><span class="n">event_type</span><span class="o">.</span><span class="n">value</span>
+            <span class="n">stats</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;total_events&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">),</span>
+            <span class="s2">&quot;events_by_type&quot;</span><span class="p">:</span> <span class="n">stats</span><span class="p">,</span>
+            <span class="s2">&quot;chain_valid&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">verify_chain_integrity</span><span class="p">()[</span><span class="mi">0</span><span class="p">],</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

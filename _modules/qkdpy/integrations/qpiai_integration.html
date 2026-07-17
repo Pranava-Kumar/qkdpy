@@ -1,0 +1,566 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.integrations.qpiai_integration &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.integrations.qpiai_integration</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.integrations.qpiai_integration</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;QpiAI Quantum SDK integration plugin for QKDpy.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">qpiai_quantum</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+        <span class="n">Circuit</span><span class="p">,</span>
+        <span class="n">JobManager</span><span class="p">,</span>
+        <span class="n">Statevector</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">QPIAI_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">QPIAI_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+    <span class="n">np</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># type: ignore[assignment]</span>
+
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_choice</span><span class="p">,</span> <span class="n">secure_randint</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qubit</span>
+
+
+<div class="viewcode-block" id="QpiAIIntegration">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QpiAIIntegration</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integration with QpiAI Quantum SDK for QKD protocol simulation.</span>
+
+<span class="sd">    Provides conversion between QKDpy and QpiAI quantum primitives,</span>
+<span class="sd">    circuit construction for QKD protocols, and access to QpiAI&#39;s</span>
+<span class="sd">    cloud quantum hardware and local simulators.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QpiAIIntegration.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize QpiAI integration.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">QPIAI_AVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;QpiAI Quantum SDK is not installed. &quot;</span>
+                <span class="s2">&quot;Install it from https://github.com/qpiai/quantum-sdk&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_api_key</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+    <span class="c1">#  State Conversion</span>
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="QpiAIIntegration.qubit_to_qpiai">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.qubit_to_qpiai">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qubit_to_qpiai</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qkdpy_qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Statevector</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a QKDpy Qubit to a QpiAI Statevector.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qkdpy_qubit: QKDpy Qubit object</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QpiAI Statevector representing the same quantum state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">qkdpy_qubit</span><span class="o">.</span><span class="n">state</span>
+        <span class="k">return</span> <span class="n">Statevector</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QpiAIIntegration.qpiai_to_qubit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.qpiai_to_qubit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qpiai_to_qubit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qpiai_state</span><span class="p">:</span> <span class="n">Statevector</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qubit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a QpiAI Statevector to a QKDpy Qubit.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qpiai_state: QpiAI Statevector</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QKDpy Qubit representing the same quantum state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">qpiai_state</span><span class="o">.</span><span class="n">data</span>
+        <span class="k">return</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="QpiAIIntegration.statevector_from_array">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.statevector_from_array">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">statevector_from_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">complex</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Statevector</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a QpiAI Statevector from an array of amplitudes (local, no cloud).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: Complex amplitudes (will be normalized)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QpiAI Statevector</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">Statevector</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+    <span class="c1">#  Quantum Information Measures (using QpiAI formalism)</span>
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="QpiAIIntegration.compute_concurrence">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.compute_concurrence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_concurrence</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the concurrence of a 2-qubit state.</span>
+
+<span class="sd">        Uses QpiAI&#39;s formalism DensityMatrix.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state: 4x4 density matrix or 4-element state vector</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Concurrence value (0 to 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">qpiai_quantum.formalism</span><span class="w"> </span><span class="kn">import</span> <span class="n">DensityMatrix</span>
+
+        <span class="n">dm</span> <span class="o">=</span> <span class="n">DensityMatrix</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">dm</span><span class="o">.</span><span class="n">concurrence</span><span class="p">())</span></div>
+
+
+<div class="viewcode-block" id="QpiAIIntegration.compute_purity">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.compute_purity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_purity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the purity of a quantum state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state: Density matrix or state vector</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Purity value (1/d to 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">qpiai_quantum.formalism</span><span class="w"> </span><span class="kn">import</span> <span class="n">DensityMatrix</span>
+
+        <span class="n">dm</span> <span class="o">=</span> <span class="n">DensityMatrix</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">dm</span><span class="o">.</span><span class="n">purity</span><span class="p">())</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+    <span class="c1">#  Circuit Construction</span>
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="QpiAIIntegration.create_bb84_circuit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.create_bb84_circuit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_bb84_circuit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">alice_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bob_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">alice_bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a QpiAI circuit implementing the BB84 protocol.</span>
+
+<span class="sd">        Alice and Bob operate on the same physical qubits (connected via</span>
+<span class="sd">        quantum channel). Alice prepares, then Bob measures.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_qubits: Number of qubits to encode</span>
+<span class="sd">            alice_bases: Bases Alice uses (&#39;Z&#39; or &#39;X&#39;)</span>
+<span class="sd">            bob_bases: Bases Bob uses (&#39;Z&#39; or &#39;X&#39;)</span>
+<span class="sd">            alice_bits: Alice&#39;s bit values (0 or 1) for encoding</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QpiAI Circuit for BB84</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">alice_bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">alice_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">bob_bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bob_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">alice_bits</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">alice_bits</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">)</span>
+
+        <span class="c1"># Alice prepares and encodes qubits (same qubits Bob will measure)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">alice_bits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">alice_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># Bob measures in his chosen bases (same qubits)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">bob_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="c1"># Measurement</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">MEASURE</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">circuit</span></div>
+
+
+<div class="viewcode-block" id="QpiAIIntegration.create_entanglement_circuit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.create_entanglement_circuit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_entanglement_circuit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">state_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;|Ψ+&gt;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Circuit</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a circuit for Bell state (entangled pair) generation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state_type: Type of Bell state: ``|Ψ+&gt;``, ``|Ψ-&gt;``, ``|Φ+&gt;``, ``|Φ-&gt;``</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (QpiAI Circuit, description string)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">descriptions</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;|Ψ+&gt;&quot;</span><span class="p">:</span> <span class="s2">&quot;│01⟩ + │10⟩&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;|Ψ-&gt;&quot;</span><span class="p">:</span> <span class="s2">&quot;│01⟩ - │10⟩&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;|Φ+&gt;&quot;</span><span class="p">:</span> <span class="s2">&quot;│00⟩ + │11⟩&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;|Φ-&gt;&quot;</span><span class="p">:</span> <span class="s2">&quot;│00⟩ - │11⟩&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">circuit</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">circuit</span><span class="o">.</span><span class="n">CX</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">state_type</span> <span class="o">==</span> <span class="s2">&quot;|Ψ+&gt;&quot;</span><span class="p">:</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Flip qubit 0: |00⟩+|11⟩ → |10⟩+|01⟩</span>
+        <span class="k">elif</span> <span class="n">state_type</span> <span class="o">==</span> <span class="s2">&quot;|Ψ-&gt;&quot;</span><span class="p">:</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">state_type</span> <span class="o">==</span> <span class="s2">&quot;|Φ-&gt;&quot;</span><span class="p">:</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">Z</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">circuit</span><span class="p">,</span> <span class="n">descriptions</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">state_type</span><span class="p">,</span> <span class="n">state_type</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QpiAIIntegration.create_ghz_circuit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.create_ghz_circuit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_ghz_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a circuit for GHZ state generation.</span>
+
+<span class="sd">        GHZ state: (``|0...0&gt;`` + ``|1...1&gt;``)/sqrt(2) for multi-party QKD.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_qubits: Number of qubits (&gt;= 2)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QpiAI Circuit for GHZ state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">)</span>
+        <span class="n">circuit</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">):</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">CX</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">circuit</span></div>
+
+
+<div class="viewcode-block" id="QpiAIIntegration.create_e91_circuit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.create_e91_circuit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_e91_circuit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_pairs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">alice_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bob_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Circuit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a QpiAI circuit implementing the E91 protocol.</span>
+
+<span class="sd">        Uses entangled pairs with measurement in Z, X, and W bases.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_pairs: Number of entangled pairs</span>
+<span class="sd">            alice_bases: Bases Alice uses (&#39;Z&#39;, &#39;X&#39;, &#39;W&#39;)</span>
+<span class="sd">            bob_bases: Bases Bob uses (&#39;Z&#39;, &#39;X&#39;, &#39;W&#39;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QpiAI Circuit for E91</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">alice_bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">alice_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;W&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">bob_bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bob_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;W&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)]</span>
+
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">Circuit</span><span class="p">(</span><span class="n">num_pairs</span> <span class="o">*</span> <span class="mi">2</span><span class="p">,</span> <span class="n">num_pairs</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Create entangled pairs</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">):</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">CX</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span> <span class="o">+</span> <span class="n">num_pairs</span><span class="p">)</span>
+
+        <span class="c1"># Alice measures her half</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">basis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">alice_bases</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;W&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">ry</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+            <span class="c1"># Z basis: no rotation</span>
+
+        <span class="c1"># Bob measures his half</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">basis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bob_bases</span><span class="p">):</span>
+            <span class="n">bob_wire</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="n">num_pairs</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">bob_wire</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;W&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">ry</span><span class="p">(</span><span class="n">bob_wire</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">)</span>
+
+        <span class="c1"># Measure all qubits</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span> <span class="o">*</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">MEASURE</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">i</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">circuit</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+    <span class="c1">#  Simulation &amp; Execution</span>
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="QpiAIIntegration.simulate">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.simulate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span> <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run a circuit on the QpiAI local simulator.</span>
+
+<span class="sd">        Requires API_KEY set in environment for cloud simulation.</span>
+<span class="sd">        Falls back to returning the circuit object for inspection.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            circuit: QpiAI Circuit to simulate</span>
+<span class="sd">            shots: Number of shots</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dict with state information</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;API_KEY&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_key</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">sv</span> <span class="o">=</span> <span class="n">Statevector</span><span class="p">(</span><span class="n">circuit</span><span class="p">)</span>
+                <span class="n">amplitudes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sv</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">complex128</span><span class="p">)</span>
+                <span class="n">probs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">amplitudes</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="n">probs</span> <span class="o">=</span> <span class="n">probs</span> <span class="o">/</span> <span class="n">probs</span><span class="o">.</span><span class="n">sum</span><span class="p">()</span>
+                <span class="c1"># Sample `shots` computational-basis outcomes by probability.</span>
+                <span class="n">outcomes</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">(</span><span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">**</span><span class="mi">31</span><span class="p">))</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span>
+                    <span class="nb">len</span><span class="p">(</span><span class="n">probs</span><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="n">shots</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="n">probs</span>
+                <span class="p">)</span>
+                <span class="n">sampled</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="nb">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">outcome</span><span class="p">),</span> <span class="sa">f</span><span class="s2">&quot;0</span><span class="si">{</span><span class="n">sv</span><span class="o">.</span><span class="n">num_qubits</span><span class="si">}</span><span class="s2">b&quot;</span><span class="p">)</span> <span class="k">for</span> <span class="n">outcome</span> <span class="ow">in</span> <span class="n">outcomes</span>
+                <span class="p">]</span>
+                <span class="k">return</span> <span class="p">{</span>
+                    <span class="s2">&quot;simulation&quot;</span><span class="p">:</span> <span class="s2">&quot;local_statevector&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;statevector&quot;</span><span class="p">:</span> <span class="n">sv</span><span class="o">.</span><span class="n">data</span><span class="p">,</span>
+                    <span class="s2">&quot;probabilities&quot;</span><span class="p">:</span> <span class="n">probs</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                    <span class="s2">&quot;num_qubits&quot;</span><span class="p">:</span> <span class="n">sv</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span>
+                    <span class="s2">&quot;shots&quot;</span><span class="p">:</span> <span class="n">shots</span><span class="p">,</span>
+                    <span class="s2">&quot;samples&quot;</span><span class="p">:</span> <span class="n">sampled</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="k">except</span> <span class="ne">TypeError</span> <span class="k">as</span> <span class="n">exc</span><span class="p">:</span>
+                <span class="c1"># Statevector from circuit may fail if circuit has unresolved parameters</span>
+                <span class="k">return</span> <span class="p">{</span>
+                    <span class="s2">&quot;circuit&quot;</span><span class="p">:</span> <span class="n">circuit</span><span class="p">,</span>
+                    <span class="s2">&quot;num_qubits&quot;</span><span class="p">:</span> <span class="n">circuit</span><span class="o">.</span><span class="n">icr</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span>
+                    <span class="s2">&quot;note&quot;</span><span class="p">:</span> <span class="sa">f</span><span class="s2">&quot;Circuit simulation skipped: </span><span class="si">{</span><span class="n">exc</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="p">}</span>
+
+        <span class="c1"># Return circuit info for inspection</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;circuit&quot;</span><span class="p">:</span> <span class="n">circuit</span><span class="p">,</span>
+            <span class="s2">&quot;num_qubits&quot;</span><span class="p">:</span> <span class="n">circuit</span><span class="o">.</span><span class="n">icr</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">,</span>
+            <span class="s2">&quot;num_classical&quot;</span><span class="p">:</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">circuit</span><span class="o">.</span><span class="n">icr</span><span class="p">,</span> <span class="s2">&quot;num_clbits&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+            <span class="s2">&quot;note&quot;</span><span class="p">:</span> <span class="s2">&quot;Set API_KEY env var for full simulation&quot;</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="QpiAIIntegration.submit_to_cloud">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.submit_to_cloud">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">submit_to_cloud</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">circuit</span><span class="p">:</span> <span class="n">Circuit</span><span class="p">,</span>
+        <span class="n">device_name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;QpiAI-QSV-Simulator&quot;</span><span class="p">,</span>
+        <span class="n">shots</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1024</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Submit a circuit to the QpiAI quantum cloud.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            circuit: QpiAI Circuit to execute</span>
+<span class="sd">            device_name: Target device</span>
+<span class="sd">            shots: Number of measurement shots</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            JobResult from the cloud execution</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If API_KEY is not set</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_api_key</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;API_KEY&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_api_key</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;API_KEY environment variable is required for cloud execution.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">manager</span> <span class="o">=</span> <span class="n">JobManager</span><span class="p">(</span><span class="n">api_key</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_api_key</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">manager</span><span class="o">.</span><span class="n">run_circuit</span><span class="p">(</span>
+            <span class="n">circuit</span><span class="o">=</span><span class="n">circuit</span><span class="p">,</span>
+            <span class="n">device_name</span><span class="o">=</span><span class="n">device_name</span><span class="p">,</span>
+            <span class="n">shots</span><span class="o">=</span><span class="n">shots</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+    <span class="c1">#  QKD Protocol Helpers</span>
+    <span class="c1"># ------------------------------------------------------------------ #</span>
+
+<div class="viewcode-block" id="QpiAIIntegration.calculate_qber">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.calculate_qber">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_qber</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alice_bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">bob_bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate Quantum Bit Error Rate from measurement outcomes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_bits: Alice&#39;s bit string</span>
+<span class="sd">            bob_bits: Bob&#39;s bit string</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QBER value (0 to 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_bits</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_bits</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Bit strings must have equal length&quot;</span><span class="p">)</span>
+
+        <span class="c1"># strict=False: bits have already been checked to be equal length above.</span>
+        <span class="n">mismatches</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="mi">1</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">alice_bits</span><span class="p">,</span> <span class="n">bob_bits</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">mismatches</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_bits</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_bits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="QpiAIIntegration.compute_chsh_value">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.qpiai_integration.QpiAIIntegration.compute_chsh_value">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">compute_chsh_value</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">angle_settings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the CHSH S-value for DI-QKD verification.</span>
+
+<span class="sd">        Uses QpiAI Statevector to compute the Bell correlator.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            angle_settings: List of four angles [a, a&#39;, b, b&#39;]</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            CHSH S-value. S &gt; 2 indicates non-local correlations.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">correlation</span><span class="p">(</span><span class="n">a</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">b</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Compute ⟨Z₀Z₁⟩ for a Bell state with RY-rotated measurements.&quot;&quot;&quot;</span>
+            <span class="c1"># For |Φ+⟩ = (|00⟩+|11⟩)/√2 with RY rotations and Z measurements:</span>
+            <span class="c1"># E(a,b) = cos(a-b)</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">a</span> <span class="o">-</span> <span class="n">b</span><span class="p">))</span>
+
+        <span class="n">a</span><span class="p">,</span> <span class="n">a_prime</span><span class="p">,</span> <span class="n">b</span><span class="p">,</span> <span class="n">b_prime</span> <span class="o">=</span> <span class="n">angle_settings</span>
+
+        <span class="c1"># S = E(a,b) + E(a,b&#39;) + E(a&#39;,b) - E(a&#39;,b&#39;)</span>
+        <span class="n">s_value</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">correlation</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">correlation</span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b_prime</span><span class="p">)</span>
+            <span class="o">+</span> <span class="n">correlation</span><span class="p">(</span><span class="n">a_prime</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">correlation</span><span class="p">(</span><span class="n">a_prime</span><span class="p">,</span> <span class="n">b_prime</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">s_value</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

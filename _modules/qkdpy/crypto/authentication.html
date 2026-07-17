@@ -1,0 +1,369 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.crypto.authentication &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.crypto.authentication</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.crypto.authentication</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Authentication utilities using quantum keys.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hmac</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_choice</span><span class="p">,</span> <span class="n">secure_randint</span>
+
+
+<div class="viewcode-block" id="QuantumAuth">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.authentication.QuantumAuth">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumAuth</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Authentication using quantum keys.</span>
+
+<span class="sd">    This class provides authentication methods that can be used with quantum keys</span>
+<span class="sd">    to ensure the integrity and authenticity of messages.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumAuth.generate_mac">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.authentication.QuantumAuth.generate_mac">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_mac</span><span class="p">(</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">hash_algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a Message Authentication Code (MAC) for a message.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Message to authenticate</span>
+<span class="sd">            key: Binary key for authentication</span>
+<span class="sd">            hash_algorithm: Hash algorithm to use (&#39;sha256&#39;, &#39;sha512&#39;, etc.)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MAC as a hexadecimal string</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert the key to bytes</span>
+        <span class="n">key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert the message to bytes</span>
+        <span class="n">message_bytes</span> <span class="o">=</span> <span class="n">message</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Choose the hash function</span>
+        <span class="k">if</span> <span class="n">hash_algorithm</span> <span class="o">==</span> <span class="s2">&quot;sha256&quot;</span><span class="p">:</span>
+            <span class="n">hash_func</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
+        <span class="k">elif</span> <span class="n">hash_algorithm</span> <span class="o">==</span> <span class="s2">&quot;sha512&quot;</span><span class="p">:</span>
+            <span class="n">hash_func</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha512</span>
+        <span class="k">elif</span> <span class="n">hash_algorithm</span> <span class="o">==</span> <span class="s2">&quot;sha1&quot;</span><span class="p">:</span>
+            <span class="n">hash_func</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span>
+        <span class="k">elif</span> <span class="n">hash_algorithm</span> <span class="o">==</span> <span class="s2">&quot;md5&quot;</span><span class="p">:</span>
+            <span class="n">hash_func</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported hash algorithm: </span><span class="si">{</span><span class="n">hash_algorithm</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate the MAC</span>
+        <span class="n">mac</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key_bytes</span><span class="p">,</span> <span class="n">message_bytes</span><span class="p">,</span> <span class="n">hash_func</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">mac</span></div>
+
+
+<div class="viewcode-block" id="QuantumAuth.verify_mac">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.authentication.QuantumAuth.verify_mac">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_mac</span><span class="p">(</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">mac</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">hash_algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify a Message Authentication Code (MAC) for a message.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Message to verify</span>
+<span class="sd">            mac: MAC to verify against</span>
+<span class="sd">            key: Binary key for authentication</span>
+<span class="sd">            hash_algorithm: Hash algorithm to use (&#39;sha256&#39;, &#39;sha512&#39;, etc.)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the MAC is valid, False otherwise</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Generate the MAC for the message</span>
+        <span class="n">generated_mac</span> <span class="o">=</span> <span class="n">QuantumAuth</span><span class="o">.</span><span class="n">generate_mac</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">hash_algorithm</span><span class="p">)</span>
+
+        <span class="c1"># Compare the generated MAC with the provided MAC</span>
+        <span class="c1"># Use hmac.compare_digest to prevent timing attacks</span>
+        <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">generated_mac</span><span class="p">,</span> <span class="n">mac</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuantumAuth.generate_authenticator">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.authentication.QuantumAuth.generate_authenticator">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_authenticator</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">challenge</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate an authenticator for challenge-response authentication.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key for authentication</span>
+<span class="sd">            challenge: Challenge string (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Authenticator as a hexadecimal string</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If no challenge is provided, generate a random one</span>
+        <span class="k">if</span> <span class="n">challenge</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">chars</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="s2">&quot;0123456789abcdef&quot;</span><span class="p">)</span>
+            <span class="n">challenge</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">secure_choice</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">16</span><span class="p">))</span>
+
+        <span class="c1"># Convert the key to bytes</span>
+        <span class="n">key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert the challenge to bytes</span>
+        <span class="n">challenge_bytes</span> <span class="o">=</span> <span class="n">challenge</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate the authenticator using HMAC-SHA256</span>
+        <span class="n">authenticator</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key_bytes</span><span class="p">,</span> <span class="n">challenge_bytes</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">authenticator</span></div>
+
+
+<div class="viewcode-block" id="QuantumAuth.verify_authenticator">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.authentication.QuantumAuth.verify_authenticator">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_authenticator</span><span class="p">(</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">challenge</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">authenticator</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify an authenticator for challenge-response authentication.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key for authentication</span>
+<span class="sd">            challenge: Challenge string</span>
+<span class="sd">            authenticator: Authenticator to verify</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the authenticator is valid, False otherwise</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Generate the authenticator for the challenge</span>
+        <span class="n">generated_authenticator</span> <span class="o">=</span> <span class="n">QuantumAuth</span><span class="o">.</span><span class="n">generate_authenticator</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">challenge</span><span class="p">)</span>
+
+        <span class="c1"># Compare the generated authenticator with the provided authenticator</span>
+        <span class="c1"># Use hmac.compare_digest to prevent timing attacks</span>
+        <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">generated_authenticator</span><span class="p">,</span> <span class="n">authenticator</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuantumAuth.generate_key_fingerprint">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.authentication.QuantumAuth.generate_key_fingerprint">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_key_fingerprint</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">hash_algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a fingerprint for a key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Binary key to fingerprint</span>
+<span class="sd">            hash_algorithm: Hash algorithm to use (&#39;sha256&#39;, &#39;sha512&#39;, etc.)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Key fingerprint as a hexadecimal string</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert the key to bytes</span>
+        <span class="n">key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Choose the hash function</span>
+        <span class="k">if</span> <span class="n">hash_algorithm</span> <span class="o">==</span> <span class="s2">&quot;sha256&quot;</span><span class="p">:</span>
+            <span class="n">hash_func</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
+        <span class="k">elif</span> <span class="n">hash_algorithm</span> <span class="o">==</span> <span class="s2">&quot;sha512&quot;</span><span class="p">:</span>
+            <span class="n">hash_func</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha512</span>
+        <span class="k">elif</span> <span class="n">hash_algorithm</span> <span class="o">==</span> <span class="s2">&quot;sha1&quot;</span><span class="p">:</span>
+            <span class="n">hash_func</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha1</span>
+        <span class="k">elif</span> <span class="n">hash_algorithm</span> <span class="o">==</span> <span class="s2">&quot;md5&quot;</span><span class="p">:</span>
+            <span class="n">hash_func</span> <span class="o">=</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">md5</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported hash algorithm: </span><span class="si">{</span><span class="n">hash_algorithm</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate the fingerprint</span>
+        <span class="n">fingerprint</span> <span class="o">=</span> <span class="n">hash_func</span><span class="p">(</span><span class="n">key_bytes</span><span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">fingerprint</span></div>
+
+
+<div class="viewcode-block" id="QuantumAuth.generate_commitment">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.authentication.QuantumAuth.generate_commitment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_commitment</span><span class="p">(</span>
+        <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">nonce</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a cryptographic commitment for a value.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            value: Value to commit to</span>
+<span class="sd">            key: Binary key for the commitment</span>
+<span class="sd">            nonce: Nonce for the commitment (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing the commitment and nonce</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If no nonce is provided, generate a random one</span>
+        <span class="k">if</span> <span class="n">nonce</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">nonce</span> <span class="o">=</span> <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="p">)</span>
+
+        <span class="c1"># Convert the key to bytes</span>
+        <span class="n">key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert the value and nonce to bytes</span>
+        <span class="n">value_bytes</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">nonce_bytes</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">nonce</span><span class="p">)</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate the commitment using HMAC-SHA256</span>
+        <span class="n">commitment</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+            <span class="n">key_bytes</span><span class="p">,</span> <span class="n">value_bytes</span> <span class="o">+</span> <span class="n">nonce_bytes</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;commitment&quot;</span><span class="p">:</span> <span class="n">commitment</span><span class="p">,</span> <span class="s2">&quot;nonce&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">nonce</span><span class="p">)}</span></div>
+
+
+<div class="viewcode-block" id="QuantumAuth.verify_commitment">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.authentication.QuantumAuth.verify_commitment">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_commitment</span><span class="p">(</span>
+        <span class="n">value</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">commitment</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">nonce</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify a cryptographic commitment for a value.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            value: Value to verify</span>
+<span class="sd">            commitment: Commitment to verify against</span>
+<span class="sd">            key: Binary key for the commitment</span>
+<span class="sd">            nonce: Nonce used for the commitment</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if the commitment is valid, False otherwise</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert the key to bytes</span>
+        <span class="n">key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span>
+            <span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">)),</span> <span class="mi">2</span><span class="p">)</span><span class="o">.</span><span class="n">to_bytes</span><span class="p">(</span>
+                <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">,</span> <span class="n">byteorder</span><span class="o">=</span><span class="s2">&quot;big&quot;</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert the value and nonce to bytes</span>
+        <span class="n">value_bytes</span> <span class="o">=</span> <span class="n">value</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+        <span class="n">nonce_bytes</span> <span class="o">=</span> <span class="n">nonce</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s2">&quot;utf-8&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate the commitment using HMAC-SHA256</span>
+        <span class="n">computed_commitment</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span>
+            <span class="n">key_bytes</span><span class="p">,</span> <span class="n">value_bytes</span> <span class="o">+</span> <span class="n">nonce_bytes</span><span class="p">,</span> <span class="n">hashlib</span><span class="o">.</span><span class="n">sha256</span>
+        <span class="p">)</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span>
+
+        <span class="c1"># Compare the commitments using a constant-time comparison</span>
+        <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">commitment</span><span class="p">,</span> <span class="n">computed_commitment</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

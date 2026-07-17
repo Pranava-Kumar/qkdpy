@@ -1,0 +1,518 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.ml.efficient_models &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.ml.efficient_models</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.ml.efficient_models</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Efficient neural network models for resource-constrained QKD deployment.</span>
+
+<span class="sd">This module provides lightweight, resource-aware neural network architectures</span>
+<span class="sd">that can run efficiently on devices with limited memory and compute resources.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="EfficientQKDPredictor">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.efficient_models.EfficientQKDPredictor">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EfficientQKDPredictor</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Resource-efficient predictor for QKD parameter optimization.</span>
+
+<span class="sd">    Uses adaptive architecture that scales based on available resources,</span>
+<span class="sd">    with support for model quantization and pruning.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EfficientQKDPredictor.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.efficient_models.EfficientQKDPredictor.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">max_memory_mb</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="n">enable_quantization</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">enable_pruning</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+        <span class="n">pruning_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize efficient predictor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            input_dim: Number of input features</span>
+<span class="sd">            max_memory_mb: Maximum memory budget in MB</span>
+<span class="sd">            enable_quantization: Whether to use INT8 quantization for inference</span>
+<span class="sd">            enable_pruning: Whether to prune small weights</span>
+<span class="sd">            pruning_threshold: Threshold for weight pruning</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span> <span class="o">=</span> <span class="n">input_dim</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_memory_mb</span> <span class="o">=</span> <span class="n">max_memory_mb</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enable_quantization</span> <span class="o">=</span> <span class="n">enable_quantization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">enable_pruning</span> <span class="o">=</span> <span class="n">enable_pruning</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pruning_threshold</span> <span class="o">=</span> <span class="n">pruning_threshold</span>
+
+        <span class="c1"># Determine architecture based on memory budget</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_architecture</span><span class="p">()</span>
+
+        <span class="c1"># Initialize weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialize_weights</span><span class="p">()</span>
+
+        <span class="c1"># Training state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_trained</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_training_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Normalization parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_mean</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_std</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_mean</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Initialized EfficientQKDPredictor&quot;</span><span class="p">,</span>
+            <span class="n">input_dim</span><span class="o">=</span><span class="n">input_dim</span><span class="p">,</span>
+            <span class="n">hidden_layers</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span><span class="p">,</span>
+            <span class="n">memory_budget_mb</span><span class="o">=</span><span class="n">max_memory_mb</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_architecture</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate optimal architecture based on memory budget.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of hidden layer sizes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Estimate bytes per parameter (float32 = 4 bytes, quantized int8 = 1 byte)</span>
+        <span class="n">bytes_per_param</span> <span class="o">=</span> <span class="mi">1</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_quantization</span> <span class="k">else</span> <span class="mi">4</span>
+
+        <span class="c1"># Target: use at most 50% of memory budget for weights</span>
+        <span class="n">max_params</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">max_memory_mb</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mi">1024</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">/</span> <span class="n">bytes_per_param</span>
+
+        <span class="c1"># Start with minimal architecture and grow</span>
+        <span class="n">hidden_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">16</span><span class="p">]</span>  <span class="c1"># Minimum single hidden layer</span>
+
+        <span class="c1"># Calculate current parameter count</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">count_params</span><span class="p">(</span><span class="n">layers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+            <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="n">prev_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span>
+            <span class="k">for</span> <span class="n">size</span> <span class="ow">in</span> <span class="n">layers</span><span class="p">:</span>
+                <span class="n">total</span> <span class="o">+=</span> <span class="n">prev_size</span> <span class="o">*</span> <span class="n">size</span> <span class="o">+</span> <span class="n">size</span>  <span class="c1"># weights + biases</span>
+                <span class="n">prev_size</span> <span class="o">=</span> <span class="n">size</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">prev_size</span> <span class="o">+</span> <span class="mi">1</span>  <span class="c1"># Output layer</span>
+            <span class="k">return</span> <span class="n">total</span>
+
+        <span class="c1"># Try to add more capacity if budget allows</span>
+        <span class="k">for</span> <span class="n">candidate</span> <span class="ow">in</span> <span class="p">[[</span><span class="mi">32</span><span class="p">],</span> <span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">],</span> <span class="p">[</span><span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="p">[</span><span class="mi">128</span><span class="p">,</span> <span class="mi">64</span><span class="p">,</span> <span class="mi">32</span><span class="p">]]:</span>
+            <span class="k">if</span> <span class="n">count_params</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">max_params</span><span class="p">:</span>
+                <span class="n">hidden_sizes</span> <span class="o">=</span> <span class="n">candidate</span>
+
+        <span class="k">return</span> <span class="n">hidden_sizes</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_initialize_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize network weights using Xavier initialization.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biases</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">prev_size</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_dim</span>
+        <span class="k">for</span> <span class="n">hidden_size</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">hidden_layers</span><span class="p">:</span>
+            <span class="c1"># Xavier initialization</span>
+            <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">prev_size</span> <span class="o">+</span> <span class="n">hidden_size</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">prev_size</span><span class="p">,</span> <span class="n">hidden_size</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">hidden_size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+            <span class="n">prev_size</span> <span class="o">=</span> <span class="n">hidden_size</span>
+
+        <span class="c1"># Output layer (single value)</span>
+        <span class="n">scale</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">prev_size</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">prev_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span> <span class="o">*</span> <span class="n">scale</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_relu</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;ReLU activation function.&quot;&quot;&quot;</span>
+        <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">maximum</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_relu_derivative</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Derivative of ReLU activation function.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">(</span><span class="n">x</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_forward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Forward pass through the network.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: Input data</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (output, post-activation list per layer including input, pre-activation list per hidden layer).</span>
+<span class="sd">            pre_activations[i] corresponds to the input of layer i+1 (i.e. the value fed into ReLU</span>
+<span class="sd">            to produce activations[i+1]) and is needed by _backward to compute ReLU derivatives.</span>
+<span class="sd">            The pre-activation list excludes the input itself, so its length equals</span>
+<span class="sd">            len(activations) - 1.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">activations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">X</span><span class="p">]</span>
+        <span class="n">pre_activations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">current</span> <span class="o">=</span> <span class="n">X</span>
+
+        <span class="k">for</span> <span class="n">W</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="n">z</span> <span class="o">=</span> <span class="n">current</span> <span class="o">@</span> <span class="n">W</span> <span class="o">+</span> <span class="n">b</span>
+            <span class="n">pre_activations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_relu</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+            <span class="n">activations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current</span><span class="p">)</span>
+
+        <span class="c1"># Output layer (linear; no activation, no pre-activation stored)</span>
+        <span class="n">output</span> <span class="o">=</span> <span class="n">current</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">output</span><span class="p">,</span> <span class="n">activations</span><span class="p">,</span> <span class="n">pre_activations</span>
+
+<div class="viewcode-block" id="EfficientQKDPredictor.fit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.efficient_models.EfficientQKDPredictor.fit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">epochs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.01</span><span class="p">,</span>
+        <span class="n">batch_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">early_stopping_patience</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">validation_split</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Train the model with early stopping.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: Input features (n_samples, n_features)</span>
+<span class="sd">            y: Target values (n_samples,)</span>
+<span class="sd">            epochs: Maximum number of epochs</span>
+<span class="sd">            learning_rate: Learning rate</span>
+<span class="sd">            batch_size: Batch size (None for full batch)</span>
+<span class="sd">            early_stopping_patience: Epochs to wait before early stopping</span>
+<span class="sd">            validation_split: Fraction of data for validation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Training history and statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Normalize inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_std</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_input_std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">X_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_mean</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_std</span>
+
+        <span class="c1"># Normalize outputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_output_std</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">y</span><span class="p">))</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_output_std</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="n">y_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_mean</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_std</span>
+
+        <span class="c1"># Split data</span>
+        <span class="n">n_samples</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">n_val</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n_samples</span> <span class="o">*</span> <span class="n">validation_split</span><span class="p">)</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="n">n_samples</span><span class="p">)</span>
+
+        <span class="n">X_train</span> <span class="o">=</span> <span class="n">X_norm</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">n_val</span><span class="p">:]]</span>
+        <span class="n">y_train</span> <span class="o">=</span> <span class="n">y_norm</span><span class="p">[</span><span class="n">indices</span><span class="p">[</span><span class="n">n_val</span><span class="p">:]]</span>
+        <span class="n">X_val</span> <span class="o">=</span> <span class="n">X_norm</span><span class="p">[</span><span class="n">indices</span><span class="p">[:</span><span class="n">n_val</span><span class="p">]]</span> <span class="k">if</span> <span class="n">n_val</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">X_train</span>
+        <span class="n">y_val</span> <span class="o">=</span> <span class="n">y_norm</span><span class="p">[</span><span class="n">indices</span><span class="p">[:</span><span class="n">n_val</span><span class="p">]]</span> <span class="k">if</span> <span class="n">n_val</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="n">y_train</span>
+
+        <span class="k">if</span> <span class="n">batch_size</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+
+        <span class="n">best_val_loss</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+        <span class="n">patience_counter</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">best_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">]</span>
+        <span class="n">best_biases</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_training_history</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+            <span class="c1"># Shuffle training data</span>
+            <span class="n">perm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">permutation</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">))</span>
+            <span class="n">X_train</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="n">perm</span><span class="p">]</span>
+            <span class="n">y_train</span> <span class="o">=</span> <span class="n">y_train</span><span class="p">[</span><span class="n">perm</span><span class="p">]</span>
+
+            <span class="c1"># Mini-batch training</span>
+            <span class="n">epoch_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">n_batches</span> <span class="o">=</span> <span class="mi">0</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">),</span> <span class="n">batch_size</span><span class="p">):</span>
+                <span class="n">X_batch</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+                <span class="n">y_batch</span> <span class="o">=</span> <span class="n">y_train</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="n">batch_size</span><span class="p">]</span>
+
+                <span class="c1"># Forward pass</span>
+                <span class="n">output</span><span class="p">,</span> <span class="n">activations</span><span class="p">,</span> <span class="n">pre_activations</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">X_batch</span><span class="p">)</span>
+
+                <span class="c1"># Compute loss</span>
+                <span class="n">loss</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">output</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">-</span> <span class="n">y_batch</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">epoch_loss</span> <span class="o">+=</span> <span class="nb">float</span><span class="p">(</span><span class="n">loss</span><span class="p">)</span>
+                <span class="n">n_batches</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="c1"># Backward pass</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_backward</span><span class="p">(</span>
+                    <span class="n">X_batch</span><span class="p">,</span>
+                    <span class="n">y_batch</span><span class="p">,</span>
+                    <span class="n">output</span><span class="p">,</span>
+                    <span class="n">activations</span><span class="p">,</span>
+                    <span class="n">pre_activations</span><span class="p">,</span>
+                    <span class="n">learning_rate</span><span class="p">,</span>
+                <span class="p">)</span>
+
+            <span class="n">epoch_loss</span> <span class="o">/=</span> <span class="n">n_batches</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_training_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch_loss</span><span class="p">)</span>
+
+            <span class="c1"># Validation</span>
+            <span class="n">val_output</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">X_val</span><span class="p">)</span>
+            <span class="n">val_loss</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">((</span><span class="n">val_output</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">-</span> <span class="n">y_val</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+
+            <span class="c1"># Early stopping check</span>
+            <span class="k">if</span> <span class="n">val_loss</span> <span class="o">&lt;</span> <span class="n">best_val_loss</span><span class="p">:</span>
+                <span class="n">best_val_loss</span> <span class="o">=</span> <span class="n">val_loss</span>
+                <span class="n">patience_counter</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="n">best_weights</span> <span class="o">=</span> <span class="p">[</span><span class="n">w</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">w</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">]</span>
+                <span class="n">best_biases</span> <span class="o">=</span> <span class="p">[</span><span class="n">b</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">patience_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">patience_counter</span> <span class="o">&gt;=</span> <span class="n">early_stopping_patience</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+                        <span class="s2">&quot;Early stopping triggered&quot;</span><span class="p">,</span>
+                        <span class="n">epoch</span><span class="o">=</span><span class="n">epoch</span><span class="p">,</span>
+                        <span class="n">best_val_loss</span><span class="o">=</span><span class="n">best_val_loss</span><span class="p">,</span>
+                    <span class="p">)</span>
+                    <span class="k">break</span>
+
+        <span class="c1"># Restore best weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span> <span class="o">=</span> <span class="n">best_weights</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biases</span> <span class="o">=</span> <span class="n">best_biases</span>
+
+        <span class="c1"># Apply pruning if enabled</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">enable_pruning</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_prune_weights</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_trained</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;epochs_trained&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_training_history</span><span class="p">),</span>
+            <span class="s2">&quot;final_train_loss&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_training_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
+            <span class="s2">&quot;best_val_loss&quot;</span><span class="p">:</span> <span class="n">best_val_loss</span><span class="p">,</span>
+            <span class="s2">&quot;training_history&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_training_history</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_backward</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">y</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">output</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span>
+        <span class="n">activations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">pre_activations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span>
+        <span class="n">learning_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Backward pass for gradient computation and weight update.</span>
+
+<span class="sd">        Uses pre-activations cached during the forward pass (rather than recomputing them from</span>
+<span class="sd">        the post-ReLU activations) so the ReLU derivative matches the activations used to</span>
+<span class="sd">        compute the layer&#39;s inputs exactly.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">batch_size</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+
+        <span class="c1"># Output layer gradient (linear output, MSE loss; derivative of MSE w.r.t. output is</span>
+        <span class="c1"># 2*(pred - y)/batch; we treat the factor-of-2 as absorbed in learning_rate scaling).</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">-</span> <span class="n">y</span><span class="p">)</span> <span class="o">/</span> <span class="n">batch_size</span>
+        <span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Update output layer</span>
+        <span class="n">dW</span> <span class="o">=</span> <span class="n">activations</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">delta</span>
+        <span class="n">db</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">dW</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">db</span>
+
+        <span class="c1"># Backpropagate through hidden layers using cached pre-activations.</span>
+        <span class="c1"># pre_activations[i] is the input to the ReLU that produced activations[i+1],</span>
+        <span class="c1"># for layer i (the i-th hidden layer, 0-indexed).</span>
+        <span class="n">n_hidden</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_hidden</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+            <span class="c1"># Gradient flowing back from the next layer times the local ReLU derivative</span>
+            <span class="c1"># evaluated at the *cached* pre-activation. pre_activations[i] has shape</span>
+            <span class="c1"># (batch, hidden_i); the ReLU derivative must broadcast across batch.</span>
+            <span class="n">relu_d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_relu_derivative</span><span class="p">(</span><span class="n">pre_activations</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">delta</span> <span class="o">=</span> <span class="n">delta</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">T</span> <span class="o">*</span> <span class="n">relu_d</span>
+            <span class="n">dW</span> <span class="o">=</span> <span class="n">activations</span><span class="p">[</span><span class="n">i</span><span class="p">]</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">delta</span>
+            <span class="n">db</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">delta</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">dW</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">db</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_prune_weights</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prune weights below threshold to zero.&quot;&quot;&quot;</span>
+        <span class="n">total_pruned</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_weights</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">W</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">:</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">W</span><span class="p">)</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">pruning_threshold</span>
+            <span class="n">total_pruned</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">mask</span><span class="p">)</span>
+            <span class="n">total_weights</span> <span class="o">+=</span> <span class="n">W</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">W</span><span class="p">[</span><span class="n">mask</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="n">pruning_ratio</span> <span class="o">=</span> <span class="n">total_pruned</span> <span class="o">/</span> <span class="n">total_weights</span> <span class="k">if</span> <span class="n">total_weights</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Weight pruning complete&quot;</span><span class="p">,</span>
+            <span class="n">pruning_ratio</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">pruning_ratio</span><span class="si">:</span><span class="s2">.2%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="n">weights_pruned</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">total_pruned</span><span class="p">),</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="EfficientQKDPredictor.predict">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.efficient_models.EfficientQKDPredictor.predict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">X</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Make predictions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X: Input features</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Predicted values</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_trained</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Model not trained, predictions may be unreliable&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Normalize input</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_mean</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_std</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">X_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_mean</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_input_std</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">X_norm</span> <span class="o">=</span> <span class="n">X</span>
+
+        <span class="c1"># Forward pass</span>
+        <span class="n">output</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_forward</span><span class="p">(</span><span class="n">X_norm</span><span class="p">)</span>
+
+        <span class="c1"># Denormalize output (keep float32 to match internal precision)</span>
+        <span class="n">predictions</span> <span class="o">=</span> <span class="n">output</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_std</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_output_mean</span>
+
+        <span class="k">return</span> <span class="n">predictions</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">float32</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EfficientQKDPredictor.get_model_size_bytes">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.efficient_models.EfficientQKDPredictor.get_model_size_bytes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_model_size_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get model size in bytes.&quot;&quot;&quot;</span>
+        <span class="n">total</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">W</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">:</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">W</span><span class="o">.</span><span class="n">nbytes</span>
+        <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">biases</span><span class="p">:</span>
+            <span class="n">total</span> <span class="o">+=</span> <span class="n">b</span><span class="o">.</span><span class="n">nbytes</span>
+        <span class="k">return</span> <span class="n">total</span></div>
+
+
+<div class="viewcode-block" id="EfficientQKDPredictor.get_sparsity">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.efficient_models.EfficientQKDPredictor.get_sparsity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_sparsity</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get fraction of zero weights (sparsity).&quot;&quot;&quot;</span>
+        <span class="n">total_zeros</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_weights</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">W</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">weights</span><span class="p">:</span>
+            <span class="n">total_zeros</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">W</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)</span>
+            <span class="n">total_weights</span> <span class="o">+=</span> <span class="n">W</span><span class="o">.</span><span class="n">size</span>
+        <span class="k">return</span> <span class="n">total_zeros</span> <span class="o">/</span> <span class="n">total_weights</span> <span class="k">if</span> <span class="n">total_weights</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

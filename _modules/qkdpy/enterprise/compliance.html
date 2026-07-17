@@ -1,0 +1,820 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.enterprise.compliance &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.enterprise.compliance</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.enterprise.compliance</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Compliance checking and reporting for QKDpy.</span>
+
+<span class="sd">This module provides automated compliance checks against security</span>
+<span class="sd">standards and generates compliance reports.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">html</span><span class="w"> </span><span class="kn">import</span> <span class="n">escape</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..config</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">QKDConfig</span><span class="p">,</span>
+    <span class="n">SecurityMode</span><span class="p">,</span>
+    <span class="n">get_config</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># Truthfulness guard for HSM-backed compliance checks.</span>
+<span class="c1">#</span>
+<span class="c1"># ``config.enterprise.enable_hsm`` only records that the operator *requested* HSM</span>
+<span class="c1"># support. It does NOT tell us whether a real, hardware-backed HSM is actually in</span>
+<span class="c1"># use: in this build the only available provider is ``HSMProvider.SOFTWARE`` — an</span>
+<span class="c1"># in-memory simulation that is explicitly NOT production-grade. We therefore must</span>
+<span class="c1"># not auto-mark &quot;FIPS/HSM compliant&quot; from the config flag alone. A compliant</span>
+<span class="c1"># FIPS/ETSI result requires a hardware-backed provider, which does not exist here.</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">_hsm_is_hardware_backed</span><span class="p">(</span><span class="n">config</span><span class="p">:</span> <span class="n">QKDConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return True only if an actual hardware-backed HSM is in use.</span>
+
+<span class="sd">    Returns False in this build because only ``HSMProvider.SOFTWARE`` (a sim)</span>
+<span class="sd">    is implemented. Placeholder for when real providers are added: they would be</span>
+<span class="sd">    checked here and must fail closed (False) until proven hardware-backed.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">config</span><span class="o">.</span><span class="n">enterprise</span><span class="o">.</span><span class="n">enable_hsm</span><span class="p">:</span>
+        <span class="k">return</span> <span class="kc">False</span>
+    <span class="c1"># SoftwareHSM is a simulation, never hardware. Fail closed.</span>
+    <span class="k">return</span> <span class="kc">False</span>
+
+
+<div class="viewcode-block" id="ComplianceStandard">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceStandard">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComplianceStandard</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Supported compliance standards.&quot;&quot;&quot;</span>
+
+    <span class="n">ETSI_GS_QKD_014</span> <span class="o">=</span> <span class="s2">&quot;ETSI GS QKD 014&quot;</span>
+    <span class="n">ETSI_GS_QKD_016</span> <span class="o">=</span> <span class="s2">&quot;ETSI GS QKD 016&quot;</span>
+    <span class="n">ISO_IEC_23837_1</span> <span class="o">=</span> <span class="s2">&quot;ISO/IEC 23837-1&quot;</span>
+    <span class="n">ISO_IEC_23837_2</span> <span class="o">=</span> <span class="s2">&quot;ISO/IEC 23837-2&quot;</span>
+    <span class="n">NIST_SP_800_57</span> <span class="o">=</span> <span class="s2">&quot;NIST SP 800-57&quot;</span>
+    <span class="n">NIST_SP_800_90</span> <span class="o">=</span> <span class="s2">&quot;NIST SP 800-90&quot;</span>
+    <span class="n">COMMON_CRITERIA</span> <span class="o">=</span> <span class="s2">&quot;Common Criteria&quot;</span>
+    <span class="n">FIPS_140_2</span> <span class="o">=</span> <span class="s2">&quot;FIPS 140-2&quot;</span>
+    <span class="n">FIPS_140_3</span> <span class="o">=</span> <span class="s2">&quot;FIPS 140-3&quot;</span>
+    <span class="n">ISO_27001</span> <span class="o">=</span> <span class="s2">&quot;ISO 27001&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ComplianceCheck">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceCheck">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComplianceCheck</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Result of a single compliance check.&quot;&quot;&quot;</span>
+
+    <span class="n">check_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">standard</span><span class="p">:</span> <span class="n">ComplianceStandard</span>
+    <span class="n">requirement</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">passed</span><span class="p">:</span> <span class="nb">bool</span>
+    <span class="n">severity</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="n">recommendation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+
+<div class="viewcode-block" id="ComplianceReport">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceReport">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComplianceReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Comprehensive compliance report.&quot;&quot;&quot;</span>
+
+    <span class="n">report_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">generated_at</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">standards_checked</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceStandard</span><span class="p">]</span>
+    <span class="n">total_checks</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">passed_checks</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">failed_checks</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]</span>
+    <span class="n">overall_compliant</span><span class="p">:</span> <span class="nb">bool</span>
+
+<div class="viewcode-block" id="ComplianceReport.get_summary">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceReport.get_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get summary of the report.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;report_id&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">report_id</span><span class="p">,</span>
+            <span class="s2">&quot;generated_at&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">generated_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;standards&quot;</span><span class="p">:</span> <span class="p">[</span><span class="n">s</span><span class="o">.</span><span class="n">value</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">standards_checked</span><span class="p">],</span>
+            <span class="s2">&quot;total_checks&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_checks</span><span class="p">,</span>
+            <span class="s2">&quot;passed_checks&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">passed_checks</span><span class="p">,</span>
+            <span class="s2">&quot;failed_checks&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">failed_checks</span><span class="p">,</span>
+            <span class="s2">&quot;compliance_rate&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">passed_checks</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_checks</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_checks</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;overall_compliant&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">overall_compliant</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="ComplianceReport.get_failed_checks">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceReport.get_failed_checks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_failed_checks</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get list of failed checks.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">passed</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="ComplianceReport.export_markdown">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceReport.export_markdown">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_markdown</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Export report as Markdown.&quot;&quot;&quot;</span>
+        <span class="n">lines</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="s2">&quot;# Compliance Report&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;**Report ID:** </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">report_id</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;**Generated:** </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">generated_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;**Standards:** </span><span class="si">{</span><span class="s1">&#39;, &#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="w"> </span><span class="k">for</span><span class="w"> </span><span class="n">s</span><span class="w"> </span><span class="ow">in</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">standards_checked</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;## Summary&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;| Metric | Value |&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;|--------|-------|&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;| Total Checks | </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">total_checks</span><span class="si">}</span><span class="s2"> |&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;| Passed | </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">passed_checks</span><span class="si">}</span><span class="s2"> |&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;| Failed | </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">failed_checks</span><span class="si">}</span><span class="s2"> |&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;| Compliance Rate | </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">passed_checks</span><span class="w"> </span><span class="o">/</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">total_checks</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">100</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">% |&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;| Overall Compliant | </span><span class="si">{</span><span class="s1">&#39;✅ Yes&#39;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">overall_compliant</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s1">&#39;❌ No&#39;</span><span class="si">}</span><span class="s2"> |&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+        <span class="p">]</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">failed_checks</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                <span class="p">[</span>
+                    <span class="s2">&quot;## Failed Checks&quot;</span><span class="p">,</span>
+                    <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="p">)</span>
+            <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_failed_checks</span><span class="p">():</span>
+                <span class="n">lines</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span>
+                    <span class="p">[</span>
+                        <span class="sa">f</span><span class="s2">&quot;### </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">check_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">requirement</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;**Standard:** </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">standard</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;**Severity:** </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">severity</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                        <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">description</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                        <span class="s2">&quot;&quot;</span><span class="p">,</span>
+                    <span class="p">]</span>
+                <span class="p">)</span>
+                <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="n">details</span><span class="p">:</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Details:** </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">details</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">check</span><span class="o">.</span><span class="n">recommendation</span><span class="p">:</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;**Recommendation:** </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">recommendation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+                    <span class="n">lines</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">lines</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ComplianceReport.export_html">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceReport.export_html">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_html</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Export report as a self-contained HTML page.&quot;&quot;&quot;</span>
+        <span class="n">rate</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">passed_checks</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_checks</span> <span class="o">*</span> <span class="mi">100</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_checks</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+        <span class="n">status_colour</span> <span class="o">=</span> <span class="s2">&quot;#22c55e&quot;</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">overall_compliant</span> <span class="k">else</span> <span class="s2">&quot;#ef4444&quot;</span>
+        <span class="n">standards_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">escape</span><span class="p">(</span><span class="n">s</span><span class="o">.</span><span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">standards_checked</span><span class="p">)</span>
+        <span class="n">severity_colours</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;critical&quot;</span><span class="p">:</span> <span class="s2">&quot;#dc2626&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;high&quot;</span><span class="p">:</span> <span class="s2">&quot;#ea580c&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;medium&quot;</span><span class="p">:</span> <span class="s2">&quot;#ca8a04&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;low&quot;</span><span class="p">:</span> <span class="s2">&quot;#2563eb&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">rows_html</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">checks</span><span class="p">:</span>
+            <span class="n">badge</span> <span class="o">=</span> <span class="s2">&quot;&amp;#9989;&quot;</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">passed</span> <span class="k">else</span> <span class="s2">&quot;&amp;#10060;&quot;</span>
+            <span class="n">colour</span> <span class="o">=</span> <span class="n">severity_colours</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">severity</span><span class="p">,</span> <span class="s2">&quot;#2563eb&quot;</span><span class="p">)</span>
+            <span class="n">rows_html</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            &lt;tr&gt;</span>
+<span class="s2">                &lt;td style=&quot;padding:8px 12px;border-bottom:1px solid #e5e7eb;font-family:monospace;font-size:13px&quot;&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">check_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/td&gt;</span>
+<span class="s2">                &lt;td style=&quot;padding:8px 12px;border-bottom:1px solid #e5e7eb&quot;&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">requirement</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/td&gt;</span>
+<span class="s2">                &lt;td style=&quot;padding:8px 12px;border-bottom:1px solid #e5e7eb&quot;&gt;</span><span class="si">{</span><span class="n">badge</span><span class="si">}</span><span class="s2">&lt;/td&gt;</span>
+<span class="s2">                &lt;td style=&quot;padding:8px 12px;border-bottom:1px solid #e5e7eb&quot;&gt;&lt;span style=&quot;background:</span><span class="si">{</span><span class="n">colour</span><span class="si">}</span><span class="s2">;color:#fff;padding:2px 8px;border-radius:9999px;font-size:12px&quot;&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">severity</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/span&gt;&lt;/td&gt;</span>
+<span class="s2">            &lt;/tr&gt;&quot;&quot;&quot;</span>
+
+        <span class="n">failed_html</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_failed_checks</span><span class="p">():</span>
+            <span class="n">details_html</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">details</span><span class="p">:</span>
+                <span class="n">details_html</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&lt;p style=&quot;margin:4px 0;font-size:13px&quot;&gt;&lt;strong&gt;Details:&lt;/strong&gt; </span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">details</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/p&gt;&#39;</span>
+            <span class="n">rec_html</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">recommendation</span><span class="p">:</span>
+                <span class="n">rec_html</span> <span class="o">=</span> <span class="sa">f</span><span class="s1">&#39;&lt;p style=&quot;margin:4px 0;font-size:13px&quot;&gt;&lt;strong&gt;Recommendation:&lt;/strong&gt; </span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">recommendation</span><span class="p">)</span><span class="si">}</span><span class="s1">&lt;/p&gt;&#39;</span>
+            <span class="n">failed_html</span> <span class="o">+=</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;</span>
+<span class="s2">            &lt;div style=&quot;margin-bottom:16px;padding:16px;background:#fef2f2;border-left:4px solid #ef4444;border-radius:6px&quot;&gt;</span>
+<span class="s2">                &lt;h3 style=&quot;margin:0 0 4px;font-size:15px;font-weight:600&quot;&gt;[</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">check_id</span><span class="p">)</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">requirement</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/h3&gt;</span>
+<span class="s2">                &lt;p style=&quot;margin:4px 0;color:#6b7280;font-size:13px&quot;&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="n">c</span><span class="o">.</span><span class="n">description</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/p&gt;</span>
+<span class="s2">                </span><span class="si">{</span><span class="n">details_html</span><span class="si">}</span>
+<span class="s2">                </span><span class="si">{</span><span class="n">rec_html</span><span class="si">}</span>
+<span class="s2">            &lt;/div&gt;&quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;&quot;&quot;&lt;!DOCTYPE html&gt;</span>
+<span class="s2">&lt;html lang=&quot;en&quot;&gt;</span>
+<span class="s2">&lt;head&gt;</span>
+<span class="s2">&lt;meta charset=&quot;utf-8&quot;&gt;</span>
+<span class="s2">&lt;meta name=&quot;viewport&quot; content=&quot;width=device-width,initial-scale=1&quot;&gt;</span>
+<span class="s2">&lt;title&gt;Compliance Report — </span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">report_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/title&gt;</span>
+<span class="s2">&lt;/head&gt;</span>
+<span class="s2">&lt;body style=&quot;margin:0;padding:24px;font-family:-apple-system,BlinkMacSystemFont,&#39;Segoe UI&#39;,Roboto,sans-serif;background:#f9fafb;color:#111827&quot;&gt;</span>
+<span class="s2">&lt;div style=&quot;max-width:960px;margin:0 auto;background:#fff;border-radius:12px;box-shadow:0 1px 3px rgba(0,0,0,0.1);padding:32px&quot;&gt;</span>
+<span class="s2">    &lt;div style=&quot;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px&quot;&gt;</span>
+<span class="s2">        &lt;h1 style=&quot;margin:0;font-size:24px;font-weight:700&quot;&gt;Compliance Report&lt;/h1&gt;</span>
+<span class="s2">        &lt;span style=&quot;background:</span><span class="si">{</span><span class="n">status_colour</span><span class="si">}</span><span class="s2">;color:#fff;padding:6px 16px;border-radius:9999px;font-size:14px;font-weight:600&quot;&gt;</span><span class="si">{</span><span class="s2">&quot;COMPLIANT&quot;</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">overall_compliant</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;NON-COMPLIANT&quot;</span><span class="si">}</span><span class="s2">&lt;/span&gt;</span>
+<span class="s2">    &lt;/div&gt;</span>
+<span class="s2">    &lt;table style=&quot;width:100%;font-size:14px;margin-bottom:24px&quot;&gt;</span>
+<span class="s2">        &lt;tr&gt;&lt;td style=&quot;padding:4px 0;color:#6b7280&quot;&gt;Report ID&lt;/td&gt;&lt;td style=&quot;padding:4px 0;font-family:monospace&quot;&gt;</span><span class="si">{</span><span class="n">escape</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">report_id</span><span class="p">)</span><span class="si">}</span><span class="s2">&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="s2">        &lt;tr&gt;&lt;td style=&quot;padding:4px 0;color:#6b7280&quot;&gt;Generated&lt;/td&gt;&lt;td style=&quot;padding:4px 0&quot;&gt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">generated_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">()</span><span class="si">}</span><span class="s2">&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="s2">        &lt;tr&gt;&lt;td style=&quot;padding:4px 0;color:#6b7280&quot;&gt;Standards&lt;/td&gt;&lt;td style=&quot;padding:4px 0&quot;&gt;</span><span class="si">{</span><span class="n">standards_str</span><span class="si">}</span><span class="s2">&lt;/td&gt;&lt;/tr&gt;</span>
+<span class="s2">    &lt;/table&gt;</span>
+<span class="s2">    &lt;div style=&quot;display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:32px&quot;&gt;</span>
+<span class="s2">        &lt;div style=&quot;background:#f3f4f6;border-radius:8px;padding:16px;text-align:center&quot;&gt;&lt;div style=&quot;font-size:28px;font-weight:700&quot;&gt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">total_checks</span><span class="si">}</span><span class="s2">&lt;/div&gt;&lt;div style=&quot;font-size:12px;color:#6b7280&quot;&gt;Total&lt;/div&gt;&lt;/div&gt;</span>
+<span class="s2">        &lt;div style=&quot;background:#f0fdf4;border-radius:8px;padding:16px;text-align:center&quot;&gt;&lt;div style=&quot;font-size:28px;font-weight:700;color:#16a34a&quot;&gt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">passed_checks</span><span class="si">}</span><span class="s2">&lt;/div&gt;&lt;div style=&quot;font-size:12px;color:#6b7280&quot;&gt;Passed&lt;/div&gt;&lt;/div&gt;</span>
+<span class="s2">        &lt;div style=&quot;background:#fef2f2;border-radius:8px;padding:16px;text-align:center&quot;&gt;&lt;div style=&quot;font-size:28px;font-weight:700;color:#dc2626&quot;&gt;</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">failed_checks</span><span class="si">}</span><span class="s2">&lt;/div&gt;&lt;div style=&quot;font-size:12px;color:#6b7280&quot;&gt;Failed&lt;/div&gt;&lt;/div&gt;</span>
+<span class="s2">        &lt;div style=&quot;background:#eff6ff;border-radius:8px;padding:16px;text-align:center&quot;&gt;&lt;div style=&quot;font-size:28px;font-weight:700;color:#2563eb&quot;&gt;</span><span class="si">{</span><span class="n">rate</span><span class="si">:</span><span class="s2">.1f</span><span class="si">}</span><span class="s2">%&lt;/div&gt;&lt;div style=&quot;font-size:12px;color:#6b7280&quot;&gt;Rate&lt;/div&gt;&lt;/div&gt;</span>
+<span class="s2">    &lt;/div&gt;</span>
+<span class="s2">    &lt;h2 style=&quot;font-size:18px;font-weight:600;margin:0 0 12px&quot;&gt;All Checks&lt;/h2&gt;</span>
+<span class="s2">    &lt;table style=&quot;width:100%;border-collapse:collapse;margin-bottom:32px&quot;&gt;</span>
+<span class="s2">        &lt;thead&gt;</span>
+<span class="s2">            &lt;tr style=&quot;background:#f9fafb;text-align:left&quot;&gt;</span>
+<span class="s2">                &lt;th style=&quot;padding:8px 12px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase&quot;&gt;ID&lt;/th&gt;</span>
+<span class="s2">                &lt;th style=&quot;padding:8px 12px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase&quot;&gt;Requirement&lt;/th&gt;</span>
+<span class="s2">                &lt;th style=&quot;padding:8px 12px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase&quot;&gt;Status&lt;/th&gt;</span>
+<span class="s2">                &lt;th style=&quot;padding:8px 12px;font-size:12px;font-weight:600;color:#6b7280;text-transform:uppercase&quot;&gt;Severity&lt;/th&gt;</span>
+<span class="s2">            &lt;/tr&gt;</span>
+<span class="s2">        &lt;/thead&gt;</span>
+<span class="s2">        &lt;tbody&gt;</span><span class="si">{</span><span class="n">rows_html</span><span class="si">}</span><span class="s2">&lt;/tbody&gt;</span>
+<span class="s2">    &lt;/table&gt;</span>
+<span class="s2">    </span><span class="si">{</span><span class="n">failed_html</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="bp">self</span><span class="o">.</span><span class="n">failed_checks</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="s2">&quot;&quot;</span><span class="si">}</span>
+<span class="s2">    &lt;p style=&quot;font-size:12px;color:#9ca3af;margin:32px 0 0;text-align:center&quot;&gt;Generated by QKDpy Enterprise Compliance Suite&lt;/p&gt;</span>
+<span class="s2">&lt;/div&gt;</span>
+<span class="s2">&lt;/body&gt;</span>
+<span class="s2">&lt;/html&gt;&quot;&quot;&quot;</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ComplianceChecker">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceChecker">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ComplianceChecker</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Checks QKD system configuration against compliance standards.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ComplianceChecker.__init__">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceChecker.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">standards</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceStandard</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">config</span><span class="p">:</span> <span class="n">QKDConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize compliance checker.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            standards: Standards to check (default: ETSI GS QKD 014)</span>
+<span class="sd">            config: QKD config to check against. Uses global config if None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">standards</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">standards</span> <span class="k">if</span> <span class="n">standards</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="p">[</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_014</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="o">=</span> <span class="n">config</span></div>
+
+
+<div class="viewcode-block" id="ComplianceChecker.check_compliance">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.compliance.ComplianceChecker.check_compliance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">check_compliance</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">ComplianceReport</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Run all compliance checks.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Compliance report</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+
+        <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">standard</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">standards</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">standard</span> <span class="o">==</span> <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">NIST_SP_800_57</span><span class="p">:</span>
+                <span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_nist_800_57</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">standard</span> <span class="o">==</span> <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">FIPS_140_2</span><span class="p">:</span>
+                <span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_fips_140_2</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">standard</span> <span class="o">==</span> <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_27001</span><span class="p">:</span>
+                <span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_iso_27001</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">standard</span> <span class="o">==</span> <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_014</span><span class="p">:</span>
+                <span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_etsi_qkd_014</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">standard</span> <span class="o">==</span> <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_016</span><span class="p">:</span>
+                <span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_etsi_qkd_016</span><span class="p">())</span>
+            <span class="k">elif</span> <span class="n">standard</span> <span class="ow">in</span> <span class="p">(</span>
+                <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_IEC_23837_1</span><span class="p">,</span>
+                <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_IEC_23837_2</span><span class="p">,</span>
+            <span class="p">):</span>
+                <span class="n">checks</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_check_iso_23837</span><span class="p">())</span>
+
+        <span class="n">passed</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="n">c</span><span class="o">.</span><span class="n">passed</span><span class="p">)</span>
+        <span class="n">failed</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">checks</span><span class="p">)</span> <span class="o">-</span> <span class="n">passed</span>
+
+        <span class="c1"># Overall compliant if no critical/high severity failures</span>
+        <span class="n">critical_failures</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">c</span> <span class="k">for</span> <span class="n">c</span> <span class="ow">in</span> <span class="n">checks</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">c</span><span class="o">.</span><span class="n">passed</span> <span class="ow">and</span> <span class="n">c</span><span class="o">.</span><span class="n">severity</span> <span class="ow">in</span> <span class="p">(</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span> <span class="s2">&quot;high&quot;</span><span class="p">)</span>
+        <span class="p">]</span>
+        <span class="n">overall_compliant</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">critical_failures</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+
+        <span class="n">report</span> <span class="o">=</span> <span class="n">ComplianceReport</span><span class="p">(</span>
+            <span class="n">report_id</span><span class="o">=</span><span class="n">secrets</span><span class="o">.</span><span class="n">token_hex</span><span class="p">(</span><span class="mi">8</span><span class="p">),</span>
+            <span class="n">generated_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">),</span>
+            <span class="n">standards_checked</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">standards</span><span class="p">,</span>
+            <span class="n">total_checks</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
+            <span class="n">passed_checks</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+            <span class="n">failed_checks</span><span class="o">=</span><span class="n">failed</span><span class="p">,</span>
+            <span class="n">checks</span><span class="o">=</span><span class="n">checks</span><span class="p">,</span>
+            <span class="n">overall_compliant</span><span class="o">=</span><span class="n">overall_compliant</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Compliance check completed&quot;</span><span class="p">,</span>
+            <span class="n">total</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">checks</span><span class="p">),</span>
+            <span class="n">passed</span><span class="o">=</span><span class="n">passed</span><span class="p">,</span>
+            <span class="n">failed</span><span class="o">=</span><span class="n">failed</span><span class="p">,</span>
+            <span class="n">overall_compliant</span><span class="o">=</span><span class="n">overall_compliant</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">report</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_nist_800_57</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check NIST SP 800-57 compliance.&quot;&quot;&quot;</span>
+        <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_config</span><span class="p">()</span>
+
+        <span class="c1"># Key length requirements</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;NIST-57-001&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">NIST_SP_800_57</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Minimum symmetric key length&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Symmetric keys must be at least 128 bits for security through 2030&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">min_key_length</span> <span class="o">&gt;=</span> <span class="mi">128</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Current minimum: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">min_key_length</span><span class="si">}</span><span class="s2"> bits&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Set min_key_length to at least 128 bits&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Key rotation</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;NIST-57-002&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">NIST_SP_800_57</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Key rotation policy&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Keys should be rotated periodically to limit exposure&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_key_rotation</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Key rotation enabled: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_key_rotation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable automatic key rotation&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Audit logging</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;NIST-57-003&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">NIST_SP_800_57</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Audit logging&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;All key management operations must be logged&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_audit_logging</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Audit logging enabled: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_audit_logging</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable audit logging for compliance&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Production mode security</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;NIST-57-004&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">NIST_SP_800_57</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Production security mode&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Production deployments should use production security mode&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SecurityMode</span><span class="o">.</span><span class="n">PRODUCTION</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;medium&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Current mode: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Set security mode to &#39;production&#39; for deployment&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Secret redaction in logs</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;NIST-57-005&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">NIST_SP_800_57</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Log sanitization&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Secret data must be redacted from logs&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">redact_secrets</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Redaction enabled: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">redact_secrets</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable secret redaction in logging configuration&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">checks</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_fips_140_2</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check FIPS 140-2 compliance.&quot;&quot;&quot;</span>
+        <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_config</span><span class="p">()</span>
+
+        <span class="c1"># HSM requirement</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;FIPS-140-001&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">FIPS_140_2</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Hardware security module&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;FIPS 140-2 Level 2+ requires HSM for key storage&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">enterprise</span><span class="o">.</span><span class="n">enable_hsm</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;HSM enabled: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">enterprise</span><span class="o">.</span><span class="n">enable_hsm</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable HSM integration for FIPS compliance&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Authentication requirement</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;FIPS-140-002&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">FIPS_140_2</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Authentication&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Role-based authentication is required&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">require_authentication</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Authentication required: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">require_authentication</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable authentication requirement&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">checks</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_iso_27001</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check ISO 27001 compliance.&quot;&quot;&quot;</span>
+        <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_config</span><span class="p">()</span>
+
+        <span class="c1"># Access control</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ISO-27001-001&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_27001</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Access Control (A.9)&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Access to systems and data must be controlled&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">require_authentication</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Authentication enabled: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">require_authentication</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Implement access control mechanisms&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Cryptographic controls</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ISO-27001-002&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_27001</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Cryptographic Controls (A.10)&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Cryptographic controls must be properly implemented&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">min_key_length</span> <span class="o">&gt;=</span> <span class="mi">128</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Key length: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">min_key_length</span><span class="si">}</span><span class="s2"> bits&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Ensure minimum 128-bit key length&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Logging and monitoring</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ISO-27001-003&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_27001</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Logging and Monitoring (A.12.4)&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Event logging must be enabled and protected&quot;</span><span class="p">,</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_audit_logging</span>
+                <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">redact_secrets</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;medium&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="s2">&quot;Audit logging and log protection&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable audit logging with secret redaction&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">checks</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_etsi_qkd_014</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check ETSI GS QKD 014 (KME-SA Interface) compliance.&quot;&quot;&quot;</span>
+        <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_config</span><span class="p">()</span>
+
+        <span class="c1"># KME-SA interface defined and HSM enabled</span>
+        <span class="n">hsm_available</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">enterprise</span><span class="o">.</span><span class="n">enable_hsm</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ETSI-014-001&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_014</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;KME-SA interface compliance&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Key Management Entity (KME) interface must be defined and HSM &quot;</span>
+                    <span class="s2">&quot;enabled to conform to ETSI GS QKD 014 key delivery specification&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">hsm_available</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;HSM enabled: </span><span class="si">{</span><span class="n">hsm_available</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable HSM integration to provide a KME interface&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Key format compliance (hex-encoded, proper length)</span>
+        <span class="n">key_len_ok</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">min_key_length</span> <span class="o">&gt;=</span> <span class="mi">128</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ETSI-014-002&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_014</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Key format compliance&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Keys must be delivered in hex-encoded format with a minimum &quot;</span>
+                    <span class="s2">&quot;length of 128 bits as specified by ETSI 014&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">key_len_ok</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Minimum key length: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">min_key_length</span><span class="si">}</span><span class="s2"> bits &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;(requires &gt;= 128)&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Set min_key_length to at least 128 bits for ETSI 014 compliance&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Identity authentication (mutual authentication between KME and SA)</span>
+        <span class="n">auth_ok</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">require_authentication</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ETSI-014-003&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_014</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Identity authentication&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Mutual authentication between Key Management Entity (KME) and &quot;</span>
+                    <span class="s2">&quot;Security Application (SA) must be enforced&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">auth_ok</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Authentication required: </span><span class="si">{</span><span class="n">auth_ok</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable authentication to enforce mutual KME-SA identity verification&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Key churn (key refresh/rotation)</span>
+        <span class="n">rotation_ok</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_key_rotation</span>
+            <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">key_rotation_interval_seconds</span> <span class="o">&lt;=</span> <span class="mi">3600</span>
+        <span class="p">)</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ETSI-014-004&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_014</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Key churn&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Key refresh or rotation must be enabled with a reasonable &quot;</span>
+                    <span class="s2">&quot;interval (&lt;= 1 hour) to satisfy key churn requirements&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">rotation_ok</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Key rotation enabled: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_key_rotation</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Interval: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">key_rotation_interval_seconds</span><span class="si">}</span><span class="s2">s&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Enable key rotation with an interval of 3600 seconds or less&quot;</span>
+                <span class="p">),</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">checks</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_etsi_qkd_016</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check ETSI GS QKD 016 (Common Criteria Protection Profile) compliance.&quot;&quot;&quot;</span>
+        <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_config</span><span class="p">()</span>
+
+        <span class="c1"># Security target — production mode required</span>
+        <span class="n">mode_ok</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="n">SecurityMode</span><span class="o">.</span><span class="n">PRODUCTION</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ETSI-016-001&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_016</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Security target compliance&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;System must meet Common Criteria security target requirements &quot;</span>
+                    <span class="s2">&quot;by operating in PRODUCTION security mode&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">mode_ok</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Current security mode: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">mode</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Set security mode to &#39;production&#39; for Common Criteria compliance&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Authentication mechanisms</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ETSI-016-002&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_016</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Authentication mechanisms&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Authentication mechanisms must be in place to satisfy &quot;</span>
+                    <span class="s2">&quot;Common Criteria security functional requirements&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">require_authentication</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Authentication required: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">require_authentication</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable authentication for Common Criteria compliance&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Audit logging</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ETSI-016-003&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_016</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Audit logging&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Audit logging must be enabled to meet Common Criteria &quot;</span>
+                    <span class="s2">&quot;audit functional requirements&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_audit_logging</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Audit logging enabled: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_audit_logging</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable audit logging for Common Criteria compliance&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">checks</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_iso_23837</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check ISO/IEC 23837 (QKD Security Requirements) compliance.&quot;&quot;&quot;</span>
+        <span class="n">checks</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">ComplianceCheck</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">config</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_config</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">get_config</span><span class="p">()</span>
+
+        <span class="c1"># Security requirements — key length</span>
+        <span class="n">key_len_ok</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">min_key_length</span> <span class="o">&gt;=</span> <span class="mi">128</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ISO-23837-001&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_IEC_23837_1</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Security requirements definition&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Key length must meet or exceed the minimum security &quot;</span>
+                    <span class="s2">&quot;requirements defined in ISO/IEC 23837 (128 bits)&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">key_len_ok</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Minimum key length: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">min_key_length</span><span class="si">}</span><span class="s2"> bits&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Ensure min_key_length is at least 128 bits&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># QBER threshold</span>
+        <span class="n">qber_ok</span> <span class="o">=</span> <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">max_qber_threshold</span> <span class="o">&lt;=</span> <span class="mf">0.11</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ISO-23837-002&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_IEC_23837_2</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;QBER threshold&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Quantum Bit Error Rate (QBER) threshold must be within the &quot;</span>
+                    <span class="s2">&quot;acceptable range (&lt;= 0.11) defined by ISO/IEC 23837&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">qber_ok</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;critical&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Max QBER threshold: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">max_qber_threshold</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Set max_qber_threshold to 0.11 or lower&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Key distillation parameters</span>
+        <span class="n">distillation_ok</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_key_rotation</span> <span class="ow">and</span> <span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_audit_logging</span>
+        <span class="p">)</span>
+        <span class="n">checks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="n">ComplianceCheck</span><span class="p">(</span>
+                <span class="n">check_id</span><span class="o">=</span><span class="s2">&quot;ISO-23837-003&quot;</span><span class="p">,</span>
+                <span class="n">standard</span><span class="o">=</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ISO_IEC_23837_2</span><span class="p">,</span>
+                <span class="n">requirement</span><span class="o">=</span><span class="s2">&quot;Key distillation parameters&quot;</span><span class="p">,</span>
+                <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                    <span class="s2">&quot;Key rotation and audit logging must both be enabled for &quot;</span>
+                    <span class="s2">&quot;proper key distillation as required by ISO/IEC 23837&quot;</span>
+                <span class="p">),</span>
+                <span class="n">passed</span><span class="o">=</span><span class="n">distillation_ok</span><span class="p">,</span>
+                <span class="n">severity</span><span class="o">=</span><span class="s2">&quot;high&quot;</span><span class="p">,</span>
+                <span class="n">details</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;Key rotation: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_key_rotation</span><span class="si">}</span><span class="s2">, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;Audit logging: </span><span class="si">{</span><span class="n">config</span><span class="o">.</span><span class="n">security</span><span class="o">.</span><span class="n">enable_audit_logging</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">,</span>
+                <span class="n">recommendation</span><span class="o">=</span><span class="s2">&quot;Enable both key rotation and audit logging&quot;</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">checks</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

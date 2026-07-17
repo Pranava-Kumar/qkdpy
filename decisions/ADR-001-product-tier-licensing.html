@@ -1,0 +1,211 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADR-001: Product Tier Licensing Model &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ADR-001: Product Tier Licensing Model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/decisions/ADR-001-product-tier-licensing.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="adr-001-product-tier-licensing-model">
+<h1>ADR-001: Product Tier Licensing Model<a class="headerlink" href="#adr-001-product-tier-licensing-model" title="Link to this heading"></a></h1>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Link to this heading"></a></h2>
+<p>Accepted</p>
+</section>
+<section id="date">
+<h2>Date<a class="headerlink" href="#date" title="Link to this heading"></a></h2>
+<p>2026-07-09</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Link to this heading"></a></h2>
+<p>QKDpy is evolving from a pure open-source simulation library into a tiered commercial product. We need a mechanism to:</p>
+<ul class="simple">
+<li><p>Define which features belong to which product tier (FREE / ENTERPRISE / PREMIUM)</p></li>
+<li><p>Gate features at runtime so unlicensed callers get a clear error instead of silent degradation</p></li>
+<li><p>Support license key activation without code changes</p></li>
+<li><p>Make the tier visible to tooling, tests, and configuration</p></li>
+</ul>
+<p>The tier model must be <strong>cumulative</strong> (each tier includes everything in the tier below it)
+so that upgrading is additive and there are no “holes” in the feature matrix.</p>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Link to this heading"></a></h2>
+<p>Introduce a lightweight <strong>feature-flag-as-code</strong> module (<code class="docutils literal notranslate"><span class="pre">enterprise/licensing.py</span></code>)
+with three core concepts:</p>
+<ol class="arabic simple">
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">ProductTier</span></code> enum</strong> — <code class="docutils literal notranslate"><span class="pre">FREE</span></code>, <code class="docutils literal notranslate"><span class="pre">ENTERPRISE</span></code>, <code class="docutils literal notranslate"><span class="pre">PREMIUM</span></code> (in ascending order)</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">Feature</span></code> enum</strong> — One member per gateable feature (e.g., <code class="docutils literal notranslate"><span class="pre">COMPLIANCE_REPORTING</span></code>,
+<code class="docutils literal notranslate"><span class="pre">QUANTUM_SAFE_MIGRATION</span></code>).  Each feature belongs to exactly one tier.</p></li>
+<li><p><strong><code class="docutils literal notranslate"><span class="pre">require_feature(feature)</span></code> decorator</strong> — Wraps any function; raises <code class="docutils literal notranslate"><span class="pre">LicenseError</span></code>
+at call time if the feature is not available in the current tier. The error message
+includes the required tier name.</p></li>
+</ol>
+<p>A module-level <code class="docutils literal notranslate"><span class="pre">TIER_FEATURES</span></code> dict maps <code class="docutils literal notranslate"><span class="pre">ProductTier</span> <span class="pre">→</span> <span class="pre">set[Feature]</span></code> and is the
+single source of truth for tier membership.  The active tier is stored as a module
+global and defaults to <code class="docutils literal notranslate"><span class="pre">FREE</span></code>.</p>
+<section id="configuration-integration">
+<h3>Configuration integration<a class="headerlink" href="#configuration-integration" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">EnterpriseConfig.product_tier</span></code> is a string field read from the <code class="docutils literal notranslate"><span class="pre">QKDPY_PRODUCT_TIER</span></code>
+environment variable or <code class="docutils literal notranslate"><span class="pre">set_config()</span></code>.  <code class="docutils literal notranslate"><span class="pre">set_config()</span></code> automatically calls
+<code class="docutils literal notranslate"><span class="pre">set_active_tier()</span></code> so the licensing module stays in sync without manual
+coordination.</p>
+</section>
+<section id="usage-pattern">
+<h3>Usage pattern<a class="headerlink" href="#usage-pattern" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@require_feature</span><span class="p">(</span><span class="n">Feature</span><span class="o">.</span><span class="n">COMPLIANCE_HTML_EXPORT</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">export_html</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="o">...</span>
+</pre></div>
+</div>
+<p>A FREE-tier caller gets:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">LicenseError</span><span class="p">:</span> <span class="s1">&#39;compliance_html_export&#39;</span> <span class="n">requires</span> <span class="n">the</span> <span class="n">Enterprise</span> <span class="n">tier</span> <span class="ow">or</span> <span class="n">higher</span><span class="o">.</span>
+<span class="n">Current</span> <span class="n">tier</span><span class="p">:</span> <span class="n">free</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="alternatives-considered">
+<h2>Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Link to this heading"></a></h2>
+<section id="separate-packages-qkdpy-free-qkdpy-enterprise-qkdpy-premium-on-pypi">
+<h3>Separate packages (qkdpy-free / qkdpy-enterprise / qkdpy-premium on PyPI)<a class="headerlink" href="#separate-packages-qkdpy-free-qkdpy-enterprise-qkdpy-premium-on-pypi" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Pros:</strong> Clear separation, no runtime gating logic needed</p></li>
+<li><p><strong>Cons:</strong> Massive maintenance overhead (three packages, three release pipelines).
+Impossible to trial upgrade without reinstall.  Breaks <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">qkdpy[enterprise]</span></code>
+patterns users expect.</p></li>
+<li><p><strong>Rejected:</strong> Too operationally expensive for the value.</p></li>
+</ul>
+</section>
+<section id="license-server-with-remote-validation">
+<h3>License server with remote validation<a class="headerlink" href="#license-server-with-remote-validation" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Pros:</strong> Harder to crack, central enforcement, usage analytics</p></li>
+<li><p><strong>Cons:</strong> Requires network access, introduces a single point of failure,
+over-engineering for a library that runs primarily in dev/on-prem environments.</p></li>
+<li><p><strong>Deferred:</strong> Can be added as an optional <code class="docutils literal notranslate"><span class="pre">LicenseValidator</span></code> plugin without
+changing any of the decorator call sites, since <code class="docutils literal notranslate"><span class="pre">set_active_tier()</span></code> is the
+only entry point.</p></li>
+</ul>
+</section>
+<section id="configuration-based-gating-if-config-x-then-enable">
+<h3>Configuration-based gating (if config.x then enable)<a class="headerlink" href="#configuration-based-gating-if-config-x-then-enable" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Pros:</strong> No decorator boilerplate</p></li>
+<li><p><strong>Cons:</strong> Scattered <code class="docutils literal notranslate"><span class="pre">if</span> <span class="pre">config.enterprise.enable_hsm</span></code> checks throughout the
+codebase. Easy to miss a gate. No way to audit what features are available
+programmatically (<code class="docutils literal notranslate"><span class="pre">feature_available(Feature.X)</span></code>).  Not self-documenting.</p></li>
+<li><p><strong>Rejected:</strong> The decorator is explicit, searchable, and testable.</p></li>
+</ul>
+</section>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Every enterprise/premium feature is <strong>opt-in at call time</strong> — FREE users can
+reference enterprise modules without errors; only execution is blocked.</p></li>
+<li><p>Adding a new tiered feature requires: (1) adding a <code class="docutils literal notranslate"><span class="pre">Feature</span></code> enum member,
+(2) adding it to the right tier’s set in <code class="docutils literal notranslate"><span class="pre">TIER_FEATURES</span></code>, (3) decorating the
+entry point function.</p></li>
+<li><p>The module global is not thread-safe for runtime tier switching, but tier is
+set once at startup (via config) and never hot-swapped in practice.</p></li>
+<li><p>A CLI or dashboard can call <code class="docutils literal notranslate"><span class="pre">feature_available(Feature.X)</span></code> to report tier
+status without executing any gated code.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

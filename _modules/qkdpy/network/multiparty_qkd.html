@@ -1,0 +1,611 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.network.multiparty_qkd &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.network.multiparty_qkd</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.network.multiparty_qkd</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Multi-party QKD network simulation.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumChannel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_randint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..protocols.bb84</span><span class="w"> </span><span class="kn">import</span> <span class="n">BB84</span>
+
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultiPartyQKDNetwork</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Simulation of a multi-party QKD network.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a multi-party QKD network.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nodes: List of node identifiers in the network</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="o">=</span> <span class="n">nodes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="n">QuantumChannel</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">routing_table</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">security_log</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork.add_channel">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork.add_channel">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_channel</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">node1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a quantum channel between two nodes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node1: First node identifier</span>
+<span class="sd">            node2: Second node identifier</span>
+<span class="sd">            channel: Quantum channel connecting the nodes</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if channel was added successfully, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">node1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="ow">or</span> <span class="n">node2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">node1</span> <span class="o">==</span> <span class="n">node2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Add channel in both directions (assuming symmetric channels)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)]</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[(</span><span class="n">node2</span><span class="p">,</span> <span class="n">node1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">channel</span>
+
+        <span class="c1"># Update network topology</span>
+        <span class="k">if</span> <span class="n">node1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">node2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="n">node2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">[</span><span class="n">node1</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">node1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">[</span><span class="n">node2</span><span class="p">]:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node1</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork.establish_pairwise_key">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork.establish_pairwise_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">establish_pairwise_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">node1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Establish a pairwise key between two nodes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node1: First node identifier</span>
+<span class="sd">            node2: Second node identifier</span>
+<span class="sd">            key_length: Desired key length</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Generated key if successful, None otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if nodes exist</span>
+        <span class="k">if</span> <span class="n">node1</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span> <span class="ow">or</span> <span class="n">node2</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span>
+                <span class="s2">&quot;KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;NODE_NOT_FOUND&quot;</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if direct channel exists</span>
+        <span class="n">channel_key</span> <span class="o">=</span> <span class="p">(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">channel_key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+            <span class="c1"># Try to find a path</span>
+            <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_path</span><span class="p">(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span><span class="s2">&quot;KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;NO_PATH&quot;</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+            <span class="c1"># For multi-hop, we would need trusted relay or entanglement swapping</span>
+            <span class="c1"># For now, we&#39;ll only support direct connections</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span>
+                <span class="s2">&quot;KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;NO_DIRECT_CHANNEL&quot;</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Get the channel</span>
+        <span class="n">channel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[</span><span class="n">channel_key</span><span class="p">]</span>
+
+        <span class="c1"># Create QKD protocol instance</span>
+        <span class="n">protocol</span> <span class="o">=</span> <span class="n">BB84</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="n">key_length</span><span class="p">)</span>
+
+        <span class="c1"># Execute protocol</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">protocol</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+            <span class="c1"># Check if key generation was successful</span>
+            <span class="n">final_key</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;final_key&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">results</span><span class="p">[</span><span class="s2">&quot;is_secure&quot;</span><span class="p">]</span>
+                <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">final_key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="p">):</span>
+                <span class="n">key</span> <span class="o">=</span> <span class="n">final_key</span>
+
+                <span class="c1"># Store the key</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)]</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">node2</span><span class="p">,</span> <span class="n">node1</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+                        <span class="c1"># Update reverse direction key (should be same in real implementation)</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[(</span><span class="n">node2</span><span class="p">,</span> <span class="n">node1</span><span class="p">)]</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span><span class="s2">&quot;KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">key</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span><span class="s2">&quot;KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;INSECURE&quot;</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span><span class="s2">&quot;KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;ERROR&quot;</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">))</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_path</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find a path between two nodes using BFS.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source: Source node</span>
+<span class="sd">            destination: Destination node</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of nodes representing the path, or None if no path exists</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="n">source</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span>
+            <span class="ow">or</span> <span class="n">destination</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span>
+        <span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">source</span> <span class="o">==</span> <span class="n">destination</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[</span><span class="n">source</span><span class="p">]</span>
+
+        <span class="c1"># BFS to find shortest path</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="p">[(</span><span class="n">source</span><span class="p">,</span> <span class="p">[</span><span class="n">source</span><span class="p">])]</span>
+
+        <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
+            <span class="n">current_node</span><span class="p">,</span> <span class="n">path</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">current_node</span> <span class="o">==</span> <span class="n">destination</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">path</span>
+
+            <span class="k">if</span> <span class="n">current_node</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">current_node</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">current_node</span><span class="p">,</span> <span class="p">[]):</span>
+                <span class="k">if</span> <span class="n">neighbor</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                    <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">neighbor</span><span class="p">,</span> <span class="n">path</span> <span class="o">+</span> <span class="p">[</span><span class="n">neighbor</span><span class="p">]))</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork.broadcast_key">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork.broadcast_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">broadcast_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Broadcast a key from source node to all other nodes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source: Source node identifier</span>
+<span class="sd">            key_length: Desired key length</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping node identifiers to keys</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">source</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="c1"># Generate a master key</span>
+        <span class="n">master_key</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">key_length</span><span class="p">)]</span>
+
+        <span class="c1"># Distribute key to all nodes (simplified implementation)</span>
+        <span class="n">distributed_keys</span> <span class="o">=</span> <span class="p">{</span><span class="n">source</span><span class="p">:</span> <span class="n">master_key</span><span class="p">}</span>
+
+        <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node</span> <span class="o">!=</span> <span class="n">source</span><span class="p">:</span>
+                <span class="c1"># In a real implementation, we would establish pairwise keys</span>
+                <span class="c1"># and use them to securely distribute the master key</span>
+                <span class="c1"># For now, we&#39;ll just generate random keys for each node</span>
+                <span class="n">distributed_keys</span><span class="p">[</span><span class="n">node</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span>
+                    <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">key_length</span><span class="p">)</span>
+                <span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">distributed_keys</span></div>
+
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork.get_network_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork.get_network_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_network_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get network statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with network statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate network connectivity</span>
+        <span class="n">total_possible_connections</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+        <span class="n">actual_connections</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>  <span class="c1"># Divide by 2 for bidirectional</span>
+
+        <span class="n">connectivity</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">actual_connections</span> <span class="o">/</span> <span class="n">total_possible_connections</span>
+            <span class="k">if</span> <span class="n">total_possible_connections</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate average channel quality</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+            <span class="n">avg_loss</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">channel</span><span class="o">.</span><span class="n">loss</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+            <span class="p">)</span>
+            <span class="n">avg_noise</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">channel</span><span class="o">.</span><span class="n">noise_level</span> <span class="k">for</span> <span class="n">channel</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">values</span><span class="p">()])</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">avg_loss</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">avg_noise</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;num_nodes&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">),</span>
+            <span class="s2">&quot;num_channels&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">),</span>
+            <span class="s2">&quot;connectivity&quot;</span><span class="p">:</span> <span class="n">connectivity</span><span class="p">,</span>
+            <span class="s2">&quot;average_channel_loss&quot;</span><span class="p">:</span> <span class="n">avg_loss</span><span class="p">,</span>
+            <span class="s2">&quot;average_channel_noise&quot;</span><span class="p">:</span> <span class="n">avg_noise</span><span class="p">,</span>
+            <span class="s2">&quot;num_established_keys&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">),</span>
+            <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_log_security_event</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">event_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">node2</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">details</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Log a security event.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            event_type: Type of security event</span>
+<span class="sd">            status: Status of the event</span>
+<span class="sd">            node1: First node involved</span>
+<span class="sd">            node2: Second node involved</span>
+<span class="sd">            details: Additional details</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">security_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+                <span class="s2">&quot;event_type&quot;</span><span class="p">:</span> <span class="n">event_type</span><span class="p">,</span>
+                <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="n">status</span><span class="p">,</span>
+                <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">((</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)),</span>
+                <span class="s2">&quot;details&quot;</span><span class="p">:</span> <span class="n">details</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork.get_security_log">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork.get_security_log">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_security_log</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the security event log.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of security events</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_log</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork.simulate_network_attack">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork.simulate_network_attack">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_network_attack</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">attack_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">target_nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate a network attack.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attack_type: Type of attack (&#39;eavesdropping&#39;, &#39;man_in_the_middle&#39;, &#39;denial_of_service&#39;)</span>
+<span class="sd">            target_nodes: Nodes targeted by the attack</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with attack simulation results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;attack_type&quot;</span><span class="p">:</span> <span class="n">attack_type</span><span class="p">,</span>
+            <span class="s2">&quot;target_nodes&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="n">target_nodes</span><span class="p">),</span>
+            <span class="s2">&quot;affected_channels&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;detection_status&quot;</span><span class="p">:</span> <span class="s2">&quot;unknown&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">if</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="s2">&quot;eavesdropping&quot;</span><span class="p">:</span>
+            <span class="c1"># Simulate eavesdropping on channels connected to target nodes</span>
+            <span class="n">affected_channels</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">target_nodes</span> <span class="ow">or</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">target_nodes</span><span class="p">:</span>
+                    <span class="n">affected_channels</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">))</span>
+                    <span class="c1"># Add an eavesdropper to the channel</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)]</span><span class="o">.</span><span class="n">set_eavesdropper</span><span class="p">(</span>
+                        <span class="n">QuantumChannel</span><span class="o">.</span><span class="n">intercept_resend_attack</span>
+                    <span class="p">)</span>
+
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;affected_channels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">affected_channels</span>
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;detection_status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="s2">&quot;possible&quot;</span>  <span class="c1"># QKD protocols can detect eavesdropping</span>
+            <span class="p">)</span>
+
+        <span class="k">elif</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="s2">&quot;man_in_the_middle&quot;</span><span class="p">:</span>
+            <span class="c1"># This is a more sophisticated attack that QKD protocols are designed to prevent</span>
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;detection_status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;high&quot;</span>  <span class="c1"># QKD protocols should detect this</span>
+
+        <span class="k">elif</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="s2">&quot;denial_of_service&quot;</span><span class="p">:</span>
+            <span class="c1"># Simulate DoS by increasing loss on channels</span>
+            <span class="n">affected_channels</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">target_nodes</span> <span class="ow">or</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">target_nodes</span><span class="p">:</span>
+                    <span class="n">affected_channels</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">))</span>
+                    <span class="c1"># Increase loss rate to simulate DoS</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)]</span><span class="o">.</span><span class="n">loss</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                        <span class="mf">1.0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">[(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">)]</span><span class="o">.</span><span class="n">loss</span> <span class="o">+</span> <span class="mf">0.5</span>
+                    <span class="p">)</span>
+
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;affected_channels&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">affected_channels</span>
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;detection_status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;likely&quot;</span>
+
+        <span class="c1"># Log the attack simulation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span>
+            <span class="s2">&quot;NETWORK_ATTACK_SIMULATION&quot;</span><span class="p">,</span>
+            <span class="n">attack_type</span><span class="p">,</span>
+            <span class="nb">str</span><span class="p">(</span><span class="n">target_nodes</span><span class="p">),</span>
+            <span class="s2">&quot;&quot;</span><span class="p">,</span>
+            <span class="sa">f</span><span class="s2">&quot;Simulated </span><span class="si">{</span><span class="n">attack_type</span><span class="si">}</span><span class="s2"> attack&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="MultiPartyQKDNetwork.generate_network_topology_graph">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiPartyQKDNetwork.generate_network_topology_graph">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_network_topology_graph</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a representation of the network topology.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with nodes and edges for graph visualization</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">edges</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">channels</span><span class="p">:</span>
+            <span class="c1"># Only add each edge once (since channels are bidirectional)</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">node2</span><span class="p">,</span> <span class="n">node1</span><span class="p">)</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">edges</span><span class="p">:</span>
+                <span class="n">edges</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="s2">&quot;edges&quot;</span><span class="p">:</span> <span class="n">edges</span><span class="p">,</span>
+            <span class="s2">&quot;node_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">),</span>
+            <span class="s2">&quot;edge_count&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">edges</span><span class="p">),</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<span class="k">class</span><span class="w"> </span><span class="nc">TrustedRelayNetwork</span><span class="p">(</span><span class="n">MultiPartyQKDNetwork</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Multi-party QKD network with trusted relay nodes.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">relay_nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a trusted relay QKD network.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nodes: List of all nodes in the network</span>
+<span class="sd">            relay_nodes: List of trusted relay nodes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">relay_nodes</span> <span class="o">=</span> <span class="n">relay_nodes</span>
+
+        <span class="c1"># Validate that relay nodes are part of the network</span>
+        <span class="k">for</span> <span class="n">relay</span> <span class="ow">in</span> <span class="n">relay_nodes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">relay</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Relay node </span><span class="si">{</span><span class="n">relay</span><span class="si">}</span><span class="s2"> not found in network nodes&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">establish_multihop_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Establish a key between two nodes using trusted relays.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source: Source node identifier</span>
+<span class="sd">            destination: Destination node identifier</span>
+<span class="sd">            key_length: Desired key length</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Generated key if successful, None otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Find path using relays</span>
+        <span class="n">path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_path_with_relays</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">path</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span>
+                <span class="s2">&quot;MULTIHOP_KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;NO_PATH&quot;</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">destination</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Generate keys for each hop</span>
+        <span class="n">hop_keys</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">path</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span> <span class="o">=</span> <span class="n">path</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">path</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">]</span>
+            <span class="n">key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">establish_pairwise_key</span><span class="p">(</span><span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">,</span> <span class="n">key_length</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span>
+                    <span class="s2">&quot;MULTIHOP_KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;HOP_FAILED&quot;</span><span class="p">,</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span>
+                <span class="p">)</span>
+                <span class="k">return</span> <span class="kc">None</span>
+            <span class="n">hop_keys</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="c1"># Combine hop keys using XOR (simplified approach)</span>
+        <span class="c1"># In a real implementation, this would be more sophisticated</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">hop_keys</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">final_key</span> <span class="o">=</span> <span class="n">hop_keys</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">hop_keys</span><span class="p">)):</span>
+            <span class="c1"># Ensure keys are of the same length by truncating to the minimum length</span>
+            <span class="n">min_length</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">final_key</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="n">hop_keys</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="c1"># Truncate both keys to the minimum length</span>
+            <span class="n">final_key</span> <span class="o">=</span> <span class="n">final_key</span><span class="p">[:</span><span class="n">min_length</span><span class="p">]</span>
+            <span class="n">current_key</span> <span class="o">=</span> <span class="n">hop_keys</span><span class="p">[</span><span class="n">i</span><span class="p">][:</span><span class="n">min_length</span><span class="p">]</span>
+
+            <span class="c1"># XOR the keys</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">min_length</span><span class="p">):</span>
+                <span class="n">final_key</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">^=</span> <span class="n">current_key</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+        <span class="c1"># Store the end-to-end key</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[(</span><span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">)]</span> <span class="o">=</span> <span class="n">final_key</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">destination</span><span class="p">,</span> <span class="n">source</span><span class="p">)</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">keys</span><span class="p">[(</span><span class="n">destination</span><span class="p">,</span> <span class="n">source</span><span class="p">)]</span> <span class="o">=</span> <span class="n">final_key</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log_security_event</span><span class="p">(</span>
+            <span class="s2">&quot;MULTIHOP_KEY_ESTABLISHMENT&quot;</span><span class="p">,</span> <span class="s2">&quot;SUCCESS&quot;</span><span class="p">,</span> <span class="n">source</span><span class="p">,</span> <span class="n">destination</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">final_key</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_find_path_with_relays</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">destination</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Find a path between two nodes using trusted relays.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source: Source node</span>
+<span class="sd">            destination: Destination node</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of nodes representing the path, or None if no path exists</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Try direct path first</span>
+        <span class="n">direct_path</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_path</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">direct_path</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">direct_path</span>
+
+        <span class="c1"># Try paths through relays</span>
+        <span class="k">for</span> <span class="n">relay</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">relay_nodes</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">relay</span> <span class="o">==</span> <span class="n">source</span> <span class="ow">or</span> <span class="n">relay</span> <span class="o">==</span> <span class="n">destination</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Find path from source to relay</span>
+            <span class="n">path_to_relay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_path</span><span class="p">(</span><span class="n">source</span><span class="p">,</span> <span class="n">relay</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path_to_relay</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Find path from relay to destination</span>
+            <span class="n">path_from_relay</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_path</span><span class="p">(</span><span class="n">relay</span><span class="p">,</span> <span class="n">destination</span><span class="p">)</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">path_from_relay</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Combine paths</span>
+            <span class="n">full_path</span> <span class="o">=</span> <span class="n">path_to_relay</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="n">path_from_relay</span>
+            <span class="k">return</span> <span class="n">full_path</span>
+
+        <span class="k">return</span> <span class="kc">None</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_relay_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get statistics about relay usage.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with relay statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;relay_nodes&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">relay_nodes</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span>
+            <span class="s2">&quot;num_relays&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">relay_nodes</span><span class="p">),</span>
+            <span class="s2">&quot;total_nodes&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nodes</span><span class="p">),</span>
+        <span class="p">}</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

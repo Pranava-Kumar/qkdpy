@@ -1,0 +1,371 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.core.secure_random &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.core.secure_random</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.core.secure_random</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Cryptographically secure random number generation utilities.</span>
+
+<span class="sd">This module provides CSPRNG-based replacements for common random operations</span>
+<span class="sd">to ensure the library is suitable for production cryptographic use.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="SecureRandom">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.SecureRandom">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SecureRandom</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cryptographically secure random number generator using Python&#39;s secrets module.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SecureRandom.__init__">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.SecureRandom.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the secure random generator.&quot;&quot;&quot;</span>
+        <span class="c1"># Create a numpy Generator with secure seed for numpy operations</span>
+        <span class="n">secure_seed</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">randbits</span><span class="p">(</span><span class="mi">128</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_np_rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PCG64</span><span class="p">(</span><span class="n">secure_seed</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="SecureRandom.randint">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.SecureRandom.randint">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">randint</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">low</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">high</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a cryptographically secure random integer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            low: Lower bound (inclusive)</span>
+<span class="sd">            high: Upper bound (exclusive)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random integer in range [low, high)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">secrets</span><span class="o">.</span><span class="n">randbelow</span><span class="p">(</span><span class="n">high</span> <span class="o">-</span> <span class="n">low</span><span class="p">)</span> <span class="o">+</span> <span class="n">low</span></div>
+
+
+<div class="viewcode-block" id="SecureRandom.choice">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.SecureRandom.choice">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">choice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cryptographically secure choice from a sequence.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            items: Sequence to choose from</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Randomly chosen element</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+            <span class="n">items</span> <span class="o">=</span> <span class="n">items</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+        <span class="k">return</span> <span class="n">secrets</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">items</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SecureRandom.random">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.SecureRandom.random">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">random</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a cryptographically secure random float in [0.0, 1.0).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random float</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Generate 53 bits of randomness for double precision</span>
+        <span class="k">return</span> <span class="n">secrets</span><span class="o">.</span><span class="n">randbits</span><span class="p">(</span><span class="mi">53</span><span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="mi">53</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SecureRandom.normal">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.SecureRandom.normal">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">normal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mean</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a cryptographically secure normally distributed random number.</span>
+
+<span class="sd">        Uses Box-Muller transform with secure uniform random source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mean: Mean of the distribution</span>
+<span class="sd">            std: Standard deviation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random number from normal distribution</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Box-Muller transform</span>
+        <span class="n">u1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+        <span class="n">u2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+        <span class="n">z0</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="o">-</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">u1</span><span class="p">))</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">u2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">mean</span> <span class="o">+</span> <span class="n">std</span> <span class="o">*</span> <span class="n">z0</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SecureRandom.bits">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.SecureRandom.bits">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">bits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate cryptographically secure random bits.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_bits: Number of bits to generate</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of random bits (0 or 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num_bytes</span> <span class="o">=</span> <span class="p">(</span><span class="n">num_bits</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span>
+        <span class="n">random_bytes</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="n">num_bytes</span><span class="p">)</span>
+        <span class="n">bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">byte</span> <span class="ow">in</span> <span class="n">random_bytes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_bits</span><span class="p">:</span>
+                    <span class="n">bits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">byte</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="mi">7</span> <span class="o">-</span> <span class="n">i</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">bits</span><span class="p">[:</span><span class="n">num_bits</span><span class="p">]</span></div>
+</div>
+
+
+
+<span class="c1"># Global instance for convenience</span>
+<span class="n">_secure_rng</span> <span class="o">=</span> <span class="n">SecureRandom</span><span class="p">()</span>
+
+
+<span class="c1"># Convenience functions that mirror numpy.random API</span>
+<div class="viewcode-block" id="secure_randint">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.secure_randint">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_randint</span><span class="p">(</span><span class="n">low</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">high</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a cryptographically secure random integer.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        low: Lower bound (inclusive)</span>
+<span class="sd">        high: Upper bound (exclusive)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Random integer in range [low, high)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_secure_rng</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="secure_choice">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.secure_choice">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_choice</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cryptographically secure choice from a sequence.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        items: Sequence to choose from</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Randomly chosen element</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_secure_rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="n">items</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="secure_random">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.secure_random">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_random</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a cryptographically secure random float in [0.0, 1.0).</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Random float</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_secure_rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span></div>
+
+
+
+<div class="viewcode-block" id="secure_normal">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.secure_normal">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_normal</span><span class="p">(</span><span class="n">mean</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">std</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a cryptographically secure normally distributed random number.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        mean: Mean of the distribution</span>
+<span class="sd">        std: Standard deviation</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Random number from normal distribution</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_secure_rng</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean</span><span class="p">,</span> <span class="n">std</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="secure_bits">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.secure_bits">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_bits</span><span class="p">(</span><span class="n">num_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate cryptographically secure random bits.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        num_bits: Number of bits to generate</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        List of random bits (0 or 1)</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">_secure_rng</span><span class="o">.</span><span class="n">bits</span><span class="p">(</span><span class="n">num_bits</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="secure_weighted_choice">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.secure_weighted_choice">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_weighted_choice</span><span class="p">(</span>
+    <span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">probabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cryptographically secure weighted choice.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        items: Sequence to choose from</span>
+<span class="sd">        probabilities: Probabilities for each item</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Randomly chosen element based on probabilities</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">items</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">items</span> <span class="o">=</span> <span class="n">items</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">probabilities</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+        <span class="n">probabilities</span> <span class="o">=</span> <span class="n">probabilities</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+    <span class="c1"># Verify probabilities sum to roughly 1.0</span>
+    <span class="n">total_prob</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">probabilities</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">total_prob</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-6</span><span class="p">:</span>
+        <span class="c1"># Normalize if needed</span>
+        <span class="n">probabilities</span> <span class="o">=</span> <span class="p">[</span><span class="n">p</span> <span class="o">/</span> <span class="n">total_prob</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">probabilities</span><span class="p">]</span>
+
+    <span class="c1"># Cumulative distribution</span>
+    <span class="n">cum_probs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">current_sum</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="n">probabilities</span><span class="p">:</span>
+        <span class="n">current_sum</span> <span class="o">+=</span> <span class="n">p</span>
+        <span class="n">cum_probs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">current_sum</span><span class="p">)</span>
+
+    <span class="c1"># Secure random float</span>
+    <span class="n">r</span> <span class="o">=</span> <span class="n">_secure_rng</span><span class="o">.</span><span class="n">random</span><span class="p">()</span>
+
+    <span class="c1"># Find index</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">cp</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">cum_probs</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">r</span> <span class="o">&lt;</span> <span class="n">cp</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">items</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">return</span> <span class="n">items</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span></div>
+
+
+
+<div class="viewcode-block" id="secure_sample">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.secure_sample">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_sample</span><span class="p">(</span><span class="n">population</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">k</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Cryptographically secure sample without replacement, using secrets.SystemRandom.&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_secrets</span>
+
+    <span class="k">return</span> <span class="n">_secrets</span><span class="o">.</span><span class="n">SystemRandom</span><span class="p">()</span><span class="o">.</span><span class="n">sample</span><span class="p">(</span><span class="n">population</span><span class="p">,</span> <span class="n">k</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="secure_shuffle">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.secure_shuffle">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">secure_shuffle</span><span class="p">(</span><span class="n">items</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;In-place cryptographically secure shuffle using secrets.SystemRandom.&quot;&quot;&quot;</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">_secrets</span>
+
+    <span class="n">_secrets</span><span class="o">.</span><span class="n">SystemRandom</span><span class="p">()</span><span class="o">.</span><span class="n">shuffle</span><span class="p">(</span><span class="n">items</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="reseed_secure_rng">
+<a class="viewcode-back" href="../../../api.html#qkdpy.core.secure_random.reseed_secure_rng">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">reseed_secure_rng</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Reseed the global secure RNG instance.</span>
+
+<span class="sd">    This should be called if you want to ensure fresh entropy,</span>
+<span class="sd">    though it&#39;s generally not necessary as secrets module is self-seeding.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">global</span> <span class="n">_secure_rng</span>
+    <span class="n">_secure_rng</span> <span class="o">=</span> <span class="n">SecureRandom</span><span class="p">()</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

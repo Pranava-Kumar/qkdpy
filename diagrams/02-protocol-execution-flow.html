@@ -1,0 +1,292 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>2. Protocol Execution Flow &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">2. Protocol Execution Flow</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/diagrams/02-protocol-execution-flow.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="protocol-execution-flow">
+<h1>2. Protocol Execution Flow<a class="headerlink" href="#protocol-execution-flow" title="Link to this heading"></a></h1>
+<section id="baseprotocol-execute-template-method-pattern">
+<h2>BaseProtocol.execute() — Template Method Pattern<a class="headerlink" href="#baseprotocol-execute-template-method-pattern" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>sequenceDiagram
+    participant Alice as Alice (Sender)
+    participant Protocol as BaseProtocol.execute()
+    participant Channel as QuantumChannel
+    participant Bob as Bob (Receiver)
+    participant EC as Error Correction
+    participant PA as Privacy Amplification
+
+    Note over Alice, PA: Full QKD Protocol Lifecycle
+
+    Alice-&gt;&gt;Protocol: prepare_states()
+    Note right of Alice: Encodes random bits in random bases&lt;br/&gt;(computational, hadamard, circular)
+
+    Protocol-&gt;&gt;Channel: transmit_batch(qubits)
+    Note over Channel: Applies noise, loss,&lt;br/&gt;eavesdropping effects
+
+    Channel-&gt;&gt;Bob: received_qubits (some may be None)
+
+    Bob-&gt;&gt;Protocol: measure_states(received)
+    Note right of Bob: Measures in random bases&lt;br/&gt;Records results + basis choices
+
+    Protocol-&gt;&gt;Protocol: sift_keys()
+    Note over Protocol: Compare bases publicly&lt;br/&gt;Keep only matching bases
+
+    Protocol-&gt;&gt;Protocol: estimate_qber()
+    Note over Protocol: Compare sample of sifted bits&lt;br/&gt;QBER = errors / total
+
+    alt QBER &gt; Security Threshold
+        Protocol-&gt;&gt;Protocol: Abort — channel insecure
+    else QBER &lt;= Security Threshold
+        Protocol-&gt;&gt;EC: error_correction(alice_key, bob_key)
+        Note over EC: Cascade, Winnow, or LDPC&lt;br/&gt;Alice and Bob reconcile errors
+        EC--&gt;&gt;Protocol: corrected_keys (identical)
+
+        Protocol-&gt;&gt;PA: privacy_amplification(corrected_key, leak)
+        Note over PA: Universal hashing, Toeplitz,&lt;br/&gt;or cryptographic hash
+        PA--&gt;&gt;Protocol: final_key (shortened, secure)
+
+        Protocol-&gt;&gt;Protocol: is_secure = True
+        Protocol--&gt;&gt;User: Result {final_key, qber, stats}
+    end
+</pre></div>
+</div>
+</section>
+<section id="bb84-protocol-prepare-and-measure">
+<h2>BB84 Protocol (Prepare-and-Measure)<a class="headerlink" href="#bb84-protocol-prepare-and-measure" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    START([&quot;BB84 Execution&quot;])
+
+    subgraph Prepare[&quot;Alice: State Preparation&quot;]
+        A1[&quot;Generate random bits: secure_randint(0,2)&quot;]
+        A2[&quot;Choose random bases: secure_choice([&#39;computational&#39;, &#39;hadamard&#39;])&quot;]
+        A3[&quot;Prepare qubit states&lt;br/&gt;bit=0, comp → |0⟩&lt;br/&gt;bit=1, comp → |1⟩&lt;br/&gt;bit=0, hadamard → |+⟩&lt;br/&gt;bit=1, hadamard → |−⟩&quot;]
+        A1 --&gt; A2 --&gt; A3
+    end
+
+    subgraph Channel[&quot;Quantum Channel Transmission&quot;]
+        C1[&quot;Loss: Beer-Lambert exp(-α·d)&quot;]
+        C2[&quot;Noise: Depolarizing / Bit-flip / Phase-flip&quot;]
+        C3[&quot;Eavesdropping: Intercept-resend / Entanglement&quot;]
+        C4[&quot;Physical effects: Polarization drift, Phase fluctuations&quot;]
+        C1 --&gt; C2 --&gt; C3 --&gt; C4
+    end
+
+    subgraph Measure[&quot;Bob: Measurement&quot;]
+        M1[&quot;Choose random bases&quot;]
+        M2[&quot;Measure qubit in chosen basis&quot;]
+        M3[&quot;Record result + basis&quot;]
+        M1 --&gt; M2 --&gt; M3
+    end
+
+    subgraph Sifting[&quot;Sifting (Public Discussion)&quot;]
+        S1[&quot;Alice and Bob announce bases publicly&quot;]
+        S2[&quot;Keep bits where bases match&quot;]
+        S3[&quot;Discard mismatched bases (~50%)&quot;]
+        S1 --&gt; S2 --&gt; S3
+    end
+
+    subgraph QBER[&quot;QBER Estimation&quot;]
+        Q1[&quot;Alice and Bob compare a subset publicly&quot;]
+        Q2[&quot;Count disagreements / total compared&quot;]
+        Q3[&quot;If QBER &gt; 11%: abort (eavesdropper detected)&quot;]
+        Q1 --&gt; Q2 --&gt; Q3
+    end
+
+    subgraph PostProc[&quot;Post-Processing&quot;]
+        P1[&quot;Error Correction (Cascade):&lt;br/&gt;Parity checks on blocks&lt;br/&gt;Binary search for errors&quot;]
+        P2[&quot;Privacy Amplification:&lt;br/&gt;Toeplitz hashing&lt;br/&gt;Universal hashing&quot;]
+        P3[&quot;Secure Final Key ✓&quot;]
+        P1 --&gt; P2 --&gt; P3
+    end
+
+    Prepare --&gt; Channel --&gt; Measure --&gt; Sifting --&gt; QBER --&gt; PostProc
+
+    style Prepare fill:#bbdefb,stroke:#1565c0
+    style Channel fill:#ffe0b2,stroke:#e65100
+    style Measure fill:#c8e6c9,stroke:#2e7d32
+    style Sifting fill:#f8bbd0,stroke:#c2185b
+    style QBER fill:#ffccbc,stroke:#bf360c
+    style PostProc fill:#d1c4e9,stroke:#4527a0
+</pre></div>
+</div>
+</section>
+<section id="e91-protocol-entanglement-based">
+<h2>E91 Protocol (Entanglement-Based)<a class="headerlink" href="#e91-protocol-entanglement-based" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    START([&quot;E91 Execution&quot;])
+
+    subgraph Source[&quot;Entanglement Source&quot;]
+        EP1[&quot;Create N Bell pairs: (|00⟩ + |11⟩)/√2&quot;]
+        EP2[&quot;Split pairs: send half to Alice, half to Bob&quot;]
+        EP1 --&gt; EP2
+    end
+
+    subgraph AliceMeas[&quot;Alice Measurements&quot;]
+        AM1[&quot;Choose random angle: 0, π/4, or π/2&quot;]
+        AM2[&quot;Apply Ry(angle) to her qubit&quot;]
+        AM3[&quot;Measure in computational basis&quot;]
+        AM1 --&gt; AM2 --&gt; AM3
+    end
+
+    subgraph BobMeas[&quot;Bob Measurements&quot;]
+        BM1[&quot;Choose random angle: π/4, π/2, or 3π/4&quot;]
+        BM2[&quot;Apply Ry(angle) to his qubit&quot;]
+        BM3[&quot;Measure in computational basis&quot;]
+        BM1 --&gt; BM2 --&gt; BM3
+    end
+
+    subgraph BellTest[&quot;Bell Inequality Test&quot;]
+        BT1[&quot;Correlate settings and outcomes&quot;]
+        BT2[&quot;CHSH S = E(A1,B1) - E(A1,B3) + E(A3,B1) + E(A3,B3)&quot;]
+        BT3[&quot;If |S| &gt; 2: Bell violation → channel secure&quot;]
+        BT4[&quot;If |S| ≤ 2: Possible eavesdropper → abort&quot;]
+        BT1 --&gt; BT2 --&gt; BT3 --&gt; BT4
+    end
+
+    subgraph KeyGen[&quot;Key Generation&quot;]
+        KG1[&quot;Keep pairs with same angle (π/4 or π/2)&quot;]
+        KG2[&quot;Error correction on matching bits&quot;]
+        KG3[&quot;Privacy amplification&quot;]
+        KG4[&quot;Final secure key&quot;]
+        KG1 --&gt; KG2 --&gt; KG3 --&gt; KG4
+    end
+
+    Source --&gt; AliceMeas
+    Source --&gt; BobMeas
+    AliceMeas --&gt; BellTest
+    BobMeas --&gt; BellTest
+    AliceMeas --&gt; KeyGen
+    BobMeas --&gt; KeyGen
+
+    style Source fill:#e1bee7,stroke:#6a1b9a
+    style AliceMeas fill:#bbdefb,stroke:#1565c0
+    style BobMeas fill:#c8e6c9,stroke:#2e7d32
+    style BellTest fill:#ffccbc,stroke:#bf360c
+    style KeyGen fill:#d1c4e9,stroke:#4527a0
+</pre></div>
+</div>
+</section>
+<section id="cv-qkd-protocol-continuous-variable">
+<h2>CV-QKD Protocol (Continuous Variable)<a class="headerlink" href="#cv-qkd-protocol-continuous-variable" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart LR
+    subgraph Alice_CV[&quot;Alice (CV-QKD)&quot;]
+        A_CV1[&quot;Generate coherent states&lt;br/&gt;Gaussian modulated&quot;]
+        A_CV2[&quot;Send quadrature states&lt;br/&gt;X and P amplitudes&quot;]
+    end
+
+    subgraph Channel_CV[&quot;Fiber/Freespace Channel&quot;]
+        C_CV1[&quot;Phase noise&quot;]
+        C_CV2[&quot;Excess noise ξ&quot;]
+        C_CV3[&quot;Channel transmittance T&quot;]
+    end
+
+    subgraph Bob_CV[&quot;Bob (Homodyne Detection)&quot;]
+        B_CV1[&quot;Randomly choose X or P quadrature&quot;]
+        B_CV2[&quot;Homodyne/heterodyne detection&quot;]
+        B_CV3[&quot;Reverse reconciliation&quot;]
+    end
+
+    A_CV1 --&gt; A_CV2 --&gt; Channel_CV --&gt; B_CV1 --&gt; B_CV2 --&gt; B_CV3
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

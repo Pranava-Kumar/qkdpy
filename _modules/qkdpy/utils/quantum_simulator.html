@@ -1,0 +1,627 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.utils.quantum_simulator &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.utils.quantum_simulator</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.utils.quantum_simulator</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Advanced quantum simulation and analysis tools.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">scipy.stats</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">stats</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumChannel</span><span class="p">,</span> <span class="n">Qubit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProtocol</span>
+
+
+<div class="viewcode-block" id="QuantumSimulator">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSimulator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumSimulator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Advanced quantum system simulator for QKD analysis.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumSimulator.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSimulator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the quantum simulator.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">performance_stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="QuantumSimulator.simulate_channel_performance">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSimulator.simulate_channel_performance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_channel_performance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">,</span>
+        <span class="n">num_trials</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span>
+        <span class="n">initial_state</span><span class="p">:</span> <span class="n">Qubit</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate the performance of a quantum channel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: Quantum channel to simulate</span>
+<span class="sd">            num_trials: Number of simulation trials</span>
+<span class="sd">            initial_state: Initial qubit state (default: |0&gt;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with simulation results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">initial_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">initial_state</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
+
+        <span class="c1"># Reset channel statistics</span>
+        <span class="n">channel</span><span class="o">.</span><span class="n">reset_statistics</span><span class="p">()</span>
+
+        <span class="c1"># Track fidelity and other metrics</span>
+        <span class="n">fidelities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">received_states</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Run simulation trials</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
+            <span class="c1"># Create a copy of the initial state</span>
+            <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">initial_state</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+            <span class="c1"># Transmit through channel</span>
+            <span class="n">received</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">transmit</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">received</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Calculate fidelity</span>
+                <span class="n">fidelity</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">initial_state</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">received</span><span class="o">.</span><span class="n">state</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+                <span class="n">fidelities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fidelity</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">received</span><span class="p">,</span> <span class="n">Qubit</span><span class="p">):</span>
+                    <span class="n">received_states</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">received</span><span class="p">)</span>
+
+        <span class="c1"># Calculate statistics</span>
+        <span class="n">stats_result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;transmission_rate&quot;</span><span class="p">:</span> <span class="n">channel</span><span class="o">.</span><span class="n">get_statistics</span><span class="p">()[</span><span class="s2">&quot;received&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">num_trials</span><span class="p">,</span>
+            <span class="s2">&quot;average_fidelity&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fidelities</span><span class="p">))</span> <span class="k">if</span> <span class="n">fidelities</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="s2">&quot;fidelity_std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">fidelities</span><span class="p">))</span> <span class="k">if</span> <span class="n">fidelities</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="s2">&quot;min_fidelity&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">fidelities</span><span class="p">))</span> <span class="k">if</span> <span class="n">fidelities</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="s2">&quot;max_fidelity&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">fidelities</span><span class="p">))</span> <span class="k">if</span> <span class="n">fidelities</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="s2">&quot;channel_stats&quot;</span><span class="p">:</span> <span class="n">channel</span><span class="o">.</span><span class="n">get_statistics</span><span class="p">(),</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Store in history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;channel_performance&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+                <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;num_trials&quot;</span><span class="p">:</span> <span class="n">num_trials</span><span class="p">,</span>
+                    <span class="s2">&quot;initial_state&quot;</span><span class="p">:</span> <span class="n">initial_state</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="n">stats_result</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">stats_result</span></div>
+
+
+<div class="viewcode-block" id="QuantumSimulator.analyze_protocol_security">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSimulator.analyze_protocol_security">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">analyze_protocol_security</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="p">:</span> <span class="n">BaseProtocol</span><span class="p">,</span>
+        <span class="n">num_simulations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">eavesdropping_probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze the security of a QKD protocol under eavesdropping.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            protocol: QKD protocol to analyze</span>
+<span class="sd">            num_simulations: Number of security analysis simulations</span>
+<span class="sd">            eavesdropping_probability: Probability of eavesdropping</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with security analysis results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Store original channel</span>
+        <span class="n">original_channel</span> <span class="o">=</span> <span class="n">protocol</span><span class="o">.</span><span class="n">channel</span>
+
+        <span class="c1"># Results tracking</span>
+        <span class="n">secure_executions</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">insecure_executions</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">qber_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">key_rates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Run security analysis simulations</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_simulations</span><span class="p">):</span>
+            <span class="c1"># Create a new channel for this simulation</span>
+            <span class="n">channel</span> <span class="o">=</span> <span class="n">QuantumChannel</span><span class="p">(</span>
+                <span class="n">loss</span><span class="o">=</span><span class="n">original_channel</span><span class="o">.</span><span class="n">loss</span><span class="p">,</span>
+                <span class="n">noise_model</span><span class="o">=</span><span class="n">original_channel</span><span class="o">.</span><span class="n">noise_model</span><span class="p">,</span>
+                <span class="n">noise_level</span><span class="o">=</span><span class="n">original_channel</span><span class="o">.</span><span class="n">noise_level</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Set eavesdropper with specified probability</span>
+            <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">eavesdropping_probability</span><span class="p">:</span>
+                <span class="n">channel</span><span class="o">.</span><span class="n">set_eavesdropper</span><span class="p">(</span><span class="n">QuantumChannel</span><span class="o">.</span><span class="n">intercept_resend_attack</span><span class="p">)</span>
+
+            <span class="c1"># Update protocol with new channel</span>
+            <span class="n">protocol</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span>
+
+            <span class="c1"># Execute protocol</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">results</span> <span class="o">=</span> <span class="n">protocol</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+                <span class="c1"># Check if execution was secure</span>
+                <span class="k">if</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;is_secure&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                    <span class="n">secure_executions</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">insecure_executions</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                <span class="c1"># Collect metrics</span>
+                <span class="n">qber_val</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qber&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+                <span class="n">qber_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="nb">float</span><span class="p">(</span><span class="n">qber_val</span><span class="p">)</span>
+                    <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qber_val</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qber_val</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+                    <span class="k">else</span> <span class="mf">1.0</span>
+                <span class="p">)</span>
+
+                <span class="n">final_key</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;final_key&quot;</span><span class="p">,</span> <span class="p">[])</span>
+                <span class="n">raw_key</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;raw_key&quot;</span><span class="p">,</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+                <span class="n">key_rate</span> <span class="o">=</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">final_key</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">final_key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="nb">max</span><span class="p">(</span>
+                    <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw_key</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">raw_key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="mi">1</span>
+                <span class="p">)</span>
+                <span class="n">key_rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">key_rate</span><span class="p">))</span>
+
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># Count failed executions</span>
+                <span class="n">insecure_executions</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">qber_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+                <span class="n">key_rates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="c1"># Restore original channel</span>
+        <span class="n">protocol</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">original_channel</span>
+
+        <span class="c1"># Calculate security metrics</span>
+        <span class="n">security_rate</span> <span class="o">=</span> <span class="n">secure_executions</span> <span class="o">/</span> <span class="n">num_simulations</span>
+        <span class="n">avg_qber</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">qber_values</span><span class="p">))</span>
+        <span class="n">avg_key_rate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">key_rates</span><span class="p">))</span>
+
+        <span class="c1"># Statistical analysis</span>
+        <span class="n">qber_std</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">qber_values</span><span class="p">))</span>
+        <span class="n">key_rate_std</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">key_rates</span><span class="p">))</span>
+
+        <span class="n">security_results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;security_rate&quot;</span><span class="p">:</span> <span class="n">security_rate</span><span class="p">,</span>
+            <span class="s2">&quot;insecure_rate&quot;</span><span class="p">:</span> <span class="n">insecure_executions</span> <span class="o">/</span> <span class="n">num_simulations</span><span class="p">,</span>
+            <span class="s2">&quot;average_qber&quot;</span><span class="p">:</span> <span class="n">avg_qber</span><span class="p">,</span>
+            <span class="s2">&quot;qber_std&quot;</span><span class="p">:</span> <span class="n">qber_std</span><span class="p">,</span>
+            <span class="s2">&quot;average_key_rate&quot;</span><span class="p">:</span> <span class="n">avg_key_rate</span><span class="p">,</span>
+            <span class="s2">&quot;key_rate_std&quot;</span><span class="p">:</span> <span class="n">key_rate_std</span><span class="p">,</span>
+            <span class="s2">&quot;confidence_interval&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_confidence_interval</span><span class="p">(</span><span class="n">qber_values</span><span class="p">),</span>
+            <span class="s2">&quot;secure_executions&quot;</span><span class="p">:</span> <span class="n">secure_executions</span><span class="p">,</span>
+            <span class="s2">&quot;insecure_executions&quot;</span><span class="p">:</span> <span class="n">insecure_executions</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Store in history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;protocol_security&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+                <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;num_simulations&quot;</span><span class="p">:</span> <span class="n">num_simulations</span><span class="p">,</span>
+                    <span class="s2">&quot;eavesdropping_probability&quot;</span><span class="p">:</span> <span class="n">eavesdropping_probability</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="n">security_results</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">security_results</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_confidence_interval</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="n">confidence</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.95</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate confidence interval for a dataset.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            data: List of data points</span>
+<span class="sd">            confidence: Confidence level (default: 0.95)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (lower_bound, upper_bound)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="n">mean</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+        <span class="n">std_err</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">stats</span><span class="o">.</span><span class="n">sem</span><span class="p">(</span><span class="n">data</span><span class="p">))</span>
+        <span class="n">ci</span> <span class="o">=</span> <span class="n">stats</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">interval</span><span class="p">(</span><span class="n">confidence</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">loc</span><span class="o">=</span><span class="n">mean</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="n">std_err</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">ci</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">float</span><span class="p">(</span><span class="n">ci</span><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+
+<div class="viewcode-block" id="QuantumSimulator.benchmark_protocols">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSimulator.benchmark_protocols">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">benchmark_protocols</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">protocols</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">BaseProtocol</span><span class="p">],</span> <span class="n">num_trials</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Benchmark multiple QKD protocols.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            protocols: List of QKD protocols to benchmark</span>
+<span class="sd">            num_trials: Number of trials for each protocol</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with benchmark results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">benchmark_results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">protocol</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">protocols</span><span class="p">):</span>
+            <span class="c1"># Track execution times</span>
+            <span class="n">execution_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">key_lengths</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">qber_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># Run benchmark trials</span>
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
+                <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">results</span> <span class="o">=</span> <span class="n">protocol</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+                    <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+                    <span class="n">execution_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+                    <span class="n">final_key</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;final_key&quot;</span><span class="p">,</span> <span class="p">[])</span>
+                    <span class="n">key_lengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="nb">len</span><span class="p">(</span><span class="n">final_key</span><span class="p">)</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">final_key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span> <span class="k">else</span> <span class="mi">0</span>
+                    <span class="p">)</span>
+                    <span class="n">qber_val</span> <span class="o">=</span> <span class="n">results</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qber&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">)</span>
+                    <span class="n">qber_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                        <span class="nb">float</span><span class="p">(</span><span class="n">qber_val</span><span class="p">)</span>
+                        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qber_val</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span>
+                        <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qber_val</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+                        <span class="k">else</span> <span class="mf">1.0</span>
+                    <span class="p">)</span>
+
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="c1"># Failed execution</span>
+                    <span class="n">execution_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+                    <span class="n">key_lengths</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+                    <span class="n">qber_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">1.0</span><span class="p">)</span>
+
+            <span class="c1"># Calculate statistics</span>
+            <span class="n">benchmark_results</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;protocol_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;name&quot;</span><span class="p">:</span> <span class="n">protocol</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="s2">&quot;avg_execution_time&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">execution_times</span><span class="p">)),</span>
+                <span class="s2">&quot;execution_time_std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">execution_times</span><span class="p">)),</span>
+                <span class="s2">&quot;avg_key_length&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">key_lengths</span><span class="p">)),</span>
+                <span class="s2">&quot;key_length_std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">key_lengths</span><span class="p">)),</span>
+                <span class="s2">&quot;avg_qber&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)),</span>
+                <span class="s2">&quot;qber_std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)),</span>
+                <span class="s2">&quot;success_rate&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">kl</span> <span class="ow">in</span> <span class="n">key_lengths</span> <span class="k">if</span> <span class="n">kl</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_trials</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="c1"># Store in history</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;protocol_benchmark&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+                <span class="s2">&quot;parameters&quot;</span><span class="p">:</span> <span class="p">{</span>
+                    <span class="s2">&quot;num_protocols&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">protocols</span><span class="p">),</span>
+                    <span class="s2">&quot;num_trials&quot;</span><span class="p">:</span> <span class="n">num_trials</span><span class="p">,</span>
+                <span class="p">},</span>
+                <span class="s2">&quot;results&quot;</span><span class="p">:</span> <span class="n">benchmark_results</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">benchmark_results</span></div>
+
+
+<div class="viewcode-block" id="QuantumSimulator.get_simulation_history">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSimulator.get_simulation_history">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_simulation_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the history of all simulations.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of simulation records</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="QuantumSimulator.clear_simulation_history">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSimulator.clear_simulation_history">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">clear_simulation_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Clear the simulation history.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="QuantumSimulator.get_performance_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSimulator.get_performance_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_performance_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get overall performance statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with performance statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="n">total_simulations</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="p">)</span>
+        <span class="n">simulation_types</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Count simulations by type</span>
+        <span class="k">for</span> <span class="n">sim</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="p">:</span>
+            <span class="n">sim_type</span> <span class="o">=</span> <span class="n">sim</span><span class="p">[</span><span class="s2">&quot;type&quot;</span><span class="p">]</span>
+            <span class="n">simulation_types</span><span class="p">[</span><span class="n">sim_type</span><span class="p">]</span> <span class="o">=</span> <span class="n">simulation_types</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">sim_type</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;total_simulations&quot;</span><span class="p">:</span> <span class="n">total_simulations</span><span class="p">,</span>
+            <span class="s2">&quot;simulation_types&quot;</span><span class="p">:</span> <span class="n">simulation_types</span><span class="p">,</span>
+            <span class="s2">&quot;first_simulation&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;timestamp&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;last_simulation&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulation_history</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="s2">&quot;timestamp&quot;</span><span class="p">],</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="QuantumNetworkAnalyzer">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumNetworkAnalyzer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumNetworkAnalyzer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyzer for quantum networks and multi-party QKD.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumNetworkAnalyzer.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumNetworkAnalyzer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the quantum network analyzer.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_performance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span></div>
+
+
+<div class="viewcode-block" id="QuantumNetworkAnalyzer.analyze_network_topology">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumNetworkAnalyzer.analyze_network_topology">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">analyze_network_topology</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">connections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze a quantum network topology.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nodes: List of node identifiers</span>
+<span class="sd">            connections: List of (node1, node2, distance) tuples</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with network analysis results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Store network information</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;nodes&quot;</span><span class="p">:</span> <span class="n">nodes</span><span class="p">,</span> <span class="s2">&quot;connections&quot;</span><span class="p">:</span> <span class="n">connections</span><span class="p">}</span>
+
+        <span class="c1"># Calculate network metrics</span>
+        <span class="n">num_nodes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+        <span class="n">num_connections</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">connections</span><span class="p">)</span>
+
+        <span class="c1"># Calculate average distance</span>
+        <span class="n">avg_distance</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">([</span><span class="n">conn</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">]))</span> <span class="k">if</span> <span class="n">connections</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Find maximum distance</span>
+        <span class="n">max_distance</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">([</span><span class="n">conn</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span> <span class="k">for</span> <span class="n">conn</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">]))</span> <span class="k">if</span> <span class="n">connections</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate network density</span>
+        <span class="n">max_possible_connections</span> <span class="o">=</span> <span class="n">num_nodes</span> <span class="o">*</span> <span class="p">(</span><span class="n">num_nodes</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">network_density</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">num_connections</span> <span class="o">/</span> <span class="n">max_possible_connections</span>
+            <span class="k">if</span> <span class="n">max_possible_connections</span> <span class="o">&gt;</span> <span class="mi">0</span>
+            <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+        <span class="n">results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;num_nodes&quot;</span><span class="p">:</span> <span class="n">num_nodes</span><span class="p">,</span>
+            <span class="s2">&quot;num_connections&quot;</span><span class="p">:</span> <span class="n">num_connections</span><span class="p">,</span>
+            <span class="s2">&quot;average_distance&quot;</span><span class="p">:</span> <span class="n">avg_distance</span><span class="p">,</span>
+            <span class="s2">&quot;max_distance&quot;</span><span class="p">:</span> <span class="n">max_distance</span><span class="p">,</span>
+            <span class="s2">&quot;network_density&quot;</span><span class="p">:</span> <span class="n">network_density</span><span class="p">,</span>
+            <span class="s2">&quot;is_connected&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_network_connectivity</span><span class="p">(</span><span class="n">nodes</span><span class="p">,</span> <span class="n">connections</span><span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_network_connectivity</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">nodes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="n">connections</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the network is connected.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            nodes: List of node identifiers</span>
+<span class="sd">            connections: List of connections</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if network is connected, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">nodes</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">connections</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="mi">1</span>
+
+        <span class="c1"># Build adjacency list</span>
+        <span class="n">adj_list</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{</span><span class="n">node</span><span class="p">:</span> <span class="p">[]</span> <span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes</span><span class="p">}</span>
+        <span class="k">for</span> <span class="n">node1</span><span class="p">,</span> <span class="n">node2</span><span class="p">,</span> <span class="n">_</span> <span class="ow">in</span> <span class="n">connections</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">node1</span> <span class="ow">in</span> <span class="n">adj_list</span> <span class="ow">and</span> <span class="n">node2</span> <span class="ow">in</span> <span class="n">adj_list</span><span class="p">:</span>
+                <span class="n">adj_list</span><span class="p">[</span><span class="n">node1</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node2</span><span class="p">)</span>
+                <span class="n">adj_list</span><span class="p">[</span><span class="n">node2</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">node1</span><span class="p">)</span>
+
+        <span class="c1"># Check connectivity using BFS</span>
+        <span class="n">visited</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="n">queue</span> <span class="o">=</span> <span class="p">[</span><span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+        <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="k">while</span> <span class="n">queue</span><span class="p">:</span>
+            <span class="n">current</span> <span class="o">=</span> <span class="n">queue</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">neighbor</span> <span class="ow">in</span> <span class="n">adj_list</span><span class="p">[</span><span class="n">current</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="n">neighbor</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">visited</span><span class="p">:</span>
+                    <span class="n">visited</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
+                    <span class="n">queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">neighbor</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">visited</span><span class="p">)</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">nodes</span><span class="p">)</span>
+
+<div class="viewcode-block" id="QuantumNetworkAnalyzer.simulate_network_performance">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumNetworkAnalyzer.simulate_network_performance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_network_performance</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">node_performance</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate network performance based on node performance.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            node_performance: Dictionary mapping nodes to performance metrics</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with network performance results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">node_performance</span> <span class="o">=</span> <span class="n">node_performance</span>
+
+        <span class="c1"># Calculate network-wide metrics</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">node_performance</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{}</span>
+
+        <span class="c1"># Extract key metrics</span>
+        <span class="n">key_rates</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">perf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;key_rate&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">for</span> <span class="n">perf</span> <span class="ow">in</span> <span class="n">node_performance</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">qber_values</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">perf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;qber&quot;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">))</span> <span class="k">for</span> <span class="n">perf</span> <span class="ow">in</span> <span class="n">node_performance</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">]</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="nb">float</span><span class="p">(</span><span class="n">perf</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;distance&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span> <span class="k">for</span> <span class="n">perf</span> <span class="ow">in</span> <span class="n">node_performance</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+        <span class="p">]</span>
+
+        <span class="n">results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;network_avg_key_rate&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">key_rates</span><span class="p">)),</span>
+            <span class="s2">&quot;network_key_rate_std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">key_rates</span><span class="p">)),</span>
+            <span class="s2">&quot;network_avg_qber&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)),</span>
+            <span class="s2">&quot;network_qber_std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)),</span>
+            <span class="s2">&quot;network_avg_distance&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">distances</span><span class="p">)),</span>
+            <span class="s2">&quot;best_performing_node&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span>
+                <span class="n">node_performance</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+                <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">node_performance</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;key_rate&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;worst_performing_node&quot;</span><span class="p">:</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="n">node_performance</span><span class="o">.</span><span class="n">keys</span><span class="p">(),</span>
+                <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">node_performance</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;key_rate&quot;</span><span class="p">,</span> <span class="mi">0</span><span class="p">)),</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="QuantumNetworkAnalyzer.get_network_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumNetworkAnalyzer.get_network_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_network_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get overall network statistics.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with network statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;topology&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">,</span>
+            <span class="s2">&quot;node_performance&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">node_performance</span><span class="p">,</span>
+            <span class="s2">&quot;num_topology_records&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">network_topology</span><span class="p">),</span>
+            <span class="s2">&quot;num_performance_records&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">node_performance</span><span class="p">),</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

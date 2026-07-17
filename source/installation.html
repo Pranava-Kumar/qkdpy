@@ -1,0 +1,178 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Installation &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Installation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/source/installation.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="installation">
+<h1>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h1>
+<p>QKDpy requires Python 3.11 or later.</p>
+<section id="install-from-pypi">
+<h2>Install from PyPI<a class="headerlink" href="#install-from-pypi" title="Link to this heading"></a></h2>
+<p>The easiest way to install QKDpy is via pip:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>qkdpy
+</pre></div>
+</div>
+</section>
+<section id="install-from-source">
+<h2>Install from source<a class="headerlink" href="#install-from-source" title="Link to this heading"></a></h2>
+<p>To install the latest development version directly from the repository:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Pranava-Kumar/qkdpy.git
+<span class="nb">cd</span><span class="w"> </span>qkdpy
+pip<span class="w"> </span>install<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="install-with-extras">
+<h2>Install with extras<a class="headerlink" href="#install-with-extras" title="Link to this heading"></a></h2>
+<p>QKDpy provides several optional dependency groups for extended functionality:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Development tools (testing, linting, documentation)</span>
+pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>dev<span class="o">]</span>
+
+<span class="c1"># Machine learning components (scikit-learn, pandas)</span>
+pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>ml<span class="o">]</span>
+
+<span class="c1"># Documentation dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>docs<span class="o">]</span>
+
+<span class="c1"># Visualization extras (seaborn)</span>
+pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>viz<span class="o">]</span>
+
+<span class="c1"># Enterprise features (cryptography, PKCS#11, compliance)</span>
+pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>enterprise<span class="o">]</span>
+
+<span class="c1"># Cirq quantum computing framework integration</span>
+pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>cirq<span class="o">]</span>
+
+<span class="c1"># PennyLane quantum computing framework integration</span>
+pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>pennylane<span class="o">]</span>
+
+<span class="c1"># All extras</span>
+pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>all<span class="o">]</span>
+</pre></div>
+</div>
+</section>
+<section id="product-tiers">
+<h2>Product Tiers<a class="headerlink" href="#product-tiers" title="Link to this heading"></a></h2>
+<p>QKDpy uses a cumulative three-tier licensing model:</p>
+<ul class="simple">
+<li><p><strong>FREE</strong> (default) — All protocols, satellite simulation, ML, visualization</p></li>
+<li><p><strong>ENTERPRISE</strong> — Adds compliance reporting, HSM, audit logging, attack detection, key escrow</p></li>
+<li><p><strong>PREMIUM</strong> — Adds quantum-safe migration toolkit, crypto inventory, priority support</p></li>
+</ul>
+<p>Set the active tier via environment variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">QKDPY_PRODUCT_TIER</span><span class="o">=</span>enterprise
+</pre></div>
+</div>
+<p>Or programmatically:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">set_config</span>
+<span class="n">set_config</span><span class="p">(</span><span class="n">product_tier</span><span class="o">=</span><span class="s2">&quot;enterprise&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="verify-installation">
+<h2>Verify installation<a class="headerlink" href="#verify-installation" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">qkdpy</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">qkdpy</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

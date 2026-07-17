@@ -1,0 +1,179 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADR-004: Enterprise HSM is a Software Simulation &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ADR-004: Enterprise HSM is a Software Simulation</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/decisions/ADR-004-enterprise-hsm-is-software-simulation.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="adr-004-enterprise-hsm-is-a-software-simulation">
+<h1>ADR-004: Enterprise HSM is a Software Simulation<a class="headerlink" href="#adr-004-enterprise-hsm-is-a-software-simulation" title="Link to this heading"></a></h1>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Link to this heading"></a></h2>
+<p>Accepted</p>
+</section>
+<section id="date">
+<h2>Date<a class="headerlink" href="#date" title="Link to this heading"></a></h2>
+<p>2026-07-16</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">enterprise</span></code> layer advertises an “HSM” abstraction (<code class="docutils literal notranslate"><span class="pre">hsm_interface.py</span></code>)
+with a <code class="docutils literal notranslate"><span class="pre">HSMProvider</span></code> enum listing <code class="docutils literal notranslate"><span class="pre">SOFTWARE</span></code>, <code class="docutils literal notranslate"><span class="pre">PKCS11</span></code>, <code class="docutils literal notranslate"><span class="pre">AWS_CLOUDHSM</span></code>,
+<code class="docutils literal notranslate"><span class="pre">AZURE_HSM</span></code>, and <code class="docutils literal notranslate"><span class="pre">GOOGLE_CLOUD_HSM</span></code>. Surrounding machinery
+(<code class="docutils literal notranslate"><span class="pre">licensing.py</span></code> tier gating, <code class="docutils literal notranslate"><span class="pre">compliance.py</span></code> checks) presented this as
+enterprise-grade. A security audit found the reality diverges from the
+presentation in three ways:</p>
+<ol class="arabic simple">
+<li><p><strong>Key derivation was not a KDF.</strong> AES-256-GCM keys were derived from
+arbitrary-length key material via raw <code class="docutils literal notranslate"><span class="pre">hashlib.sha256(key_material</span> <span class="pre">+</span> <span class="pre">b&quot;qkdpy.hsm.aesgcm&quot;)</span></code>
+— a hardcoded, non-secret suffix, no salt, no iteration count. An attacker
+holding the (plaintext, in-memory) key material could recompute the AES key
+trivially; the suffix added zero secrecy.</p></li>
+<li><p><strong>Keys were stored in plaintext in process memory.</strong> <code class="docutils literal notranslate"><span class="pre">SoftwareHSM</span></code> held raw key
+bytes in a plain dict, readable by any in-process code, debugger, or memory dump.</p></li>
+<li><p><strong>“Compliance” was config-self-reporting.</strong> <code class="docutils literal notranslate"><span class="pre">compliance.py</span></code> derived
+“FIPS/HSM compliant” from a boolean config flag (<code class="docutils literal notranslate"><span class="pre">enable_hsm</span></code>) even when only
+the software simulator was active. Cloud/PKCS#11 providers were unimplemented stubs.</p></li>
+</ol>
+<p>The module already self-labels “NOT FOR PRODUCTION USE”, but the naming and the
+compliance/licensing machinery risked misleading users into believing keys were
+hardware-protected. We needed to make the simulation honest and stop over-claiming.</p>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Link to this heading"></a></h2>
+<ol class="arabic simple">
+<li><p><strong>Replace raw-SHA derivation with a real KDF.</strong> <code class="docutils literal notranslate"><span class="pre">_derive_aes_key(key_material,</span> <span class="pre">salt)</span></code>
+now uses <code class="docutils literal notranslate"><span class="pre">PBKDF2HMAC</span></code> (SHA-256, 100,000 iterations) with a random 16-byte
+per-key salt generated via <code class="docutils literal notranslate"><span class="pre">secrets.token_bytes</span></code> and stored alongside the key handle.
+The AES-GCM encryption path is unchanged; only the key origin is hardened.</p></li>
+<li><p><strong>Stop storing/treating keys as hardware-backed.</strong> <code class="docutils literal notranslate"><span class="pre">SoftwareHSM</span></code> stores keys
+wrapped + salt, never plaintext; <code class="docutils literal notranslate"><span class="pre">close()</span></code> behavior unchanged. The cloud/PKCS#11
+provider stubs are explicitly <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code> with docstrings clarifying they are
+not implemented in this build.</p></li>
+<li><p><strong>Make compliance truthful.</strong> <code class="docutils literal notranslate"><span class="pre">compliance.py</span></code> no longer infers hardware
+conformance from a flag. <code class="docutils literal notranslate"><span class="pre">enable_hsm</span></code> records only a <em>request</em>; the report states
+when only the software simulation is active that the deployment is NOT
+hardware-backed. <code class="docutils literal notranslate"><span class="pre">overall_compliant</span></code> is computed from actual <code class="docutils literal notranslate"><span class="pre">critical_failures</span></code>,
+not a boolean.</p></li>
+<li><p><strong>Document licensing as a demo gate.</strong> <code class="docutils literal notranslate"><span class="pre">licensing.set_active_tier</span></code> is
+annotated to state plainly that no license key is cryptographically verified in this
+build — the tier is an in-memory variable the caller controls.</p></li>
+<li><p><strong>Add keyed-HMAC tamper resistance to the audit chain.</strong> <code class="docutils literal notranslate"><span class="pre">audit.py</span></code>’s
+<code class="docutils literal notranslate"><span class="pre">compute_hash</span></code> now produces an HMAC-SHA256 over the event, keyed by an
+in-process 32-byte secret (<code class="docutils literal notranslate"><span class="pre">secrets.token_bytes</span></code>). This turns the chain from
+corruption-evident into tamper-resistant (a log writer cannot forge chain links
+without the secret).</p></li>
+</ol>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>The <code class="docutils literal notranslate"><span class="pre">SoftwareHSM</span></code> remains a non-production software simulation; this ADR does NOT
+make it production-safe. It is hardened and honestly labeled.</p></li>
+<li><p>Derived AES keys are now salted and iteration-stretched; identical key material with
+different salts yields different AES keys.</p></li>
+<li><p>Audit logs resist malicious tampering by an attacker without the in-process secret
+(memory-only default; no persistence unless <code class="docutils literal notranslate"><span class="pre">storage_path</span></code> is supplied).</p></li>
+<li><p>Compliance reports will no longer claim hardware-backed FIPS/HSM status when only the
+software simulator is in use.</p></li>
+<li><p>Cloud/PKCS#11 HSM backends remain out of scope and will <code class="docutils literal notranslate"><span class="pre">NotImplementedError</span></code>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

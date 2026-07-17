@@ -1,0 +1,495 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.key_management.quantum_error_correction &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.key_management.quantum_error_correction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.key_management.quantum_error_correction</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Quantum error correction codes for protecting quantum information.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qubit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">PauliX</span><span class="p">,</span> <span class="n">PauliZ</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">secure_choice</span><span class="p">,</span>
+    <span class="n">secure_randint</span><span class="p">,</span>
+    <span class="n">secure_random</span><span class="p">,</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumErrorCorrection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implementation of quantum error correction codes.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumErrorCorrection.shor_code_encode">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.shor_code_encode">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shor_code_encode</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode a single qubit using the 9-qubit Shor code.</span>
+
+<span class="sd">        The Shor code can correct arbitrary single-qubit errors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to encode</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of 9 qubits representing the encoded state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The Shor code encodes 1 qubit into 9 qubits</span>
+        <span class="c1"># It can correct any single-qubit error (X, Y, Z, or combinations)</span>
+
+        <span class="c1"># First, we create 9 qubits in the |0&gt; state</span>
+        <span class="n">encoded_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">9</span><span class="p">)]</span>
+
+        <span class="c1"># For simulation purposes, we&#39;ll encode the logical state</span>
+        <span class="c1"># In a real implementation, this would involve complex quantum operations</span>
+        <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># The Shor code creates the state:</span>
+        <span class="c1"># |ψ⟩_L = α|0⟩_L + β|1⟩_L</span>
+        <span class="c1"># where |0⟩_L = (|000⟩ + |111⟩)(|000⟩ + |111⟩)(|000⟩ + |111⟩)/√8</span>
+        <span class="c1"># and |1⟩_L = (|000⟩ - |111⟩)(|000⟩ - |111⟩)(|000⟩ - |111⟩)/√8</span>
+
+        <span class="c1"># For simulation, we&#39;ll just store the original state information</span>
+        <span class="c1"># and add some redundancy</span>
+        <span class="n">encoded_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>  <span class="c1"># Original qubit</span>
+        <span class="c1"># Add redundancy (in a real implementation, these would be entangled)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">9</span><span class="p">):</span>
+            <span class="n">encoded_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">encoded_qubits</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.shor_code_decode">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.shor_code_decode">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">shor_code_decode</span><span class="p">(</span><span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Qubit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode a qubit from the 9-qubit Shor code.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubits: List of 9 qubits encoded with Shor code</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Decoded qubit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">9</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Shor code requires exactly 9 qubits&quot;</span><span class="p">)</span>
+
+        <span class="c1"># In a real implementation, this would involve syndrome measurement</span>
+        <span class="c1"># and error correction operations</span>
+
+        <span class="c1"># For simulation, we&#39;ll just return the first qubit</span>
+        <span class="c1"># (in a real implementation, this would be more complex)</span>
+        <span class="k">return</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.steane_code_encode">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.steane_code_encode">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">steane_code_encode</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode a single qubit using the 7-qubit Steane code.</span>
+
+<span class="sd">        The Steane code is a [[7,1,3]] quantum error correction code</span>
+<span class="sd">        that can correct arbitrary single-qubit errors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to encode</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of 7 qubits representing the encoded state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The Steane code encodes 1 qubit into 7 qubits</span>
+        <span class="c1"># It&#39;s based on the classical Hamming code</span>
+
+        <span class="c1"># Create 7 qubits</span>
+        <span class="n">encoded_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">7</span><span class="p">)]</span>
+
+        <span class="c1"># Extract the state amplitudes</span>
+        <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># For simulation, we&#39;ll store the original state information</span>
+        <span class="c1"># and add redundancy</span>
+        <span class="n">encoded_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>  <span class="c1"># Original qubit</span>
+        <span class="c1"># Add redundancy</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">7</span><span class="p">):</span>
+            <span class="n">encoded_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">encoded_qubits</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.steane_code_decode">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.steane_code_decode">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">steane_code_decode</span><span class="p">(</span><span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Qubit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode a qubit from the 7-qubit Steane code.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubits: List of 7 qubits encoded with Steane code</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Decoded qubit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">7</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Steane code requires exactly 7 qubits&quot;</span><span class="p">)</span>
+
+        <span class="c1"># For simulation, return the first qubit</span>
+        <span class="k">return</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.five_qubit_code_encode">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.five_qubit_code_encode">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">five_qubit_code_encode</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encode a single qubit using the 5-qubit perfect code.</span>
+
+<span class="sd">        The 5-qubit code is the smallest possible quantum error correction code</span>
+<span class="sd">        that can correct arbitrary single-qubit errors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to encode</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of 5 qubits representing the encoded state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># The 5-qubit code encodes 1 qubit into 5 qubits</span>
+
+        <span class="c1"># Create 5 qubits</span>
+        <span class="n">encoded_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">5</span><span class="p">)]</span>
+
+        <span class="c1"># Extract the state amplitudes</span>
+        <span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+
+        <span class="c1"># For simulation, store the original state information</span>
+        <span class="n">encoded_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>  <span class="c1"># Original qubit</span>
+        <span class="c1"># Add redundancy</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">5</span><span class="p">):</span>
+            <span class="n">encoded_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">encoded_qubits</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.five_qubit_code_decode">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.five_qubit_code_decode">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">five_qubit_code_decode</span><span class="p">(</span><span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Qubit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decode a qubit from the 5-qubit perfect code.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubits: List of 5 qubits encoded with 5-qubit code</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Decoded qubit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;5-qubit code requires exactly 5 qubits&quot;</span><span class="p">)</span>
+
+        <span class="c1"># For simulation, return the first qubit</span>
+        <span class="k">return</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.detect_and_correct_error">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.detect_and_correct_error">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_and_correct_error</span><span class="p">(</span>
+        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">],</span> <span class="n">error_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;X&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect and correct a single-qubit error using syndrome measurement.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubits: List of qubits that may contain an error</span>
+<span class="sd">            error_type: Type of error to simulate (&quot;X&quot;, &quot;Z&quot;, or &quot;Y&quot;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Corrected qubits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># This is a simplified simulation of error detection and correction</span>
+        <span class="c1"># In a real implementation, this would involve:</span>
+        <span class="c1"># 1. Syndrome measurement using ancilla qubits</span>
+        <span class="c1"># 2. Classical processing of syndrome results</span>
+        <span class="c1"># 3. Application of corrective operations</span>
+
+        <span class="n">corrected_qubits</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span>
+
+        <span class="c1"># For simulation, we&#39;ll randomly &quot;detect&quot; and &quot;correct&quot; an error</span>
+        <span class="k">if</span> <span class="p">(</span>
+            <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.3</span>
+        <span class="p">):</span>  <span class="c1"># 30% chance of detecting an error</span>
+            <span class="n">error_position</span> <span class="o">=</span> <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span>
+
+            <span class="c1"># Apply the inverse error to correct it</span>
+            <span class="k">if</span> <span class="n">error_type</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+                <span class="c1"># Apply Pauli-X to correct bit-flip error</span>
+                <span class="n">gate</span> <span class="o">=</span> <span class="n">PauliX</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span>
+                <span class="n">corrected_qubits</span><span class="p">[</span><span class="n">error_position</span><span class="p">]</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">error_type</span> <span class="o">==</span> <span class="s2">&quot;Z&quot;</span><span class="p">:</span>
+                <span class="c1"># Apply Pauli-Z to correct phase-flip error</span>
+                <span class="n">gate</span> <span class="o">=</span> <span class="n">PauliZ</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span>
+                <span class="n">corrected_qubits</span><span class="p">[</span><span class="n">error_position</span><span class="p">]</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">error_type</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
+                <span class="c1"># Apply Pauli-Y to correct Y error</span>
+                <span class="c1"># Y = iXZ, so we need to apply Y† = -iZX</span>
+                <span class="n">gate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+                <span class="n">corrected_qubits</span><span class="p">[</span><span class="n">error_position</span><span class="p">]</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">corrected_qubits</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.quantum_error_correction_simulation">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.quantum_error_correction_simulation">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quantum_error_correction_simulation</span><span class="p">(</span>
+        <span class="n">initial_qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">,</span> <span class="n">code_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;shor&quot;</span><span class="p">,</span> <span class="n">error_probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">Qubit</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate the complete quantum error correction process.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            initial_qubit: The initial qubit to protect</span>
+<span class="sd">            code_type: Type of error correction code (&quot;shor&quot;, &quot;steane&quot;, &quot;five_qubit&quot;)</span>
+<span class="sd">            error_probability: Probability of error occurring on each qubit</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (decoded_qubit, success) where success indicates if the</span>
+<span class="sd">            decoded qubit matches the initial qubit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># 1. Encode the qubit</span>
+        <span class="k">if</span> <span class="n">code_type</span> <span class="o">==</span> <span class="s2">&quot;shor&quot;</span><span class="p">:</span>
+            <span class="n">encoded_qubits</span> <span class="o">=</span> <span class="n">QuantumErrorCorrection</span><span class="o">.</span><span class="n">shor_code_encode</span><span class="p">(</span><span class="n">initial_qubit</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">code_type</span> <span class="o">==</span> <span class="s2">&quot;steane&quot;</span><span class="p">:</span>
+            <span class="n">encoded_qubits</span> <span class="o">=</span> <span class="n">QuantumErrorCorrection</span><span class="o">.</span><span class="n">steane_code_encode</span><span class="p">(</span><span class="n">initial_qubit</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">code_type</span> <span class="o">==</span> <span class="s2">&quot;five_qubit&quot;</span><span class="p">:</span>
+            <span class="n">encoded_qubits</span> <span class="o">=</span> <span class="n">QuantumErrorCorrection</span><span class="o">.</span><span class="n">five_qubit_code_encode</span><span class="p">(</span>
+                <span class="n">initial_qubit</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown code type: </span><span class="si">{</span><span class="n">code_type</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="c1"># 2. Simulate errors</span>
+        <span class="n">errored_qubits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">encoded_qubits</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">error_probability</span><span class="p">:</span>
+                <span class="c1"># Apply a random error</span>
+                <span class="n">error_type</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">error_type</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+                    <span class="n">qubit</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">PauliX</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">error_type</span> <span class="o">==</span> <span class="s2">&quot;Z&quot;</span><span class="p">:</span>
+                    <span class="n">qubit</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">PauliZ</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">error_type</span> <span class="o">==</span> <span class="s2">&quot;Y&quot;</span><span class="p">:</span>
+                    <span class="n">gate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+                    <span class="n">qubit</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">gate</span><span class="p">)</span>
+            <span class="n">errored_qubits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
+
+        <span class="c1"># 3. Detect and correct errors</span>
+        <span class="n">corrected_qubits</span> <span class="o">=</span> <span class="n">QuantumErrorCorrection</span><span class="o">.</span><span class="n">detect_and_correct_error</span><span class="p">(</span>
+            <span class="n">errored_qubits</span><span class="p">,</span> <span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;X&quot;</span><span class="p">,</span> <span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;Y&quot;</span><span class="p">])</span>
+        <span class="p">)</span>
+
+        <span class="c1"># 4. Decode the qubit</span>
+        <span class="k">if</span> <span class="n">code_type</span> <span class="o">==</span> <span class="s2">&quot;shor&quot;</span><span class="p">:</span>
+            <span class="n">decoded_qubit</span> <span class="o">=</span> <span class="n">QuantumErrorCorrection</span><span class="o">.</span><span class="n">shor_code_decode</span><span class="p">(</span><span class="n">corrected_qubits</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">code_type</span> <span class="o">==</span> <span class="s2">&quot;steane&quot;</span><span class="p">:</span>
+            <span class="n">decoded_qubit</span> <span class="o">=</span> <span class="n">QuantumErrorCorrection</span><span class="o">.</span><span class="n">steane_code_decode</span><span class="p">(</span><span class="n">corrected_qubits</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">code_type</span> <span class="o">==</span> <span class="s2">&quot;five_qubit&quot;</span><span class="p">:</span>
+            <span class="n">decoded_qubit</span> <span class="o">=</span> <span class="n">QuantumErrorCorrection</span><span class="o">.</span><span class="n">five_qubit_code_decode</span><span class="p">(</span>
+                <span class="n">corrected_qubits</span>
+            <span class="p">)</span>
+
+        <span class="c1"># 5. Check if correction was successful</span>
+        <span class="c1"># Compare the final state with the initial state</span>
+        <span class="n">fidelity</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">initial_qubit</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">conj</span><span class="p">(),</span> <span class="n">decoded_qubit</span><span class="o">.</span><span class="n">state</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">success</span> <span class="o">=</span> <span class="nb">bool</span><span class="p">(</span><span class="n">fidelity</span> <span class="o">&gt;</span> <span class="mf">0.95</span><span class="p">)</span>  <span class="c1"># Consider successful if fidelity &gt; 95%</span>
+
+        <span class="k">return</span> <span class="n">decoded_qubit</span><span class="p">,</span> <span class="n">success</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.get_code_parameters">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.get_code_parameters">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_code_parameters</span><span class="p">(</span><span class="n">code_type</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get parameters for different quantum error correction codes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            code_type: Type of error correction code</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with code parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">parameters</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;shor&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">9</span><span class="p">,</span>  <span class="c1"># Number of physical qubits</span>
+                <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>  <span class="c1"># Number of logical qubits</span>
+                <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>  <span class="c1"># Distance (can correct up to (d-1)/2 errors)</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;9-qubit Shor code&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;steane&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">7</span><span class="p">,</span> <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;7-qubit Steane code&quot;</span><span class="p">},</span>
+            <span class="s2">&quot;five_qubit&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;n&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+                <span class="s2">&quot;k&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+                <span class="s2">&quot;d&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+                <span class="s2">&quot;description&quot;</span><span class="p">:</span> <span class="s2">&quot;5-qubit perfect code&quot;</span><span class="p">,</span>
+            <span class="p">},</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">parameters</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">code_type</span><span class="p">,</span> <span class="p">{})</span></div>
+
+
+<div class="viewcode-block" id="QuantumErrorCorrection.simulate_error_correction_performance">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumErrorCorrection.simulate_error_correction_performance">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_error_correction_performance</span><span class="p">(</span>
+        <span class="n">num_trials</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">code_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;shor&quot;</span><span class="p">,</span> <span class="n">error_probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate the performance of quantum error correction.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_trials: Number of trials to run</span>
+<span class="sd">            code_type: Type of error correction code</span>
+<span class="sd">            error_probability: Probability of error on each qubit</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with performance statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">successes</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">fidelities</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
+            <span class="c1"># Create a random initial qubit</span>
+            <span class="n">alpha_real</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">alpha_imag</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">beta_real</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">beta_imag</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">alpha</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">alpha_real</span><span class="p">,</span> <span class="n">alpha_imag</span><span class="p">)</span>
+            <span class="n">beta</span> <span class="o">=</span> <span class="nb">complex</span><span class="p">(</span><span class="n">beta_real</span><span class="p">,</span> <span class="n">beta_imag</span><span class="p">)</span>
+            <span class="c1"># Normalize</span>
+            <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">alpha</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="nb">abs</span><span class="p">(</span><span class="n">beta</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">alpha</span> <span class="o">/=</span> <span class="n">norm</span>
+            <span class="n">beta</span> <span class="o">/=</span> <span class="n">norm</span>
+
+            <span class="n">initial_qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">alpha</span><span class="p">,</span> <span class="n">beta</span><span class="p">)</span>
+
+            <span class="c1"># Run error correction</span>
+            <span class="n">decoded_qubit</span><span class="p">,</span> <span class="n">success</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">QuantumErrorCorrection</span><span class="o">.</span><span class="n">quantum_error_correction_simulation</span><span class="p">(</span>
+                    <span class="n">initial_qubit</span><span class="p">,</span> <span class="n">code_type</span><span class="p">,</span> <span class="n">error_probability</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">success</span><span class="p">:</span>
+                <span class="n">successes</span> <span class="o">+=</span> <span class="mi">1</span>
+
+            <span class="c1"># Calculate fidelity</span>
+            <span class="n">fidelity</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">initial_qubit</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">conj</span><span class="p">(),</span> <span class="n">decoded_qubit</span><span class="o">.</span><span class="n">state</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="n">fidelities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fidelity</span><span class="p">)</span>
+
+        <span class="n">success_rate</span> <span class="o">=</span> <span class="n">successes</span> <span class="o">/</span> <span class="n">num_trials</span>
+        <span class="n">avg_fidelity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">fidelities</span><span class="p">)</span>
+        <span class="n">std_fidelity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">fidelities</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;success_rate&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">success_rate</span><span class="p">),</span>
+            <span class="s2">&quot;average_fidelity&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">avg_fidelity</span><span class="p">),</span>
+            <span class="s2">&quot;fidelity_std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">std_fidelity</span><span class="p">),</span>
+            <span class="s2">&quot;num_trials&quot;</span><span class="p">:</span> <span class="n">num_trials</span><span class="p">,</span>
+            <span class="s2">&quot;code_type&quot;</span><span class="p">:</span> <span class="n">code_type</span><span class="p">,</span>
+            <span class="s2">&quot;error_probability&quot;</span><span class="p">:</span> <span class="n">error_probability</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

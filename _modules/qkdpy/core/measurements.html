@@ -1,0 +1,471 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.core.measurements &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.core.measurements</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.core.measurements</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Quantum measurement operations for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gate_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">GateUtils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">Hadamard</span><span class="p">,</span> <span class="n">SDag</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.qubit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qubit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.qudit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qudit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_choice</span>
+
+
+<div class="viewcode-block" id="Measurement">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Measurement</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides various quantum measurement operations for QKD protocols.</span>
+
+<span class="sd">    This class implements different measurement bases and strategies used in</span>
+<span class="sd">    quantum key distribution protocols.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Measurement.measure_in_basis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_in_basis">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_in_basis</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">,</span> <span class="n">basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;computational&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure a qubit/qudit in the specified basis.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit/qudit to measure</span>
+<span class="sd">            basis: Measurement basis (&#39;computational&#39;, &#39;hadamard&#39;, &#39;circular&#39;, &#39;fourier&#39;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Measurement result (integer)</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If an unsupported basis is specified for Qudit</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">Qubit</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">qubit</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">Qudit</span><span class="p">):</span>
+            <span class="c1"># For qudits, we need to convert the string basis to a basis matrix</span>
+            <span class="c1"># This is a simplification; a full implementation would define</span>
+            <span class="c1"># basis matrices for Qudits. For now, we&#39;ll assume computational</span>
+            <span class="c1"># or a simple fourier basis.</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;computational&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">qubit</span><span class="o">.</span><span class="n">measure_computational</span><span class="p">()</span>
+            <span class="k">elif</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;fourier&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">qubit</span><span class="o">.</span><span class="n">measure_fourier</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported basis &#39;</span><span class="si">{</span><span class="n">basis</span><span class="si">}</span><span class="s2">&#39; for Qudit measurement&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Unsupported quantum state type&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_batch_in_basis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_batch_in_basis">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_batch_in_basis</span><span class="p">(</span>
+        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">],</span> <span class="n">basis</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;computational&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure a batch of qubits/qudits in the specified basis.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubits: List of qubits/qudits to measure</span>
+<span class="sd">            basis: Measurement basis (&#39;computational&#39;, &#39;hadamard&#39;, &#39;circular&#39;, &#39;fourier&#39;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of measurement results (integer for each quantum state)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Measurement</span><span class="o">.</span><span class="n">measure_in_basis</span><span class="p">(</span><span class="n">q</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_in_random_basis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_in_random_basis">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_in_random_basis</span><span class="p">(</span>
+        <span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">,</span> <span class="n">bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure a qubit/qudit in a randomly chosen basis.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit/qudit to measure</span>
+<span class="sd">            bases: List of bases to choose from (default: [&#39;computational&#39;, &#39;hadamard&#39;])</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (measurement result, chosen basis)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;computational&quot;</span><span class="p">,</span> <span class="s2">&quot;hadamard&quot;</span><span class="p">]</span>
+
+        <span class="n">basis</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">measure_in_basis</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">basis</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_batch_in_random_bases">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_batch_in_random_bases">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_batch_in_random_bases</span><span class="p">(</span>
+        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">],</span> <span class="n">bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure a batch of qubits/qudits in randomly chosen bases.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubits: List of qubits/qudits to measure</span>
+<span class="sd">            bases: List of bases to choose from (default: [&#39;computational&#39;, &#39;hadamard&#39;])</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (measurement results, chosen bases)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;computational&quot;</span><span class="p">,</span> <span class="s2">&quot;hadamard&quot;</span><span class="p">]</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">chosen_bases</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">:</span>
+            <span class="n">basis</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">(</span><span class="n">bases</span><span class="p">)</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">measure_in_basis</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span>
+            <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+            <span class="n">chosen_bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span><span class="p">,</span> <span class="n">chosen_bases</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_state_fidelity">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_state_fidelity">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_state_fidelity</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">,</span> <span class="n">target_state</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the fidelity between a qubit state and a target state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+<span class="sd">            target_state: The target state vector</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Fidelity value between 0 and 1</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span>
+        <span class="c1"># Fidelity = |&lt;ψ|φ&gt;|^2</span>
+        <span class="n">fidelity</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">target_state</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fidelity</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_bloch_coordinates">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_bloch_coordinates">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_bloch_coordinates</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the Bloch sphere coordinates of a qubit.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (x, y, z) coordinates on the Bloch sphere</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">qubit</span><span class="o">.</span><span class="n">bloch_vector</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_density_matrix">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_density_matrix">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_density_matrix</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the density matrix of a qubit.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            2x2 density matrix</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">qubit</span><span class="o">.</span><span class="n">density_matrix</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_purity">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_purity">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_purity</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the purity of a qubit state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Purity value (1 for pure states, &lt;1 for mixed states)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">density_matrix</span><span class="p">()</span>
+        <span class="n">purity</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">rho</span> <span class="o">@</span> <span class="n">rho</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">purity</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_von_neumann_entropy">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_von_neumann_entropy">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_von_neumann_entropy</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the von Neumann entropy of a qubit state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Von Neumann entropy value</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">density_matrix</span><span class="p">()</span>
+        <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">rho</span><span class="p">)</span>
+
+        <span class="c1"># Remove eigenvalues that are effectively zero</span>
+        <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">eigenvalues</span><span class="p">[</span><span class="n">eigenvalues</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">]</span>
+
+        <span class="c1"># Calculate entropy: S = -∑(λ * log2(λ))</span>
+        <span class="n">entropy</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">eigenvalues</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">eigenvalues</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">entropy</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_observable">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_observable">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_observable</span><span class="p">(</span><span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">,</span> <span class="n">observable</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the expectation value of an observable.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+<span class="sd">            observable: Hermitian matrix representing the observable</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Expectation value of the observable</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the observable is not Hermitian</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">GateUtils</span><span class="o">.</span><span class="n">is_hermitian</span><span class="p">(</span><span class="n">observable</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Observable must be Hermitian&quot;</span><span class="p">)</span>
+
+        <span class="n">rho</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">density_matrix</span><span class="p">()</span>
+        <span class="n">expectation</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">rho</span> <span class="o">@</span> <span class="n">observable</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">expectation</span></div>
+
+
+<div class="viewcode-block" id="Measurement.measure_bell_state">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.measure_bell_state">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_bell_state</span><span class="p">(</span><span class="n">qubit1</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">,</span> <span class="n">qubit2</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure which Bell state two qubits are in.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit1: First qubit</span>
+<span class="sd">            qubit2: Second qubit</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            String representing the Bell state (&#39;Φ+&#39;, &#39;Φ-&#39;, &#39;Ψ+&#39;, &#39;Ψ-&#39;)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Create the combined state</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">qubit1</span><span class="o">.</span><span class="n">state</span><span class="p">,</span> <span class="n">qubit2</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+
+        <span class="c1"># Bell states</span>
+        <span class="n">phi_plus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">phi_minus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">psi_plus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">psi_minus</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># Calculate fidelities</span>
+        <span class="n">fid_phi_plus</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">phi_plus</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">fid_phi_minus</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">phi_minus</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">fid_psi_plus</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">psi_plus</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">fid_psi_minus</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">psi_minus</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="c1"># Find the Bell state with the highest fidelity</span>
+        <span class="n">fidelities</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;Φ+&quot;</span><span class="p">:</span> <span class="n">fid_phi_plus</span><span class="p">,</span>
+            <span class="s2">&quot;Φ-&quot;</span><span class="p">:</span> <span class="n">fid_phi_minus</span><span class="p">,</span>
+            <span class="s2">&quot;Ψ+&quot;</span><span class="p">:</span> <span class="n">fid_psi_plus</span><span class="p">,</span>
+            <span class="s2">&quot;Ψ-&quot;</span><span class="p">:</span> <span class="n">fid_psi_minus</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="n">fidelities</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="k">lambda</span> <span class="n">k</span><span class="p">:</span> <span class="n">fidelities</span><span class="p">[</span><span class="n">k</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="Measurement.quantum_state_tomography">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.core.measurements.Measurement.quantum_state_tomography">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">quantum_state_tomography</span><span class="p">(</span>
+        <span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">,</span> <span class="n">num_measurements</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform quantum state tomography to reconstruct the density matrix.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubit: The qubit to measure</span>
+<span class="sd">            num_measurements: Number of measurements to perform for each basis</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing the reconstructed density matrix elements</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">Qudit</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+                <span class="s2">&quot;Quantum state tomography is not implemented for Qudits&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Make a copy of the qubit to avoid modifying the original</span>
+        <span class="n">qubit_copy</span> <span class="o">=</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+
+        <span class="c1"># Measurements in different bases</span>
+        <span class="n">results_x</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">results_y</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">results_z</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_measurements</span><span class="p">):</span>
+            <span class="c1"># Reset the qubit to its original state</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="c1"># Measure in X basis (Hadamard rotates X eigenstates to Z)</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">Hadamard</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
+            <span class="n">result_x</span> <span class="o">=</span> <span class="n">qubit_copy</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="s2">&quot;computational&quot;</span><span class="p">)</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">collapse_state</span><span class="p">(</span><span class="n">result_x</span><span class="p">,</span> <span class="s2">&quot;computational&quot;</span><span class="p">)</span>
+            <span class="n">results_x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result_x</span><span class="p">)</span>
+
+            <span class="c1"># Reset and measure in Y basis (S† H rotates Y eigenstates to Z)</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">SDag</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">Hadamard</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span>
+            <span class="n">result_y</span> <span class="o">=</span> <span class="n">qubit_copy</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="s2">&quot;computational&quot;</span><span class="p">)</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">collapse_state</span><span class="p">(</span><span class="n">result_y</span><span class="p">,</span> <span class="s2">&quot;computational&quot;</span><span class="p">)</span>
+            <span class="n">results_y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result_y</span><span class="p">)</span>
+
+            <span class="c1"># Reset and measure in Z basis</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="n">result_z</span> <span class="o">=</span> <span class="n">qubit_copy</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="s2">&quot;computational&quot;</span><span class="p">)</span>
+            <span class="n">qubit_copy</span><span class="o">.</span><span class="n">collapse_state</span><span class="p">(</span><span class="n">result_z</span><span class="p">,</span> <span class="s2">&quot;computational&quot;</span><span class="p">)</span>
+            <span class="n">results_z</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result_z</span><span class="p">)</span>
+
+        <span class="c1"># Calculate expectation values</span>
+        <span class="n">exp_x</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results_x</span><span class="p">))</span>  <span class="c1"># Convert from 0/1 to +1/-1</span>
+        <span class="n">exp_y</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results_y</span><span class="p">))</span>
+        <span class="n">exp_z</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">results_z</span><span class="p">))</span>
+
+        <span class="c1"># Reconstruct density matrix from expectation values</span>
+        <span class="c1"># ρ = (I + &lt;X&gt;X + &lt;Y&gt;Y + &lt;Z&gt;Z) / 2</span>
+        <span class="n">identity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">pauli_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+        <span class="n">pauli_y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span>
+        <span class="n">pauli_z</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+
+        <span class="n">rho</span> <span class="o">=</span> <span class="p">(</span><span class="n">identity</span> <span class="o">+</span> <span class="n">exp_x</span> <span class="o">*</span> <span class="n">pauli_x</span> <span class="o">+</span> <span class="n">exp_y</span> <span class="o">*</span> <span class="n">pauli_y</span> <span class="o">+</span> <span class="n">exp_z</span> <span class="o">*</span> <span class="n">pauli_z</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Return the density matrix elements</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;rho_00&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">rho</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">),</span>
+            <span class="s2">&quot;rho_01&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">rho</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">),</span>
+            <span class="s2">&quot;rho_10&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">rho</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">),</span>
+            <span class="s2">&quot;rho_11&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">rho</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">real</span><span class="p">),</span>
+            <span class="s2">&quot;exp_x&quot;</span><span class="p">:</span> <span class="n">exp_x</span><span class="p">,</span>
+            <span class="s2">&quot;exp_y&quot;</span><span class="p">:</span> <span class="n">exp_y</span><span class="p">,</span>
+            <span class="s2">&quot;exp_z&quot;</span><span class="p">:</span> <span class="n">exp_z</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

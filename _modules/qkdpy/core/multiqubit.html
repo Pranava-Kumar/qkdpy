@@ -1,0 +1,538 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.core.multiqubit &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.core.multiqubit</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.core.multiqubit</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Multi-qubit state representation and manipulation.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Optional</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gate_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">GateUtils</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">Identity</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.qubit</span><span class="w"> </span><span class="kn">import</span> <span class="n">Qubit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_random</span>
+
+
+<div class="viewcode-block" id="MultiQubitState">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MultiQubitState</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a multi-qubit quantum state.</span>
+
+<span class="sd">    A multi-qubit state is represented as a complex vector in a 2^n dimensional</span>
+<span class="sd">    Hilbert space where n is the number of qubits.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MultiQubitState.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a multi-qubit state with a given state vector.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state: Complex vector representing the quantum state</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the state dimension is not a power of 2</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Check if state dimension is a power of 2</span>
+        <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">dim</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="p">(</span><span class="n">dim</span> <span class="o">&amp;</span> <span class="p">(</span><span class="n">dim</span> <span class="o">-</span> <span class="mi">1</span><span class="p">))</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;State dimension must be a power of 2&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Normalize the state</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">state</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot create a state with zero norm&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">dim</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">state</span> <span class="o">/</span> <span class="n">norm</span></div>
+
+
+<div class="viewcode-block" id="MultiQubitState.from_qubits">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.from_qubits">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_qubits</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="s2">&quot;MultiQubitState&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a multi-qubit state from individual qubits.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubits: List of Qubit objects</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MultiQubitState representing the tensor product of the qubits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">qubits</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;At least one qubit is required&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Start with the first qubit</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">state</span>
+
+        <span class="c1"># Compute tensor product with remaining qubits</span>
+        <span class="k">for</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="n">qubits</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">qubit</span><span class="o">.</span><span class="n">state</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MultiQubitState.zeros">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.zeros">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">zeros</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MultiQubitState&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a multi-qubit state ``|00...0&gt;``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_qubits: Number of qubits</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MultiQubitState in the all-zeros state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">num_qubits</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of qubits must be positive&quot;</span><span class="p">)</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MultiQubitState.ghz">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.ghz">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ghz</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MultiQubitState&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a GHZ (Greenberger-Horne-Zeilinger) state.</span>
+
+<span class="sd">        The GHZ state is ``(|00...0&gt; + |11...1&gt;) / sqrt(2)``</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_qubits: Number of qubits</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MultiQubitState in the GHZ state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">num_qubits</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of qubits must be positive&quot;</span><span class="p">)</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">state</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MultiQubitState.w_state">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.w_state">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">w_state</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;MultiQubitState&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a W state.</span>
+
+<span class="sd">        The W state is ``(|100...0&gt; + |010...0&gt; + ... + |000...1&gt;) / sqrt(n)``</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_qubits: Number of qubits</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            MultiQubitState in the W state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">num_qubits</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Number of qubits must be positive&quot;</span><span class="p">)</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="c1"># Set the single 1 states: |100...0&gt;, |010...0&gt;, ..., |000...1&gt;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">num_qubits</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">i</span><span class="p">)</span>
+            <span class="n">state</span><span class="p">[</span><span class="n">index</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Normalize</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">state</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">num_qubits</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the number of qubits in the state.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the state vector.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the probabilities of measuring each computational basis state.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Array of probabilities for each of the 2^n basis states</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+<div class="viewcode-block" id="MultiQubitState.apply_gate">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.apply_gate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_gate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">gate</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">target_qubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a quantum gate to specific qubits.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            gate: Unitary matrix representing the quantum gate</span>
+<span class="sd">            target_qubits: Index or list of indices of qubits to apply the gate to</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the gate size doesn&#39;t match the number of target qubits</span>
+<span class="sd">            ValueError: If target qubit indices are invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert single qubit index to list</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">target_qubits</span><span class="p">,</span> <span class="nb">int</span><span class="p">):</span>
+            <span class="n">target_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">target_qubits</span><span class="p">]</span>
+
+        <span class="c1"># Validate target qubits</span>
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">q</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">q</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">target_qubits</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Target qubit indices must be between 0 and num_qubits-1&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check if gate size matches number of target qubits</span>
+        <span class="n">gate_size</span> <span class="o">=</span> <span class="n">gate</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">expected_size</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_qubits</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">gate_size</span> <span class="o">!=</span> <span class="n">expected_size</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Gate size </span><span class="si">{</span><span class="n">gate_size</span><span class="si">}</span><span class="s2"> doesn&#39;t match </span><span class="si">{</span><span class="n">expected_size</span><span class="si">}</span><span class="s2"> for </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">target_qubits</span><span class="p">)</span><span class="si">}</span><span class="s2"> qubits&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Check if gate is unitary</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">GateUtils</span><span class="o">.</span><span class="n">is_unitary</span><span class="p">(</span><span class="n">gate</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Gate must be unitary&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Create the full operator by tensoring with identity matrices</span>
+        <span class="c1"># Start with identity for all qubits</span>
+        <span class="n">full_gate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+
+        <span class="c1"># For single qubit gates, we can use a more efficient approach</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_qubits</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">target</span> <span class="o">=</span> <span class="n">target_qubits</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="c1"># Create a list of operators for each qubit</span>
+            <span class="n">ops</span> <span class="o">=</span> <span class="p">[</span><span class="n">Identity</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span><span class="p">)]</span>
+            <span class="n">ops</span><span class="p">[</span><span class="n">target</span><span class="p">]</span> <span class="o">=</span> <span class="n">gate</span>
+
+            <span class="c1"># Compute the tensor product</span>
+            <span class="n">full_gate</span> <span class="o">=</span> <span class="n">ops</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">op</span> <span class="ow">in</span> <span class="n">ops</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="n">full_gate</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">full_gate</span><span class="p">,</span> <span class="n">op</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># General approach for multi-qubit gates</span>
+            <span class="c1"># This works for any number of target qubits and any gate size</span>
+
+            <span class="c1"># Create new state vector</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>
+
+            <span class="c1"># Number of target qubits</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">target_qubits</span><span class="p">)</span>
+
+            <span class="c1"># Pre-compute shifts for efficiency</span>
+            <span class="c1"># target_qubits[0] corresponds to the most significant bit of the gate index</span>
+            <span class="n">shifts</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">q</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">target_qubits</span><span class="p">]</span>
+
+            <span class="c1"># Iterate over all basis states</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">)):</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Extract the index for the target qubits</span>
+                <span class="n">target_idx</span> <span class="o">=</span> <span class="mi">0</span>
+                <span class="k">for</span> <span class="n">bit_idx</span><span class="p">,</span> <span class="n">shift</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shifts</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">&gt;&gt;</span> <span class="n">shift</span><span class="p">)</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">target_idx</span> <span class="o">|=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">bit_idx</span><span class="p">)</span>
+
+                <span class="c1"># The gate maps |target_idx&gt; to sum(U[row, target_idx] * |row&gt;)</span>
+                <span class="c1"># We need to add contribution to new_state</span>
+
+                <span class="c1"># Get the column of the gate matrix corresponding to target_idx</span>
+                <span class="n">col</span> <span class="o">=</span> <span class="n">gate</span><span class="p">[:,</span> <span class="n">target_idx</span><span class="p">]</span>
+
+                <span class="k">for</span> <span class="n">row_idx</span><span class="p">,</span> <span class="n">amplitude</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">col</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">amplitude</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">continue</span>
+
+                    <span class="c1"># Construct the new full state index</span>
+                    <span class="c1"># Start with i, but clear the target bits</span>
+                    <span class="n">new_i</span> <span class="o">=</span> <span class="n">i</span>
+                    <span class="k">for</span> <span class="n">shift</span> <span class="ow">in</span> <span class="n">shifts</span><span class="p">:</span>
+                        <span class="n">new_i</span> <span class="o">&amp;=</span> <span class="o">~</span><span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">shift</span><span class="p">)</span>
+
+                    <span class="c1"># Set the target bits according to row_idx</span>
+                    <span class="k">for</span> <span class="n">bit_idx</span><span class="p">,</span> <span class="n">shift</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">shifts</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="p">(</span><span class="n">row_idx</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">bit_idx</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">:</span>
+                            <span class="n">new_i</span> <span class="o">|=</span> <span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">shift</span>
+
+                    <span class="n">new_state</span><span class="p">[</span><span class="n">new_i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">amplitude</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">new_state</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Apply the gate (for single qubit case)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">full_gate</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span></div>
+
+
+<div class="viewcode-block" id="MultiQubitState.measure">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.measure">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">target_qubit</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">int</span><span class="p">,</span> <span class="n">Optional</span><span class="p">[</span><span class="s2">&quot;MultiQubitState&quot;</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure a specific qubit in the computational basis.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            target_qubit: Index of the qubit to measure</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (measurement_result, collapsed_state) where collapsed_state</span>
+<span class="sd">            is the state of the remaining qubits (None if this was the last qubit)</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If target_qubit is invalid</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">target_qubit</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">target_qubit</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Target qubit index must be between 0 and num_qubits-1&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate probabilities for measuring 0 or 1 on the target qubit</span>
+        <span class="n">prob_0</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="n">prob_1</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># For each computational basis state, check if the target qubit is 0 or 1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span><span class="p">):</span>
+            <span class="c1"># Check if the target qubit is 0 or 1 in this basis state</span>
+            <span class="c1"># The target qubit is at position (num_qubits - 1 - target_qubit) from the right</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">i</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">target_qubit</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">prob_1</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">prob_0</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+
+        <span class="c1"># Perform the measurement</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">prob_0</span> <span class="k">else</span> <span class="mi">1</span>
+
+        <span class="c1"># Convert numpy integer to Python int to avoid returning np.int32</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="c1"># If this is the last qubit, return None for the collapsed state</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="kc">None</span>
+
+        <span class="c1"># Collapse the state</span>
+        <span class="n">new_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+
+        <span class="c1"># For each computational basis state in the new system, sum the amplitudes</span>
+        <span class="c1"># from the old system that are consistent with the measurement result</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)):</span>
+            <span class="c1"># Determine the indices in the original state that correspond to</span>
+            <span class="c1"># this basis state in the new system with the measurement result</span>
+
+            <span class="c1"># The target qubit is at position (num_qubits - 1 - target_qubit) from the right</span>
+            <span class="n">target_pos</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">-</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">target_qubit</span>
+            <span class="n">mask</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">&lt;&lt;</span> <span class="n">target_pos</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+
+            <span class="c1"># Split i into upper and lower parts around target_pos</span>
+            <span class="n">lower</span> <span class="o">=</span> <span class="n">i</span> <span class="o">&amp;</span> <span class="n">mask</span>
+            <span class="n">upper</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span> <span class="o">&amp;</span> <span class="o">~</span><span class="n">mask</span><span class="p">)</span> <span class="o">&lt;&lt;</span> <span class="mi">1</span>
+
+            <span class="n">old_index</span> <span class="o">=</span> <span class="n">upper</span> <span class="o">|</span> <span class="p">(</span><span class="n">result</span> <span class="o">&lt;&lt;</span> <span class="n">target_pos</span><span class="p">)</span> <span class="o">|</span> <span class="n">lower</span>
+
+            <span class="n">new_state</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">[</span><span class="n">old_index</span><span class="p">]</span>
+
+        <span class="c1"># Normalize the new state</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">norm</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">new_state</span> <span class="o">/</span> <span class="n">norm</span>
+
+        <span class="k">return</span> <span class="n">result</span><span class="p">,</span> <span class="n">MultiQubitState</span><span class="p">(</span><span class="n">new_state</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MultiQubitState.density_matrix">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.density_matrix">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">density_matrix</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the density matrix of the multi-qubit state.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            2^n x 2^n density matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">outer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">conjugate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="MultiQubitState.entanglement_entropy">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.entanglement_entropy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entanglement_entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsystem_qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the entanglement entropy of a subsystem.</span>
+
+<span class="sd">        Computes S(rho_reduced) = -Tr(rho_reduced * log2(rho_reduced))</span>
+<span class="sd">        where rho_reduced is obtained by tracing out all qubits NOT in</span>
+<span class="sd">        subsystem_qubits.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            subsystem_qubits: List of qubit indices in the subsystem</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Von Neumann entropy of the subsystem (base-2)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">subsystem_qubits</span> <span class="ow">or</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">q</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">q</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="n">subsystem_qubits</span>
+        <span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Invalid subsystem qubit indices&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Build the list of qubits to trace out (complement of subsystem)</span>
+        <span class="n">trace_out_qubits</span> <span class="o">=</span> <span class="p">[</span>
+            <span class="n">q</span> <span class="k">for</span> <span class="n">q</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span><span class="p">)</span> <span class="k">if</span> <span class="n">q</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">subsystem_qubits</span>
+        <span class="p">]</span>
+
+        <span class="c1"># If tracing out nothing, return full state entropy (0 for pure state)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">trace_out_qubits</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Compute reduced density matrix via partial trace</span>
+        <span class="c1"># Use statevector tensordot approach (matching Qiskit&#39;s partial_trace method):</span>
+        <span class="c1"># Contract the state tensor with its conjugate over the traced-out axes</span>
+        <span class="n">state_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="mi">2</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span><span class="p">)</span>
+        <span class="n">rho_reduced</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span>
+            <span class="n">state_tensor</span><span class="p">,</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">state_tensor</span><span class="p">),</span>
+            <span class="n">axes</span><span class="o">=</span><span class="p">(</span><span class="n">trace_out_qubits</span><span class="p">,</span> <span class="n">trace_out_qubits</span><span class="p">),</span>
+        <span class="p">)</span>
+        <span class="c1"># Reshape to 2^k x 2^k density matrix and normalize</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">subsystem_qubits</span><span class="p">)</span>
+        <span class="n">rho_reduced</span> <span class="o">=</span> <span class="n">rho_reduced</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="mi">2</span><span class="o">**</span><span class="n">k</span><span class="p">,</span> <span class="mi">2</span><span class="o">**</span><span class="n">k</span><span class="p">))</span>
+        <span class="n">rho_reduced</span> <span class="o">=</span> <span class="n">rho_reduced</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">rho_reduced</span><span class="p">)</span>
+
+        <span class="c1"># Compute von Neumann entropy from eigenvalues</span>
+        <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">rho_reduced</span><span class="p">)</span>
+        <span class="n">entropy</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">eigenvalues</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="mf">1e-15</span><span class="p">:</span>
+                <span class="n">entropy</span> <span class="o">-=</span> <span class="n">val</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">entropy</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MultiQubitState.fidelity">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.MultiQubitState.fidelity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fidelity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;MultiQubitState&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the fidelity between this state and another state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another MultiQubitState</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Fidelity value between 0 and 1</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the states have different numbers of qubits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">_num_qubits</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;States must have the same number of qubits&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Fidelity = |&lt;ψ|φ&gt;|^2</span>
+        <span class="n">inner_product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">inner_product</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation of the multi-qubit state.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;MultiQubitState(num_qubits=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span><span class="si">}</span><span class="s2">)&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if two multi-qubit states are equal.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">MultiQubitState</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="o">==</span> <span class="n">other</span><span class="o">.</span><span class="n">_num_qubits</span> <span class="ow">and</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_state</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

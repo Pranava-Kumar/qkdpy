@@ -1,0 +1,404 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.crypto.enhanced_security &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.crypto.enhanced_security</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.crypto.enhanced_security</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Enhanced security features for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">hashlib</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">hmac</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="QuantumAuthentication">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumAuthentication">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumAuthentication</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quantum authentication protocols for enhanced security.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumAuthentication.generate_message_authentication_code">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumAuthentication.generate_message_authentication_code">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_message_authentication_code</span><span class="p">(</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">message</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a message authentication code using a quantum key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Quantum key as a list of bits</span>
+<span class="sd">            message: Message to authenticate</span>
+<span class="sd">            algorithm: Hash algorithm to use</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Hexadecimal representation of the MAC</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert key to bytes</span>
+        <span class="n">key_bytes</span> <span class="o">=</span> <span class="nb">bytes</span><span class="p">(</span>
+            <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">8</span><span class="p">])),</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="mi">8</span><span class="p">)]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Pad or truncate key to 32 bytes for HMAC</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_bytes</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">32</span><span class="p">:</span>
+            <span class="n">key_bytes</span> <span class="o">=</span> <span class="n">key_bytes</span><span class="o">.</span><span class="n">ljust</span><span class="p">(</span><span class="mi">32</span><span class="p">,</span> <span class="sa">b</span><span class="s2">&quot;</span><span class="se">\x00</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_bytes</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">32</span><span class="p">:</span>
+            <span class="n">key_bytes</span> <span class="o">=</span> <span class="n">key_bytes</span><span class="p">[:</span><span class="mi">32</span><span class="p">]</span>
+
+        <span class="c1"># Generate MAC</span>
+        <span class="n">mac</span> <span class="o">=</span> <span class="n">hmac</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="n">key_bytes</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">hashlib</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">mac</span><span class="o">.</span><span class="n">hexdigest</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="QuantumAuthentication.verify_message_authentication_code">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumAuthentication.verify_message_authentication_code">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_message_authentication_code</span><span class="p">(</span>
+        <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">message</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">mac</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;sha256&quot;</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify a message authentication code.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Quantum key as a list of bits</span>
+<span class="sd">            message: Message to verify</span>
+<span class="sd">            mac: Message authentication code to verify</span>
+<span class="sd">            algorithm: Hash algorithm to use</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if MAC is valid, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">computed_mac</span> <span class="o">=</span> <span class="n">QuantumAuthentication</span><span class="o">.</span><span class="n">generate_message_authentication_code</span><span class="p">(</span>
+            <span class="n">key</span><span class="p">,</span> <span class="n">message</span><span class="p">,</span> <span class="n">algorithm</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">hmac</span><span class="o">.</span><span class="n">compare_digest</span><span class="p">(</span><span class="n">computed_mac</span><span class="p">,</span> <span class="n">mac</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="QuantumKeyValidation">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumKeyValidation">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumKeyValidation</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Validation mechanisms for quantum keys.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumKeyValidation.statistical_randomness_test">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumKeyValidation.statistical_randomness_test">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">statistical_randomness_test</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform statistical randomness tests on a quantum key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Quantum key as a list of bits</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with test results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Empty key&quot;</span><span class="p">}</span>
+
+        <span class="c1"># Convert to numpy array for easier manipulation</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="c1"># Frequency test (Monobit test)</span>
+        <span class="n">ones_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+        <span class="n">zeros_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">-</span> <span class="n">ones_count</span>
+        <span class="n">frequency_p_value</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ones_count</span> <span class="o">-</span> <span class="n">zeros_count</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span>
+
+        <span class="c1"># Block Frequency Test</span>
+        <span class="n">block_size</span> <span class="o">=</span> <span class="mi">128</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">block_size</span><span class="p">:</span>
+            <span class="n">num_blocks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">//</span> <span class="n">block_size</span>
+            <span class="n">block_means</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_blocks</span><span class="p">):</span>
+                <span class="n">block</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="n">i</span> <span class="o">*</span> <span class="n">block_size</span> <span class="p">:</span> <span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">block_size</span><span class="p">]</span>
+                <span class="n">block_means</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">block</span><span class="p">))</span>
+
+            <span class="c1"># Chi-square statistic for block frequency</span>
+            <span class="n">chi_square</span> <span class="o">=</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">block_size</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">((</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">block_means</span><span class="p">)</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="c1"># Simplified p-value (not rigorous, but indicative)</span>
+            <span class="c1"># Ideally we&#39;d use scipy.stats.chi2.sf(chi_square, num_blocks)</span>
+            <span class="c1"># Here we just return the statistic</span>
+            <span class="n">block_freq_stat</span> <span class="o">=</span> <span class="n">chi_square</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">block_freq_stat</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="c1"># Runs test (simplified)</span>
+        <span class="n">runs_count</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">bits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">bits</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="n">runs_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">expected_runs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">+</span> <span class="mi">1</span>
+        <span class="n">runs_p_value</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="nb">abs</span><span class="p">(</span><span class="n">runs_count</span> <span class="o">-</span> <span class="n">expected_runs</span><span class="p">)</span> <span class="o">/</span> <span class="n">expected_runs</span>
+
+        <span class="c1"># Longest run test (simplified)</span>
+        <span class="n">max_run_length</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="n">current_run_length</span> <span class="o">=</span> <span class="mi">1</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">bits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">bits</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="n">current_run_length</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">max_run_length</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">max_run_length</span><span class="p">,</span> <span class="n">current_run_length</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">current_run_length</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Return results</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;frequency_test_p_value&quot;</span><span class="p">:</span> <span class="n">frequency_p_value</span><span class="p">,</span>
+            <span class="s2">&quot;block_frequency_stat&quot;</span><span class="p">:</span> <span class="n">block_freq_stat</span><span class="p">,</span>
+            <span class="s2">&quot;runs_test_p_value&quot;</span><span class="p">:</span> <span class="n">runs_p_value</span><span class="p">,</span>
+            <span class="s2">&quot;longest_run_length&quot;</span><span class="p">:</span> <span class="n">max_run_length</span><span class="p">,</span>
+            <span class="s2">&quot;key_length&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">),</span>
+            <span class="s2">&quot;ones_proportion&quot;</span><span class="p">:</span> <span class="n">ones_count</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyValidation.entropy_test">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumKeyValidation.entropy_test">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">entropy_test</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the entropy of a quantum key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Quantum key as a list of bits</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Entropy value (0 to 1, where 1 is maximum entropy)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">key</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Convert to string for easier processing</span>
+        <span class="n">key_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+
+        <span class="c1"># Calculate frequency of 0s and 1s</span>
+        <span class="n">ones_count</span> <span class="o">=</span> <span class="n">key_str</span><span class="o">.</span><span class="n">count</span><span class="p">(</span><span class="s2">&quot;1&quot;</span><span class="p">)</span>
+        <span class="n">zeros_count</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_str</span><span class="p">)</span> <span class="o">-</span> <span class="n">ones_count</span>
+
+        <span class="c1"># Calculate probabilities</span>
+        <span class="n">p0</span> <span class="o">=</span> <span class="n">zeros_count</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_str</span><span class="p">)</span>
+        <span class="n">p1</span> <span class="o">=</span> <span class="n">ones_count</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">key_str</span><span class="p">)</span>
+
+        <span class="c1"># Calculate entropy</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">entropy_term</span><span class="p">(</span><span class="n">p</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">p</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">p</span><span class="p">)</span> <span class="k">if</span> <span class="n">p</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span>
+
+        <span class="n">entropy</span> <span class="o">=</span> <span class="n">entropy_term</span><span class="p">(</span><span class="n">p0</span><span class="p">)</span> <span class="o">+</span> <span class="n">entropy_term</span><span class="p">(</span><span class="n">p1</span><span class="p">)</span>
+
+        <span class="c1"># Normalize to 0-1 range</span>
+        <span class="k">return</span> <span class="n">entropy</span> <span class="o">/</span> <span class="mf">1.0</span>  <span class="c1"># Maximum entropy for binary is 1</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyValidation.correlation_test">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumKeyValidation.correlation_test">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">correlation_test</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">lag</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Test for correlations in the key at a specific lag.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Quantum key as a list of bits</span>
+<span class="sd">            lag: Lag for correlation test</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Correlation coefficient (-1 to 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="n">lag</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Convert to numpy array</span>
+        <span class="n">bits</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+
+        <span class="c1"># Calculate correlation</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[:</span><span class="o">-</span><span class="n">lag</span><span class="p">]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">bits</span><span class="p">[</span><span class="n">lag</span><span class="p">:]</span>
+
+        <span class="c1"># Pearson correlation coefficient</span>
+        <span class="n">correlation</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">corrcoef</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">)[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+        <span class="k">return</span> <span class="n">correlation</span> <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">isnan</span><span class="p">(</span><span class="n">correlation</span><span class="p">)</span> <span class="k">else</span> <span class="mf">0.0</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="QuantumSideChannelProtection">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSideChannelProtection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumSideChannelProtection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Protection against side-channel attacks in QKD implementations.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumSideChannelProtection.constant_time_compare">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSideChannelProtection.constant_time_compare">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">constant_time_compare</span><span class="p">(</span><span class="n">key1</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">key2</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compare two keys in constant time to prevent timing attacks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key1: First key</span>
+<span class="sd">            key2: Second key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if keys are equal, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key2</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key1</span><span class="p">)):</span>
+            <span class="n">result</span> <span class="o">|=</span> <span class="n">key1</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">^</span> <span class="n">key2</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">result</span> <span class="o">==</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="QuantumSideChannelProtection.secure_key_splitting">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSideChannelProtection.secure_key_splitting">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">secure_key_splitting</span><span class="p">(</span><span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">num_parts</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Split a key into multiple parts using XOR secret sharing.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Key to split</span>
+<span class="sd">            num_parts: Number of parts to split into</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of key parts</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">num_parts</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Must split into at least 2 parts&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate random parts</span>
+        <span class="n">parts</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_parts</span> <span class="o">-</span> <span class="mi">1</span><span class="p">):</span>
+            <span class="n">part</span> <span class="o">=</span> <span class="p">[</span><span class="n">secrets</span><span class="o">.</span><span class="n">randbelow</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">))]</span>
+            <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">part</span><span class="p">)</span>
+
+        <span class="c1"># Compute the last part so that XOR of all parts equals the original key</span>
+        <span class="n">last_part</span> <span class="o">=</span> <span class="n">key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)):</span>
+                <span class="n">last_part</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">^=</span> <span class="n">part</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+        <span class="n">parts</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">last_part</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">parts</span></div>
+
+
+<div class="viewcode-block" id="QuantumSideChannelProtection.reconstruct_key">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumSideChannelProtection.reconstruct_key">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reconstruct_key</span><span class="p">(</span><span class="n">parts</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reconstruct a key from its parts.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parts: List of key parts</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Reconstructed key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">parts</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No parts provided&quot;</span><span class="p">)</span>
+
+        <span class="c1"># XOR all parts to get the original key</span>
+        <span class="n">key</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">parts</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">part</span> <span class="ow">in</span> <span class="n">parts</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)):</span>
+                <span class="n">key</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">^=</span> <span class="n">part</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">key</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

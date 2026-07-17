@@ -1,0 +1,702 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.network.satellite_qkd &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.network.satellite_qkd</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.network.satellite_qkd</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Satellite Quantum Key Distribution (SatQKD) Module.</span>
+
+<span class="sd">This module provides simulation capabilities for satellite-based quantum</span>
+<span class="sd">key distribution, implementing realistic free-space optical channel models,</span>
+<span class="sd">atmospheric effects, and orbital mechanics for space-ground quantum links.</span>
+
+<span class="sd">This module demonstrates the intersection of:</span>
+<span class="sd">- Space Technology: Orbital mechanics, satellite-ground links</span>
+<span class="sd">- Quantum Computing: QKD protocols adapted for space</span>
+<span class="sd">- AI/ML: Predictive channel modeling and adaptive protocols</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">math</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.channels</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumChannel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">ChannelPredictor</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="OrbitType">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.OrbitType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OrbitType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Satellite orbit types.&quot;&quot;&quot;</span>
+
+    <span class="n">LEO</span> <span class="o">=</span> <span class="s2">&quot;leo&quot;</span>  <span class="c1"># Low Earth Orbit (400-2000 km)</span>
+    <span class="n">MEO</span> <span class="o">=</span> <span class="s2">&quot;meo&quot;</span>  <span class="c1"># Medium Earth Orbit (2000-35786 km)</span>
+    <span class="n">GEO</span> <span class="o">=</span> <span class="s2">&quot;geo&quot;</span>  <span class="c1"># Geostationary Orbit (35786 km)</span></div>
+
+
+
+<div class="viewcode-block" id="AtmosphericCondition">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AtmosphericCondition">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AtmosphericCondition</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Atmospheric conditions affecting transmission.&quot;&quot;&quot;</span>
+
+    <span class="n">CLEAR</span> <span class="o">=</span> <span class="s2">&quot;clear&quot;</span>
+    <span class="n">HAZE</span> <span class="o">=</span> <span class="s2">&quot;haze&quot;</span>
+    <span class="n">THIN_CLOUDS</span> <span class="o">=</span> <span class="s2">&quot;thin_clouds&quot;</span>
+    <span class="n">TURBULENT</span> <span class="o">=</span> <span class="s2">&quot;turbulent&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SatellitePosition">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SatellitePosition">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">SatellitePosition</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Satellite orbital position.&quot;&quot;&quot;</span>
+
+    <span class="n">altitude_km</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Altitude above Earth&#39;s surface</span>
+    <span class="n">latitude</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Degrees</span>
+    <span class="n">longitude</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Degrees</span>
+    <span class="n">elevation_angle</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Angle from ground station horizon</span>
+    <span class="n">slant_range_km</span><span class="p">:</span> <span class="nb">float</span>  <span class="c1"># Distance to ground station</span>
+
+<div class="viewcode-block" id="SatellitePosition.from_orbit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SatellitePosition.from_orbit">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">from_orbit</span><span class="p">(</span>
+        <span class="bp">cls</span><span class="p">,</span>
+        <span class="n">altitude_km</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">ground_lat</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">ground_lon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">sat_lat</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">sat_lon</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;SatellitePosition&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate satellite position relative to ground station.&quot;&quot;&quot;</span>
+        <span class="c1"># Earth&#39;s radius in km</span>
+        <span class="n">R_earth</span> <span class="o">=</span> <span class="mf">6371.0</span>
+
+        <span class="c1"># Convert to radians</span>
+        <span class="n">lat1</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">ground_lat</span><span class="p">)</span>
+        <span class="n">lat2</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">sat_lat</span><span class="p">)</span>
+        <span class="n">dlon</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">sat_lon</span> <span class="o">-</span> <span class="n">ground_lon</span><span class="p">)</span>
+
+        <span class="c1"># Central angle using spherical law of cosines</span>
+        <span class="n">cos_gamma</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">lat2</span><span class="p">)</span> <span class="o">+</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">lat1</span><span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span>
+            <span class="n">lat2</span>
+        <span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">dlon</span><span class="p">)</span>
+        <span class="c1"># gamma used implicitly in slant_range via cos_gamma</span>
+
+        <span class="c1"># Slant range calculation</span>
+        <span class="n">r_sat</span> <span class="o">=</span> <span class="n">R_earth</span> <span class="o">+</span> <span class="n">altitude_km</span>
+        <span class="n">slant_range</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">R_earth</span><span class="o">**</span><span class="mi">2</span> <span class="o">+</span> <span class="n">r_sat</span><span class="o">**</span><span class="mi">2</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">R_earth</span> <span class="o">*</span> <span class="n">r_sat</span> <span class="o">*</span> <span class="n">cos_gamma</span><span class="p">)</span>
+
+        <span class="c1"># Elevation angle</span>
+        <span class="n">sin_elev</span> <span class="o">=</span> <span class="p">(</span><span class="n">r_sat</span> <span class="o">*</span> <span class="n">cos_gamma</span> <span class="o">-</span> <span class="n">R_earth</span><span class="p">)</span> <span class="o">/</span> <span class="n">slant_range</span>
+        <span class="n">elevation</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">degrees</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">asin</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">sin_elev</span><span class="p">))))</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span>
+            <span class="n">altitude_km</span><span class="o">=</span><span class="n">altitude_km</span><span class="p">,</span>
+            <span class="n">latitude</span><span class="o">=</span><span class="n">sat_lat</span><span class="p">,</span>
+            <span class="n">longitude</span><span class="o">=</span><span class="n">sat_lon</span><span class="p">,</span>
+            <span class="n">elevation_angle</span><span class="o">=</span><span class="n">elevation</span><span class="p">,</span>
+            <span class="n">slant_range_km</span><span class="o">=</span><span class="n">slant_range</span><span class="p">,</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="AtmosphericProfile">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AtmosphericProfile">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">AtmosphericProfile</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Atmospheric conditions along the optical path.&quot;&quot;&quot;</span>
+
+    <span class="n">visibility_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">23.0</span>  <span class="c1"># Horizontal visibility</span>
+    <span class="n">turbulence_cn2</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-14</span>  <span class="c1"># Refractive index structure constant</span>
+    <span class="n">aerosol_optical_depth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span>
+    <span class="n">water_vapor_mm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">10.0</span>  <span class="c1"># Precipitable water vapor</span>
+    <span class="n">cloud_optical_depth</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+    <span class="n">temperature_k</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">288.0</span>  <span class="c1"># Ground temperature</span>
+    <span class="n">pressure_hpa</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1013.25</span>  <span class="c1"># Ground pressure</span></div>
+
+
+
+<div class="viewcode-block" id="FreeSpaceOpticalChannel">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.FreeSpaceOpticalChannel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">FreeSpaceOpticalChannel</span><span class="p">(</span><span class="n">QuantumChannel</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quantum channel model for free-space optical links.</span>
+
+<span class="sd">    Implements realistic atmospheric effects including:</span>
+<span class="sd">    - Geometric spreading loss</span>
+<span class="sd">    - Atmospheric absorption and scattering</span>
+<span class="sd">    - Turbulence-induced beam wandering and scintillation</span>
+<span class="sd">    - Background noise from sky radiance</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="FreeSpaceOpticalChannel.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.FreeSpaceOpticalChannel.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">satellite_position</span><span class="p">:</span> <span class="n">SatellitePosition</span><span class="p">,</span>
+        <span class="n">atmosphere</span><span class="p">:</span> <span class="n">AtmosphericProfile</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">wavelength_nm</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">850.0</span><span class="p">,</span>
+        <span class="n">telescope_diameter_m</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.3</span><span class="p">,</span>
+        <span class="n">pointing_error_urad</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1.0</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize free-space optical channel.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            satellite_position: Satellite position data</span>
+<span class="sd">            atmosphere: Atmospheric profile</span>
+<span class="sd">            wavelength_nm: Wavelength of photons in nanometers</span>
+<span class="sd">            telescope_diameter_m: Receiving telescope diameter</span>
+<span class="sd">            pointing_error_urad: RMS pointing error in microradians</span>
+<span class="sd">            **kwargs: Additional arguments for base QuantumChannel</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">satellite_position</span> <span class="o">=</span> <span class="n">satellite_position</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">atmosphere</span> <span class="o">=</span> <span class="n">atmosphere</span> <span class="ow">or</span> <span class="n">AtmosphericProfile</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span> <span class="o">=</span> <span class="n">wavelength_nm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_m</span> <span class="o">=</span> <span class="n">wavelength_nm</span> <span class="o">*</span> <span class="mf">1e-9</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">telescope_diameter</span> <span class="o">=</span> <span class="n">telescope_diameter_m</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pointing_error</span> <span class="o">=</span> <span class="n">pointing_error_urad</span> <span class="o">*</span> <span class="mf">1e-6</span>
+
+        <span class="c1"># Calculate total channel loss</span>
+        <span class="n">total_loss</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_total_loss</span><span class="p">()</span>
+
+        <span class="c1"># Initialize base channel with calculated loss</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">distance</span><span class="o">=</span><span class="n">satellite_position</span><span class="o">.</span><span class="n">slant_range_km</span><span class="p">,</span>
+            <span class="n">loss</span><span class="o">=</span><span class="n">total_loss</span><span class="p">,</span>
+            <span class="o">**</span><span class="n">kwargs</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;FreeSpaceOpticalChannel initialized&quot;</span><span class="p">,</span>
+            <span class="n">slant_range_km</span><span class="o">=</span><span class="n">satellite_position</span><span class="o">.</span><span class="n">slant_range_km</span><span class="p">,</span>
+            <span class="n">elevation_deg</span><span class="o">=</span><span class="n">satellite_position</span><span class="o">.</span><span class="n">elevation_angle</span><span class="p">,</span>
+            <span class="n">total_loss_db</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_loss_to_db</span><span class="p">(</span><span class="n">total_loss</span><span class="p">),</span>
+        <span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_loss_to_db</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">loss_fraction</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert loss fraction to dB.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">loss_fraction</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">loss_fraction</span> <span class="o">&lt;=</span> <span class="mf">0.0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="k">return</span> <span class="o">-</span><span class="mi">10</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">loss_fraction</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_total_loss</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate total channel loss from all effects.&quot;&quot;&quot;</span>
+        <span class="c1"># 1. Geometric spreading loss</span>
+        <span class="n">L</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">satellite_position</span><span class="o">.</span><span class="n">slant_range_km</span> <span class="o">*</span> <span class="mi">1000</span>  <span class="c1"># Convert to meters</span>
+        <span class="n">diffraction_angle</span> <span class="o">=</span> <span class="mf">1.22</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_m</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">telescope_diameter</span>
+        <span class="n">beam_radius_at_receiver</span> <span class="o">=</span> <span class="n">L</span> <span class="o">*</span> <span class="n">diffraction_angle</span>
+        <span class="n">geometric_efficiency</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">telescope_diameter</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">beam_radius_at_receiver</span><span class="p">)</span>
+        <span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="n">geometric_efficiency</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">geometric_efficiency</span><span class="p">)</span>
+
+        <span class="c1"># 2. Atmospheric transmittance (Beer-Lambert)</span>
+        <span class="c1"># Effective atmospheric path using elevation angle</span>
+        <span class="n">elevation_rad</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">satellite_position</span><span class="o">.</span><span class="n">elevation_angle</span><span class="p">))</span>
+        <span class="n">air_mass</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">elevation_rad</span><span class="p">)</span>  <span class="c1"># Simplified plane-parallel</span>
+
+        <span class="c1"># Rayleigh scattering coefficient at sea level (approx)</span>
+        <span class="n">rayleigh_coeff</span> <span class="o">=</span> <span class="mf">0.0116</span> <span class="o">*</span> <span class="p">(</span><span class="mi">550</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_nm</span><span class="p">)</span> <span class="o">**</span> <span class="mi">4</span>  <span class="c1"># per km</span>
+
+        <span class="c1"># Mie scattering from aerosols</span>
+        <span class="n">mie_coeff</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atmosphere</span><span class="o">.</span><span class="n">aerosol_optical_depth</span> <span class="o">/</span> <span class="mf">8.0</span>  <span class="c1"># per km at zenith</span>
+
+        <span class="c1"># Effective scattering path through atmosphere (~8 km scale height)</span>
+        <span class="n">atm_path_km</span> <span class="o">=</span> <span class="mf">8.0</span> <span class="o">*</span> <span class="n">air_mass</span>
+
+        <span class="n">atmospheric_transmittance</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+            <span class="o">-</span><span class="p">(</span><span class="n">rayleigh_coeff</span> <span class="o">+</span> <span class="n">mie_coeff</span><span class="p">)</span> <span class="o">*</span> <span class="n">atm_path_km</span>
+        <span class="p">)</span>
+
+        <span class="c1"># 3. Cloud attenuation</span>
+        <span class="n">cloud_transmittance</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">atmosphere</span><span class="o">.</span><span class="n">cloud_optical_depth</span><span class="p">)</span>
+
+        <span class="c1"># 4. Pointing loss</span>
+        <span class="n">pointing_loss</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pointing_error</span> <span class="o">/</span> <span class="n">diffraction_angle</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># 5. Turbulence effects (Strehl ratio approximation)</span>
+        <span class="n">r0</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fried_parameter</span><span class="p">()</span>
+        <span class="n">strehl</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">math</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">telescope_diameter</span> <span class="o">/</span> <span class="n">r0</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">5</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)))</span> <span class="k">if</span> <span class="n">r0</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.1</span>
+        <span class="p">)</span>
+        <span class="n">strehl</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">strehl</span><span class="p">))</span>
+
+        <span class="c1"># Total efficiency</span>
+        <span class="n">total_efficiency</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">geometric_efficiency</span>
+            <span class="o">*</span> <span class="n">atmospheric_transmittance</span>
+            <span class="o">*</span> <span class="n">cloud_transmittance</span>
+            <span class="o">*</span> <span class="n">pointing_loss</span>
+            <span class="o">*</span> <span class="n">strehl</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Convert to loss fraction</span>
+        <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">total_efficiency</span><span class="p">))</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_fried_parameter</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate Fried parameter (r0) for atmospheric coherence.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Fried parameter in meters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cn2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atmosphere</span><span class="o">.</span><span class="n">turbulence_cn2</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_m</span>
+
+        <span class="c1"># Integrated path through turbulence (simplified)</span>
+        <span class="n">elevation_rad</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">satellite_position</span><span class="o">.</span><span class="n">elevation_angle</span><span class="p">))</span>
+        <span class="n">sec_z</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">elevation_rad</span><span class="p">)</span>
+
+        <span class="c1"># Hufnagel-Valley turbulence profile integration (simplified)</span>
+        <span class="n">integrated_cn2</span> <span class="o">=</span> <span class="n">cn2</span> <span class="o">*</span> <span class="mi">1000</span> <span class="o">*</span> <span class="n">sec_z</span>  <span class="c1"># Approximate</span>
+
+        <span class="n">r0</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.423</span> <span class="o">*</span> <span class="n">k</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">integrated_cn2</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="mi">3</span> <span class="o">/</span> <span class="mi">5</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">r0</span><span class="p">))</span>  <span class="c1"># Minimum 1 cm</span>
+
+<div class="viewcode-block" id="FreeSpaceOpticalChannel.get_channel_metrics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.FreeSpaceOpticalChannel.get_channel_metrics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_channel_metrics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get detailed channel metrics.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;slant_range_km&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">satellite_position</span><span class="o">.</span><span class="n">slant_range_km</span><span class="p">,</span>
+            <span class="s2">&quot;elevation_angle_deg&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">satellite_position</span><span class="o">.</span><span class="n">elevation_angle</span><span class="p">,</span>
+            <span class="s2">&quot;total_loss_db&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_loss_to_db</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">loss</span><span class="p">),</span>
+            <span class="s2">&quot;fried_parameter_cm&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fried_parameter</span><span class="p">()</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span>
+            <span class="s2">&quot;atmospheric_seeing_arcsec&quot;</span><span class="p">:</span> <span class="mf">0.98</span>
+            <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_m</span>
+            <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fried_parameter</span><span class="p">()</span>
+            <span class="o">*</span> <span class="mi">206265</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SatelliteQKD">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SatelliteQKD">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SatelliteQKD</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Satellite-based Quantum Key Distribution system.</span>
+
+<span class="sd">    Simulates QKD between a satellite and ground station with:</span>
+<span class="sd">    - Realistic orbital mechanics</span>
+<span class="sd">    - Time-varying channel conditions</span>
+<span class="sd">    - ML-based channel prediction for adaptive protocols</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SatelliteQKD.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SatelliteQKD.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">orbit_type</span><span class="p">:</span> <span class="n">OrbitType</span> <span class="o">=</span> <span class="n">OrbitType</span><span class="o">.</span><span class="n">LEO</span><span class="p">,</span>
+        <span class="n">altitude_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">500.0</span><span class="p">,</span>
+        <span class="n">ground_station_lat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">ground_station_lon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;BB84&quot;</span><span class="p">,</span>
+        <span class="n">channel_predictor</span><span class="p">:</span> <span class="n">ChannelPredictor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize satellite QKD system.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            orbit_type: Type of satellite orbit</span>
+<span class="sd">            altitude_km: Satellite altitude in km</span>
+<span class="sd">            ground_station_lat: Ground station latitude</span>
+<span class="sd">            ground_station_lon: Ground station longitude</span>
+<span class="sd">            protocol: QKD protocol to use</span>
+<span class="sd">            channel_predictor: Optional ML predictor. Created lazily if None.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">orbit_type</span> <span class="o">=</span> <span class="n">orbit_type</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">altitude_km</span> <span class="o">=</span> <span class="n">altitude_km</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ground_station_lat</span> <span class="o">=</span> <span class="n">ground_station_lat</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ground_station_lon</span> <span class="o">=</span> <span class="n">ground_station_lon</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol_name</span> <span class="o">=</span> <span class="n">protocol</span>
+
+        <span class="c1"># ML predictor for channel conditions</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_channel_predictor</span><span class="p">:</span> <span class="n">ChannelPredictor</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">channel_predictor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pass_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;SatelliteQKD initialized&quot;</span><span class="p">,</span>
+            <span class="n">orbit_type</span><span class="o">=</span><span class="n">orbit_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="n">altitude_km</span><span class="o">=</span><span class="n">altitude_km</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SatelliteQKD.simulate_pass">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SatelliteQKD.simulate_pass">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_pass</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">duration_seconds</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">300.0</span><span class="p">,</span>
+        <span class="n">time_steps</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">60</span><span class="p">,</span>
+        <span class="n">atmosphere</span><span class="p">:</span> <span class="n">AtmosphericProfile</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate a satellite pass over the ground station.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            duration_seconds: Pass duration in seconds</span>
+<span class="sd">            time_steps: Number of simulation time steps</span>
+<span class="sd">            atmosphere: Atmospheric conditions</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Pass simulation results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">atmosphere</span> <span class="o">=</span> <span class="n">atmosphere</span> <span class="ow">or</span> <span class="n">AtmosphericProfile</span><span class="p">()</span>
+
+        <span class="n">results</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;time_points&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;elevation_angles&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;channel_losses_db&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;key_rates_bps&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;qber_values&quot;</span><span class="p">:</span> <span class="p">[],</span>
+            <span class="s2">&quot;total_key_bits&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Simulate pass trajectory (simplified circular arc)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">time_steps</span><span class="p">):</span>
+            <span class="n">t</span> <span class="o">=</span> <span class="n">i</span> <span class="o">/</span> <span class="p">(</span><span class="n">time_steps</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">time_steps</span> <span class="o">&gt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span>
+
+            <span class="c1"># Elevation angle varies during pass — peak at middle of pass</span>
+            <span class="n">peak_elevation</span> <span class="o">=</span> <span class="mf">80.0</span>
+            <span class="n">min_elevation</span> <span class="o">=</span> <span class="mf">10.0</span>
+            <span class="n">elevation_angle</span> <span class="o">=</span> <span class="n">min_elevation</span> <span class="o">+</span> <span class="p">(</span>
+                <span class="n">peak_elevation</span> <span class="o">-</span> <span class="n">min_elevation</span>
+            <span class="p">)</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+
+            <span class="c1"># Calculate satellite position for this time step</span>
+            <span class="n">sat_lat</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_station_lat</span> <span class="o">+</span> <span class="mi">5</span> <span class="o">*</span> <span class="n">math</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>
+            <span class="n">sat_lon</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_station_lon</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="p">(</span><span class="n">t</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">)</span>
+
+            <span class="n">position</span> <span class="o">=</span> <span class="n">SatellitePosition</span><span class="o">.</span><span class="n">from_orbit</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">altitude_km</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ground_station_lat</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ground_station_lon</span><span class="p">,</span>
+                <span class="n">sat_lat</span><span class="p">,</span>
+                <span class="n">sat_lon</span><span class="p">,</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Compute the per-step QBER *before* using it to derive key rate.</span>
+            <span class="c1"># Higher elevation (closer to zenith) typically means lower QBER.</span>
+            <span class="n">qber</span> <span class="o">=</span> <span class="mf">0.02</span> <span class="o">+</span> <span class="mf">0.01</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">math</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">math</span><span class="o">.</span><span class="n">radians</span><span class="p">(</span><span class="n">elevation_angle</span><span class="p">)))</span>
+
+            <span class="c1"># Create channel for this position (atmospheric profile is constant</span>
+            <span class="c1"># within a pass — only the geometric path changes with elevation).</span>
+            <span class="n">channel</span> <span class="o">=</span> <span class="n">FreeSpaceOpticalChannel</span><span class="p">(</span><span class="n">position</span><span class="p">,</span> <span class="n">atmosphere</span><span class="p">)</span>
+
+            <span class="c1"># Estimate key rate (simplified model): throughput gated by per-step</span>
+            <span class="c1"># channel loss and qber.  Previously this used a hardcoded 2% QBER</span>
+            <span class="c1"># regardless of the per-step qber, silently understating key-rate</span>
+            <span class="c1"># variation across the pass.</span>
+            <span class="n">loss_db</span> <span class="o">=</span> <span class="n">channel</span><span class="o">.</span><span class="n">_loss_to_db</span><span class="p">(</span><span class="n">channel</span><span class="o">.</span><span class="n">loss</span><span class="p">)</span>
+            <span class="n">detector_rate</span> <span class="o">=</span> <span class="mf">1e6</span>  <span class="c1"># 1 MHz source rate</span>
+            <span class="n">key_rate</span> <span class="o">=</span> <span class="n">detector_rate</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">channel</span><span class="o">.</span><span class="n">loss</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.5</span>  <span class="c1"># sifting factor</span>
+            <span class="n">key_rate</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">key_rate</span> <span class="o">*</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">-</span> <span class="n">qber</span><span class="p">))</span>
+
+            <span class="c1"># Store results</span>
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;time_points&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span> <span class="o">*</span> <span class="n">duration_seconds</span> <span class="o">/</span> <span class="n">time_steps</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;elevation_angles&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">position</span><span class="o">.</span><span class="n">elevation_angle</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;channel_losses_db&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">loss_db</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;key_rates_bps&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">key_rate</span><span class="p">)</span>
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;qber_values&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qber</span><span class="p">)</span>
+
+            <span class="n">results</span><span class="p">[</span><span class="s2">&quot;total_key_bits&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">key_rate</span> <span class="o">*</span> <span class="p">(</span><span class="n">duration_seconds</span> <span class="o">/</span> <span class="n">time_steps</span><span class="p">)</span>
+
+        <span class="c1"># Store for ML training</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_pass_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;atmosphere&quot;</span><span class="p">:</span> <span class="n">atmosphere</span><span class="p">,</span>
+                <span class="s2">&quot;total_key_bits&quot;</span><span class="p">:</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;total_key_bits&quot;</span><span class="p">],</span>
+                <span class="s2">&quot;peak_elevation&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;elevation_angles&quot;</span><span class="p">]),</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Satellite pass simulated&quot;</span><span class="p">,</span>
+            <span class="n">total_key_bits</span><span class="o">=</span><span class="nb">int</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;total_key_bits&quot;</span><span class="p">]),</span>
+            <span class="n">peak_elevation</span><span class="o">=</span><span class="nb">max</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;elevation_angles&quot;</span><span class="p">]),</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="SatelliteQKD.train_channel_predictor">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SatelliteQKD.train_channel_predictor">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">train_channel_predictor</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Train ML model to predict channel conditions.</span>
+
+<span class="sd">        Uses historical pass data to train a predictor for</span>
+<span class="sd">        optimal transmission windows.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Training results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pass_history</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Need at least 5 passes for training&quot;</span><span class="p">}</span>
+
+        <span class="c1"># Prepare training data</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">pass_data</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pass_history</span><span class="p">:</span>
+            <span class="n">atm</span> <span class="o">=</span> <span class="n">pass_data</span><span class="p">[</span><span class="s2">&quot;atmosphere&quot;</span><span class="p">]</span>
+            <span class="n">features</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">atm</span><span class="o">.</span><span class="n">visibility_km</span><span class="p">,</span>
+                <span class="n">atm</span><span class="o">.</span><span class="n">turbulence_cn2</span> <span class="o">*</span> <span class="mf">1e14</span><span class="p">,</span>  <span class="c1"># Scale for numerical stability</span>
+                <span class="n">atm</span><span class="o">.</span><span class="n">aerosol_optical_depth</span><span class="p">,</span>
+                <span class="n">atm</span><span class="o">.</span><span class="n">cloud_optical_depth</span><span class="p">,</span>
+                <span class="n">pass_data</span><span class="p">[</span><span class="s2">&quot;peak_elevation&quot;</span><span class="p">],</span>
+            <span class="p">]</span>
+            <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+            <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">pass_data</span><span class="p">[</span><span class="s2">&quot;total_key_bits&quot;</span><span class="p">])</span>
+
+        <span class="n">X_arr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+        <span class="n">y_arr</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+        <span class="c1"># Create and train efficient predictor if none was injected</span>
+        <span class="n">predictor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channel_predictor</span>
+        <span class="k">if</span> <span class="n">predictor</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">..ml.efficient_models</span><span class="w"> </span><span class="kn">import</span> <span class="n">EfficientQKDPredictor</span>
+
+            <span class="n">predictor</span> <span class="o">=</span> <span class="n">EfficientQKDPredictor</span><span class="p">(</span>  <span class="c1"># type: ignore[assignment]</span>
+                <span class="n">input_dim</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+                <span class="n">max_memory_mb</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+                <span class="n">enable_quantization</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_channel_predictor</span> <span class="o">=</span> <span class="n">predictor</span>
+
+        <span class="k">assert</span> <span class="n">predictor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+        <span class="n">results</span> <span class="o">=</span> <span class="n">predictor</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_arr</span><span class="p">,</span> <span class="n">y_arr</span><span class="p">,</span> <span class="n">epochs</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;Channel predictor trained&quot;</span><span class="p">,</span>
+            <span class="n">epochs</span><span class="o">=</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;epochs_trained&quot;</span><span class="p">],</span>
+            <span class="n">final_loss</span><span class="o">=</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;final_train_loss&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+
+
+<div class="viewcode-block" id="SatelliteQKD.predict_key_yield">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SatelliteQKD.predict_key_yield">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict_key_yield</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">atmosphere</span><span class="p">:</span> <span class="n">AtmosphericProfile</span><span class="p">,</span>
+        <span class="n">peak_elevation</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">80.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict key yield for given conditions using ML model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            atmosphere: Expected atmospheric conditions</span>
+<span class="sd">            peak_elevation: Expected peak elevation angle</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Predicted total key bits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channel_predictor</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channel_predictor</span><span class="o">.</span><span class="n">is_trained</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span><span class="s2">&quot;Channel predictor not trained, using default estimate&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="mf">1e6</span>  <span class="c1"># Default estimate</span>
+
+        <span class="n">features</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="p">[</span>
+                    <span class="n">atmosphere</span><span class="o">.</span><span class="n">visibility_km</span><span class="p">,</span>
+                    <span class="n">atmosphere</span><span class="o">.</span><span class="n">turbulence_cn2</span> <span class="o">*</span> <span class="mf">1e14</span><span class="p">,</span>
+                    <span class="n">atmosphere</span><span class="o">.</span><span class="n">aerosol_optical_depth</span><span class="p">,</span>
+                    <span class="n">atmosphere</span><span class="o">.</span><span class="n">cloud_optical_depth</span><span class="p">,</span>
+                    <span class="n">peak_elevation</span><span class="p">,</span>
+                <span class="p">]</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">prediction</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channel_predictor</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">features</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="SatelliteQKD.get_mission_summary">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SatelliteQKD.get_mission_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_mission_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get summary of satellite QKD mission capabilities.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Mission capability summary</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;orbit_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">orbit_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;altitude_km&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">altitude_km</span><span class="p">,</span>
+            <span class="s2">&quot;ground_station&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">&quot;latitude&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_station_lat</span><span class="p">,</span>
+                <span class="s2">&quot;longitude&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">ground_station_lon</span><span class="p">,</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_name</span><span class="p">,</span>
+            <span class="s2">&quot;total_passes_simulated&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_pass_history</span><span class="p">),</span>
+            <span class="s2">&quot;ml_predictor_trained&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_channel_predictor</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span>
+                <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_channel_predictor</span><span class="o">.</span><span class="n">is_trained</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;estimated_daily_key_bits&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="nb">sum</span><span class="p">(</span><span class="n">p</span><span class="p">[</span><span class="s2">&quot;total_key_bits&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">p</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pass_history</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">:])</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_pass_history</span>
+                <span class="k">else</span> <span class="mi">0</span>
+            <span class="p">),</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<span class="c1"># Convenience function for quick satellite QKD simulation</span>
+<div class="viewcode-block" id="simulate_satellite_qkd">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.simulate_satellite_qkd">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">simulate_satellite_qkd</span><span class="p">(</span>
+    <span class="n">altitude_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">500.0</span><span class="p">,</span>
+    <span class="n">ground_lat</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">28.5</span><span class="p">,</span>  <span class="c1"># Cape Canaveral latitude</span>
+    <span class="n">ground_lon</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="o">-</span><span class="mf">80.6</span><span class="p">,</span>  <span class="c1"># Cape Canaveral longitude</span>
+    <span class="n">num_passes</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">5</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quick satellite QKD simulation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        altitude_km: Satellite altitude</span>
+<span class="sd">        ground_lat: Ground station latitude</span>
+<span class="sd">        ground_lon: Ground station longitude</span>
+<span class="sd">        num_passes: Number of passes to simulate</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Simulation results</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">sat_qkd</span> <span class="o">=</span> <span class="n">SatelliteQKD</span><span class="p">(</span>
+        <span class="n">orbit_type</span><span class="o">=</span><span class="n">OrbitType</span><span class="o">.</span><span class="n">LEO</span><span class="p">,</span>
+        <span class="n">altitude_km</span><span class="o">=</span><span class="n">altitude_km</span><span class="p">,</span>
+        <span class="n">ground_station_lat</span><span class="o">=</span><span class="n">ground_lat</span><span class="p">,</span>
+        <span class="n">ground_station_lon</span><span class="o">=</span><span class="n">ground_lon</span><span class="p">,</span>
+    <span class="p">)</span>
+
+    <span class="n">all_results</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">_i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_passes</span><span class="p">):</span>
+        <span class="c1"># Vary atmospheric conditions</span>
+        <span class="n">atmosphere</span> <span class="o">=</span> <span class="n">AtmosphericProfile</span><span class="p">(</span>
+            <span class="n">visibility_km</span><span class="o">=</span><span class="mi">15</span> <span class="o">+</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">secure_random</span><span class="p">(),</span>
+            <span class="n">turbulence_cn2</span><span class="o">=</span><span class="mf">1e-14</span> <span class="o">*</span> <span class="p">(</span><span class="mf">0.5</span> <span class="o">+</span> <span class="n">secure_random</span><span class="p">()),</span>
+            <span class="n">aerosol_optical_depth</span><span class="o">=</span><span class="mf">0.05</span> <span class="o">+</span> <span class="mf">0.1</span> <span class="o">*</span> <span class="n">secure_random</span><span class="p">(),</span>
+        <span class="p">)</span>
+
+        <span class="n">results</span> <span class="o">=</span> <span class="n">sat_qkd</span><span class="o">.</span><span class="n">simulate_pass</span><span class="p">(</span><span class="n">atmosphere</span><span class="o">=</span><span class="n">atmosphere</span><span class="p">)</span>
+        <span class="n">all_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">results</span><span class="p">)</span>
+
+    <span class="c1"># Train predictor if enough data</span>
+    <span class="k">if</span> <span class="n">num_passes</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+        <span class="n">sat_qkd</span><span class="o">.</span><span class="n">train_channel_predictor</span><span class="p">()</span>
+
+    <span class="k">return</span> <span class="p">{</span>
+        <span class="s2">&quot;mission_summary&quot;</span><span class="p">:</span> <span class="n">sat_qkd</span><span class="o">.</span><span class="n">get_mission_summary</span><span class="p">(),</span>
+        <span class="s2">&quot;pass_results&quot;</span><span class="p">:</span> <span class="n">all_results</span><span class="p">,</span>
+        <span class="s2">&quot;total_key_bits&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">r</span><span class="p">[</span><span class="s2">&quot;total_key_bits&quot;</span><span class="p">]</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="n">all_results</span><span class="p">),</span>
+    <span class="p">}</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

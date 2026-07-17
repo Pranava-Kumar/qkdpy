@@ -1,0 +1,371 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.utils.instrumentation &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.utils.instrumentation</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.utils.instrumentation</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Instrumentation and telemetry for QKDpy operations.</span>
+
+<span class="sd">Provides decorators and context managers for observing protocol execution,</span>
+<span class="sd">ML training, and other key operations with structured events and timing.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">functools</span><span class="w"> </span><span class="kn">import</span> <span class="n">wraps</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">TypeVar</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">F</span> <span class="o">=</span> <span class="n">TypeVar</span><span class="p">(</span><span class="s2">&quot;F&quot;</span><span class="p">,</span> <span class="n">bound</span><span class="o">=</span><span class="n">Callable</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="OperationSpan">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.utils.instrumentation.OperationSpan">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OperationSpan</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Context manager for timing and logging an operation.</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        with OperationSpan(&quot;protocol.execute&quot;, protocol=&quot;BB84&quot;, key_length=256) as span:</span>
+<span class="sd">            result = protocol.execute()</span>
+<span class="sd">            span.set_metadata(qber=result[&quot;qber&quot;], key_size=len(result[&quot;final_key&quot;]))</span>
+
+<span class="sd">    Emits structured ``operation_started`` and ``operation_completed`` /</span>
+<span class="sd">    ``operation_failed`` events with duration in milliseconds.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OperationSpan.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.utils.instrumentation.OperationSpan.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">operation</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;info&quot;</span><span class="p">,</span>
+        <span class="n">logger_override</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">context</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Start an operation span.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            operation: Stable operation name (e.g. ``protocol.execute``)</span>
+<span class="sd">            level: Log level for completion events</span>
+<span class="sd">            logger_override: Logger instance to use (defaults to module logger)</span>
+<span class="sd">            **context: Static context attached to all events in this span</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">operation</span> <span class="o">=</span> <span class="n">operation</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">level</span> <span class="o">=</span> <span class="n">level</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span> <span class="o">=</span> <span class="n">logger_override</span> <span class="ow">or</span> <span class="n">logger</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_context</span> <span class="o">=</span> <span class="n">context</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="OperationSpan.set_metadata">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.utils.instrumentation.OperationSpan.set_metadata">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">**</span><span class="n">metadata</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Attach additional metadata to the completion event.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;OperationSpan&quot;</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+            <span class="s2">&quot;operation_started&quot;</span><span class="p">,</span>
+            <span class="n">operation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span>
+            <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__exit__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">exc_type</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="ne">BaseException</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exc_val</span><span class="p">:</span> <span class="ne">BaseException</span> <span class="o">|</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">exc_tb</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">duration_ms</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">monotonic</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span><span class="p">)</span> <span class="o">*</span> <span class="mi">1000</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_start_time</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">exc_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">error</span><span class="p">(</span>
+                <span class="s2">&quot;operation_failed&quot;</span><span class="p">,</span>
+                <span class="n">operation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span>
+                <span class="n">duration_ms</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">duration_ms</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="n">error_type</span><span class="o">=</span><span class="n">exc_type</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="n">error</span><span class="o">=</span><span class="nb">str</span><span class="p">(</span><span class="n">exc_val</span><span class="p">)</span> <span class="k">if</span> <span class="n">exc_val</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">log_method</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">level</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="bp">self</span><span class="o">.</span><span class="n">_log</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+            <span class="n">log_method</span><span class="p">(</span>
+                <span class="s2">&quot;operation_completed&quot;</span><span class="p">,</span>
+                <span class="n">operation</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">operation</span><span class="p">,</span>
+                <span class="n">duration_ms</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">duration_ms</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_context</span><span class="p">,</span>
+                <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span><span class="p">,</span>
+            <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="instrument">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.utils.instrumentation.instrument">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">instrument</span><span class="p">(</span>
+    <span class="n">operation</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">level</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;info&quot;</span><span class="p">,</span>
+    <span class="n">log_args</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="n">log_result</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">F</span><span class="p">],</span> <span class="n">F</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decorator that instruments a function with an ``OperationSpan``.</span>
+
+<span class="sd">    Usage::</span>
+
+<span class="sd">        @instrument(&quot;qkd.bb84.execute&quot;)</span>
+<span class="sd">        def execute(self, ...):</span>
+<span class="sd">            ...</span>
+
+<span class="sd">    When *operation* is ``None``, the fully-qualified function name</span>
+<span class="sd">    ``module.function`` is used as the span name.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        operation: Stable operation name (defaults to ``module.function``)</span>
+<span class="sd">        level: Log level for the completion event</span>
+<span class="sd">        log_args: If ``True``, attach call arguments to the started event</span>
+<span class="sd">        log_result: If ``True``, attach the return value to the completed event</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">decorator</span><span class="p">(</span><span class="n">func</span><span class="p">:</span> <span class="n">F</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">F</span><span class="p">:</span>
+        <span class="n">op_name</span> <span class="o">=</span> <span class="n">operation</span> <span class="ow">or</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__module__</span><span class="si">}</span><span class="s2">.</span><span class="si">{</span><span class="n">func</span><span class="o">.</span><span class="vm">__qualname__</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="nd">@wraps</span><span class="p">(</span><span class="n">func</span><span class="p">)</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">wrapper</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">if</span> <span class="n">log_args</span><span class="p">:</span>
+                <span class="c1"># Skip &#39;self&#39; and &#39;cls&#39; for bound methods</span>
+                <span class="n">bound_args</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">if</span> <span class="n">args</span> <span class="ow">and</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">func</span><span class="p">,</span> <span class="s2">&quot;__qualname__&quot;</span><span class="p">):</span>
+                    <span class="k">pass</span>  <span class="c1"># handled below</span>
+                <span class="k">if</span> <span class="n">args</span><span class="p">:</span>
+                    <span class="n">bound_args</span><span class="p">[</span><span class="s2">&quot;_arg_count&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">kwargs</span><span class="p">:</span>
+                    <span class="c1"># Log kwarg keys only, not values (avoid secrets)</span>
+                    <span class="n">context</span><span class="p">[</span><span class="s2">&quot;kwargs&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">kwargs</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="n">context</span><span class="p">[</span><span class="s2">&quot;arg_count&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+            <span class="k">with</span> <span class="n">OperationSpan</span><span class="p">(</span><span class="n">op_name</span><span class="p">,</span> <span class="n">level</span><span class="o">=</span><span class="n">level</span><span class="p">,</span> <span class="o">**</span><span class="n">context</span><span class="p">)</span> <span class="k">as</span> <span class="n">span</span><span class="p">:</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">func</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">log_result</span> <span class="ow">and</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">span</span><span class="o">.</span><span class="n">set_metadata</span><span class="p">(</span><span class="n">has_result</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                <span class="k">return</span> <span class="n">result</span>
+
+        <span class="k">return</span> <span class="n">wrapper</span>  <span class="c1"># type: ignore</span>
+
+    <span class="k">return</span> <span class="n">decorator</span></div>
+
+
+
+<div class="viewcode-block" id="record_protocol_execution">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.utils.instrumentation.record_protocol_execution">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">record_protocol_execution</span><span class="p">(</span>
+    <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">final_key_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">is_secure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">duration_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">channel_stats</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Emit a structured event for a completed protocol execution.</span>
+
+<span class="sd">    This is a convenience helper for the emit-on-completion pattern,</span>
+<span class="sd">    separate from the per-step ``OperationSpan`` instrumentation.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        protocol_name: Name of the protocol (e.g. ``BB84``)</span>
+<span class="sd">        key_length: Requested key length in bits</span>
+<span class="sd">        qber: Measured quantum bit error rate</span>
+<span class="sd">        final_key_size: Size of the final distilled key</span>
+<span class="sd">        is_secure: Whether the protocol met the security threshold</span>
+<span class="sd">        duration_ms: Total execution time in milliseconds</span>
+<span class="sd">        channel_stats: Optional channel statistics dict</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;protocol_executed&quot;</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="o">=</span><span class="n">protocol_name</span><span class="p">,</span>
+        <span class="n">key_length</span><span class="o">=</span><span class="n">key_length</span><span class="p">,</span>
+        <span class="n">qber</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">qber</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+        <span class="n">final_key_size</span><span class="o">=</span><span class="n">final_key_size</span><span class="p">,</span>
+        <span class="n">is_secure</span><span class="o">=</span><span class="n">is_secure</span><span class="p">,</span>
+        <span class="n">duration_ms</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">duration_ms</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">channel_stats</span><span class="o">=</span><span class="n">channel_stats</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="record_ml_training">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.utils.instrumentation.record_ml_training">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">record_ml_training</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">protocol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">input_dim</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">training_samples</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">training_time_ms</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">final_loss</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">convergence_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Emit a structured event for ML model training.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model_name: Name of the ML model</span>
+<span class="sd">        protocol: QKD protocol the model targets</span>
+<span class="sd">        input_dim: Input feature dimensionality</span>
+<span class="sd">        training_samples: Number of training samples used</span>
+<span class="sd">        training_time_ms: Training duration in milliseconds</span>
+<span class="sd">        final_loss: Final training loss value</span>
+<span class="sd">        convergence_iterations: Iterations to convergence</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span>
+        <span class="s2">&quot;ml_training_completed&quot;</span><span class="p">,</span>
+        <span class="n">model</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
+        <span class="n">input_dim</span><span class="o">=</span><span class="n">input_dim</span><span class="p">,</span>
+        <span class="n">training_samples</span><span class="o">=</span><span class="n">training_samples</span><span class="p">,</span>
+        <span class="n">training_time_ms</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">training_time_ms</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span>
+        <span class="n">final_loss</span><span class="o">=</span><span class="n">final_loss</span><span class="p">,</span>
+        <span class="n">convergence_iterations</span><span class="o">=</span><span class="n">convergence_iterations</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="record_qber_diagnostic">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.utils.instrumentation.record_qber_diagnostic">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">record_qber_diagnostic</span><span class="p">(</span>
+    <span class="n">protocol</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="n">key_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="n">distance_km</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Emit a structured QBER diagnostic event.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        protocol: Protocol name</span>
+<span class="sd">        qber: Measured QBER</span>
+<span class="sd">        threshold: Security threshold</span>
+<span class="sd">        key_size: Sifted key size</span>
+<span class="sd">        distance_km: Simulated channel distance in km</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">level</span> <span class="o">=</span> <span class="s2">&quot;warning&quot;</span> <span class="k">if</span> <span class="n">qber</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="mf">0.8</span> <span class="k">else</span> <span class="s2">&quot;info&quot;</span>
+    <span class="n">log_fn</span> <span class="o">=</span> <span class="nb">getattr</span><span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">level</span><span class="p">,</span> <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+    <span class="n">log_fn</span><span class="p">(</span>
+        <span class="s2">&quot;qber_diagnostic&quot;</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="o">=</span><span class="n">protocol</span><span class="p">,</span>
+        <span class="n">qber</span><span class="o">=</span><span class="nb">round</span><span class="p">(</span><span class="n">qber</span><span class="p">,</span> <span class="mi">6</span><span class="p">),</span>
+        <span class="n">threshold</span><span class="o">=</span><span class="n">threshold</span><span class="p">,</span>
+        <span class="n">margin_pct</span><span class="o">=</span><span class="nb">round</span><span class="p">((</span><span class="mi">1</span> <span class="o">-</span> <span class="n">qber</span> <span class="o">/</span> <span class="n">threshold</span><span class="p">)</span> <span class="o">*</span> <span class="mi">100</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="k">if</span> <span class="n">threshold</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">key_size</span><span class="o">=</span><span class="n">key_size</span><span class="p">,</span>
+        <span class="n">distance_km</span><span class="o">=</span><span class="n">distance_km</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

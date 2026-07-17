@@ -1,0 +1,484 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.crypto.key_exchange &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.crypto.key_exchange</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.crypto.key_exchange</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Quantum key exchange protocols and utilities.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">json</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumChannel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_randint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">BB84</span><span class="p">,</span> <span class="n">E91</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.quantum_auth</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumAuthenticator</span>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumKeyExchange</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manages quantum key exchange between parties.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumKeyExchange.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the quantum key exchange system.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: Quantum channel for key exchange</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">authenticator</span> <span class="o">=</span> <span class="n">QuantumAuthenticator</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">successful_exchanges</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">failed_exchanges</span> <span class="o">=</span> <span class="mi">0</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.initiate_key_exchange">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.initiate_key_exchange">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">initiate_key_exchange</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">party_a</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">party_b</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">128</span><span class="p">,</span>
+        <span class="n">protocol</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;BB84&quot;</span><span class="p">,</span>
+        <span class="n">timeout</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">30.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initiate a quantum key exchange between two parties.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            party_a: Identifier for the first party</span>
+<span class="sd">            party_b: Identifier for the second party</span>
+<span class="sd">            key_length: Desired length of the exchanged key</span>
+<span class="sd">            protocol: QKD protocol to use (&#39;BB84&#39;, &#39;E91&#39;, etc.)</span>
+<span class="sd">            timeout: Maximum time to wait for exchange completion</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Session identifier if successful, None otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Generate a unique session identifier</span>
+        <span class="n">session_id</span> <span class="o">=</span> <span class="sa">f</span><span class="s2">&quot;exchange_</span><span class="si">{</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="w"> </span><span class="o">*</span><span class="w"> </span><span class="mi">1000000</span><span class="p">)</span><span class="si">}</span><span class="s2">_</span><span class="si">{</span><span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="w"> </span><span class="mi">10000</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+
+        <span class="c1"># Register both parties for authentication</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">authenticator</span><span class="o">.</span><span class="n">register_party</span><span class="p">(</span><span class="n">party_a</span><span class="p">,</span> <span class="n">key_length</span><span class="p">):</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">authenticator</span><span class="o">.</span><span class="n">register_party</span><span class="p">(</span><span class="n">party_b</span><span class="p">,</span> <span class="n">key_length</span><span class="p">):</span>
+            <span class="c1"># Clean up party A registration</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">authenticator</span><span class="o">.</span><span class="n">remove_party</span><span class="p">(</span><span class="n">party_a</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Create exchange session</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;party_a&quot;</span><span class="p">:</span> <span class="n">party_a</span><span class="p">,</span>
+            <span class="s2">&quot;party_b&quot;</span><span class="p">:</span> <span class="n">party_b</span><span class="p">,</span>
+            <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="n">protocol</span><span class="p">,</span>
+            <span class="s2">&quot;key_length&quot;</span><span class="p">:</span> <span class="n">key_length</span><span class="p">,</span>
+            <span class="s2">&quot;status&quot;</span><span class="p">:</span> <span class="s2">&quot;initiated&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;start_time&quot;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">(),</span>
+            <span class="s2">&quot;timeout&quot;</span><span class="p">:</span> <span class="n">timeout</span><span class="p">,</span>
+            <span class="s2">&quot;shared_key&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+            <span class="s2">&quot;qber&quot;</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">session_id</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.execute_key_exchange">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.execute_key_exchange">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute_key_exchange</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the quantum key exchange for a session.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            session_id: Session identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if exchange successful, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">session_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span>
+
+        <span class="c1"># Check if session has timed out</span>
+        <span class="k">if</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;start_time&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;timeout&quot;</span><span class="p">]:</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;timeout&quot;</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">failed_exchanges</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Execute the QKD protocol</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">..protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProtocol</span>
+
+            <span class="n">qkd</span><span class="p">:</span> <span class="n">BaseProtocol</span>
+            <span class="k">if</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;protocol&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;BB84&quot;</span><span class="p">:</span>
+                <span class="n">qkd</span> <span class="o">=</span> <span class="n">BB84</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;key_length&quot;</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;protocol&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;E91&quot;</span><span class="p">:</span>
+                <span class="n">qkd</span> <span class="o">=</span> <span class="n">E91</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;key_length&quot;</span><span class="p">])</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported protocol: </span><span class="si">{</span><span class="n">session</span><span class="p">[</span><span class="s1">&#39;protocol&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Run the protocol</span>
+            <span class="n">results</span> <span class="o">=</span> <span class="n">qkd</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+            <span class="c1"># Check if the exchange was successful</span>
+            <span class="n">final_key</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;final_key&quot;</span><span class="p">]</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;is_secure&quot;</span><span class="p">]</span>
+                <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">final_key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_key</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="p">):</span>
+                <span class="n">session</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;failed&quot;</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">failed_exchanges</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="c1"># Store the shared key</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;shared_key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;final_key&quot;</span><span class="p">]</span>
+            <span class="n">qber_val</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;qber&quot;</span><span class="p">]</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;qber&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">qber_val</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qber_val</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qber_val</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+                <span class="k">else</span> <span class="mf">1.0</span>
+            <span class="p">)</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;completed&quot;</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;end_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">successful_exchanges</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during key exchange: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;error&quot;</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;error&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">failed_exchanges</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.get_shared_key">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.get_shared_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_shared_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the shared key from a completed exchange.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            session_id: Session identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Shared key if exchange was successful, None otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">session_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+            <span class="n">shared_key</span> <span class="o">=</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;shared_key&quot;</span><span class="p">]</span>
+            <span class="c1"># Ensure we return a list of integers</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">shared_key</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+                <span class="k">return</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">shared_key</span><span class="p">]</span>
+        <span class="k">return</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.verify_key_exchange">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.verify_key_exchange">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">verify_key_exchange</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">party</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">challenge</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Verify a party&#39;s participation in a key exchange.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            session_id: Session identifier</span>
+<span class="sd">            party: Party identifier</span>
+<span class="sd">            challenge: Challenge string for authentication (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Authentication token if verification successful, None otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">session_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span>
+
+        <span class="c1"># Check if party is part of this exchange</span>
+        <span class="k">if</span> <span class="n">party</span> <span class="ow">not</span> <span class="ow">in</span> <span class="p">[</span><span class="n">session</span><span class="p">[</span><span class="s2">&quot;party_a&quot;</span><span class="p">],</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;party_b&quot;</span><span class="p">]]:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Check if exchange was successful</span>
+        <span class="k">if</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Authenticate the party</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">authenticator</span><span class="o">.</span><span class="n">authenticate_party</span><span class="p">(</span><span class="n">party</span><span class="p">,</span> <span class="n">challenge</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.get_session_info">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.get_session_info">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_session_info</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get information about a key exchange session.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            session_id: Session identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with session information, None if not found</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">session_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
+        <span class="c1"># Return a copy of the session information</span>
+        <span class="n">session_info</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Remove sensitive information</span>
+        <span class="k">if</span> <span class="s2">&quot;shared_key&quot;</span> <span class="ow">in</span> <span class="n">session_info</span><span class="p">:</span>
+            <span class="k">del</span> <span class="n">session_info</span><span class="p">[</span><span class="s2">&quot;shared_key&quot;</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">session_info</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.get_exchange_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.get_exchange_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_exchange_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get statistics about key exchanges.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with exchange statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">total_exchanges</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">successful_exchanges</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">failed_exchanges</span>
+        <span class="n">success_rate</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">successful_exchanges</span> <span class="o">/</span> <span class="n">total_exchanges</span> <span class="k">if</span> <span class="n">total_exchanges</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;successful_exchanges&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">successful_exchanges</span><span class="p">,</span>
+            <span class="s2">&quot;failed_exchanges&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">failed_exchanges</span><span class="p">,</span>
+            <span class="s2">&quot;total_exchanges&quot;</span><span class="p">:</span> <span class="n">total_exchanges</span><span class="p">,</span>
+            <span class="s2">&quot;success_rate&quot;</span><span class="p">:</span> <span class="n">success_rate</span><span class="p">,</span>
+            <span class="s2">&quot;active_sessions&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.cleanup_expired_sessions">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.cleanup_expired_sessions">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cleanup_expired_sessions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">max_age</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">3600.0</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Remove expired sessions.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            max_age: Maximum age of sessions in seconds</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Number of sessions cleaned up</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">expired_sessions</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">session_info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="c1"># Check if session has expired based on age</span>
+            <span class="n">session_age</span> <span class="o">=</span> <span class="n">current_time</span> <span class="o">-</span> <span class="n">session_info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;start_time&quot;</span><span class="p">,</span> <span class="n">current_time</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">session_age</span> <span class="o">&gt;</span> <span class="n">max_age</span><span class="p">:</span>
+                <span class="n">expired_sessions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">session_id</span><span class="p">)</span>
+
+        <span class="c1"># Remove expired sessions</span>
+        <span class="k">for</span> <span class="n">session_id</span> <span class="ow">in</span> <span class="n">expired_sessions</span><span class="p">:</span>
+            <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="n">expired_sessions</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.export_session_log">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.export_session_log">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">export_session_log</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">filename</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Export session log to a file.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            filename: Name of the file to export to</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if successful, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Prepare session data for export (without sensitive information)</span>
+            <span class="n">export_data</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">session_id</span><span class="p">,</span> <span class="n">session_info</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="c1"># Copy session info</span>
+                <span class="n">safe_info</span> <span class="o">=</span> <span class="n">session_info</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+                <span class="c1"># Remove sensitive information</span>
+                <span class="k">if</span> <span class="s2">&quot;shared_key&quot;</span> <span class="ow">in</span> <span class="n">safe_info</span><span class="p">:</span>
+                    <span class="k">del</span> <span class="n">safe_info</span><span class="p">[</span><span class="s2">&quot;shared_key&quot;</span><span class="p">]</span>
+
+                <span class="n">export_data</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">safe_info</span>
+
+            <span class="c1"># Write to file</span>
+            <span class="k">with</span> <span class="nb">open</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="s2">&quot;w&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">f</span><span class="p">:</span>
+                <span class="n">json</span><span class="o">.</span><span class="n">dump</span><span class="p">(</span><span class="n">export_data</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">indent</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="nb">str</span><span class="p">)</span>
+
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error exporting session log: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="QuantumKeyExchange.rotate_key">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.crypto.key_exchange.QuantumKeyExchange.rotate_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">rotate_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">session_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">new_key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Rotate the key for an active session.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            session_id: Session identifier</span>
+<span class="sd">            new_key_length: Length of the new key (optional, defaults to current key length)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if rotation successful, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">session_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="n">session</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exchange_sessions</span><span class="p">[</span><span class="n">session_id</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span> <span class="o">!=</span> <span class="s2">&quot;completed&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="c1"># Use current key length if not specified</span>
+        <span class="k">if</span> <span class="n">new_key_length</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">new_key_length</span> <span class="o">=</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;key_length&quot;</span><span class="p">]</span>
+
+        <span class="c1"># Initiate a new exchange for rotation</span>
+        <span class="c1"># In a real system, we might use the old key to authenticate the new exchange</span>
+        <span class="c1"># Here we simulate it by running a new protocol execution</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">..protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProtocol</span>
+
+            <span class="n">qkd</span><span class="p">:</span> <span class="n">BaseProtocol</span>
+            <span class="k">if</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;protocol&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;BB84&quot;</span><span class="p">:</span>
+                <span class="n">qkd</span> <span class="o">=</span> <span class="n">BB84</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="n">new_key_length</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">session</span><span class="p">[</span><span class="s2">&quot;protocol&quot;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;E91&quot;</span><span class="p">:</span>
+                <span class="n">qkd</span> <span class="o">=</span> <span class="n">E91</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="n">new_key_length</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="n">results</span> <span class="o">=</span> <span class="n">qkd</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="ow">not</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;is_secure&quot;</span><span class="p">]</span>
+                <span class="ow">or</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;final_key&quot;</span><span class="p">],</span> <span class="nb">list</span><span class="p">)</span>
+                <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="n">results</span><span class="p">[</span><span class="s2">&quot;final_key&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">0</span>
+            <span class="p">):</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+            <span class="c1"># Update session with new key</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;shared_key&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;final_key&quot;</span><span class="p">]</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;key_length&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">new_key_length</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;last_rotation_time&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="c1"># Update QBER statistics</span>
+            <span class="n">qber_val</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;qber&quot;</span><span class="p">]</span>
+            <span class="n">session</span><span class="p">[</span><span class="s2">&quot;qber&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">qber_val</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qber_val</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">qber_val</span><span class="p">,</span> <span class="nb">bool</span><span class="p">)</span>
+                <span class="k">else</span> <span class="mf">1.0</span>
+            <span class="p">)</span>
+
+            <span class="k">return</span> <span class="kc">True</span>
+
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Error during key rotation: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

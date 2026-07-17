@@ -1,0 +1,273 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>7. Cryptographic &amp; Enterprise Module &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">7. Cryptographic &amp; Enterprise Module</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/diagrams/07-crypto-enterprise.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="cryptographic-enterprise-module">
+<h1>7. Cryptographic &amp; Enterprise Module<a class="headerlink" href="#cryptographic-enterprise-module" title="Link to this heading"></a></h1>
+<section id="cryptographic-module">
+<h2>Cryptographic Module<a class="headerlink" href="#cryptographic-module" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>graph TD
+    subgraph QuantumHash[&quot;QuantumHash&quot;]
+        QH1[&quot;sha3_256_hash(data) → bytes&quot;]
+        QH2[&quot;shake_256_hash(data, length) → bytes&quot;]
+        QH3[&quot;quantum_hash(bits) → list[int]&quot;]
+        QH4[&quot;bits_to_bytes(bits) → bytes&quot;]
+        QH5[&quot;bytes_to_bits(bytes) → list[int]&quot;]
+        QH1 --&gt;|uses| QH4
+        QH2 --&gt;|uses| QH4
+        QH3 --&gt;|uses| QH1
+        QH3 --&gt;|uses| QH5
+    end
+
+    subgraph QuantumCommitment[&quot;QuantumCommitment&quot;]
+        QC1[&quot;commit(value, salt) → (id, key)&quot;]
+        QC2[&quot;verify_commitment(id, value, salt, key) → bool&quot;]
+        QC3[&quot;open_commitment(id, key) → dict&quot;]
+        QC4[&quot;get_commitment_info(id) → dict&quot;]
+        QC1 --&gt;|stores| MEM[(&quot;In-memory store&quot;)]
+        QC2 --&gt;|looks up| MEM
+        QC3 --&gt;|looks up| MEM
+    end
+
+    subgraph ZeroKnowledge[&quot;QuantumZeroKnowledge&quot;]
+        ZK1[&quot;schnorr_proof(secret, public) → (challenge, response)&quot;]
+        ZK2[&quot;verify_schnorr_proof(public, challenge, response) → bool&quot;]
+        ZK3[&quot;hash_based_commitment(value) → (commitment, path)&quot;]
+        ZK4[&quot;verify_hash_commitment(commitment, value, path) → bool&quot;]
+
+        ZK1 --&gt;|uses| MOD[&quot;Large prime modulus: 2²⁵⁵-19&quot;]
+        ZK1 --&gt;|uses| GEN[&quot;Generator: 2&quot;]
+    end
+
+    subgraph Encryption[&quot;Encryption / Decryption&quot;]
+        ENC1[&quot;encrypt(data, key) → ciphertext&quot;]
+        DEC1[&quot;decrypt(ciphertext, key) → data&quot;]
+    end
+
+    subgraph Auth[&quot;Authentication&quot;]
+        AUTH1[&quot;quantum_auth.authenticate(user, credentials)&quot;]
+        AUTH2[&quot;authentication.verify(message, signature)&quot;]
+    end
+
+    subgraph KeyExchange[&quot;Key Exchange&quot;]
+        KEX1[&quot;key_exchange.protocol(party_a, party_b)&quot;]
+    end
+
+    subgraph QRNG[&quot;Quantum RNG&quot;]
+        QRNG1[&quot;QuantumRNG.generate(num_bits) → list[int]&quot;]
+        QRNG2[&quot;QuantumRNG.entropy_source() → float&quot;]
+    end
+</pre></div>
+</div>
+</section>
+<section id="enterprise-features">
+<h2>Enterprise Features<a class="headerlink" href="#enterprise-features" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>graph TD
+    subgraph HSM[&quot;HSM Interface (PKCS#11)&quot;]
+        HSM1[&quot;HSMInterface&quot;]
+        HSM2[&quot;initialize(slot, pin)&quot;]
+        HSM3[&quot;generate_key(label, type, size)&quot;]
+        HSM4[&quot;store_key(key_id, label)&quot;]
+        HSM5[&quot;retrieve_key(label)&quot;]
+        HSM6[&quot;delete_key(label)&quot;]
+        HSM7[&quot;sign(data, key_label)&quot;]
+        HSM8[&quot;verify(data, signature, key_label)&quot;]
+        HSM9[&quot;encrypt(data, key_label)&quot;]
+        HSM10[&quot;decrypt(data, key_label)&quot;]
+
+        HSM1 --&gt; HSM2
+        HSM1 --&gt; HSM3
+        HSM1 --&gt; HSM4
+        HSM1 --&gt; HSM5
+        HSM1 --&gt; HSM6
+        HSM1 --&gt; HSM7
+        HSM1 --&gt; HSM8
+        HSM1 --&gt; HSM9
+        HSM1 --&gt; HSM10
+    end
+
+    subgraph Compliance[&quot;Compliance Framework&quot;]
+        C1[&quot;ComplianceFramework&quot;]
+        C2[&quot;check_compliance(standard)&quot;]
+        C3[&quot;generate_report()&quot;]
+        C4[&quot;STANDARDS: FIPS 140-2/3, ETSI QKD, ISO 27001&quot;]
+        C1 --&gt; C2
+        C1 --&gt; C3
+    end
+
+    subgraph Audit[&quot;Audit Logging&quot;]
+        AL1[&quot;AuditLogger&quot;]
+        AL2[&quot;log_event(event_type, data)&quot;]
+        AL3[&quot;query_logs(filters)&quot;]
+        AL4[&quot;export_logs(format)&quot;]
+        AL5[&quot;EVENTS: key_generation, key_rotation,&lt;br/&gt;key_deletion, access_attempt,&lt;br/&gt;compliance_check, protocol_run&quot;]
+        AL1 --&gt; AL2
+        AL1 --&gt; AL3
+        AL1 --&gt; AL4
+    end
+
+    subgraph QuantumSafe[&quot;Quantum-Safe Migration&quot;]
+        QS1[&quot;QuantumSafeMigrationToolkit&quot;]
+        QS2[&quot;inventory_crypto_systems()&quot;]
+        QS3[&quot;assess_vulnerability()&quot;]
+        QS4[&quot;generate_migration_plan()&quot;]
+        QS5[&quot;estimate_timeline()&quot;]
+
+        QS1 --&gt; QS2
+        QS1 --&gt; QS3
+        QS1 --&gt; QS4
+        QS1 --&gt; QS5
+    end
+
+    subgraph Licensing[&quot;License Management&quot;]
+        LM1[&quot;LicenseManager&quot;]
+        LM2[&quot;validate_license(key)&quot;]
+        LM3[&quot;get_tier() → community|pro|enterprise&quot;]
+        LM4[&quot;check_feature_access(feature)&quot;]
+
+        LM1 --&gt; LM2
+        LM1 --&gt; LM3
+        LM1 --&gt; LM4
+    end
+
+    style HSM fill:#e8eaf6,stroke:#283593
+    style Compliance fill:#e0f2f1,stroke:#004d40
+    style Audit fill:#fff3e0,stroke:#e65100
+    style QuantumSafe fill:#fce4ec,stroke:#b71c1c
+    style Licensing fill:#f3e5f5,stroke:#4a148c
+</pre></div>
+</div>
+</section>
+<section id="product-tiers">
+<h2>Product Tiers<a class="headerlink" href="#product-tiers" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart LR
+    subgraph COM[&quot;Community 🆓&quot;]
+        COM_F[&quot;• BB84, B92, E91 protocols&quot;]
+        COM_C[&quot;• Core quantum simulation&quot;]
+        COM_K[&quot;• Basic key management&quot;]
+        COM_V[&quot;• Visualization tools&quot;]
+    end
+
+    subgraph PRO[&quot;Professional 💳&quot;]
+        PRO_F[&quot;• All community features&quot;]
+        PRO_C[&quot;• CV-QKD, HD-QKD, SARG04&quot;]
+        PRO_K[&quot;• Advanced error correction&quot;]
+        PRO_M[&quot;• ML optimizers&quot;]
+        PRO_I[&quot;• Framework integrations&quot;]
+    end
+
+    subgraph ENT[&quot;Enterprise 🏢&quot;]
+        ENT_F[&quot;• All professional features&quot;]
+        ENT_C[&quot;• HSM interface (PKCS#11)&quot;]
+        ENT_K[&quot;• Compliance frameworks&quot;]
+        ENT_A[&quot;• Audit logging&quot;]
+        ENT_Q[&quot;• Quantum-safe migration&quot;]
+        ENT_S[&quot;• Satellite QKD simulation&quot;]
+        ENT_N[&quot;• Quantum network simulation&quot;]
+    end
+
+    COM --&gt; PRO --&gt; ENT
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

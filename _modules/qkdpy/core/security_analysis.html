@@ -1,0 +1,879 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.core.security_analysis &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.core.security_analysis</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.core.security_analysis</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Security analysis tools for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="AttackType">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.AttackType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AttackType</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Types of attacks that can be simulated in QKD protocols.&quot;&quot;&quot;</span>
+
+    <span class="n">INTERCEPT_RESEND</span> <span class="o">=</span> <span class="s2">&quot;intercept-resend&quot;</span>
+    <span class="n">PHASE_CLONE</span> <span class="o">=</span> <span class="s2">&quot;phase-cloning&quot;</span>
+    <span class="n">BEAM_SPLITTING</span> <span class="o">=</span> <span class="s2">&quot;beam-splitting&quot;</span>
+    <span class="n">FAKED_STATE</span> <span class="o">=</span> <span class="s2">&quot;faked-state&quot;</span>
+    <span class="n">TIME_SHIFT</span> <span class="o">=</span> <span class="s2">&quot;time-shift&quot;</span>
+    <span class="n">SPLIT_AND_DELAY</span> <span class="o">=</span> <span class="s2">&quot;split-and-delay&quot;</span>
+    <span class="n">COLLECTOR</span> <span class="o">=</span> <span class="s2">&quot;collector&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="SecurityAnalyzer">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SecurityAnalyzer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SecurityAnalyzer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Comprehensive security analysis tools for QKD protocols.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SecurityAnalyzer.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SecurityAnalyzer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the security analyzer.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">attack_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="SecurityAnalyzer.perform_security_analysis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SecurityAnalyzer.perform_security_analysis">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">perform_security_analysis</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">key_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">channel_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mean_photon_number</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">num_decoy_states</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform comprehensive security analysis for a QKD protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            protocol_name: Name of the QKD protocol</span>
+<span class="sd">            qber: Quantum Bit Error Rate</span>
+<span class="sd">            key_rate: Raw key generation rate</span>
+<span class="sd">            channel_loss: Channel loss in dB</span>
+<span class="sd">            mean_photon_number: Mean photon number per pulse</span>
+<span class="sd">            num_decoy_states: Number of decoy states used (0 for no decoys)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with comprehensive security analysis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate various security metrics</span>
+        <span class="n">security_threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_protocol_security_threshold</span><span class="p">(</span><span class="n">protocol_name</span><span class="p">)</span>
+        <span class="n">is_secure</span> <span class="o">=</span> <span class="n">qber</span> <span class="o">&lt;</span> <span class="n">security_threshold</span>
+
+        <span class="c1"># Calculate key rate after error correction and privacy amplification</span>
+        <span class="n">corrected_key_rate</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_corrected_key_rate</span><span class="p">(</span>
+            <span class="n">key_rate</span><span class="p">,</span> <span class="n">qber</span><span class="p">,</span> <span class="n">protocol_name</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate security parameters</span>
+        <span class="n">sifted_key_rate</span> <span class="o">=</span> <span class="n">key_rate</span> <span class="o">*</span> <span class="mf">0.5</span>  <span class="c1"># Rough estimate: ~50% sifted in BB84</span>
+
+        <span class="c1"># Estimate security parameters based on protocol</span>
+        <span class="n">security_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_security_parameters</span><span class="p">(</span>
+            <span class="n">protocol_name</span><span class="p">,</span> <span class="n">qber</span><span class="p">,</span> <span class="n">channel_loss</span><span class="p">,</span> <span class="n">mean_photon_number</span><span class="p">,</span> <span class="n">num_decoy_states</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Perform attack vulnerability analysis</span>
+        <span class="n">vulnerabilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_attack_vulnerabilities</span><span class="p">(</span>
+            <span class="n">protocol_name</span><span class="p">,</span> <span class="n">qber</span><span class="p">,</span> <span class="n">channel_loss</span><span class="p">,</span> <span class="n">mean_photon_number</span><span class="p">,</span> <span class="n">num_decoy_states</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate security level</span>
+        <span class="n">security_level</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_security_level</span><span class="p">(</span>
+            <span class="n">is_secure</span><span class="p">,</span> <span class="n">qber</span><span class="p">,</span> <span class="n">security_threshold</span><span class="p">,</span> <span class="n">vulnerabilities</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="n">protocol_name</span><span class="p">,</span>
+            <span class="s2">&quot;qber&quot;</span><span class="p">:</span> <span class="n">qber</span><span class="p">,</span>
+            <span class="s2">&quot;threshold&quot;</span><span class="p">:</span> <span class="n">security_threshold</span><span class="p">,</span>
+            <span class="s2">&quot;is_secure&quot;</span><span class="p">:</span> <span class="n">is_secure</span><span class="p">,</span>
+            <span class="s2">&quot;raw_key_rate&quot;</span><span class="p">:</span> <span class="n">key_rate</span><span class="p">,</span>
+            <span class="s2">&quot;corrected_key_rate&quot;</span><span class="p">:</span> <span class="n">corrected_key_rate</span><span class="p">,</span>
+            <span class="s2">&quot;sifted_key_rate&quot;</span><span class="p">:</span> <span class="n">sifted_key_rate</span><span class="p">,</span>
+            <span class="s2">&quot;security_level&quot;</span><span class="p">:</span> <span class="n">security_level</span><span class="p">,</span>
+            <span class="s2">&quot;security_parameters&quot;</span><span class="p">:</span> <span class="n">security_params</span><span class="p">,</span>
+            <span class="s2">&quot;vulnerabilities&quot;</span><span class="p">:</span> <span class="n">vulnerabilities</span><span class="p">,</span>
+            <span class="s2">&quot;analysis_timestamp&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">datetime64</span><span class="p">(</span><span class="s2">&quot;now&quot;</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_protocol_security_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the security threshold for a specific protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            protocol_name: Name of the QKD protocol</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Security threshold QBER value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">thresholds</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;BB84&quot;</span><span class="p">:</span> <span class="mf">0.11</span><span class="p">,</span>
+            <span class="s2">&quot;SARG04&quot;</span><span class="p">:</span> <span class="mf">0.146</span><span class="p">,</span>
+            <span class="s2">&quot;E91&quot;</span><span class="p">:</span> <span class="mf">0.071</span><span class="p">,</span>  <span class="c1"># For maximally entangled states</span>
+            <span class="s2">&quot;B92&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>
+            <span class="s2">&quot;six-state&quot;</span><span class="p">:</span> <span class="mf">0.127</span><span class="p">,</span>
+            <span class="s2">&quot;cv_qkd&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># For continuous variable (more tolerant to noise)</span>
+            <span class="s2">&quot;HD-QKD&quot;</span><span class="p">:</span> <span class="mf">0.15</span><span class="p">,</span>  <span class="c1"># Higher for high-dimensional protocols</span>
+            <span class="s2">&quot;decoy-state-bb84&quot;</span><span class="p">:</span> <span class="mf">0.12</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="n">thresholds</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">protocol_name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="mf">0.11</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_corrected_key_rate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">raw_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate corrected key rate after privacy amplification.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            raw_rate: Raw key generation rate</span>
+<span class="sd">            qber: Quantum Bit Error Rate</span>
+<span class="sd">            protocol_name: Name of the protocol</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Corrected key rate after privacy amplification</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">def</span><span class="w"> </span><span class="nf">h2</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">            </span><span class="sd">&quot;&quot;&quot;Binary entropy function.&quot;&quot;&quot;</span>
+            <span class="k">return</span> <span class="o">-</span><span class="n">x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">x</span><span class="p">)</span> <span class="k">if</span> <span class="mi">0</span> <span class="o">&lt;</span> <span class="n">x</span> <span class="o">&lt;</span> <span class="mi">1</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+        <span class="k">if</span> <span class="n">qber</span> <span class="o">&gt;</span> <span class="mf">0.5</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>  <span class="c1"># No secure key possible</span>
+
+        <span class="c1"># Calculate mutual information between Alice and Bob</span>
+        <span class="n">mutual_ab</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">h2</span><span class="p">(</span><span class="n">qber</span><span class="p">)</span>
+
+        <span class="c1"># Calculate upper bound on mutual information between Alice and Eve</span>
+        <span class="c1"># For BB84: I(A:E) &lt;= h2(qber)</span>
+        <span class="n">mutual_ae</span> <span class="o">=</span> <span class="n">h2</span><span class="p">(</span><span class="n">qber</span><span class="p">)</span>
+
+        <span class="c1"># Calculate final key rate after privacy amplification</span>
+        <span class="c1"># R &gt;= R_raw * (mutual_ab - mutual_ae)</span>
+        <span class="n">corrected_rate</span> <span class="o">=</span> <span class="n">raw_rate</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">mutual_ab</span> <span class="o">-</span> <span class="n">mutual_ae</span><span class="p">)</span>
+
+        <span class="c1"># Apply protocol-specific efficiency factors</span>
+        <span class="n">efficiency_factors</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;BB84&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># Sifting factor</span>
+            <span class="s2">&quot;SARG04&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>
+            <span class="s2">&quot;E91&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>
+            <span class="s2">&quot;B92&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="s2">&quot;six-state&quot;</span><span class="p">:</span> <span class="mf">0.33</span><span class="p">,</span>
+            <span class="s2">&quot;cv_qkd&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span>  <span class="c1"># Higher for CV protocols</span>
+            <span class="s2">&quot;HD-QKD&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>  <span class="c1"># Depends on dimension</span>
+            <span class="s2">&quot;decoy-state-bb84&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="n">efficiency</span> <span class="o">=</span> <span class="n">efficiency_factors</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">protocol_name</span><span class="o">.</span><span class="n">lower</span><span class="p">(),</span> <span class="mf">0.5</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">corrected_rate</span> <span class="o">*</span> <span class="n">efficiency</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_estimate_security_parameters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">channel_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mean_photon_number</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">num_decoy_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate key security parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            protocol_name: Name of the protocol</span>
+<span class="sd">            qber: Quantum Bit Error Rate</span>
+<span class="sd">            channel_loss: Channel loss in dB</span>
+<span class="sd">            mean_photon_number: Mean photon number per pulse</span>
+<span class="sd">            num_decoy_states: Number of decoy states</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with security parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate various security metrics</span>
+        <span class="n">visibility</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">qber</span> <span class="k">if</span> <span class="n">qber</span> <span class="o">&lt;</span> <span class="mf">0.5</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="n">error_rate_db</span> <span class="o">=</span> <span class="o">-</span><span class="mi">10</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">qber</span><span class="p">)</span> <span class="k">if</span> <span class="n">qber</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Calculate probability of multi-photon pulses (for weak coherent sources)</span>
+        <span class="n">prob_multi</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">1</span>
+            <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">mean_photon_number</span><span class="p">)</span>
+            <span class="o">-</span> <span class="n">mean_photon_number</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">mean_photon_number</span><span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate decoy-state effectiveness</span>
+        <span class="n">decoy_effectiveness</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">num_decoy_states</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">)</span>  <span class="c1"># Simplified</span>
+
+        <span class="c1"># Calculate expected key rate based on channel parameters</span>
+        <span class="n">transmittance</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">**</span> <span class="p">(</span><span class="o">-</span><span class="n">channel_loss</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)</span>
+        <span class="n">expected_rate</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">transmittance</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">mean_photon_number</span><span class="p">)</span> <span class="o">*</span> <span class="n">mean_photon_number</span>
+        <span class="p">)</span>  <span class="c1"># Single photon rate</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;visibility&quot;</span><span class="p">:</span> <span class="n">visibility</span><span class="p">,</span>
+            <span class="s2">&quot;error_rate_db&quot;</span><span class="p">:</span> <span class="n">error_rate_db</span><span class="p">,</span>
+            <span class="s2">&quot;probability_multi_photon&quot;</span><span class="p">:</span> <span class="n">prob_multi</span><span class="p">,</span>
+            <span class="s2">&quot;decoy_effectiveness&quot;</span><span class="p">:</span> <span class="n">decoy_effectiveness</span><span class="p">,</span>
+            <span class="s2">&quot;expected_single_photon_rate&quot;</span><span class="p">:</span> <span class="n">expected_rate</span><span class="p">,</span>
+            <span class="s2">&quot;photon_count_statistics&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_photon_statistics</span><span class="p">(</span>
+                <span class="n">mean_photon_number</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_photon_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mean_photon_number</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze photon number statistics.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            mean_photon_number: Mean photon number per pulse</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with photon statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">prob_vacuum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">mean_photon_number</span><span class="p">)</span>
+        <span class="n">prob_single</span> <span class="o">=</span> <span class="n">mean_photon_number</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">mean_photon_number</span><span class="p">)</span>
+        <span class="n">prob_multi</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">prob_vacuum</span> <span class="o">-</span> <span class="n">prob_single</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;prob_vacuum&quot;</span><span class="p">:</span> <span class="n">prob_vacuum</span><span class="p">,</span>
+            <span class="s2">&quot;prob_single&quot;</span><span class="p">:</span> <span class="n">prob_single</span><span class="p">,</span>
+            <span class="s2">&quot;prob_multi&quot;</span><span class="p">:</span> <span class="n">prob_multi</span><span class="p">,</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_attack_vulnerabilities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">channel_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mean_photon_number</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">num_decoy_states</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="n">AttackType</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze vulnerabilities to different types of attacks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            protocol_name: Name of the protocol</span>
+<span class="sd">            qber: Quantum Bit Error Rate</span>
+<span class="sd">            channel_loss: Channel loss in dB</span>
+<span class="sd">            mean_photon_number: Mean photon number per pulse</span>
+<span class="sd">            num_decoy_states: Number of decoy states</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping attack types to vulnerability assessments</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vulnerabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">AttackType</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="c1"># Intercept-Resend Attack</span>
+        <span class="n">ir_success_prob</span> <span class="o">=</span> <span class="mf">0.25</span>  <span class="c1"># Basic intercept-resend success probability</span>
+        <span class="n">ir_detected</span> <span class="o">=</span> <span class="n">qber</span> <span class="o">&gt;</span> <span class="mf">0.125</span>  <span class="c1"># Detection threshold</span>
+        <span class="n">vulnerabilities</span><span class="p">[</span><span class="n">AttackType</span><span class="o">.</span><span class="n">INTERCEPT_RESEND</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;success_probability&quot;</span><span class="p">:</span> <span class="n">ir_success_prob</span><span class="p">,</span>
+            <span class="s2">&quot;detectability&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">ir_detected</span><span class="p">),</span>
+            <span class="s2">&quot;impact&quot;</span><span class="p">:</span> <span class="mf">0.25</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Photon Number Splitting (PNS) / Beam Splitting Attack</span>
+        <span class="c1"># More vulnerable with higher mean photon number and no decoy states</span>
+        <span class="n">pns_vuln</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">mean_photon_number</span> <span class="o">*</span> <span class="mf">2.0</span><span class="p">)</span>  <span class="c1"># Higher for multi-photon</span>
+        <span class="k">if</span> <span class="n">num_decoy_states</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">pns_vuln</span> <span class="o">*=</span> <span class="mf">0.1</span>  <span class="c1"># Decoy states significantly reduce PNS vulnerability</span>
+        <span class="n">vulnerabilities</span><span class="p">[</span><span class="n">AttackType</span><span class="o">.</span><span class="n">BEAM_SPLITTING</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;vulnerability_level&quot;</span><span class="p">:</span> <span class="n">pns_vuln</span><span class="p">,</span>
+            <span class="s2">&quot;detectability&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>  <span class="c1"># PNS is hard to detect</span>
+            <span class="s2">&quot;impact&quot;</span><span class="p">:</span> <span class="n">pns_vuln</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Phase-Clone Attack</span>
+        <span class="n">pc_vuln</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">qber</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># More effective at higher QBER</span>
+        <span class="n">vulnerabilities</span><span class="p">[</span><span class="n">AttackType</span><span class="o">.</span><span class="n">PHASE_CLONE</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;vulnerability_level&quot;</span><span class="p">:</span> <span class="n">pc_vuln</span><span class="p">,</span>
+            <span class="s2">&quot;detectability&quot;</span><span class="p">:</span> <span class="mf">0.3</span><span class="p">,</span>
+            <span class="s2">&quot;impact&quot;</span><span class="p">:</span> <span class="n">pc_vuln</span> <span class="o">*</span> <span class="mf">0.6</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Faked-State Attack</span>
+        <span class="c1"># More relevant for protocols using phase encoding</span>
+        <span class="n">fs_vuln</span> <span class="o">=</span> <span class="mf">0.1</span> <span class="k">if</span> <span class="n">protocol_name</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;BB84&quot;</span><span class="p">,</span> <span class="s2">&quot;decoy-state-bb84&quot;</span><span class="p">]</span> <span class="k">else</span> <span class="mf">0.05</span>
+        <span class="n">vulnerabilities</span><span class="p">[</span><span class="n">AttackType</span><span class="o">.</span><span class="n">FAKED_STATE</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;vulnerability_level&quot;</span><span class="p">:</span> <span class="n">fs_vuln</span><span class="p">,</span>
+            <span class="s2">&quot;detectability&quot;</span><span class="p">:</span> <span class="mf">0.8</span><span class="p">,</span>  <span class="c1"># Usually detectable</span>
+            <span class="s2">&quot;impact&quot;</span><span class="p">:</span> <span class="n">fs_vuln</span> <span class="o">*</span> <span class="mf">0.8</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Time-Shift Attack</span>
+        <span class="c1"># Depends on detector characteristics (simplified)</span>
+        <span class="n">ts_vuln</span> <span class="o">=</span> <span class="mf">0.15</span> <span class="o">*</span> <span class="p">(</span><span class="n">channel_loss</span> <span class="o">/</span> <span class="mf">20.0</span><span class="p">)</span>  <span class="c1"># Higher loss = higher vulnerability</span>
+        <span class="n">vulnerabilities</span><span class="p">[</span><span class="n">AttackType</span><span class="o">.</span><span class="n">TIME_SHIFT</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;vulnerability_level&quot;</span><span class="p">:</span> <span class="n">ts_vuln</span><span class="p">,</span>
+            <span class="s2">&quot;detectability&quot;</span><span class="p">:</span> <span class="mf">0.6</span><span class="p">,</span>
+            <span class="s2">&quot;impact&quot;</span><span class="p">:</span> <span class="n">ts_vuln</span> <span class="o">*</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">vulnerabilities</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_security_level</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">is_secure</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+        <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">vulnerabilities</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="n">AttackType</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate overall security level (1-5 scale).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            is_secure: Whether the protocol is secure based on QBER</span>
+<span class="sd">            qber: Quantum Bit Error Rate</span>
+<span class="sd">            threshold: Security threshold</span>
+<span class="sd">            vulnerabilities: Vulnerability analysis results</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Security level from 1 (insecure) to 5 (very secure)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">is_secure</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mi">1</span>  <span class="c1"># Not secure based on QBER</span>
+
+        <span class="c1"># Calculate security score based on how far QBER is from threshold</span>
+        <span class="n">safety_margin</span> <span class="o">=</span> <span class="p">(</span><span class="n">threshold</span> <span class="o">-</span> <span class="n">qber</span><span class="p">)</span> <span class="o">/</span> <span class="n">threshold</span>
+        <span class="n">safety_score</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">2.0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">safety_margin</span> <span class="o">*</span> <span class="mf">3.0</span><span class="p">))</span>  <span class="c1"># Scale 0-2</span>
+
+        <span class="c1"># Calculate vulnerability score (lower is better)</span>
+        <span class="n">max_vulnerability</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="nb">max</span><span class="p">(</span>
+                <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;vulnerability_level&quot;</span><span class="p">,</span> <span class="n">v</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;success_probability&quot;</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
+                <span class="k">for</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">vulnerabilities</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="n">vulnerabilities</span>
+            <span class="k">else</span> <span class="mi">0</span>
+        <span class="p">)</span>
+        <span class="n">vulnerability_score</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">max_vulnerability</span><span class="p">)</span>  <span class="c1"># Scale 0-2</span>
+
+        <span class="c1"># Calculate protocol robustness score</span>
+        <span class="n">robustness_score</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Base score</span>
+
+        <span class="n">total_score</span> <span class="o">=</span> <span class="n">safety_score</span> <span class="o">+</span> <span class="n">vulnerability_score</span> <span class="o">+</span> <span class="n">robustness_score</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mi">5</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">total_score</span><span class="p">))))</span>
+
+<div class="viewcode-block" id="SecurityAnalyzer.simulate_attack">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SecurityAnalyzer.simulate_attack">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_attack</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">attack_type</span><span class="p">:</span> <span class="n">AttackType</span><span class="p">,</span>
+        <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">original_qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">channel_loss</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">mean_photon_number</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate the effects of a specific attack on the protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            attack_type: Type of attack to simulate</span>
+<span class="sd">            protocol_name: Name of the protocol</span>
+<span class="sd">            original_qber: Original QBER without attack</span>
+<span class="sd">            channel_loss: Channel loss in dB</span>
+<span class="sd">            mean_photon_number: Mean photon number per pulse</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with attack simulation results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate the impact of the attack</span>
+        <span class="k">if</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="n">AttackType</span><span class="o">.</span><span class="n">INTERCEPT_RESEND</span><span class="p">:</span>
+            <span class="c1"># Intercept-resend adds 25% error rate on top of existing errors</span>
+            <span class="n">new_qber</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">original_qber</span> <span class="o">+</span> <span class="mf">0.25</span><span class="p">)</span>
+            <span class="n">info_gained</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># Eve gains 50% of information</span>
+            <span class="n">detection_prob</span> <span class="o">=</span> <span class="mf">0.75</span> <span class="k">if</span> <span class="n">original_qber</span> <span class="o">&lt;</span> <span class="mf">0.1</span> <span class="k">else</span> <span class="mf">0.95</span>
+
+        <span class="k">elif</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="n">AttackType</span><span class="o">.</span><span class="n">BEAM_SPLITTING</span><span class="p">:</span>
+            <span class="c1"># PNS attack - more effective with higher mean photon number</span>
+            <span class="n">pns_effect</span> <span class="o">=</span> <span class="mf">0.3</span> <span class="o">*</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="mf">1.0</span><span class="p">,</span> <span class="n">mean_photon_number</span> <span class="o">-</span> <span class="mf">0.1</span>
+            <span class="p">)</span>  <span class="c1"># Only effective if &gt; 0.1</span>
+            <span class="n">new_qber</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">original_qber</span> <span class="o">+</span> <span class="n">pns_effect</span> <span class="o">*</span> <span class="mf">0.1</span><span class="p">)</span>
+            <span class="n">info_gained</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span>
+                <span class="mf">1.0</span><span class="p">,</span> <span class="n">mean_photon_number</span> <span class="o">*</span> <span class="mf">0.8</span>
+            <span class="p">)</span>  <span class="c1"># More info with more photons</span>
+            <span class="n">detection_prob</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># PNS is hard to detect</span>
+
+        <span class="k">elif</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="n">AttackType</span><span class="o">.</span><span class="n">PHASE_CLONE</span><span class="p">:</span>
+            <span class="c1"># Phase cloning attack - adds error and lets Eve gain information</span>
+            <span class="n">new_qber</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">original_qber</span> <span class="o">+</span> <span class="mf">0.15</span><span class="p">)</span>
+            <span class="n">info_gained</span> <span class="o">=</span> <span class="mf">0.4</span>
+            <span class="n">detection_prob</span> <span class="o">=</span> <span class="mf">0.3</span>
+
+        <span class="k">elif</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="n">AttackType</span><span class="o">.</span><span class="n">FAKED_STATE</span><span class="p">:</span>
+            <span class="c1"># Faked state attack on detectors</span>
+            <span class="n">new_qber</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">original_qber</span> <span class="o">+</span> <span class="mf">0.05</span><span class="p">)</span>
+            <span class="n">info_gained</span> <span class="o">=</span> <span class="mf">0.6</span>
+            <span class="n">detection_prob</span> <span class="o">=</span> <span class="mf">0.9</span>  <span class="c1"># Usually detectable</span>
+
+        <span class="k">elif</span> <span class="n">attack_type</span> <span class="o">==</span> <span class="n">AttackType</span><span class="o">.</span><span class="n">TIME_SHIFT</span><span class="p">:</span>
+            <span class="c1"># Time shift attack exploiting detector dead time</span>
+            <span class="n">ts_effect</span> <span class="o">=</span> <span class="mf">0.08</span> <span class="o">*</span> <span class="p">(</span><span class="n">channel_loss</span> <span class="o">/</span> <span class="mf">10.0</span><span class="p">)</span>  <span class="c1"># More effective at higher loss</span>
+            <span class="n">new_qber</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">original_qber</span> <span class="o">+</span> <span class="n">ts_effect</span><span class="p">)</span>
+            <span class="n">info_gained</span> <span class="o">=</span> <span class="mf">0.35</span>
+            <span class="n">detection_prob</span> <span class="o">=</span> <span class="mf">0.6</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Default values for other attacks</span>
+            <span class="n">new_qber</span> <span class="o">=</span> <span class="n">original_qber</span> <span class="o">+</span> <span class="mf">0.1</span>
+            <span class="n">info_gained</span> <span class="o">=</span> <span class="mf">0.2</span>
+            <span class="n">detection_prob</span> <span class="o">=</span> <span class="mf">0.4</span>
+
+        <span class="c1"># Calculate impact on key rate</span>
+        <span class="n">key_rate_reduction</span> <span class="o">=</span> <span class="n">info_gained</span> <span class="o">*</span> <span class="mf">0.5</span>  <span class="c1"># Simplified model</span>
+
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;attack_type&quot;</span><span class="p">:</span> <span class="n">attack_type</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+            <span class="s2">&quot;original_qber&quot;</span><span class="p">:</span> <span class="n">original_qber</span><span class="p">,</span>
+            <span class="s2">&quot;new_qber&quot;</span><span class="p">:</span> <span class="n">new_qber</span><span class="p">,</span>
+            <span class="s2">&quot;qber_increase&quot;</span><span class="p">:</span> <span class="n">new_qber</span> <span class="o">-</span> <span class="n">original_qber</span><span class="p">,</span>
+            <span class="s2">&quot;information_gained_by_eve&quot;</span><span class="p">:</span> <span class="n">info_gained</span><span class="p">,</span>
+            <span class="s2">&quot;detection_probability&quot;</span><span class="p">:</span> <span class="n">detection_prob</span><span class="p">,</span>
+            <span class="s2">&quot;key_rate_reduction_factor&quot;</span><span class="p">:</span> <span class="n">key_rate_reduction</span><span class="p">,</span>
+            <span class="s2">&quot;effective_key_rate&quot;</span><span class="p">:</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">key_rate_reduction</span><span class="p">),</span>
+            <span class="s2">&quot;security_compromise_level&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_compromise_level</span><span class="p">(</span>
+                <span class="n">new_qber</span><span class="p">,</span> <span class="n">protocol_name</span>
+            <span class="p">),</span>
+        <span class="p">}</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">attack_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_compromise_level</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span> <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the level of security compromise.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qber: QBER value</span>
+<span class="sd">            protocol_name: Name of the protocol</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Security compromise level as a string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_protocol_security_threshold</span><span class="p">(</span><span class="n">protocol_name</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">qber</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="mf">1.5</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;severe&quot;</span>
+        <span class="k">elif</span> <span class="n">qber</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;moderate&quot;</span>
+        <span class="k">elif</span> <span class="n">qber</span> <span class="o">&gt;</span> <span class="n">threshold</span> <span class="o">*</span> <span class="mf">0.7</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;minor&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;none&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="QBERAnalysis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QBERAnalysis">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QBERAnalysis</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analysis tools specifically for QBER (Quantum Bit Error Rate).&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QBERAnalysis.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QBERAnalysis.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize QBER analysis tools.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="QBERAnalysis.analyze_qber_trends">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QBERAnalysis.analyze_qber_trends">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">analyze_qber_trends</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">qber_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">time_intervals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">window_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze trends in QBER values over time.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qber_values: List of QBER values over time</span>
+<span class="sd">            time_intervals: Optional time intervals for each QBER value</span>
+<span class="sd">            window_size: Size of sliding window for trend analysis</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with QBER trend analysis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;Need at least 2 QBER values for trend analysis&quot;</span><span class="p">}</span>
+
+        <span class="c1"># Calculate basic statistics</span>
+        <span class="n">mean_qber</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">qber_values</span><span class="p">))</span>
+        <span class="n">std_qber</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">qber_values</span><span class="p">))</span>
+        <span class="n">min_qber</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">qber_values</span><span class="p">))</span>
+        <span class="n">max_qber</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">qber_values</span><span class="p">))</span>
+
+        <span class="c1"># Calculate trends</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="n">recent_values</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">qber_values</span><span class="p">[</span><span class="o">-</span><span class="n">window_size</span><span class="p">:]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">window_size</span>
+                <span class="k">else</span> <span class="n">qber_values</span>
+            <span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">recent_values</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="c1"># Linear trend over recent values</span>
+                <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">recent_values</span><span class="p">))</span>
+                <span class="n">slope</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">polyfit</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">recent_values</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">trend_direction</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="s2">&quot;increasing&quot;</span>
+                    <span class="k">if</span> <span class="n">slope</span> <span class="o">&gt;</span> <span class="mf">0.001</span>
+                    <span class="k">else</span> <span class="s2">&quot;decreasing&quot;</span> <span class="k">if</span> <span class="n">slope</span> <span class="o">&lt;</span> <span class="o">-</span><span class="mf">0.001</span> <span class="k">else</span> <span class="s2">&quot;stable&quot;</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">slope</span> <span class="o">=</span> <span class="mf">0.0</span>
+                <span class="n">trend_direction</span> <span class="o">=</span> <span class="s2">&quot;insufficient_data&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">slope</span> <span class="o">=</span> <span class="mf">0.0</span>
+            <span class="n">trend_direction</span> <span class="o">=</span> <span class="s2">&quot;insufficient_data&quot;</span>
+
+        <span class="c1"># Detect anomalies</span>
+        <span class="n">anomalies</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detect_qber_anomalies</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;mean_qber&quot;</span><span class="p">:</span> <span class="n">mean_qber</span><span class="p">,</span>
+            <span class="s2">&quot;std_qber&quot;</span><span class="p">:</span> <span class="n">std_qber</span><span class="p">,</span>
+            <span class="s2">&quot;min_qber&quot;</span><span class="p">:</span> <span class="n">min_qber</span><span class="p">,</span>
+            <span class="s2">&quot;max_qber&quot;</span><span class="p">:</span> <span class="n">max_qber</span><span class="p">,</span>
+            <span class="s2">&quot;qber_trend_slope&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">slope</span><span class="p">),</span>
+            <span class="s2">&quot;trend_direction&quot;</span><span class="p">:</span> <span class="n">trend_direction</span><span class="p">,</span>
+            <span class="s2">&quot;anomalies_detected&quot;</span><span class="p">:</span> <span class="n">anomalies</span><span class="p">,</span>
+            <span class="s2">&quot;num_anomalies&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">anomalies</span><span class="p">),</span>
+            <span class="s2">&quot;qber_stability&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_stability_score</span><span class="p">(</span><span class="n">qber_values</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_detect_qber_anomalies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qber_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect anomalous QBER values using statistical methods.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qber_values: List of QBER values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of indices where anomalies were detected</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>
+
+        <span class="n">anomalies</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">mean_qber</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span>
+        <span class="n">std_qber</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">std_qber</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">[]</span>  <span class="c1"># All values are the same</span>
+
+        <span class="c1"># Use 2-sigma as threshold for anomaly detection</span>
+        <span class="n">threshold</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">std_qber</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">qber</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">qber_values</span><span class="p">):</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">qber</span> <span class="o">-</span> <span class="n">mean_qber</span><span class="p">)</span> <span class="o">&gt;</span> <span class="n">threshold</span><span class="p">:</span>
+                <span class="n">anomalies</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">anomalies</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_stability_score</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qber_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate a stability score for QBER values.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qber_values: List of QBER values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Stability score between 0 (unstable) and 1 (stable)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.5</span>  <span class="c1"># Unknown stability</span>
+
+        <span class="c1"># Calculate coefficient of variation</span>
+        <span class="n">mean_qber</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span>
+        <span class="n">std_qber</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">qber_values</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">mean_qber</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span> <span class="k">if</span> <span class="n">std_qber</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+
+        <span class="n">cv</span> <span class="o">=</span> <span class="n">std_qber</span> <span class="o">/</span> <span class="n">mean_qber</span> <span class="k">if</span> <span class="n">mean_qber</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Convert to stability score (inverse relationship)</span>
+        <span class="c1"># Lower CV = more stable</span>
+        <span class="n">stability_score</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">cv</span><span class="p">)</span>  <span class="c1"># Maps to [0, 1]</span>
+
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">stability_score</span><span class="p">)))</span></div>
+
+
+
+<div class="viewcode-block" id="SideChannelAnalyzer">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SideChannelAnalyzer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SideChannelAnalyzer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyzer for side-channel attacks in QKD systems.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SideChannelAnalyzer.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SideChannelAnalyzer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize side-channel analyzer.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="SideChannelAnalyzer.analyze_detector_side_channels">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SideChannelAnalyzer.analyze_detector_side_channels">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">analyze_detector_side_channels</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">detector_timing</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]],</span>
+        <span class="n">detector_settings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze potential side-channel vulnerabilities in detectors.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            detector_timing: List of (timestamp, detection_occurred) tuples</span>
+<span class="sd">            detector_settings: List of detector configuration parameters</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with side-channel analysis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Analyze timing correlations</span>
+        <span class="n">timing_analysis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_detector_timing</span><span class="p">(</span><span class="n">detector_timing</span><span class="p">)</span>
+
+        <span class="c1"># Analyze setting correlations</span>
+        <span class="n">setting_analysis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_analyze_detector_settings</span><span class="p">(</span><span class="n">detector_settings</span><span class="p">)</span>
+
+        <span class="c1"># Identify potential vulnerabilities</span>
+        <span class="n">vulnerabilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_identify_detector_vulnerabilities</span><span class="p">(</span>
+            <span class="n">timing_analysis</span><span class="p">,</span> <span class="n">setting_analysis</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;timing_analysis&quot;</span><span class="p">:</span> <span class="n">timing_analysis</span><span class="p">,</span>
+            <span class="s2">&quot;setting_analysis&quot;</span><span class="p">:</span> <span class="n">setting_analysis</span><span class="p">,</span>
+            <span class="s2">&quot;vulnerabilities&quot;</span><span class="p">:</span> <span class="n">vulnerabilities</span><span class="p">,</span>
+            <span class="s2">&quot;recommendations&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_generate_detector_recommendations</span><span class="p">(</span><span class="n">vulnerabilities</span><span class="p">),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_detector_timing</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">detector_timing</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze detector timing for side-channel vulnerabilities.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            detector_timing: List of (timestamp, detection_occurred) tuples</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with timing analysis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">detector_timing</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;No timing data provided&quot;</span><span class="p">}</span>
+
+        <span class="c1"># Calculate detection rate</span>
+        <span class="n">detections</span> <span class="o">=</span> <span class="p">[</span><span class="n">detected</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">detected</span> <span class="ow">in</span> <span class="n">detector_timing</span> <span class="k">if</span> <span class="n">detected</span><span class="p">]</span>
+        <span class="n">detection_rate</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">detections</span><span class="p">)</span> <span class="k">if</span> <span class="n">detections</span> <span class="k">else</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Analyze timing patterns</span>
+        <span class="n">intervals</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">last_detection_time</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">timestamp</span><span class="p">,</span> <span class="n">detected</span> <span class="ow">in</span> <span class="n">detector_timing</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">detected</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">last_detection_time</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="n">intervals</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">timestamp</span> <span class="o">-</span> <span class="n">last_detection_time</span><span class="p">)</span>
+                <span class="n">last_detection_time</span> <span class="o">=</span> <span class="n">timestamp</span>
+
+        <span class="n">timing_variance</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="n">intervals</span><span class="p">))</span> <span class="k">if</span> <span class="n">intervals</span> <span class="k">else</span> <span class="mf">0.0</span>
+        <span class="n">mean_interval</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">intervals</span><span class="p">))</span> <span class="k">if</span> <span class="n">intervals</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;detection_rate&quot;</span><span class="p">:</span> <span class="n">detection_rate</span><span class="p">,</span>
+            <span class="s2">&quot;mean_interval&quot;</span><span class="p">:</span> <span class="n">mean_interval</span><span class="p">,</span>
+            <span class="s2">&quot;timing_variance&quot;</span><span class="p">:</span> <span class="n">timing_variance</span><span class="p">,</span>
+            <span class="s2">&quot;possible_timing_attacks&quot;</span><span class="p">:</span> <span class="n">timing_variance</span> <span class="o">&gt;</span> <span class="mf">1e-12</span><span class="p">,</span>  <span class="c1"># Arbitrary threshold</span>
+            <span class="s2">&quot;number_of_intervals&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">intervals</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_analyze_detector_settings</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">detector_settings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Analyze detector settings for correlations.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            detector_settings: List of detector configuration parameters</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with setting analysis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">detector_settings</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;No detector settings provided&quot;</span><span class="p">}</span>
+
+        <span class="c1"># Check for correlations between settings and outcomes</span>
+        <span class="n">keys</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">detector_settings</span><span class="p">:</span>
+            <span class="n">keys</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">setting</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="n">correlations</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span><span class="n">setting</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">setting</span> <span class="ow">in</span> <span class="n">detector_settings</span><span class="p">]</span>
+            <span class="c1"># Calculate variance as a simple measure of setting stability</span>
+            <span class="n">correlations</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
+                <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
+                <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
+                <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
+                <span class="s2">&quot;possible_vulnerability&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">values</span><span class="p">)</span>
+                <span class="o">&gt;</span> <span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># If settings vary significantly</span>
+            <span class="p">}</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;parameter_correlations&quot;</span><span class="p">:</span> <span class="n">correlations</span><span class="p">,</span>
+            <span class="s2">&quot;number_of_settings&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">detector_settings</span><span class="p">),</span>
+        <span class="p">}</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_identify_detector_vulnerabilities</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">timing_analysis</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">],</span> <span class="n">setting_analysis</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Identify potential detector side-channel vulnerabilities.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            timing_analysis: Results from timing analysis</span>
+<span class="sd">            setting_analysis: Results from setting analysis</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of identified vulnerabilities</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vulnerabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Check for timing-based vulnerabilities</span>
+        <span class="k">if</span> <span class="n">timing_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;possible_timing_attacks&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+            <span class="n">vulnerabilities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;timing_correlation&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Check for setting-based vulnerabilities</span>
+        <span class="n">param_correlations</span> <span class="o">=</span> <span class="n">setting_analysis</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;parameter_correlations&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">for</span> <span class="n">param</span><span class="p">,</span> <span class="n">stats</span> <span class="ow">in</span> <span class="n">param_correlations</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">stats</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;possible_vulnerability&quot;</span><span class="p">,</span> <span class="kc">False</span><span class="p">):</span>
+                <span class="n">vulnerabilities</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;setting_correlation_</span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">vulnerabilities</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_detector_recommendations</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">vulnerabilities</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate recommendations based on identified vulnerabilities.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            vulnerabilities: List of identified vulnerabilities</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of recommendations</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">recommendations</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">if</span> <span class="s2">&quot;timing_correlation&quot;</span> <span class="ow">in</span> <span class="n">vulnerabilities</span><span class="p">:</span>
+            <span class="n">recommendations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s2">&quot;Implement randomized detector timing or add temporal jitter&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">vuln</span> <span class="ow">in</span> <span class="n">vulnerabilities</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">vuln</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s2">&quot;setting_correlation_&quot;</span><span class="p">):</span>
+                <span class="n">param</span> <span class="o">=</span> <span class="n">vuln</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;setting_correlation_&quot;</span><span class="p">,</span> <span class="s2">&quot;&quot;</span><span class="p">)</span>
+                <span class="n">recommendations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Stabilize </span><span class="si">{</span><span class="n">param</span><span class="si">}</span><span class="s2"> parameter or add randomization&quot;</span>
+                <span class="p">)</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">vulnerabilities</span><span class="p">:</span>
+            <span class="n">recommendations</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s2">&quot;No significant detector side-channel vulnerabilities detected&quot;</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">recommendations</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

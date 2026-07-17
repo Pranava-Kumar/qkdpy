@@ -1,0 +1,202 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quick Start &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="API Reference" href="api.html" />
+    <link rel="prev" title="Installation" href="installation.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Quick Start</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#enterprise-quick-start">Enterprise Quick Start</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quick Start</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/quickstart.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quick-start">
+<h1>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h1>
+<p>Here’s a simple example of using the BB84 protocol to generate a secure key:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">BB84</span><span class="p">,</span> <span class="n">QuantumChannel</span><span class="p">,</span> <span class="n">Qubit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.core</span><span class="w"> </span><span class="kn">import</span> <span class="n">PauliX</span><span class="p">,</span> <span class="n">Hadamard</span> <span class="c1"># Import individual gate classes</span>
+
+<span class="c1"># Create a quantum channel with some noise</span>
+<span class="n">channel</span> <span class="o">=</span> <span class="n">QuantumChannel</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">noise_model</span><span class="o">=</span><span class="s1">&#39;depolarizing&#39;</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+<span class="c1"># Create a BB84 protocol instance</span>
+<span class="n">bb84</span> <span class="o">=</span> <span class="n">BB84</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Execute the protocol</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">bb84</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+<span class="c1"># Print the results</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generated key: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;final_key&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;QBER: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;qber&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Is secure: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;is_secure&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Example of flexible qubit measurement and collapse</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">plus</span><span class="p">()</span> <span class="c1"># Qubit in superposition</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Qubit state before measurement: </span><span class="si">{</span><span class="n">q</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">measurement_result</span> <span class="o">=</span> <span class="n">q</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="s2">&quot;hadamard&quot;</span><span class="p">)</span> <span class="c1"># Measure without collapsing internal state</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Measurement result: </span><span class="si">{</span><span class="n">measurement_result</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Qubit state after measurement (still in superposition): </span><span class="si">{</span><span class="n">q</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">q</span><span class="o">.</span><span class="n">collapse_state</span><span class="p">(</span><span class="n">measurement_result</span><span class="p">,</span> <span class="s2">&quot;hadamard&quot;</span><span class="p">)</span> <span class="c1"># Explicitly collapse the state</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Qubit state after explicit collapse: </span><span class="si">{</span><span class="n">q</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Example of applying a gate</span>
+<span class="n">q_zero</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Qubit state before X gate: </span><span class="si">{</span><span class="n">q_zero</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="n">q_zero</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">PauliX</span><span class="p">()</span><span class="o">.</span><span class="n">matrix</span><span class="p">)</span> <span class="c1"># Apply Pauli-X gate</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Qubit state after X gate: </span><span class="si">{</span><span class="n">q_zero</span><span class="o">.</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For High-Dimensional QKD:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy</span><span class="w"> </span><span class="kn">import</span> <span class="n">HDQKD</span><span class="p">,</span> <span class="n">QuantumChannel</span>
+
+<span class="c1"># Create a quantum channel with some noise</span>
+<span class="n">channel</span> <span class="o">=</span> <span class="n">QuantumChannel</span><span class="p">(</span><span class="n">loss</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">noise_model</span><span class="o">=</span><span class="s1">&#39;depolarizing&#39;</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+
+<span class="c1"># Create an HD-QKD protocol instance with 4-dimensional qudits</span>
+<span class="n">hd_qkd</span> <span class="o">=</span> <span class="n">HDQKD</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">dimension</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+
+<span class="c1"># Execute the protocol</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">hd_qkd</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+<span class="c1"># Print the results</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Generated key: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;final_key&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;QBER: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;qber&#39;</span><span class="p">]</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Is secure: </span><span class="si">{</span><span class="n">results</span><span class="p">[</span><span class="s1">&#39;is_secure&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># The execution is automatically instrumented with:</span>
+<span class="c1"># - OperationSpan tracing (duration, success/failure)</span>
+<span class="c1"># - QBER diagnostics (warning if QBER approaches threshold)</span>
+<span class="c1"># - Protocol execution event recording</span>
+</pre></div>
+</div>
+<section id="enterprise-quick-start">
+<h2>Enterprise Quick Start<a class="headerlink" href="#enterprise-quick-start" title="Link to this heading"></a></h2>
+<p>To use enterprise features (requires ENTERPRISE or PREMIUM tier):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>qkdpy<span class="o">[</span>enterprise<span class="o">]</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">QKDPY_PRODUCT_TIER</span><span class="o">=</span>enterprise
+</pre></div>
+</div>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.enterprise</span><span class="w"> </span><span class="kn">import</span> <span class="n">ComplianceChecker</span><span class="p">,</span> <span class="n">ComplianceStandard</span>
+
+<span class="c1"># Run compliance checks against industry standards</span>
+<span class="n">checker</span> <span class="o">=</span> <span class="n">ComplianceChecker</span><span class="p">()</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">checker</span><span class="o">.</span><span class="n">check_compliance</span><span class="p">(</span>
+    <span class="p">[</span><span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_014</span><span class="p">,</span>
+     <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">NIST_SP_800_57</span><span class="p">]</span>
+<span class="p">)</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">export_markdown</span><span class="p">())</span>
+
+<span class="c1"># Check overall compliance status</span>
+<span class="k">if</span> <span class="n">report</span><span class="o">.</span><span class="n">overall_compliant</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;All checks passed!&quot;</span><span class="p">)</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Failed checks: </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">failed_checks</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">get_failed_checks</span><span class="p">():</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  - [</span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">severity</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">requirement</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    Recommendation: </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">recommendation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="examples.html"><span class="std std-doc">examples</span></a> page for more advanced usage including the quantum-safe migration toolkit and observability features.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="installation.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="api.html" class="btn btn-neutral float-right" title="API Reference" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

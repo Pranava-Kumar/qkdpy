@@ -1,0 +1,638 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.core.photon_source &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.core.photon_source</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.core.photon_source</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Realistic photon source models for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span><span class="p">,</span> <span class="n">Protocol</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_randint</span><span class="p">,</span> <span class="n">secure_random</span>
+
+
+<div class="viewcode-block" id="PhotonSourceState">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSourceState">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhotonSourceState</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enum for different photon source states.&quot;&quot;&quot;</span>
+
+    <span class="n">VACUUM</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">SINGLE_PHOTON</span> <span class="o">=</span> <span class="mi">1</span>
+    <span class="n">MULTI_PHOTON</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># Multiple photons in the same mode</span></div>
+
+
+
+<span class="n">PhotonPulse</span> <span class="o">=</span> <span class="p">(</span>
+    <span class="nb">tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PhotonSourceState</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]</span>
+    <span class="o">|</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]</span>
+<span class="p">)</span>
+
+
+<div class="viewcode-block" id="PhotonPulseGenerator">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonPulseGenerator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhotonPulseGenerator</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol for photon pulse generators.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PhotonPulseGenerator.generate_photon_pulse">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonPulseGenerator.generate_photon_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_photon_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhotonPulse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a photon pulse at the specified time.&quot;&quot;&quot;</span>
+        <span class="o">...</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PhotonSource">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSource">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhotonSource</span><span class="p">(</span><span class="n">PhotonPulseGenerator</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for realistic photon sources in QKD systems.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PhotonSource.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSource.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Photon Source&quot;</span><span class="p">,</span>
+        <span class="n">pulse_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e9</span><span class="p">,</span>  <span class="c1"># 1 GHz pulse rate</span>
+        <span class="n">wavelength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1550e-9</span><span class="p">,</span>  <span class="c1"># 1550 nm telecom wavelength</span>
+        <span class="n">timing_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>  <span class="c1"># 1 ps timing jitter (std)</span>
+        <span class="n">power</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>  <span class="c1"># 1 µW average power</span>
+        <span class="n">efficiency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># 10% coupling efficiency</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a basic photon source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name of the photon source</span>
+<span class="sd">            pulse_rate: Rate of photon pulse generation (Hz)</span>
+<span class="sd">            wavelength: Wavelength of the photons (m)</span>
+<span class="sd">            timing_jitter: Standard deviation of timing jitter (s)</span>
+<span class="sd">            power: Average optical power in watts</span>
+<span class="sd">            efficiency: Coupling efficiency to the quantum channel</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">name</span> <span class="o">=</span> <span class="n">name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pulse_rate</span> <span class="o">=</span> <span class="n">pulse_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span> <span class="o">=</span> <span class="n">wavelength</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span> <span class="o">=</span> <span class="n">timing_jitter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">power</span> <span class="o">=</span> <span class="n">power</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">efficiency</span> <span class="o">=</span> <span class="n">efficiency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">photon_energy</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_calculate_photon_energy</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_calculate_photon_energy</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the energy of a single photon.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Energy of a single photon in Joules</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="mf">6.626e-34</span>  <span class="c1"># Planck constant</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">299792458</span>  <span class="c1"># Speed of light</span>
+        <span class="k">return</span> <span class="n">h</span> <span class="o">*</span> <span class="n">c</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength</span>
+
+<div class="viewcode-block" id="PhotonSource.generate_photon_pulse">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSource.generate_photon_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_photon_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">PhotonPulse</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a photon pulse at the specified time.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            time: Time of pulse generation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (photon_present, actual_time_with_jitter)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Add timing jitter</span>
+        <span class="n">actual_time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">)</span>
+
+        <span class="c1"># Determine if a photon is generated based on power/energy</span>
+        <span class="c1"># For now, assume a simple model where photons are regularly generated</span>
+        <span class="n">photon_present</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">efficiency</span>
+
+        <span class="k">return</span> <span class="n">photon_present</span><span class="p">,</span> <span class="n">actual_time</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="WeakCoherentSource">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.WeakCoherentSource">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">WeakCoherentSource</span><span class="p">(</span><span class="n">PhotonSource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model for weak coherent photon sources used in QKD.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="WeakCoherentSource.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.WeakCoherentSource.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Weak Coherent Source&quot;</span><span class="p">,</span>
+        <span class="n">pulse_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e9</span><span class="p">,</span>
+        <span class="n">wavelength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1550e-9</span><span class="p">,</span>
+        <span class="n">mean_photon_number</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">timing_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
+        <span class="n">power</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">efficiency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a weak coherent source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name of the photon source</span>
+<span class="sd">            pulse_rate: Rate of photon pulse generation (Hz)</span>
+<span class="sd">            wavelength: Wavelength of the photons (m)</span>
+<span class="sd">            mean_photon_number: Average number of photons per pulse</span>
+<span class="sd">            timing_jitter: Standard deviation of timing jitter (s)</span>
+<span class="sd">            power: Average optical power in watts</span>
+<span class="sd">            efficiency: Coupling efficiency to the quantum channel</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pulse_rate</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">timing_jitter</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">efficiency</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">mean_photon_number</span> <span class="o">=</span> <span class="n">mean_photon_number</span></div>
+
+
+<div class="viewcode-block" id="WeakCoherentSource.generate_photon_pulse">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.WeakCoherentSource.generate_photon_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_photon_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PhotonSourceState</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a photon pulse from the weak coherent source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            time: Time of pulse generation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (photon_state, actual_time_with_jitter)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Add timing jitter</span>
+        <span class="n">actual_time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">)</span>
+
+        <span class="c1"># Generate photon number according to Poisson distribution</span>
+        <span class="n">photon_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_photon_number</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">photon_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">VACUUM</span><span class="p">,</span> <span class="n">actual_time</span>
+        <span class="k">elif</span> <span class="n">photon_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">SINGLE_PHOTON</span><span class="p">,</span> <span class="n">actual_time</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">MULTI_PHOTON</span><span class="p">,</span> <span class="n">actual_time</span></div>
+
+
+<div class="viewcode-block" id="WeakCoherentSource.get_photon_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.WeakCoherentSource.get_photon_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_photon_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_pulses</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get photon statistics for the source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_pulses: Number of pulses to simulate</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with photon statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">vacuum_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">single_photon_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">multi_photon_count</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pulses</span><span class="p">):</span>
+            <span class="n">state</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_photon_pulse</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">state</span> <span class="o">==</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">VACUUM</span><span class="p">:</span>
+                <span class="n">vacuum_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">elif</span> <span class="n">state</span> <span class="o">==</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">SINGLE_PHOTON</span><span class="p">:</span>
+                <span class="n">single_photon_count</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">multi_photon_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;vacuum_probability&quot;</span><span class="p">:</span> <span class="n">vacuum_count</span> <span class="o">/</span> <span class="n">num_pulses</span><span class="p">,</span>
+            <span class="s2">&quot;single_photon_probability&quot;</span><span class="p">:</span> <span class="n">single_photon_count</span> <span class="o">/</span> <span class="n">num_pulses</span><span class="p">,</span>
+            <span class="s2">&quot;multi_photon_probability&quot;</span><span class="p">:</span> <span class="n">multi_photon_count</span> <span class="o">/</span> <span class="n">num_pulses</span><span class="p">,</span>
+            <span class="s2">&quot;mean_photon_number&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_photon_number</span><span class="p">,</span>
+            <span class="s2">&quot;g2_factor&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">mean_photon_number</span><span class="p">,</span>  <span class="c1"># For coherent state</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="DecoyStateSource">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DecoyStateSource">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DecoyStateSource</span><span class="p">(</span><span class="n">PhotonSource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model for decoy state photon sources used to enhance security.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DecoyStateSource.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DecoyStateSource.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;Decoy State Source&quot;</span><span class="p">,</span>
+        <span class="n">pulse_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e9</span><span class="p">,</span>
+        <span class="n">wavelength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1550e-9</span><span class="p">,</span>
+        <span class="n">signal_mean_photon_number</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">decoy_mean_photon_numbers</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">timing_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>
+        <span class="n">power</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>
+        <span class="n">efficiency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">decoy_probability</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>  <span class="c1"># 10% decoy state pulses</span>
+        <span class="n">random_number_generator</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">Generator</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a decoy state source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name of the photon source</span>
+<span class="sd">            pulse_rate: Rate of photon pulse generation (Hz)</span>
+<span class="sd">            wavelength: Wavelength of the photons (m)</span>
+<span class="sd">            signal_mean_photon_number: Average photons for signal pulses</span>
+<span class="sd">            decoy_mean_photon_numbers: List of average photons for decoy pulses</span>
+<span class="sd">            timing_jitter: Standard deviation of timing jitter (s)</span>
+<span class="sd">            power: Average optical power in watts</span>
+<span class="sd">            efficiency: Coupling efficiency to the quantum channel</span>
+<span class="sd">            decoy_probability: Probability of sending a decoy pulse</span>
+<span class="sd">            random_number_generator: Random number generator instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">name</span><span class="p">,</span> <span class="n">pulse_rate</span><span class="p">,</span> <span class="n">wavelength</span><span class="p">,</span> <span class="n">timing_jitter</span><span class="p">,</span> <span class="n">power</span><span class="p">,</span> <span class="n">efficiency</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">signal_mean_photon_number</span> <span class="o">=</span> <span class="n">signal_mean_photon_number</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">decoy_mean_photon_numbers</span> <span class="o">=</span> <span class="n">decoy_mean_photon_numbers</span> <span class="ow">or</span> <span class="p">[</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.01</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">decoy_probability</span> <span class="o">=</span> <span class="n">decoy_probability</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rng</span> <span class="o">=</span> <span class="n">random_number_generator</span> <span class="ow">or</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">default_rng</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="DecoyStateSource.generate_signal_pulse">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DecoyStateSource.generate_signal_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_signal_pulse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PhotonSourceState</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a signal photon pulse.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            time: Time of pulse generation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (photon_state, actual_time_with_jitter, pulse_type)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">actual_time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">)</span>
+        <span class="n">photon_count</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">signal_mean_photon_number</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">photon_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">VACUUM</span>
+        <span class="k">elif</span> <span class="n">photon_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">SINGLE_PHOTON</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">MULTI_PHOTON</span>
+
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">actual_time</span><span class="p">,</span> <span class="s2">&quot;signal&quot;</span></div>
+
+
+<div class="viewcode-block" id="DecoyStateSource.generate_decoy_pulse">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DecoyStateSource.generate_decoy_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_decoy_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PhotonSourceState</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a decoy photon pulse.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            time: Time of pulse generation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (photon_state, actual_time_with_jitter, pulse_type)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">actual_time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">)</span>
+
+        <span class="c1"># Randomly select a decoy intensity</span>
+        <span class="n">decoy_intensity</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decoy_mean_photon_numbers</span><span class="p">)</span>
+        <span class="n">photon_count</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rng</span><span class="o">.</span><span class="n">poisson</span><span class="p">(</span><span class="n">decoy_intensity</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">photon_count</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">VACUUM</span>
+        <span class="k">elif</span> <span class="n">photon_count</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">SINGLE_PHOTON</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">state</span> <span class="o">=</span> <span class="n">PhotonSourceState</span><span class="o">.</span><span class="n">MULTI_PHOTON</span>
+
+        <span class="k">return</span> <span class="n">state</span><span class="p">,</span> <span class="n">actual_time</span><span class="p">,</span> <span class="sa">f</span><span class="s2">&quot;decoy_</span><span class="si">{</span><span class="n">decoy_intensity</span><span class="si">}</span><span class="s2">&quot;</span></div>
+
+
+<div class="viewcode-block" id="DecoyStateSource.generate_photon_pulse">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DecoyStateSource.generate_photon_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_photon_pulse</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="n">PhotonSourceState</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a photon pulse, randomly selecting signal or decoy state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            time: Time of pulse generation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (photon_state, actual_time_with_jitter, pulse_type)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoy_probability</span><span class="p">:</span>
+            <span class="c1"># Generate decoy pulse</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_decoy_pulse</span><span class="p">(</span><span class="n">time</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Generate signal pulse</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_signal_pulse</span><span class="p">(</span><span class="n">time</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="DecoyStateSource.get_pulse_type_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DecoyStateSource.get_pulse_type_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_pulse_type_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_pulses</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1000</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get statistics about pulse types generated.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_pulses: Number of pulses to simulate</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with pulse type statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">signal_count</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">decoy_counts</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decoy_mean_photon_numbers</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pulses</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">decoy_probability</span><span class="p">:</span>
+                <span class="c1"># Determine which decoy type</span>
+                <span class="n">idx</span> <span class="o">=</span> <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">decoy_mean_photon_numbers</span><span class="p">))</span>
+                <span class="n">decoy_counts</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">signal_count</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;signal_probability&quot;</span><span class="p">:</span> <span class="n">signal_count</span> <span class="o">/</span> <span class="n">num_pulses</span><span class="p">,</span>
+            <span class="s2">&quot;decoy_probability&quot;</span><span class="p">:</span> <span class="nb">sum</span><span class="p">(</span><span class="n">decoy_counts</span><span class="p">)</span> <span class="o">/</span> <span class="n">num_pulses</span><span class="p">,</span>
+            <span class="s2">&quot;decoy_probabilities_by_type&quot;</span><span class="p">:</span> <span class="p">[</span>
+                <span class="n">count</span> <span class="o">/</span> <span class="n">num_pulses</span> <span class="k">for</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">decoy_counts</span>
+            <span class="p">],</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ParametricDownConversionSource">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ParametricDownConversionSource">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParametricDownConversionSource</span><span class="p">(</span><span class="n">PhotonSource</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model for parametric down conversion photon pair sources.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ParametricDownConversionSource.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ParametricDownConversionSource.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;PDC Source&quot;</span><span class="p">,</span>
+        <span class="n">pulse_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e8</span><span class="p">,</span>  <span class="c1"># Typically lower rate for PDC</span>
+        <span class="n">wavelength</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1550e-9</span><span class="p">,</span>
+        <span class="n">pair_generation_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e6</span><span class="p">,</span>  <span class="c1"># Pairs per second</span>
+        <span class="n">timing_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2e-12</span><span class="p">,</span>  <span class="c1"># Higher timing jitter for PDC</span>
+        <span class="n">efficiency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span><span class="p">,</span>  <span class="c1"># Lower efficiency for PDC</span>
+        <span class="n">heralding_efficiency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.15</span><span class="p">,</span>  <span class="c1"># Efficiency of heralding</span>
+        <span class="n">spectral_width</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e12</span><span class="p">,</span>  <span class="c1"># Spectral width (FWHM) in Hz</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a parametric down conversion source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            name: Name of the photon source</span>
+<span class="sd">            pulse_rate: Rate of pump pulses (Hz)</span>
+<span class="sd">            wavelength: Wavelength of the down-converted photons (m)</span>
+<span class="sd">            pair_generation_rate: Rate of photon pair generation (pairs/s)</span>
+<span class="sd">            timing_jitter: Standard deviation of timing jitter (s)</span>
+<span class="sd">            efficiency: Overall efficiency of the source</span>
+<span class="sd">            heralding_efficiency: Efficiency of detecting one photon to herald the other</span>
+<span class="sd">            spectral_width: Spectral width of the photons (FWHM) in Hz</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate mean photon number based on pair generation rate</span>
+        <span class="n">mean_photon_number</span> <span class="o">=</span> <span class="n">pair_generation_rate</span> <span class="o">/</span> <span class="n">pulse_rate</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="mf">6.626e-34</span>  <span class="c1"># Planck constant</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">299792458</span>  <span class="c1"># Speed of light</span>
+        <span class="n">photon_energy</span> <span class="o">=</span> <span class="n">h</span> <span class="o">*</span> <span class="n">c</span> <span class="o">/</span> <span class="n">wavelength</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">name</span><span class="p">,</span>
+            <span class="n">pulse_rate</span><span class="p">,</span>
+            <span class="n">wavelength</span><span class="p">,</span>
+            <span class="n">timing_jitter</span><span class="p">,</span>
+            <span class="n">power</span><span class="o">=</span><span class="n">mean_photon_number</span> <span class="o">*</span> <span class="n">photon_energy</span> <span class="o">*</span> <span class="n">pulse_rate</span><span class="p">,</span>
+            <span class="n">efficiency</span><span class="o">=</span><span class="n">efficiency</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">pair_generation_rate</span> <span class="o">=</span> <span class="n">pair_generation_rate</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">heralding_efficiency</span> <span class="o">=</span> <span class="n">heralding_efficiency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">spectral_width</span> <span class="o">=</span> <span class="n">spectral_width</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">heralding_probability</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">mean_photon_number</span>  <span class="c1"># Probability of pair generation per pulse</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ParametricDownConversionSource.generate_photon_pulse">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ParametricDownConversionSource.generate_photon_pulse">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_photon_pulse</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bool</span><span class="p">,</span> <span class="nb">float</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a photon pulse from the PDC source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            time: Time of pulse generation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (photon_present, actual_time_with_jitter, additional_info)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">actual_time</span> <span class="o">=</span> <span class="n">time</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">)</span>
+
+        <span class="c1"># Determine if a pair is generated</span>
+        <span class="n">pair_generated</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">heralding_probability</span>
+
+        <span class="n">additional_info</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">photon_present</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">pair_generated</span><span class="p">:</span>
+            <span class="c1"># Determine if the heralding photon is detected</span>
+            <span class="n">herald_detected</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">heralding_efficiency</span>
+
+            <span class="k">if</span> <span class="n">herald_detected</span><span class="p">:</span>
+                <span class="c1"># The signal photon is available with coupling efficiency</span>
+                <span class="n">photon_present</span> <span class="o">=</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">efficiency</span>
+                <span class="n">additional_info</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;pair_generated&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="s2">&quot;herald_detected&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="s2">&quot;photon_present&quot;</span><span class="p">:</span> <span class="n">photon_present</span><span class="p">,</span>
+                <span class="p">}</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">additional_info</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;pair_generated&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+                    <span class="s2">&quot;herald_detected&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                    <span class="s2">&quot;photon_present&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="p">}</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">additional_info</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;pair_generated&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;herald_detected&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+                <span class="s2">&quot;photon_present&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
+            <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">photon_present</span><span class="p">,</span> <span class="n">actual_time</span><span class="p">,</span> <span class="n">additional_info</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PhotonSourceManager">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSourceManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhotonSourceManager</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manager for coordinating multiple photon sources in QKD protocols.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PhotonSourceManager.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSourceManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the photon source manager.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">PhotonSource</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_source</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span></div>
+
+
+<div class="viewcode-block" id="PhotonSourceManager.add_source">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSourceManager.add_source">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">source</span><span class="p">:</span> <span class="n">PhotonSource</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add a photon source to the manager.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_id: Unique identifier for the source</span>
+<span class="sd">            source: PhotonSource instance to add</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span> <span class="o">=</span> <span class="n">source</span></div>
+
+
+<div class="viewcode-block" id="PhotonSourceManager.set_active_source">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSourceManager.set_active_source">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">set_active_source</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">source_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Set the active photon source.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            source_id: ID of the source to make active</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">source_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Source </span><span class="si">{</span><span class="n">source_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">active_source</span> <span class="o">=</span> <span class="n">source_id</span></div>
+
+
+<div class="viewcode-block" id="PhotonSourceManager.generate_sequence">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonSourceManager.generate_sequence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_sequence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">duration</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">source_id</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">timestamps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">PhotonPulse</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a sequence of photon pulses.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            duration: Duration of sequence in seconds</span>
+<span class="sd">            source_id: ID of source to use (default: active source)</span>
+<span class="sd">            timestamps: Specific timestamps for pulse generation (optional)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of (photon_state, time) tuples</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">source_id</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_source</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;No active source and no source specified&quot;</span><span class="p">)</span>
+            <span class="n">source_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">active_source</span>
+
+        <span class="k">if</span> <span class="n">source_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Source </span><span class="si">{</span><span class="n">source_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+
+        <span class="n">source</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sources</span><span class="p">[</span><span class="n">source_id</span><span class="p">]</span>
+        <span class="n">results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">PhotonPulse</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">if</span> <span class="n">timestamps</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Generate pulses at specific timestamps</span>
+            <span class="k">for</span> <span class="n">time</span> <span class="ow">in</span> <span class="n">timestamps</span><span class="p">:</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">generate_photon_pulse</span><span class="p">(</span><span class="n">time</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Generate pulses at regular intervals</span>
+            <span class="n">num_pulses</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">duration</span> <span class="o">*</span> <span class="n">source</span><span class="o">.</span><span class="n">pulse_rate</span><span class="p">)</span>
+            <span class="n">pulse_interval</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">source</span><span class="o">.</span><span class="n">pulse_rate</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pulses</span><span class="p">):</span>
+                <span class="n">time</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">pulse_interval</span>
+                <span class="n">results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">source</span><span class="o">.</span><span class="n">generate_photon_pulse</span><span class="p">(</span><span class="n">time</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">results</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,558 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.core.timing &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.core.timing</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.core.timing</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Timing and synchronization models for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+
+<div class="viewcode-block" id="TimingSynchronizer">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TimingSynchronizer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TimingSynchronizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A realistic timing synchronization model for QKD systems.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="TimingSynchronizer.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TimingSynchronizer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">clock_frequency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e9</span><span class="p">,</span>  <span class="c1"># 1 GHz clock</span>
+        <span class="n">timing_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>  <span class="c1"># 1 ps timing jitter (std)</span>
+        <span class="n">synchronization_accuracy</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-9</span><span class="p">,</span>  <span class="c1"># 1 ns synchronization accuracy</span>
+        <span class="n">max_drift_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-6</span><span class="p">,</span>  <span class="c1"># 1 ppm drift rate</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize timing synchronizer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            clock_frequency: System clock frequency in Hz</span>
+<span class="sd">            timing_jitter: Standard deviation of timing jitter in seconds</span>
+<span class="sd">            synchronization_accuracy: Accuracy of synchronization in seconds</span>
+<span class="sd">            max_drift_rate: Maximum clock drift rate (fraction per second)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">clock_frequency</span> <span class="o">=</span> <span class="n">clock_frequency</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span> <span class="o">=</span> <span class="n">timing_jitter</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">synchronization_accuracy</span> <span class="o">=</span> <span class="n">synchronization_accuracy</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_drift_rate</span> <span class="o">=</span> <span class="n">max_drift_rate</span>
+
+        <span class="c1"># Initialize clock states</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_clock_offset</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># Alice&#39;s clock offset from reference</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_clock_offset</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># Bob&#39;s clock offset from reference</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_clock_drift</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">max_drift_rate</span><span class="p">,</span> <span class="n">max_drift_rate</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_clock_drift</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="o">-</span><span class="n">max_drift_rate</span><span class="p">,</span> <span class="n">max_drift_rate</span><span class="p">))</span>
+
+        <span class="c1"># Reference time (for simulation purposes)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reference_time</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">())</span>
+
+        <span class="c1"># Timing statistics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timing_measurements</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="TimingSynchronizer.synchronize_clocks">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TimingSynchronizer.synchronize_clocks">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">synchronize_clocks</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">synchronization_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform clock synchronization between Alice and Bob.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            synchronization_time: Time of synchronization attempt</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with synchronization results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Add timing jitter to synchronization</span>
+        <span class="n">sync_error</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">synchronization_accuracy</span><span class="p">))</span>
+
+        <span class="c1"># Update clock offsets based on synchronization</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_clock_offset</span> <span class="o">=</span> <span class="n">sync_error</span> <span class="o">/</span> <span class="mi">2</span>  <span class="c1"># Assume equal adjustment</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_clock_offset</span> <span class="o">=</span> <span class="o">-</span><span class="n">sync_error</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># Record synchronization result</span>
+        <span class="n">sync_result</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;synchronization_time&quot;</span><span class="p">:</span> <span class="n">synchronization_time</span><span class="p">,</span>
+            <span class="s2">&quot;synchronization_error&quot;</span><span class="p">:</span> <span class="nb">abs</span><span class="p">(</span><span class="n">sync_error</span><span class="p">),</span>
+            <span class="s2">&quot;alice_offset_after_sync&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_clock_offset</span><span class="p">,</span>
+            <span class="s2">&quot;bob_offset_after_sync&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_clock_offset</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="k">return</span> <span class="n">sync_result</span></div>
+
+
+<div class="viewcode-block" id="TimingSynchronizer.get_alice_time">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TimingSynchronizer.get_alice_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_alice_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get Alice&#39;s local time based on reference time and drift.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            reference_time: Reference time</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Alice&#39;s local time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate elapsed time since reference</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="n">reference_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_time</span>
+
+        <span class="c1"># Apply clock drift and offset</span>
+        <span class="n">drift</span> <span class="o">=</span> <span class="n">elapsed</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_clock_drift</span>
+        <span class="n">alice_time</span> <span class="o">=</span> <span class="n">reference_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_clock_offset</span> <span class="o">+</span> <span class="n">drift</span>
+
+        <span class="c1"># Add timing jitter</span>
+        <span class="n">jitter</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">))</span>
+        <span class="n">alice_time</span> <span class="o">+=</span> <span class="n">jitter</span>
+
+        <span class="k">return</span> <span class="n">alice_time</span></div>
+
+
+<div class="viewcode-block" id="TimingSynchronizer.get_bob_time">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TimingSynchronizer.get_bob_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_bob_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get Bob&#39;s local time based on reference time and drift.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            reference_time: Reference time</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Bob&#39;s local time</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate elapsed time since reference</span>
+        <span class="n">elapsed</span> <span class="o">=</span> <span class="n">reference_time</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">reference_time</span>
+
+        <span class="c1"># Apply clock drift and offset</span>
+        <span class="n">drift</span> <span class="o">=</span> <span class="n">elapsed</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_clock_drift</span>
+        <span class="n">bob_time</span> <span class="o">=</span> <span class="n">reference_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_clock_offset</span> <span class="o">+</span> <span class="n">drift</span>
+
+        <span class="c1"># Add timing jitter</span>
+        <span class="n">jitter</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_jitter</span><span class="p">))</span>
+        <span class="n">bob_time</span> <span class="o">+=</span> <span class="n">jitter</span>
+
+        <span class="k">return</span> <span class="n">bob_time</span></div>
+
+
+<div class="viewcode-block" id="TimingSynchronizer.calculate_time_difference">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TimingSynchronizer.calculate_time_difference">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_time_difference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">reference_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the time difference between Alice and Bob&#39;s clocks.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            reference_time: Reference time for calculation</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Time difference (Alice&#39;s time - Bob&#39;s time)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alice_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_alice_time</span><span class="p">(</span><span class="n">reference_time</span><span class="p">)</span>
+        <span class="n">bob_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_bob_time</span><span class="p">(</span><span class="n">reference_time</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">alice_time</span> <span class="o">-</span> <span class="n">bob_time</span></div>
+
+
+<div class="viewcode-block" id="TimingSynchronizer.update_clock_drift">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.TimingSynchronizer.update_clock_drift">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_clock_drift</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update clock drift values (to simulate gradual changes).&quot;&quot;&quot;</span>
+        <span class="c1"># Small random walk for drift values</span>
+        <span class="n">drift_change</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_drift_rate</span> <span class="o">*</span> <span class="mf">0.01</span><span class="p">)</span>
+        <span class="p">)</span>  <span class="c1"># Small changes</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_clock_drift</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">alice_clock_drift</span> <span class="o">+</span> <span class="n">drift_change</span><span class="p">,</span>
+                <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">max_drift_rate</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">max_drift_rate</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span>
+
+        <span class="n">drift_change</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">max_drift_rate</span> <span class="o">*</span> <span class="mf">0.01</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_clock_drift</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_clock_drift</span> <span class="o">+</span> <span class="n">drift_change</span><span class="p">,</span>
+                <span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">max_drift_rate</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">max_drift_rate</span><span class="p">,</span>
+            <span class="p">)</span>
+        <span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="PhotonTimingModel">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonTimingModel">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PhotonTimingModel</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model for photon timing in QKD systems.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="PhotonTimingModel.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonTimingModel.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">fiber_length</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># in meters</span>
+        <span class="n">speed_of_light_factor</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.2</span><span class="p">,</span>  <span class="c1"># Fraction of c in fiber (typically ~0.2)</span>
+        <span class="n">detector_timing_resolution</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">5e-12</span><span class="p">,</span>  <span class="c1"># 5 ps resolution</span>
+        <span class="n">source_jitter</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2e-12</span><span class="p">,</span>  <span class="c1"># 2 ps source jitter</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize photon timing model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            fiber_length: Length of optical fiber in meters</span>
+<span class="sd">            speed_of_light_factor: Effective speed as fraction of c in fiber</span>
+<span class="sd">            detector_timing_resolution: Timing resolution of detectors in seconds</span>
+<span class="sd">            source_jitter: Jitter from photon source in seconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fiber_length</span> <span class="o">=</span> <span class="n">fiber_length</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">speed_of_light_factor</span> <span class="o">=</span> <span class="n">speed_of_light_factor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detector_timing_resolution</span> <span class="o">=</span> <span class="n">detector_timing_resolution</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">source_jitter</span> <span class="o">=</span> <span class="n">source_jitter</span>
+
+        <span class="c1"># Speed of light in fiber (m/s)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">v_fiber</span> <span class="o">=</span> <span class="mi">299792458</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">speed_of_light_factor</span>
+
+        <span class="c1"># Propagation time for photons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">propagation_time</span> <span class="o">=</span> <span class="n">fiber_length</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">v_fiber</span></div>
+
+
+<div class="viewcode-block" id="PhotonTimingModel.emit_photon">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonTimingModel.emit_photon">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">emit_photon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">emission_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate photon emission with timing jitter.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            emission_time: Desired emission time</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Actual emission time with jitter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">actual_emission</span> <span class="o">=</span> <span class="n">emission_time</span> <span class="o">+</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">source_jitter</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">actual_emission</span></div>
+
+
+<div class="viewcode-block" id="PhotonTimingModel.detect_photon">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonTimingModel.detect_photon">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_photon</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">arrival_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate photon detection with timing resolution.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            arrival_time: Actual arrival time of photon</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Measured arrival time with resolution effects</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Detector adds timing uncertainty</span>
+        <span class="n">measured_time</span> <span class="o">=</span> <span class="n">arrival_time</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">detector_timing_resolution</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">measured_time</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="PhotonTimingModel.photon_transit_time">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.PhotonTimingModel.photon_transit_time">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">photon_transit_time</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the transit time for a photon through the fiber.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Photon transit time in seconds</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">propagation_time</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="QBERTimingAnalysis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QBERTimingAnalysis">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QBERTimingAnalysis</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Analyze timing-dependent QBER in QKD systems.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QBERTimingAnalysis.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QBERTimingAnalysis.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">timing_window</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-9</span><span class="p">,</span>  <span class="c1"># 1 ns coincidence window</span>
+        <span class="n">max_temporal_drift</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">1e-12</span><span class="p">,</span>  <span class="c1"># 1 ps max drift per photon</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize timing-dependent QBER analysis.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            timing_window: Time window for matching photon pairs (s)</span>
+<span class="sd">            max_temporal_drift: Maximum temporal drift per photon (s)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timing_window</span> <span class="o">=</span> <span class="n">timing_window</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">max_temporal_drift</span> <span class="o">=</span> <span class="n">max_temporal_drift</span></div>
+
+
+<div class="viewcode-block" id="QBERTimingAnalysis.calculate_temporal_qber">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QBERTimingAnalysis.calculate_temporal_qber">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_temporal_qber</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">alice_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">bob_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">expected_delay</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate QBER based on timing mismatches.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_times: List of photon emission times from Alice</span>
+<span class="sd">            bob_times: List of photon detection times at Bob</span>
+<span class="sd">            expected_delay: Expected delay between Alice and Bob</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Estimated QBER due to timing mismatches</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_times</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_times</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice and Bob time lists must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="n">mismatches</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">total_pairs</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_times</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">total_pairs</span><span class="p">):</span>
+            <span class="c1"># Calculate time difference accounting for expected delay</span>
+            <span class="n">time_diff</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">((</span><span class="n">bob_times</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">alice_times</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">-</span> <span class="n">expected_delay</span><span class="p">)</span>
+
+            <span class="c1"># If outside timing window, consider as mismatch</span>
+            <span class="k">if</span> <span class="n">time_diff</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_window</span><span class="p">:</span>
+                <span class="n">mismatches</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">mismatches</span> <span class="o">/</span> <span class="n">total_pairs</span> <span class="k">if</span> <span class="n">total_pairs</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="QBERTimingAnalysis.update_with_drift">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QBERTimingAnalysis.update_with_drift">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_with_drift</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">drift_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">time_elapsed</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>  <span class="c1"># s/s  # s</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update timing window based on clock drift.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            drift_rate: Rate of temporal drift (s/s)</span>
+<span class="sd">            time_elapsed: Time since last synchronization (s)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Adjusted timing window to account for drift</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">additional_uncertainty</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">drift_rate</span><span class="p">)</span> <span class="o">*</span> <span class="n">time_elapsed</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">timing_window</span> <span class="o">+</span> <span class="n">additional_uncertainty</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProtocolTimingManager">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ProtocolTimingManager">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProtocolTimingManager</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Manage timing aspects of QKD protocols.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ProtocolTimingManager.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ProtocolTimingManager.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">synchronizer</span><span class="p">:</span> <span class="n">TimingSynchronizer</span><span class="p">,</span>
+        <span class="n">photon_model</span><span class="p">:</span> <span class="n">PhotonTimingModel</span><span class="p">,</span>
+        <span class="n">qber_analyzer</span><span class="p">:</span> <span class="n">QBERTimingAnalysis</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize protocol timing manager.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            synchronizer: Timing synchronizer instance</span>
+<span class="sd">            photon_model: Photon timing model instance</span>
+<span class="sd">            qber_analyzer: QBER timing analysis instance</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">synchronizer</span> <span class="o">=</span> <span class="n">synchronizer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">photon_model</span> <span class="o">=</span> <span class="n">photon_model</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qber_analyzer</span> <span class="o">=</span> <span class="n">qber_analyzer</span>
+
+        <span class="c1"># Event timing records</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">emission_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="ProtocolTimingManager.send_photon_sequence">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ProtocolTimingManager.send_photon_sequence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">send_photon_sequence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">start_time</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">pulse_interval</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">num_photons</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+        <span class="n">basis_sequence</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate sending a sequence of photons with proper timing.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            start_time: Start time for sequence</span>
+<span class="sd">            pulse_interval: Interval between pulses</span>
+<span class="sd">            num_photons: Number of photons to send</span>
+<span class="sd">            basis_sequence: Sequence of bases to encode</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (emission_times, basis_sequence)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">emission_times</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_photons</span><span class="p">):</span>
+            <span class="c1"># Calculate scheduled emission time</span>
+            <span class="n">scheduled_time</span> <span class="o">=</span> <span class="n">start_time</span> <span class="o">+</span> <span class="n">i</span> <span class="o">*</span> <span class="n">pulse_interval</span>
+
+            <span class="c1"># Apply emission jitter</span>
+            <span class="n">actual_emission</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_model</span><span class="o">.</span><span class="n">emit_photon</span><span class="p">(</span><span class="n">scheduled_time</span><span class="p">)</span>
+            <span class="n">emission_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">actual_emission</span><span class="p">)</span>
+
+            <span class="c1"># Update clock drifts over time</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">synchronizer</span><span class="o">.</span><span class="n">update_clock_drift</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">emission_times</span><span class="p">,</span> <span class="n">basis_sequence</span></div>
+
+
+<div class="viewcode-block" id="ProtocolTimingManager.receive_photon_sequence">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ProtocolTimingManager.receive_photon_sequence">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">receive_photon_sequence</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">emission_times</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">expected_delay</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">basis_sequence</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate receiving a sequence of photons with proper timing.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            emission_times: List of photon emission times from Alice</span>
+<span class="sd">            expected_delay: Expected delay for photons</span>
+<span class="sd">            basis_sequence: Sequence of bases that were encoded</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (detection_times, measurement_bases, timing_qber)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">detection_times</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">measurement_bases</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">emit_time</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">emission_times</span><span class="p">):</span>
+            <span class="c1"># Calculate when photon should arrive</span>
+            <span class="n">arrival_time</span> <span class="o">=</span> <span class="n">emit_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_model</span><span class="o">.</span><span class="n">photon_transit_time</span><span class="p">()</span>
+
+            <span class="c1"># Simulate detection with resolution</span>
+            <span class="n">detection_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_model</span><span class="o">.</span><span class="n">detect_photon</span><span class="p">(</span><span class="n">arrival_time</span><span class="p">)</span>
+            <span class="n">detection_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">detection_time</span><span class="p">)</span>
+
+            <span class="c1"># Bob might choose a different basis due to timing effects</span>
+            <span class="n">measurement_bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">basis_sequence</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="c1"># Calculate timing-dependent QBER</span>
+        <span class="n">timing_qber</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">qber_analyzer</span><span class="o">.</span><span class="n">calculate_temporal_qber</span><span class="p">(</span>
+            <span class="n">emission_times</span><span class="p">,</span> <span class="n">detection_times</span><span class="p">,</span> <span class="n">expected_delay</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">detection_times</span><span class="p">,</span> <span class="n">measurement_bases</span><span class="p">,</span> <span class="n">timing_qber</span></div>
+
+
+<div class="viewcode-block" id="ProtocolTimingManager.get_timing_stats">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ProtocolTimingManager.get_timing_stats">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_timing_stats</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get statistics about timing performance.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with timing statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;propagation_time&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_model</span><span class="o">.</span><span class="n">propagation_time</span><span class="p">,</span>
+            <span class="s2">&quot;timing_window&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qber_analyzer</span><span class="o">.</span><span class="n">timing_window</span><span class="p">,</span>
+            <span class="s2">&quot;source_jitter&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_model</span><span class="o">.</span><span class="n">source_jitter</span><span class="p">,</span>
+            <span class="s2">&quot;detector_resolution&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">photon_model</span><span class="o">.</span><span class="n">detector_timing_resolution</span><span class="p">,</span>
+            <span class="s2">&quot;current_alice_drift&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">synchronizer</span><span class="o">.</span><span class="n">alice_clock_drift</span><span class="p">,</span>
+            <span class="s2">&quot;current_bob_drift&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">synchronizer</span><span class="o">.</span><span class="n">bob_clock_drift</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

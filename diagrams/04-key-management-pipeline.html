@@ -1,0 +1,342 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>4. Key Management Pipeline &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">4. Key Management Pipeline</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/diagrams/04-key-management-pipeline.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="key-management-pipeline">
+<h1>4. Key Management Pipeline<a class="headerlink" href="#key-management-pipeline" title="Link to this heading"></a></h1>
+<section id="full-key-distillation-pipeline">
+<h2>Full Key Distillation Pipeline<a class="headerlink" href="#full-key-distillation-pipeline" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    RAW[&quot;Raw Key Exchange&lt;br/&gt;Alice: random bits α₁α₂...αₙ&lt;br/&gt;Bob: measured bits β₁β₂...βₙ&quot;]
+
+    subgraph Sifting[&quot;Basis Sifting&quot;]
+        S1[&quot;Compare bases publicly&quot;]
+        S2[&quot;Keep ~50% where bases match&quot;]
+        S3[&quot;Discard test bits for QBER&quot;]
+    end
+
+    subgraph EC[&quot;Error Correction&quot;]
+        EC_METHOD{&quot;Method&quot;}
+
+        subgraph Cascade[&quot;Cascade Protocol&quot;]
+            C1[&quot;Divide into blocks (size=4)&quot;]
+            C2[&quot;Compare block parity&quot;]
+            C3{&quot;Parity mismatch?&quot;}
+            C4[&quot;Binary search for error bit&quot;]
+            C5[&quot;Flip error bit on Bob&#39;s side&quot;]
+            C6[&quot;Repeat with doubling block sizes&quot;]
+            C2 --&gt; C3 --&gt;|yes| C4 --&gt; C5
+            C3 --&gt;|no| C6
+        end
+
+        subgraph Winnow[&quot;Winnow Protocol&quot;]
+            W1[&quot;Divide into blocks&quot;]
+            W2[&quot;Hamming syndrome computation&quot;]
+            W3[&quot;Correct errors via syndrome&quot;]
+        end
+
+        subgraph LDPC[&quot;Low-Density Parity-Check&quot;]
+            L1[&quot;Build sparse parity check matrix H&quot;]
+            L2[&quot;Belief propagation on Tanner graph&quot;]
+            L3[&quot;Iterate variable→check→variable messages&quot;]
+            L4[&quot;Check syndrome H·x = 0&quot;]
+        end
+
+        EC_METHOD --&gt;|cascade| Cascade
+        EC_METHOD --&gt;|winnow| Winnow
+        EC_METHOD --&gt;|ldpc| LDPC
+    end
+
+    subgraph PA[&quot;Privacy Amplification&quot;]
+        PA_METHOD{&quot;Method&quot;}
+
+        subgraph UnivHash[&quot;Universal Hashing&quot;]
+            UH1[&quot;Generate random Toeplitz matrix&quot;]
+            UH2[&quot;Matrix-vector multiply mod 2&quot;]
+            UH3[&quot;Output: shortened secure key&quot;]
+        end
+
+        subgraph Toeplitz[&quot;Toeplitz Hashing&quot;]
+            T1[&quot;Generate random Toeplitz matrix&lt;br/&gt;(diagonal-constant structure)&quot;]
+            T2[&quot;Efficient FFT-based multiply&quot;]
+            T3[&quot;Output: shortened secure key&quot;]
+        end
+
+        subgraph CryptoHash[&quot;Cryptographic Hash&quot;]
+            CH1[&quot;SHA-3 / SHAKE-256&quot;]
+            CH2[&quot;Keyed hashing with random salt&quot;]
+            CH3[&quot;Output: fixed-length digest&quot;]
+        end
+
+        subgraph BennettBrassard[&quot;Bennett-Brassard 1984&quot;]
+            BB1[&quot;2-universal hash family&quot;]
+            BB2[&quot;Output length: n - s - t&quot;]
+            BB3[&quot;n=corrected, s=security, t=leak&quot;]
+        end
+
+        PA_METHOD --&gt;|universal_hashing| UnivHash
+        PA_METHOD --&gt;|toeplitz_hashing| Toeplitz
+        PA_METHOD --&gt;|cryptographic_hash| CryptoHash
+        PA_METHOD --&gt;|bennett_brassard| BennettBrassard
+    end
+
+    subgraph Output[&quot;Output&quot;]
+        O1[&quot;Final secure key&quot;]
+        O2[&quot;Key rate: final / initial&quot;]
+        O3[&quot;Eve info estimate&quot;]
+        O4[&quot;Statistics&quot;]
+    end
+
+    RAW --&gt; Sifting --&gt; EC --&gt; PA --&gt; Output
+
+    style RAW fill:#bbdefb,stroke:#1565c0
+    style Sifting fill:#e1bee7,stroke:#6a1b9a
+    style EC fill:#c8e6c9,stroke:#2e7d32
+    style PA fill:#d1c4e9,stroke:#4527a0
+    style Output fill:#ffe0b2,stroke:#e65100
+
+    style Cascade fill:#e8f5e9,stroke:#1b5e20
+    style Winnow fill:#e8f5e9,stroke:#1b5e20
+    style LDPC fill:#e8f5e9,stroke:#1b5e20
+    style UnivHash fill:#ede7f6,stroke:#311b92
+    style Toeplitz fill:#ede7f6,stroke:#311b92
+    style CryptoHash fill:#ede7f6,stroke:#311b92
+    style BennettBrassard fill:#ede7f6,stroke:#311b92
+</pre></div>
+</div>
+</section>
+<section id="error-correction-cascade-protocol">
+<h2>Error Correction: Cascade Protocol<a class="headerlink" href="#error-correction-cascade-protocol" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>sequenceDiagram
+    participant Alice as Alice Key
+    participant Channel as Public Channel
+    participant Bob as Bob Key
+
+    Note over Alice, Bob: Initial keys of length N
+
+    Alice-&gt;&gt;Channel: Block 0 parity = Σ(keys[0:4]) mod 2
+    Channel-&gt;&gt;Bob: Forward parity
+
+    Bob-&gt;&gt;Bob: Compute own parity for block 0
+
+    alt Parities match
+        Note over Alice, Bob: No error in this block ✓
+    else Parities differ
+        Note over Alice, Bob: Error found! Binary search...
+
+        Alice-&gt;&gt;Channel: Parity of left half keys[0:2] mod 2
+        Bob-&gt;&gt;Bob: Compute left half parity
+        Bob-&gt;&gt;Bob: Compare
+
+        alt Left half matches
+            Note over Bob: Error is in right half [2:4]
+        else Left half differs
+            Note over Bob: Error is in left half [0:2]
+        end
+
+        Bob-&gt;&gt;Bob: Flip the error bit to match Alice
+        Note over Bob: Keys now identical in this block ✓
+    end
+
+    Note over Alice, Bob: Repeat for all blocks&lt;br/&gt;Then repeat with doubled block sizes&lt;br/&gt;Typically 4 passes total
+</pre></div>
+</div>
+</section>
+<section id="ldpc-belief-propagation">
+<h2>LDPC Belief Propagation<a class="headerlink" href="#ldpc-belief-propagation" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    subgraph Init[&quot;Initialization&quot;]
+        I1[&quot;Build parity-check matrix H (m × n)&quot;]
+        I2[&quot;Compute LLR from Alice and Bob keys&quot;]
+        I3[&quot;Initialize variable-to-check messages = LLR&quot;]
+    end
+
+    subgraph Iter[&quot;Iteration Loop (max 100)&quot;]
+        direction LR
+
+        Check[&quot;Check Node Update&lt;br/&gt;tanh(m_cj/2) = ∏ tanh(m_v&#39;j/2)&lt;br/&gt;for all connected v&#39;&quot;]
+        Variable[&quot;Variable Node Update&lt;br/&gt;m_vi = Σ m_c&#39;i + LLR_i&lt;br/&gt;for all connected c&#39;&quot;]
+        Syndrome[&quot;Syndrome Check&lt;br/&gt;H · hard_decision = ? 0&quot;]
+
+        Check --&gt; Variable --&gt; Syndrome
+    end
+
+    subgraph Decision[&quot;Decision&quot;]
+        D1{&quot;Syndrome = 0&lt;br/&gt;OR max iterations?&quot;}
+        D2[&quot;Output corrected keys&quot;]
+        D3[&quot;FAIL: convergence failed&quot;]
+        D1 --&gt;|yes| D2
+        D1 --&gt;|no| Iter
+    end
+
+    Init --&gt; Iter
+    Iter --&gt; Decision
+    Syndrome --&gt;|non-zero| D1
+</pre></div>
+</div>
+</section>
+<section id="privacy-amplification-toeplitz-hashing">
+<h2>Privacy Amplification: Toeplitz Hashing<a class="headerlink" href="#privacy-amplification-toeplitz-hashing" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    subgraph InputPA[&quot;Input&quot;]
+        PA_IN[&quot;Corrected key k (n bits)&quot;]
+        PA_OUT_LEN[&quot;Desired output length m &lt; n&quot;]
+    end
+
+    subgraph Matrix[&quot;Toeplitz Matrix Construction&quot;]
+        T11[&quot;Generate random seed s (n + m - 1 bits)&quot;]
+        T12[&quot;Build Toeplitz matrix T (m × n)&quot;]
+        T13[&quot;T[i,j] = s[i - j + n - 1]&lt;br/&gt;(diagonal-constant structure)&quot;]
+    end
+
+    subgraph Multiply[&quot;Matrix-Vector Multiply (mod 2)&quot;]
+        MUL[&quot;T · k mod 2&lt;br/&gt;= m-bit output&quot;]
+        MUL_FFT[&quot;(Optional) FFT-based&lt;br/&gt;O(n log n) instead of O(nm)&quot;]
+    end
+
+    subgraph OutputPA[&quot;Output&quot;]
+        PA_OUT[&quot;Final key k&#39; (m bits)&quot;]
+        SEC_PARAM[&quot;Security: m ≤ n - s - t&lt;br/&gt;s = 10 (security param)&lt;br/&gt;t = Eve&#39;s info estimate&quot;]
+    end
+
+    InputPA --&gt; Matrix --&gt; Multiply --&gt; OutputPA
+</pre></div>
+</div>
+</section>
+<section id="key-manager-orchestration">
+<h2>Key Manager Orchestration<a class="headerlink" href="#key-manager-orchestration" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    subgraph KM[&quot;KeyManager&quot;]
+        KM_STATE[&quot;state: dict&lt;br/&gt;tracks keys by protocol run&quot;]
+        KM_GEN[&quot;generate_key(protocol, params)&quot;]
+        KM_STORE[&quot;store_key(key_id, key)&quot;]
+        KM_RETRIEVE[&quot;retrieve_key(key_id)&quot;]
+        KM_ROTATE[&quot;rotate_key(key_id)&quot;]
+        KM_DELETE[&quot;delete_key(key_id)&quot;]
+    end
+
+    subgraph Protocols_KM[&quot;QKD Protocols&quot;]
+        BB84_KM[&quot;BB84&quot;]
+        E91_KM[&quot;E91&quot;]
+        CV_KM[&quot;CV-QKD&quot;]
+    end
+
+    subgraph Pipeline[&quot;Distillation Pipeline&quot;]
+        KD_KM[&quot;KeyDistillation&quot;]
+        EC_KM[&quot;ErrorCorrection&quot;]
+        PA_KM[&quot;PrivacyAmplification&quot;]
+    end
+
+    subgraph Storage[&quot;Key Storage&quot;]
+        MEM[&quot;In-memory cache&quot;]
+        DB[&quot;(Future) Key Store DB&quot;]
+    end
+
+    KM --&gt;|runs| Protocols_KM
+    KM --&gt;|distills| Pipeline
+    KM --&gt;|stores| Storage
+    EC_KM --&gt; PA_KM
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

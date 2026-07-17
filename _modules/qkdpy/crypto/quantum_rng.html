@@ -1,0 +1,381 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.crypto.quantum_rng &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.crypto.quantum_rng</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.crypto.quantum_rng</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Quantum random number generation utilities.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumChannel</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_randint</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..protocols</span><span class="w"> </span><span class="kn">import</span> <span class="n">BB84</span>
+
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumRandomNumberGenerator</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generates cryptographically secure random numbers using quantum principles.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the quantum random number generator.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: Quantum channel for QKD-based randomness (optional)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bits_generated</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">last_calibration</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span></div>
+
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.generate_random_bits">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.generate_random_bits">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_random_bits</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bits</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate cryptographically secure random bits.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_bits: Number of random bits to generate</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of random bits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># For a real quantum RNG, we would use quantum measurements</span>
+        <span class="c1"># Since we&#39;re simulating, we&#39;ll use a combination of sources</span>
+
+        <span class="c1"># 1. Use quantum key generation if a channel is provided</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="c1"># Generate a short key using BB84 for additional entropy</span>
+                <span class="n">qkd</span> <span class="o">=</span> <span class="n">BB84</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="mi">128</span><span class="p">,</span> <span class="n">num_bits</span><span class="p">))</span>
+                <span class="n">results</span> <span class="o">=</span> <span class="n">qkd</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+                <span class="n">final_key</span> <span class="o">=</span> <span class="n">results</span><span class="p">[</span><span class="s2">&quot;final_key&quot;</span><span class="p">]</span>
+                <span class="k">if</span> <span class="p">(</span>
+                    <span class="n">results</span><span class="p">[</span><span class="s2">&quot;is_secure&quot;</span><span class="p">]</span>
+                    <span class="ow">and</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">final_key</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+                    <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span>
+                <span class="p">):</span>
+                    <span class="c1"># Add the quantum-generated key to our entropy pool</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">final_key</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="c1"># If QKD fails, continue with other methods</span>
+                <span class="k">pass</span>
+
+        <span class="c1"># 2. Use OS-provided randomness</span>
+        <span class="n">os_random_bytes</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">((</span><span class="n">num_bits</span> <span class="o">+</span> <span class="mi">7</span><span class="p">)</span> <span class="o">//</span> <span class="mi">8</span><span class="p">)</span>
+        <span class="n">os_random_bits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">byte</span> <span class="ow">in</span> <span class="n">os_random_bytes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">8</span><span class="p">):</span>
+                <span class="n">os_random_bits</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">byte</span> <span class="o">&gt;&gt;</span> <span class="p">(</span><span class="mi">7</span> <span class="o">-</span> <span class="n">i</span><span class="p">))</span> <span class="o">&amp;</span> <span class="mi">1</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">os_random_bits</span><span class="p">[:</span><span class="n">num_bits</span><span class="p">])</span>
+
+        <span class="c1"># 3. Use numpy random with additional entropy</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">num_bits</span><span class="p">:</span>
+            <span class="c1"># Generate additional secure random bits</span>
+            <span class="n">additional_bits</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_bits</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">))</span>
+            <span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">additional_bits</span><span class="p">)</span>
+
+        <span class="c1"># 4. Apply a randomness extractor to ensure quality</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="n">num_bits</span><span class="p">:</span>
+            <span class="c1"># Use a simple XOR-based extractor</span>
+            <span class="n">extracted_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xor_extractor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">[:</span><span class="n">num_bits</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">[</span><span class="n">num_bits</span><span class="p">:]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># If we don&#39;t have enough bits, generate more</span>
+            <span class="n">needed_bits</span> <span class="o">=</span> <span class="n">num_bits</span> <span class="o">-</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">)</span>
+            <span class="n">additional_bits</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">needed_bits</span><span class="p">)]</span>
+            <span class="n">all_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span> <span class="o">+</span> <span class="n">additional_bits</span>
+            <span class="n">extracted_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_xor_extractor</span><span class="p">(</span><span class="n">all_bits</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">bits_generated</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">extracted_bits</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">extracted_bits</span><span class="p">[:</span><span class="n">num_bits</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.generate_random_bytes">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.generate_random_bytes">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_random_bytes</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_bytes</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate cryptographically secure random bytes.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_bytes: Number of random bytes to generate</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random bytes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Generate 8 times as many bits as bytes</span>
+        <span class="n">random_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_bits</span><span class="p">(</span><span class="n">num_bytes</span> <span class="o">*</span> <span class="mi">8</span><span class="p">)</span>
+
+        <span class="c1"># Convert bits to bytes</span>
+        <span class="n">random_bytes</span> <span class="o">=</span> <span class="nb">bytearray</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">random_bits</span><span class="p">),</span> <span class="mi">8</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">8</span> <span class="o">&lt;=</span> <span class="nb">len</span><span class="p">(</span><span class="n">random_bits</span><span class="p">):</span>
+                <span class="n">byte_bits</span> <span class="o">=</span> <span class="n">random_bits</span><span class="p">[</span><span class="n">i</span> <span class="p">:</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">8</span><span class="p">]</span>
+                <span class="n">byte_value</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bit</span> <span class="o">&lt;&lt;</span> <span class="p">(</span><span class="mi">7</span> <span class="o">-</span> <span class="n">j</span><span class="p">)</span> <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">bit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">byte_bits</span><span class="p">))</span>
+                <span class="n">random_bytes</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">byte_value</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">bytes</span><span class="p">(</span><span class="n">random_bytes</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.generate_random_int">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.generate_random_int">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_random_int</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">min_val</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">max_val</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a cryptographically secure random integer in a range.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            min_val: Minimum value (inclusive)</span>
+<span class="sd">            max_val: Maximum value (inclusive)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random integer in the specified range</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">min_val</span> <span class="o">&gt;</span> <span class="n">max_val</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;min_val must be less than or equal to max_val&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">min_val</span> <span class="o">==</span> <span class="n">max_val</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">min_val</span>
+
+        <span class="c1"># Calculate the range</span>
+        <span class="n">range_size</span> <span class="o">=</span> <span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># Determine how many bits we need</span>
+        <span class="n">num_bits</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="n">range_size</span><span class="p">)))</span>
+
+        <span class="c1"># Generate random bits and convert to integer</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">random_bits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_bits</span><span class="p">(</span><span class="n">num_bits</span><span class="p">)</span>
+            <span class="n">random_int</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bit</span> <span class="o">&lt;&lt;</span> <span class="n">i</span> <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">bit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">reversed</span><span class="p">(</span><span class="n">random_bits</span><span class="p">)))</span>
+
+            <span class="c1"># If the result is within our desired range, return it</span>
+            <span class="k">if</span> <span class="n">random_int</span> <span class="o">&lt;</span> <span class="n">range_size</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">min_val</span> <span class="o">+</span> <span class="n">random_int</span></div>
+
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.generate_random_string">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.generate_random_string">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_random_string</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">length</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">charset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;alphanumeric&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a cryptographically secure random string.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            length: Length of the string to generate</span>
+<span class="sd">            charset: Character set to use (&#39;alphanumeric&#39;, &#39;hex&#39;, &#39;binary&#39;, or custom)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Random string</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Define character sets</span>
+        <span class="n">charsets</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;alphanumeric&quot;</span><span class="p">:</span> <span class="s2">&quot;ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;hex&quot;</span><span class="p">:</span> <span class="s2">&quot;0123456789abcdef&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;binary&quot;</span><span class="p">:</span> <span class="s2">&quot;01&quot;</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Select the character set</span>
+        <span class="n">chars</span> <span class="o">=</span> <span class="n">charsets</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">charset</span><span class="p">,</span> <span class="n">charset</span><span class="p">)</span>
+
+        <span class="c1"># Generate random indices</span>
+        <span class="n">random_string</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">length</span><span class="p">):</span>
+            <span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_random_int</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">chars</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="n">random_string</span> <span class="o">+=</span> <span class="n">chars</span><span class="p">[</span><span class="n">index</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">random_string</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_xor_extractor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simple XOR-based randomness extractor.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            bits: Input bits to extract from</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Extracted random bits</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">bits</span>
+
+        <span class="c1"># Apply pairwise XOR to reduce bias</span>
+        <span class="n">extracted</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">bits</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">):</span>
+            <span class="n">extracted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bits</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">^</span> <span class="n">bits</span><span class="p">[</span><span class="n">i</span> <span class="o">+</span> <span class="mi">1</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">extracted</span>
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.add_entropy">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.add_entropy">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">add_entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">entropy_source</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Add external entropy to the pool.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            entropy_source: List of random bits to add to the entropy pool</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">entropy_source</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.get_entropy_level">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.get_entropy_level">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_entropy_level</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate the entropy level in the pool.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Estimated entropy level (0.0 to 1.0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Simple entropy estimation based on bit balance</span>
+        <span class="n">ones</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">)</span>
+        <span class="n">zeros</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">)</span> <span class="o">-</span> <span class="n">ones</span>
+        <span class="n">balance</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">ones</span> <span class="o">-</span> <span class="n">zeros</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">)</span>
+
+        <span class="c1"># Return 1.0 - balance as a simple entropy measure</span>
+        <span class="k">return</span> <span class="mf">1.0</span> <span class="o">-</span> <span class="n">balance</span></div>
+
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.calibrate">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.calibrate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calibrate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calibrate the random number generator.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if calibration successful, False otherwise</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Add entropy from various sources</span>
+            <span class="n">timestamp_entropy</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">bin</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">*</span> <span class="mi">1000000</span><span class="p">))[</span><span class="mi">2</span><span class="p">:]]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_entropy</span><span class="p">(</span><span class="n">timestamp_entropy</span><span class="p">)</span>
+
+            <span class="c1"># Add OS-provided entropy</span>
+            <span class="n">os_entropy</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">b</span><span class="p">)</span> <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">bin</span><span class="p">(</span><span class="n">secrets</span><span class="o">.</span><span class="n">randbelow</span><span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="mi">32</span><span class="p">))[</span><span class="mi">2</span><span class="p">:]]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">add_entropy</span><span class="p">(</span><span class="n">os_entropy</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">last_calibration</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="QuantumRandomNumberGenerator.get_statistics">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.QuantumRandomNumberGenerator.get_statistics">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_statistics</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get statistics about the random number generator.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with generator statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;bits_generated&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">bits_generated</span><span class="p">,</span>
+            <span class="s2">&quot;entropy_pool_size&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">entropy_pool</span><span class="p">),</span>
+            <span class="s2">&quot;entropy_level&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_entropy_level</span><span class="p">(),</span>
+            <span class="s2">&quot;last_calibration&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_calibration</span><span class="p">,</span>
+            <span class="s2">&quot;time_since_calibration&quot;</span><span class="p">:</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">last_calibration</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

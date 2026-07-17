@@ -1,0 +1,1060 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.ml.qkd_optimizer &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.ml.qkd_optimizer</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.ml.qkd_optimizer</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Machine learning tools for QKD optimization and analysis.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Callable</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">scipy.special</span><span class="w"> </span><span class="kn">import</span> <span class="n">erf</span>
+
+
+<div class="viewcode-block" id="QKDOptimizer">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDOptimizer">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QKDOptimizer</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Machine learning-based optimizer for QKD protocols.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QKDOptimizer.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDOptimizer.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">protocol_name</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the QKD optimizer.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            protocol_name: Name of the QKD protocol to optimize</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">protocol_name</span> <span class="o">=</span> <span class="n">protocol_name</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimization_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_performance</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># For neural network-based optimization</span>
+
+        <span class="c1"># Check for sklearn</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.gaussian_process</span><span class="w"> </span><span class="kn">import</span> <span class="n">GaussianProcessRegressor</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.gaussian_process.kernels</span><span class="w"> </span><span class="kn">import</span> <span class="n">Matern</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">sklearn.neural_network</span><span class="w"> </span><span class="kn">import</span> <span class="n">MLPRegressor</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">sklearn_available</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gp_class</span> <span class="o">=</span> <span class="n">GaussianProcessRegressor</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">gp_kernel</span> <span class="o">=</span> <span class="n">Matern</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mlp_class</span> <span class="o">=</span> <span class="n">MLPRegressor</span>
+        <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sklearn_available</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="QKDOptimizer.optimize_channel_parameters">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDOptimizer.optimize_channel_parameters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">optimize_channel_parameters</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameter_space</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">objective_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;bayesian&quot;</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Optimize quantum channel parameters using machine learning.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameter_space: Dictionary mapping parameter names to (min, max) tuples</span>
+<span class="sd">            objective_function: Function to maximize (e.g., key rate, security)</span>
+<span class="sd">            num_iterations: Number of optimization iterations</span>
+<span class="sd">            method: Optimization method (&#39;bayesian&#39;, &#39;genetic&#39;, &#39;neural&#39;, &#39;gradient&#39;)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with optimization results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;bayesian&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bayesian_optimization</span><span class="p">(</span>
+                <span class="n">parameter_space</span><span class="p">,</span> <span class="n">objective_function</span><span class="p">,</span> <span class="n">num_iterations</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;genetic&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_genetic_algorithm_optimization</span><span class="p">(</span>
+                <span class="n">parameter_space</span><span class="p">,</span> <span class="n">objective_function</span><span class="p">,</span> <span class="n">num_iterations</span>
+            <span class="p">)</span>
+        <span class="k">elif</span> <span class="n">method</span> <span class="o">==</span> <span class="s2">&quot;neural&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_neural_network_optimization</span><span class="p">(</span>
+                <span class="n">parameter_space</span><span class="p">,</span> <span class="n">objective_function</span><span class="p">,</span> <span class="n">num_iterations</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unsupported optimization method: </span><span class="si">{</span><span class="n">method</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_bayesian_optimization</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameter_space</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">objective_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Improved Bayesian optimization for QKD parameters using Gaussian process.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameter_space: Dictionary mapping parameter names to (min, max) tuples</span>
+<span class="sd">            objective_function: Function to maximize</span>
+<span class="sd">            num_iterations: Number of optimization iterations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with optimization results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Initialize with random samples</span>
+        <span class="n">best_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">best_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Track parameter values and objective values</span>
+        <span class="n">param_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">objective_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Initial random sampling</span>
+        <span class="n">initial_samples</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">num_iterations</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">initial_samples</span><span class="p">):</span>
+            <span class="c1"># Generate random parameters within bounds</span>
+            <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+
+            <span class="c1"># Evaluate objective function</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>  <span class="c1"># Penalize failed evaluations</span>
+
+            <span class="c1"># Update best parameters</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="n">best_value</span><span class="p">:</span>
+                <span class="n">best_value</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="n">best_params</span> <span class="o">=</span> <span class="n">params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="c1"># Store history</span>
+            <span class="n">param_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">objective_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># Improved Bayesian optimization iterations</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iterations</span> <span class="o">-</span> <span class="n">initial_samples</span><span class="p">):</span>
+            <span class="c1"># Fit a Gaussian process model to the data</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sklearn_available</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_history</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="c1"># Prepare data</span>
+                <span class="n">X</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">y</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="n">param_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">parameter_space</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">param_history</span><span class="p">)):</span>
+                    <span class="n">row</span> <span class="o">=</span> <span class="p">[</span><span class="n">param_history</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">]</span>
+                    <span class="n">X</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+                    <span class="n">y</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">objective_history</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+                <span class="n">X_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+                <span class="n">y_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+
+                <span class="c1"># Train GP</span>
+                <span class="n">kernel</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp_kernel</span><span class="p">(</span><span class="n">nu</span><span class="o">=</span><span class="mf">2.5</span><span class="p">)</span>
+                <span class="n">gp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">gp_class</span><span class="p">(</span><span class="n">kernel</span><span class="o">=</span><span class="n">kernel</span><span class="p">,</span> <span class="n">n_restarts_optimizer</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
+                <span class="n">gp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_np</span><span class="p">,</span> <span class="n">y_np</span><span class="p">)</span>
+
+                <span class="c1"># Select next point using Expected Improvement with the trained GP</span>
+                <span class="n">next_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_sklearn_gp_search</span><span class="p">(</span>
+                    <span class="n">gp</span><span class="p">,</span> <span class="n">parameter_space</span><span class="p">,</span> <span class="n">best_value</span><span class="p">,</span> <span class="n">param_names</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Fallback to simplified approach if sklearn not available or not enough data</span>
+            <span class="k">elif</span> <span class="nb">len</span><span class="p">(</span><span class="n">param_history</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mi">5</span><span class="p">:</span>
+                <span class="c1"># Select next point using expected improvement (manual implementation)</span>
+                <span class="n">next_params</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_expected_improvement_search</span><span class="p">(</span>
+                    <span class="n">parameter_space</span><span class="p">,</span> <span class="n">param_history</span><span class="p">,</span> <span class="n">objective_history</span>
+                <span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Use random search with bias toward better regions</span>
+                <span class="n">next_params</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="c1"># Add some bias toward better performing regions</span>
+                    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">objective_history</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="c1"># Find parameters that led to good results</span>
+                        <span class="n">good_indices</span> <span class="o">=</span> <span class="p">[</span>
+                            <span class="n">i</span>
+                            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">objective_history</span><span class="p">)</span>
+                            <span class="k">if</span> <span class="n">val</span> <span class="o">&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">objective_history</span><span class="p">)</span>
+                        <span class="p">]</span>
+                        <span class="k">if</span> <span class="n">good_indices</span><span class="p">:</span>
+                            <span class="c1"># Sample near good parameter values</span>
+                            <span class="n">good_values</span> <span class="o">=</span> <span class="p">[</span>
+                                <span class="n">param_history</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">param_name</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">good_indices</span>
+                            <span class="p">]</span>
+                            <span class="n">mean_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">good_values</span><span class="p">)</span>
+                            <span class="n">std_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">good_values</span><span class="p">)</span>
+                            <span class="c1"># Sample from a distribution centered on good values</span>
+                            <span class="n">next_params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                                <span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span>
+                                    <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">mean_val</span><span class="p">,</span> <span class="n">std_val</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">),</span>
+                                    <span class="n">min_val</span><span class="p">,</span>
+                                    <span class="n">max_val</span><span class="p">,</span>
+                                <span class="p">)</span>
+                            <span class="p">)</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">next_params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span>
+                                <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span>
+                            <span class="p">)</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">next_params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+
+            <span class="c1"># Evaluate objective function</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">next_params</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>  <span class="c1"># Penalize failed evaluations</span>
+
+            <span class="c1"># Update best parameters</span>
+            <span class="k">if</span> <span class="n">value</span> <span class="o">&gt;</span> <span class="n">best_value</span><span class="p">:</span>
+                <span class="n">best_value</span> <span class="o">=</span> <span class="n">value</span>
+                <span class="n">best_params</span> <span class="o">=</span> <span class="n">next_params</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="c1"># Store history</span>
+            <span class="n">param_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">next_params</span><span class="p">)</span>
+            <span class="n">objective_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># Store optimization results</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;best_parameters&quot;</span><span class="p">:</span> <span class="n">best_params</span><span class="p">,</span>
+            <span class="s2">&quot;best_objective_value&quot;</span><span class="p">:</span> <span class="n">best_value</span><span class="p">,</span>
+            <span class="s2">&quot;parameter_history&quot;</span><span class="p">:</span> <span class="n">param_history</span><span class="p">,</span>
+            <span class="s2">&quot;objective_history&quot;</span><span class="p">:</span> <span class="n">objective_history</span><span class="p">,</span>
+            <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_name</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Update optimizer state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_parameters</span> <span class="o">=</span> <span class="n">best_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_performance</span> <span class="o">=</span> <span class="n">best_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimization_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_sklearn_gp_search</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">gp</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+        <span class="n">parameter_space</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">best_value</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+        <span class="n">param_names</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Search for next parameter using sklearn GP and Expected Improvement.&quot;&quot;&quot;</span>
+        <span class="c1"># Random sampling for candidate points</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">X_candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">100</span><span class="p">):</span>
+            <span class="n">cand</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="n">row</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">:</span>
+                <span class="n">min_v</span><span class="p">,</span> <span class="n">max_v</span> <span class="o">=</span> <span class="n">parameter_space</span><span class="p">[</span><span class="n">name</span><span class="p">]</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_v</span><span class="p">,</span> <span class="n">max_v</span><span class="p">)</span>
+                <span class="n">cand</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                <span class="n">row</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cand</span><span class="p">)</span>
+            <span class="n">X_candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">row</span><span class="p">)</span>
+
+        <span class="n">X_candidates_np</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X_candidates</span><span class="p">)</span>
+
+        <span class="c1"># Predict mean and std</span>
+        <span class="n">mu</span><span class="p">,</span> <span class="n">sigma</span> <span class="o">=</span> <span class="n">gp</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">X_candidates_np</span><span class="p">,</span> <span class="n">return_std</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># Calculate EI</span>
+        <span class="k">with</span> <span class="n">np</span><span class="o">.</span><span class="n">errstate</span><span class="p">(</span><span class="n">divide</span><span class="o">=</span><span class="s2">&quot;warn&quot;</span><span class="p">):</span>
+            <span class="n">imp</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">-</span> <span class="n">best_value</span>
+            <span class="n">Z</span> <span class="o">=</span> <span class="n">imp</span> <span class="o">/</span> <span class="n">sigma</span>
+            <span class="n">ei</span> <span class="o">=</span> <span class="n">imp</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_standard_normal_cdf</span><span class="p">(</span><span class="n">Z</span><span class="p">)</span> <span class="o">+</span> <span class="n">sigma</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_standard_normal_pdf</span><span class="p">(</span>
+                <span class="n">Z</span>
+            <span class="p">)</span>
+            <span class="n">ei</span><span class="p">[</span><span class="n">sigma</span> <span class="o">==</span> <span class="mf">0.0</span><span class="p">]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="n">best_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ei</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_expected_improvement_search</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameter_space</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">param_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">objective_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Select next point using expected improvement heuristic.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameter_space: Dictionary mapping parameter names to (min, max) tuples</span>
+<span class="sd">            param_history: History of parameter evaluations</span>
+<span class="sd">            objective_history: History of objective values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Next parameter set to evaluate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Find best observed value</span>
+        <span class="n">best_value</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">objective_history</span><span class="p">)</span>
+
+        <span class="c1"># Try several candidate points</span>
+        <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">ei_values</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">20</span><span class="p">):</span>
+            <span class="c1"># Generate random candidate</span>
+            <span class="n">candidate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">candidate</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+            <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+
+            <span class="c1"># Estimate expected improvement</span>
+            <span class="c1"># This is a simplified approximation</span>
+            <span class="n">predicted_value</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_simple_gp_predict</span><span class="p">(</span>
+                <span class="n">candidate</span><span class="p">,</span> <span class="n">param_history</span><span class="p">,</span> <span class="n">objective_history</span>
+            <span class="p">)</span>
+            <span class="n">uncertainty</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_simple_gp_uncertainty</span><span class="p">(</span><span class="n">candidate</span><span class="p">,</span> <span class="n">param_history</span><span class="p">)</span>
+
+            <span class="c1"># Calculate expected improvement</span>
+            <span class="k">if</span> <span class="n">uncertainty</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">improvement</span> <span class="o">=</span> <span class="n">predicted_value</span> <span class="o">-</span> <span class="n">best_value</span>
+                <span class="n">z</span> <span class="o">=</span> <span class="n">improvement</span> <span class="o">/</span> <span class="n">uncertainty</span>
+                <span class="n">ei</span> <span class="o">=</span> <span class="n">improvement</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_standard_normal_cdf</span><span class="p">(</span>
+                    <span class="n">z</span>
+                <span class="p">)</span> <span class="o">+</span> <span class="n">uncertainty</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_standard_normal_pdf</span><span class="p">(</span><span class="n">z</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">ei</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="mf">0.0</span>
+                    <span class="k">if</span> <span class="n">predicted_value</span> <span class="o">&lt;=</span> <span class="n">best_value</span>
+                    <span class="k">else</span> <span class="n">predicted_value</span> <span class="o">-</span> <span class="n">best_value</span>
+                <span class="p">)</span>
+
+            <span class="n">ei_values</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">ei</span><span class="p">))</span>
+
+        <span class="c1"># Select candidate with highest expected improvement</span>
+        <span class="n">best_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">ei_values</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">candidates</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_simple_gp_predict</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">candidate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">param_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">objective_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simple Gaussian process prediction.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            candidate: Parameter set to predict</span>
+<span class="sd">            param_history: History of parameter evaluations</span>
+<span class="sd">            objective_history: History of objective values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Predicted objective value</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">param_history</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Convert to vectors</span>
+        <span class="n">param_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">candidate_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">candidate</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">])</span>
+        <span class="n">history_vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[[</span><span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">]</span> <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">param_history</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate distances to historical points</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">history_vectors</span> <span class="o">-</span> <span class="n">candidate_vector</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Use inverse distance weighting</span>
+        <span class="c1"># Add small epsilon to avoid division by zero</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="n">distances</span> <span class="o">+</span> <span class="mf">1e-6</span><span class="p">)</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="n">weights</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">)</span>  <span class="c1"># Normalize</span>
+
+        <span class="c1"># Weighted average of historical values</span>
+        <span class="n">prediction</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">weights</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">objective_history</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">prediction</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_simple_gp_uncertainty</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">candidate</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">param_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simple Gaussian process uncertainty estimate.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            candidate: Parameter set to evaluate</span>
+<span class="sd">            param_history: History of parameter evaluations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Uncertainty estimate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">param_history</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Convert to vectors</span>
+        <span class="n">param_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">candidate</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="n">candidate_vector</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="n">candidate</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">])</span>
+        <span class="n">history_vectors</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[[</span><span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">]</span> <span class="k">for</span> <span class="n">params</span> <span class="ow">in</span> <span class="n">param_history</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Calculate distances to historical points</span>
+        <span class="n">distances</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span><span class="p">(</span><span class="n">history_vectors</span> <span class="o">-</span> <span class="n">candidate_vector</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Uncertainty is higher when far from historical points</span>
+        <span class="c1"># Use minimum distance as a measure of uncertainty</span>
+        <span class="n">min_distance</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">distances</span><span class="p">)</span>
+        <span class="c1"># Normalize and invert so that smaller distances mean lower uncertainty</span>
+        <span class="n">uncertainty</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="p">(</span><span class="mf">1.0</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">min_distance</span><span class="p">))</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">uncertainty</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_standard_normal_cdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Standard normal cumulative distribution function.&quot;&quot;&quot;</span>
+        <span class="c1"># Use scipy.special.erf if available, otherwise fallback or loop</span>
+        <span class="c1"># But since we are in a scientific context, we likely have scipy</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="n">erf</span><span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span><span class="p">)))</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_standard_normal_pdf</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Standard normal probability density function.&quot;&quot;&quot;</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.5</span> <span class="o">*</span> <span class="n">x</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_genetic_algorithm_optimization</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameter_space</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">objective_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Genetic algorithm optimization for QKD parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameter_space: Dictionary mapping parameter names to (min, max) tuples</span>
+<span class="sd">            objective_function: Function to maximize</span>
+<span class="sd">            num_iterations: Number of optimization iterations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with optimization results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Genetic algorithm parameters</span>
+        <span class="n">population_size</span> <span class="o">=</span> <span class="mi">20</span>
+        <span class="n">mutation_rate</span> <span class="o">=</span> <span class="mf">0.1</span>
+        <span class="n">crossover_rate</span> <span class="o">=</span> <span class="mf">0.8</span>
+        <span class="n">elitism_count</span> <span class="o">=</span> <span class="mi">2</span>
+
+        <span class="c1"># Initialize population</span>
+        <span class="n">population</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">population_size</span><span class="p">):</span>
+            <span class="n">individual</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">individual</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+            <span class="n">population</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">individual</span><span class="p">)</span>
+
+        <span class="c1"># Evaluate initial population</span>
+        <span class="n">fitness_scores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">individual</span> <span class="ow">in</span> <span class="n">population</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">fitness</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">individual</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">fitness</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+            <span class="n">fitness_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitness</span><span class="p">)</span>
+
+        <span class="c1"># Track best solution</span>
+        <span class="n">best_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">fitness_scores</span><span class="p">)</span>
+        <span class="n">best_params</span> <span class="o">=</span> <span class="n">population</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">best_fitness</span> <span class="o">=</span> <span class="n">fitness_scores</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+
+        <span class="c1"># Evolution loop</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iterations</span><span class="p">):</span>
+            <span class="c1"># Create new population</span>
+            <span class="n">new_population</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="c1"># Elitism: keep best individuals</span>
+            <span class="n">sorted_indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argsort</span><span class="p">(</span><span class="n">fitness_scores</span><span class="p">)[::</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">elitism_count</span><span class="p">):</span>
+                <span class="n">new_population</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">population</span><span class="p">[</span><span class="n">sorted_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]]</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+
+            <span class="c1"># Generate offspring</span>
+            <span class="k">while</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_population</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">population_size</span><span class="p">:</span>
+                <span class="c1"># Selection (tournament selection)</span>
+                <span class="n">parent1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tournament_selection</span><span class="p">(</span><span class="n">population</span><span class="p">,</span> <span class="n">fitness_scores</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+                <span class="n">parent2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_tournament_selection</span><span class="p">(</span><span class="n">population</span><span class="p">,</span> <span class="n">fitness_scores</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+
+                <span class="c1"># Crossover</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">crossover_rate</span><span class="p">:</span>
+                    <span class="n">child1</span><span class="p">,</span> <span class="n">child2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_uniform_crossover</span><span class="p">(</span><span class="n">parent1</span><span class="p">,</span> <span class="n">parent2</span><span class="p">)</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">child1</span><span class="p">,</span> <span class="n">child2</span> <span class="o">=</span> <span class="n">parent1</span><span class="o">.</span><span class="n">copy</span><span class="p">(),</span> <span class="n">parent2</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+                <span class="c1"># Mutation</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_mutate</span><span class="p">(</span><span class="n">child1</span><span class="p">,</span> <span class="n">parameter_space</span><span class="p">,</span> <span class="n">mutation_rate</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_mutate</span><span class="p">(</span><span class="n">child2</span><span class="p">,</span> <span class="n">parameter_space</span><span class="p">,</span> <span class="n">mutation_rate</span><span class="p">)</span>
+
+                <span class="c1"># Add to new population</span>
+                <span class="n">new_population</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child1</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">new_population</span><span class="p">)</span> <span class="o">&lt;</span> <span class="n">population_size</span><span class="p">:</span>
+                    <span class="n">new_population</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">child2</span><span class="p">)</span>
+
+            <span class="c1"># Evaluate new population</span>
+            <span class="n">population</span> <span class="o">=</span> <span class="n">new_population</span>
+            <span class="n">fitness_scores</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">individual</span> <span class="ow">in</span> <span class="n">population</span><span class="p">:</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="n">fitness</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">individual</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                    <span class="n">fitness</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+                <span class="n">fitness_scores</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">fitness</span><span class="p">)</span>
+
+            <span class="c1"># Update best solution</span>
+            <span class="n">best_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">fitness_scores</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">fitness_scores</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">best_fitness</span><span class="p">:</span>
+                <span class="n">best_fitness</span> <span class="o">=</span> <span class="n">fitness_scores</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+                <span class="n">best_params</span> <span class="o">=</span> <span class="n">population</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Store optimization results</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;best_parameters&quot;</span><span class="p">:</span> <span class="n">best_params</span><span class="p">,</span>
+            <span class="s2">&quot;best_objective_value&quot;</span><span class="p">:</span> <span class="n">best_fitness</span><span class="p">,</span>
+            <span class="s2">&quot;final_population&quot;</span><span class="p">:</span> <span class="n">population</span><span class="p">,</span>
+            <span class="s2">&quot;final_fitness_scores&quot;</span><span class="p">:</span> <span class="n">fitness_scores</span><span class="p">,</span>
+            <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_name</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Update optimizer state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_parameters</span> <span class="o">=</span> <span class="n">best_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_performance</span> <span class="o">=</span> <span class="n">best_fitness</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimization_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_tournament_selection</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">population</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">fitness_scores</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">],</span>
+        <span class="n">tournament_size</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Tournament selection for genetic algorithm.&quot;&quot;&quot;</span>
+        <span class="c1"># Select random individuals for tournament</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">choice</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">population</span><span class="p">),</span> <span class="n">tournament_size</span><span class="p">,</span> <span class="n">replace</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+        <span class="c1"># Find the best individual in the tournament</span>
+        <span class="n">best_idx</span> <span class="o">=</span> <span class="n">indices</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+            <span class="k">if</span> <span class="n">fitness_scores</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">fitness_scores</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]:</span>
+                <span class="n">best_idx</span> <span class="o">=</span> <span class="n">idx</span>
+
+        <span class="k">return</span> <span class="nb">dict</span><span class="p">(</span><span class="n">population</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span><span class="o">.</span><span class="n">copy</span><span class="p">())</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_uniform_crossover</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">parent1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="n">parent2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Uniform crossover for genetic algorithm.&quot;&quot;&quot;</span>
+        <span class="n">child1</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">child2</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">param_name</span> <span class="ow">in</span> <span class="n">parent1</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="mf">0.5</span><span class="p">:</span>
+                <span class="n">child1</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent1</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
+                <span class="n">child2</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent2</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">child1</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent2</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
+                <span class="n">child2</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">parent1</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">child1</span><span class="p">,</span> <span class="n">child2</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_mutate</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">individual</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">parameter_space</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">mutation_rate</span><span class="p">:</span> <span class="nb">float</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Mutation operator for genetic algorithm.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">mutation_rate</span><span class="p">:</span>
+                <span class="c1"># Gaussian mutation</span>
+                <span class="n">current_val</span> <span class="o">=</span> <span class="n">individual</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span>
+                <span class="n">mutation_strength</span> <span class="o">=</span> <span class="p">(</span><span class="n">max_val</span> <span class="o">-</span> <span class="n">min_val</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
+                <span class="n">new_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">current_val</span><span class="p">,</span> <span class="n">mutation_strength</span><span class="p">)</span>
+                <span class="n">individual</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">new_val</span><span class="p">,</span> <span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">))</span>
+
+<div class="viewcode-block" id="QKDOptimizer.get_optimization_history">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDOptimizer.get_optimization_history">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_optimization_history</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the history of all optimizations.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of optimization results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization_history</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_neural_network_optimization</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">parameter_space</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">float</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span>
+        <span class="n">objective_function</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]],</span> <span class="nb">float</span><span class="p">],</span>
+        <span class="n">num_iterations</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Neural network-based optimization for QKD parameters.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameter_space: Dictionary mapping parameter names to (min, max) tuples</span>
+<span class="sd">            objective_function: Function to maximize</span>
+<span class="sd">            num_iterations: Number of optimization iterations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with optimization results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Initialize training data</span>
+        <span class="n">X_train</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Parameter sets</span>
+        <span class="n">y_train</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Objective values</span>
+
+        <span class="c1"># Initial random sampling to build training dataset</span>
+        <span class="n">initial_samples</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="n">num_iterations</span> <span class="o">//</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">initial_samples</span><span class="p">):</span>
+            <span class="c1"># Generate random parameters within bounds</span>
+            <span class="n">params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+
+            <span class="c1"># Evaluate objective function</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>  <span class="c1"># Penalize failed evaluations</span>
+
+            <span class="c1"># Add to training data</span>
+            <span class="n">param_vector</span> <span class="o">=</span> <span class="p">[</span><span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">keys</span><span class="p">()]</span>
+            <span class="n">X_train</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">param_vector</span><span class="p">)</span>
+            <span class="n">y_train</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+        <span class="c1"># Find best initial solution</span>
+        <span class="n">best_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
+        <span class="n">best_params</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">param_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">parameter_space</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_names</span><span class="p">):</span>
+            <span class="n">best_params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="n">best_idx</span><span class="p">][</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">best_value</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="n">y_train</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
+
+        <span class="c1"># Track history</span>
+        <span class="n">param_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">objective_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">X_train</span><span class="p">)):</span>
+            <span class="n">params</span> <span class="o">=</span> <span class="p">{}</span>
+            <span class="k">for</span> <span class="n">j</span><span class="p">,</span> <span class="n">name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">param_names</span><span class="p">):</span>
+                <span class="n">params</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">X_train</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span>
+            <span class="n">param_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">params</span><span class="p">)</span>
+            <span class="n">objective_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">y_train</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="c1"># Perform optimization iterations</span>
+        <span class="k">for</span> <span class="n">_iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_iterations</span> <span class="o">-</span> <span class="n">initial_samples</span><span class="p">):</span>
+            <span class="n">model</span><span class="p">:</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]</span>
+            <span class="c1"># Train a neural network model</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sklearn_available</span><span class="p">:</span>
+                <span class="c1"># Prepare data</span>
+                <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+                <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
+
+                <span class="c1"># Train MLP</span>
+                <span class="n">mlp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">mlp_class</span><span class="p">(</span>
+                    <span class="n">hidden_layer_sizes</span><span class="o">=</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">50</span><span class="p">),</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">500</span><span class="p">,</span> <span class="n">learning_rate_init</span><span class="o">=</span><span class="mf">0.01</span>
+                <span class="p">)</span>
+                <span class="n">mlp</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+                <span class="k">def</span><span class="w"> </span><span class="nf">model_func</span><span class="p">(</span><span class="n">x</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">model_instance</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="n">mlp</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+                    <span class="n">result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">model_instance</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+                    <span class="k">return</span> <span class="n">result</span>
+
+                <span class="n">model</span> <span class="o">=</span> <span class="n">model_func</span>
+
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Train a simple neural network model (manual fallback)</span>
+                <span class="n">model</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_train_simple_nn</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+            <span class="c1"># Use the model to guide search</span>
+            <span class="c1"># Try several candidate solutions and select the most promising</span>
+            <span class="n">candidates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="n">predictions</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+            <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">):</span>
+                <span class="c1"># Generate candidate parameters</span>
+                <span class="n">candidate</span> <span class="o">=</span> <span class="p">{}</span>
+                <span class="n">candidate_vector</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+                <span class="k">for</span> <span class="n">param_name</span><span class="p">,</span> <span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                    <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">uniform</span><span class="p">(</span><span class="n">min_val</span><span class="p">,</span> <span class="n">max_val</span><span class="p">)</span>
+                    <span class="n">candidate</span><span class="p">[</span><span class="n">param_name</span><span class="p">]</span> <span class="o">=</span> <span class="n">val</span>
+                    <span class="n">candidate_vector</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">val</span><span class="p">)</span>
+
+                <span class="c1"># Predict performance using the model</span>
+                <span class="n">candidate_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">candidate_vector</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">predicted_value</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">candidate_array</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+                <span class="n">candidates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate</span><span class="p">)</span>
+                <span class="n">predictions</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">predicted_value</span><span class="p">)</span>
+
+            <span class="c1"># Select the most promising candidate</span>
+            <span class="n">best_candidate_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">predictions</span><span class="p">)</span>
+            <span class="n">selected_candidate</span> <span class="o">=</span> <span class="n">candidates</span><span class="p">[</span><span class="n">best_candidate_idx</span><span class="p">]</span>
+
+            <span class="c1"># Evaluate the selected candidate with the actual objective function</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">actual_value</span> <span class="o">=</span> <span class="n">objective_function</span><span class="p">(</span><span class="n">selected_candidate</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="n">actual_value</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;-inf&quot;</span><span class="p">)</span>
+
+            <span class="c1"># Update training data</span>
+            <span class="n">candidate_vector</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">selected_candidate</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">parameter_space</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+            <span class="p">]</span>
+            <span class="n">X_train</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">candidate_vector</span><span class="p">)</span>
+            <span class="n">y_train</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">actual_value</span><span class="p">)</span>
+
+            <span class="c1"># Update best solution if needed</span>
+            <span class="k">if</span> <span class="n">actual_value</span> <span class="o">&gt;</span> <span class="n">best_value</span><span class="p">:</span>
+                <span class="n">best_value</span> <span class="o">=</span> <span class="n">actual_value</span>
+                <span class="n">best_params</span> <span class="o">=</span> <span class="n">selected_candidate</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+            <span class="c1"># Update history</span>
+            <span class="n">param_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">selected_candidate</span><span class="p">)</span>
+            <span class="n">objective_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">actual_value</span><span class="p">)</span>
+
+        <span class="c1"># Store optimization results</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="s2">&quot;best_parameters&quot;</span><span class="p">:</span> <span class="n">best_params</span><span class="p">,</span>
+            <span class="s2">&quot;best_objective_value&quot;</span><span class="p">:</span> <span class="n">best_value</span><span class="p">,</span>
+            <span class="s2">&quot;parameter_history&quot;</span><span class="p">:</span> <span class="n">param_history</span><span class="p">,</span>
+            <span class="s2">&quot;objective_history&quot;</span><span class="p">:</span> <span class="n">objective_history</span><span class="p">,</span>
+            <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">protocol_name</span><span class="p">,</span>
+        <span class="p">}</span>
+
+        <span class="c1"># Update optimizer state</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_parameters</span> <span class="o">=</span> <span class="n">best_params</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">best_performance</span> <span class="o">=</span> <span class="n">best_value</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">optimization_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_train_simple_nn</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">X_train</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]],</span> <span class="n">y_train</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Callable</span><span class="p">[[</span><span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">],</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Train a simple neural network model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            X_train: Training input data</span>
+<span class="sd">            y_train: Training target data</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            A function that can make predictions</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Convert to numpy arrays</span>
+        <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">X_train</span><span class="p">)</span>
+        <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">y_train</span><span class="p">)</span>
+
+        <span class="c1"># Normalize inputs</span>
+        <span class="n">X_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">X_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+        <span class="n">X_std</span><span class="p">[</span><span class="n">X_std</span> <span class="o">==</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># Avoid division by zero</span>
+        <span class="n">X_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">X</span> <span class="o">-</span> <span class="n">X_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">X_std</span>
+
+        <span class="c1"># Normalize outputs</span>
+        <span class="n">y_mean</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">y_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">y</span><span class="p">)</span>
+        <span class="n">y_std</span> <span class="o">=</span> <span class="n">y_std</span> <span class="k">if</span> <span class="n">y_std</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>  <span class="c1"># Avoid division by zero</span>
+        <span class="n">y_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">y</span> <span class="o">-</span> <span class="n">y_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">y_std</span>
+
+        <span class="c1"># Simple neural network with one hidden layer</span>
+        <span class="n">input_dim</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="n">hidden_dim</span> <span class="o">=</span> <span class="mi">10</span>
+        <span class="n">output_dim</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Initialize weights randomly</span>
+        <span class="n">W1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">input_dim</span><span class="p">,</span> <span class="n">hidden_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
+        <span class="n">b1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">)</span>
+        <span class="n">W2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">hidden_dim</span><span class="p">,</span> <span class="n">output_dim</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.1</span>
+        <span class="n">b2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">output_dim</span><span class="p">)</span>
+
+        <span class="c1"># Training parameters</span>
+        <span class="n">learning_rate</span> <span class="o">=</span> <span class="mf">0.01</span>
+        <span class="n">epochs</span> <span class="o">=</span> <span class="mi">100</span>
+
+        <span class="c1"># Training loop</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">epochs</span><span class="p">):</span>
+            <span class="c1"># Forward pass</span>
+            <span class="n">z1</span> <span class="o">=</span> <span class="n">X_norm</span> <span class="o">@</span> <span class="n">W1</span> <span class="o">+</span> <span class="n">b1</span>
+            <span class="n">a1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">z1</span><span class="p">)</span>  <span class="c1"># Activation function</span>
+            <span class="n">z2</span> <span class="o">=</span> <span class="n">a1</span> <span class="o">@</span> <span class="n">W2</span> <span class="o">+</span> <span class="n">b2</span>
+            <span class="n">predictions</span> <span class="o">=</span> <span class="n">z2</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span>
+
+            <span class="c1"># Compute loss (mean squared error)</span>
+            <span class="c1"># _loss = np.mean((predictions - y_norm) ** 2)</span>
+
+            <span class="c1"># Backward pass - Corrected gradient computation</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">y_norm</span><span class="p">)</span>  <span class="c1"># Number of samples</span>
+
+            <span class="c1"># Gradients for output layer</span>
+            <span class="n">dZ2</span> <span class="o">=</span> <span class="p">(</span><span class="n">predictions</span> <span class="o">-</span> <span class="n">y_norm</span><span class="p">)</span> <span class="o">/</span> <span class="n">m</span>  <span class="c1"># Shape: (m,)</span>
+            <span class="n">dW2</span> <span class="o">=</span> <span class="n">a1</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">dZ2</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># Shape: (hidden_dim, 1)</span>
+            <span class="n">db2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dZ2</span><span class="p">)</span>  <span class="c1"># Shape: scalar</span>
+
+            <span class="c1"># Gradients for hidden layer</span>
+            <span class="n">dA1</span> <span class="o">=</span> <span class="n">dZ2</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span> <span class="o">@</span> <span class="n">W2</span><span class="o">.</span><span class="n">T</span>  <span class="c1"># Shape: (m, hidden_dim)</span>
+            <span class="n">dZ1</span> <span class="o">=</span> <span class="n">dA1</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">z1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>  <span class="c1"># Shape: (m, hidden_dim)</span>
+            <span class="n">dW1</span> <span class="o">=</span> <span class="n">X_norm</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="n">dZ1</span>  <span class="c1"># Shape: (input_dim, hidden_dim)</span>
+            <span class="n">db1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">dZ1</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>  <span class="c1"># Shape: (hidden_dim,)</span>
+
+            <span class="c1"># Update weights</span>
+            <span class="n">W2</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">dW2</span>
+            <span class="n">b2</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">db2</span>
+            <span class="n">W1</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">dW1</span>
+            <span class="n">b1</span> <span class="o">-=</span> <span class="n">learning_rate</span> <span class="o">*</span> <span class="n">db1</span>
+
+        <span class="c1"># Return prediction function</span>
+        <span class="k">def</span><span class="w"> </span><span class="nf">predict</span><span class="p">(</span><span class="n">X_test</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+            <span class="n">X_test_norm</span> <span class="o">=</span> <span class="p">(</span><span class="n">X_test</span> <span class="o">-</span> <span class="n">X_mean</span><span class="p">)</span> <span class="o">/</span> <span class="n">X_std</span>
+            <span class="n">z1</span> <span class="o">=</span> <span class="n">X_test_norm</span> <span class="o">@</span> <span class="n">W1</span> <span class="o">+</span> <span class="n">b1</span>
+            <span class="n">a1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">z1</span><span class="p">)</span>
+            <span class="n">z2</span> <span class="o">=</span> <span class="n">a1</span> <span class="o">@</span> <span class="n">W2</span> <span class="o">+</span> <span class="n">b2</span>
+            <span class="n">predictions_result</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">z2</span><span class="o">.</span><span class="n">flatten</span><span class="p">()</span> <span class="o">*</span> <span class="n">y_std</span> <span class="o">+</span> <span class="n">y_mean</span>
+            <span class="p">)</span>  <span class="c1"># Denormalize</span>
+            <span class="k">return</span> <span class="n">predictions_result</span>
+
+        <span class="k">return</span> <span class="n">predict</span>
+
+<div class="viewcode-block" id="QKDOptimizer.predict_performance">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDOptimizer.predict_performance">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">predict_performance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">parameters</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Predict protocol performance for given parameters using trained model.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            parameters: Protocol parameters</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Predicted performance metric</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># If we have a trained model, use it for prediction</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">model</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Convert parameters to vector</span>
+            <span class="n">param_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">parameters</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+            <span class="n">param_vector</span> <span class="o">=</span> <span class="p">[</span><span class="n">parameters</span><span class="p">[</span><span class="n">name</span><span class="p">]</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">param_names</span><span class="p">]</span>
+            <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">param_vector</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">model</span><span class="p">(</span><span class="n">X</span><span class="p">)[</span><span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># If no model is trained, return a simple heuristic</span>
+        <span class="k">return</span> <span class="mf">0.0</span>  <span class="c1"># Placeholder</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="QKDAnomalyDetector">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDAnomalyDetector">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QKDAnomalyDetector</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Anomaly detection for QKD systems using machine learning.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="QKDAnomalyDetector.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDAnomalyDetector.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the anomaly detector.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseline_statistics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># 5% threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="QKDAnomalyDetector.establish_baseline">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDAnomalyDetector.establish_baseline">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">establish_baseline</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metrics_history</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Establish baseline statistics from historical data.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            metrics_history: List of historical metric dictionaries</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">metrics_history</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="c1"># Calculate statistics for each metric</span>
+        <span class="n">all_metrics</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">metrics</span> <span class="ow">in</span> <span class="n">metrics_history</span><span class="p">:</span>
+            <span class="n">all_metrics</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">metrics</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">baseline_statistics</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">all_metrics</span><span class="p">:</span>
+            <span class="n">values</span> <span class="o">=</span> <span class="p">[</span>
+                <span class="n">metrics</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="k">for</span> <span class="n">metrics</span> <span class="ow">in</span> <span class="n">metrics_history</span> <span class="k">if</span> <span class="n">metric</span> <span class="ow">in</span> <span class="n">metrics</span>
+            <span class="p">]</span>
+            <span class="k">if</span> <span class="n">values</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">baseline_statistics</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                    <span class="s2">&quot;mean&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
+                    <span class="s2">&quot;std&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
+                    <span class="s2">&quot;min&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
+                    <span class="s2">&quot;max&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">values</span><span class="p">)),</span>
+                <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="QKDAnomalyDetector.detect_anomalies">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDAnomalyDetector.detect_anomalies">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">detect_anomalies</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">current_metrics</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Detect anomalies in current metrics.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            current_metrics: Current metric values</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary mapping metric names to anomaly flags</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">anomalies</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">bool</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">current_metrics</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="k">if</span> <span class="n">metric</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseline_statistics</span><span class="p">:</span>
+                <span class="n">stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">baseline_statistics</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span>
+                <span class="c1"># Simple statistical anomaly detection</span>
+                <span class="c1"># Check if value is outside mean ± 3*std</span>
+                <span class="k">if</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">z_score</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">value</span> <span class="o">-</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">])</span> <span class="o">/</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;std&quot;</span><span class="p">]</span>
+                    <span class="n">anomalies</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">z_score</span> <span class="o">&gt;</span> <span class="mi">3</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># If std is 0, check if value differs from mean</span>
+                    <span class="n">anomalies</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span> <span class="o">!=</span> <span class="n">stats</span><span class="p">[</span><span class="s2">&quot;mean&quot;</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># No baseline for this metric</span>
+                <span class="n">anomalies</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># Store detection result</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection_history</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="p">{</span>
+                <span class="s2">&quot;timestamp&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detection_history</span><span class="p">),</span>
+                <span class="s2">&quot;metrics&quot;</span><span class="p">:</span> <span class="n">current_metrics</span><span class="p">,</span>
+                <span class="s2">&quot;anomalies&quot;</span><span class="p">:</span> <span class="n">anomalies</span><span class="p">,</span>
+            <span class="p">}</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">anomalies</span></div>
+
+
+<div class="viewcode-block" id="QKDAnomalyDetector.update_anomaly_threshold">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDAnomalyDetector.update_anomaly_threshold">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">update_anomaly_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_threshold</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Update the anomaly detection threshold.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            new_threshold: New threshold value (0.0 to 1.0)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">anomaly_threshold</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">new_threshold</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="QKDAnomalyDetector.get_detection_report">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ml.qkd_optimizer.QKDAnomalyDetector.get_detection_report">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_detection_report</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a report of anomaly detection results.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with detection statistics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_history</span><span class="p">:</span>
+            <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;error&quot;</span><span class="p">:</span> <span class="s2">&quot;No detection history&quot;</span><span class="p">}</span>
+
+        <span class="c1"># Count anomalies by metric</span>
+        <span class="n">anomaly_counts</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="n">total_detections</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detection_history</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">detection</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_history</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">is_anomaly</span> <span class="ow">in</span> <span class="n">detection</span><span class="p">[</span><span class="s2">&quot;anomalies&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">is_anomaly</span><span class="p">:</span>
+                    <span class="n">anomaly_counts</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="n">anomaly_counts</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">metric</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="c1"># Calculate anomaly rates</span>
+        <span class="n">anomaly_rates</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">anomaly_counts</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+            <span class="n">anomaly_rates</span><span class="p">[</span><span class="n">metric</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">count</span> <span class="o">/</span> <span class="n">total_detections</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;total_detections&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">total_detections</span><span class="p">),</span>
+            <span class="s2">&quot;anomaly_counts&quot;</span><span class="p">:</span> <span class="p">{</span>
+                <span class="n">metric</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">count</span><span class="p">)</span> <span class="k">for</span> <span class="n">metric</span><span class="p">,</span> <span class="n">count</span> <span class="ow">in</span> <span class="n">anomaly_counts</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+            <span class="p">},</span>
+            <span class="s2">&quot;anomaly_rates&quot;</span><span class="p">:</span> <span class="n">anomaly_rates</span><span class="p">,</span>
+            <span class="s2">&quot;baseline_metrics&quot;</span><span class="p">:</span> <span class="nb">list</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseline_statistics</span><span class="o">.</span><span class="n">keys</span><span class="p">()),</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

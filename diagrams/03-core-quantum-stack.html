@@ -1,0 +1,396 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>3. Core Quantum Stack &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">3. Core Quantum Stack</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/diagrams/03-core-quantum-stack.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="core-quantum-stack">
+<h1>3. Core Quantum Stack<a class="headerlink" href="#core-quantum-stack" title="Link to this heading"></a></h1>
+<section id="class-hierarchy">
+<h2>Class Hierarchy<a class="headerlink" href="#class-hierarchy" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>classDiagram
+    class Qubit {
+        -_state: np.ndarray[complex]
+        +state: np.ndarray
+        +probabilities: tuple[float, float]
+        +zero() Qubit
+        +one() Qubit
+        +plus() Qubit
+        +minus() Qubit
+        +apply_gate(gate: np.ndarray)
+        +measure(basis: str) int
+        +collapse_state(result: int, basis: str)
+        +density_matrix() np.ndarray
+        +bloch_vector() tuple[float, float, float]
+    }
+
+    class Qudit {
+        -_state: np.ndarray[complex]
+        +dimension: int
+        +state: np.ndarray
+        +probabilities: list[float]
+        +computational_basis(level, dim) Qudit
+        +uniform_superposition(dim) Qudit
+        +fourier_basis(level, dim) Qudit
+        +apply_unitary(operator: np.ndarray)
+        +measure(basis_matrix) int
+        +partial_trace(idx, dim) Qudit
+        +fidelity(other) float
+    }
+
+    class MultiQubitState {
+        -_state: np.ndarray[complex]
+        -_num_qubits: int
+        +state: np.ndarray
+        +probabilities: np.ndarray
+        +from_qubits(list[Qubit]) MultiQubitState
+        +zeros(n) MultiQubitState
+        +ghz(n) MultiQubitState
+        +w_state(n) MultiQubitState
+        +apply_gate(gate, target_qubits)
+        +measure(target) tuple[int, MultiQubitState]
+        +entanglement_entropy(subsystem) float
+        +fidelity(other) float
+        +density_matrix() np.ndarray
+    }
+
+    class QuantumChannel {
+        +distance: float
+        +loss: float
+        +noise_model: str
+        +noise_level: float
+        +transmit(qubit, timestamp) Qubit|None
+        +transmit_batch(qubits) list[Qubit|None]
+        +static intercept_resend_attack()
+        +static entanglement_attack()
+        +get_statistics() dict
+        +reset_statistics()
+    }
+
+    class QuantumGate {
+        +matrix: np.ndarray
+    }
+
+    class Identity {
+        +__init__()
+    }
+    class PauliX { }
+    class PauliY { }
+    class PauliZ { }
+    class Hadamard { }
+    class S { }
+    class SDag { }
+    class T { }
+    class Rx {
+        +__init__(theta)
+    }
+    class Ry {
+        +__init__(theta)
+    }
+    class Rz {
+        +__init__(theta)
+    }
+    class CNOT { }
+    class CZ { }
+    class SWAP { }
+
+    class GateUtils {
+        +static basis_switch(basis) np.ndarray
+        +static random_unitary() np.ndarray
+        +static unitary_from_angles(theta, phi, lam) np.ndarray
+        +static sequence(*gates) np.ndarray
+        +static tensor_product(*gates) np.ndarray
+        +static is_unitary(gate) bool
+        +static is_hermitian(gate) bool
+    }
+
+    class Measurement {
+        +static measure_in_basis(qubit, basis) int
+        +static measure_batch_in_basis(qubits, basis) list[int]
+        +static measure_in_random_basis(qubit, bases) tuple[int, str]
+        +static measure_batch_in_random_bases(qubits, bases) tuple[list[int], list[str]]
+        +static measure_state_fidelity(qubit, target) float
+        +static measure_bloch_coordinates(qubit) tuple
+        +static measure_density_matrix(qubit) np.ndarray
+        +static measure_purity(qubit) float
+        +static measure_von_neumann_entropy(qubit) float
+        +static measure_observable(qubit, observable) float
+        +static measure_bell_state(q1, q2) str
+        +static quantum_state_tomography(qubit, n) dict
+    }
+
+    class QuantumDetector {
+        +efficiency: float
+        +dark_count_rate: float
+        +detect(photon_present, timestamp) tuple
+        +get_statistics() dict
+        +reset()
+        +static measure_state(state) int
+    }
+
+    class DetectorArray {
+        +detectors: list[QuantumDetector]
+        +measure_in_basis(qubit, basis, timestamp) int
+        +get_statistics() list[dict]
+        +static measure_state(state) int
+    }
+
+    class PhotonSource {
+        +wavelength: float
+        +intensity: float
+        +generate_pulse() Photon
+        +get_statistics() dict
+    }
+
+    QuantumGate &lt;|-- Identity
+    QuantumGate &lt;|-- PauliX
+    QuantumGate &lt;|-- PauliY
+    QuantumGate &lt;|-- PauliZ
+    QuantumGate &lt;|-- Hadamard
+    QuantumGate &lt;|-- S
+    QuantumGate &lt;|-- SDag
+    QuantumGate &lt;|-- T
+    QuantumGate &lt;|-- Rx
+    QuantumGate &lt;|-- Ry
+    QuantumGate &lt;|-- Rz
+    QuantumGate &lt;|-- CNOT
+    QuantumGate &lt;|-- CZ
+    QuantumGate &lt;|-- SWAP
+
+    QuantumDetector --&gt; DetectorArray : composed in
+</pre></div>
+</div>
+</section>
+<section id="physical-channel-effects">
+<h2>Physical Channel Effects<a class="headerlink" href="#physical-channel-effects" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    subgraph Input[&quot;Input Qubit&quot;]
+        IQ[&quot;|ψ⟩ = α|0⟩ + β|1⟩&quot;]
+    end
+
+    subgraph Loss[&quot;1. Photon Loss&quot;]
+        L1[&quot;Calculate survival: exp(-α·d)&quot;]
+        L2{&quot;secure_random() &lt; loss?&quot;}
+        L3[&quot;Qubit lost → None&quot;]
+        L4[&quot;Qubit survives → continue&quot;]
+        L1 --&gt; L2
+        L2 --&gt;|yes| L3
+        L2 --&gt;|no| L4
+    end
+
+    subgraph Eve[&quot;2. Eavesdropping (optional)&quot;]
+        E1{&quot;Eavesdropper present?&quot;}
+        E2[&quot;Intercept-Resend Attack:&lt;br/&gt;Measure in random basis&lt;br/&gt;Resend new qubit&quot;]
+        E3[&quot;Entanglement Attack:&lt;br/&gt;CNOT with ancilla&lt;br/&gt;Measure ancilla later&quot;]
+        E1 --&gt;|yes| E2
+        E1 --&gt;|yes| E3
+    end
+
+    subgraph Physical[&quot;3. Physical Effects&quot;]
+        P1[&quot;Polarization Drift&lt;br/&gt;Ry(θ_drift) where θ_drift = N(0, rate)·t&quot;]
+        P2[&quot;Phase Fluctuations&lt;br/&gt;Rz(φ) where φ = N(0, rate)·t&quot;]
+        P3[&quot;Misalignment Errors&lt;br/&gt;Small random rotation with prob p&quot;]
+        P4[&quot;Thermal Noise&lt;br/&gt;Random Pauli with prob T(temperature)&quot;]
+        P1 --&gt; P2 --&gt; P3 --&gt; P4
+    end
+
+    subgraph NoiseModel[&quot;4. Noise Models&quot;]
+        N1[&quot;Depolarizing: ρ → (1-p)ρ + p/3·(XρX + YρY + ZρZ)&quot;]
+        N2[&quot;Bit Flip: ρ → (1-p)ρ + p·XρX&quot;]
+        N3[&quot;Phase Flip: ρ → (1-p)ρ + p·ZρZ&quot;]
+        N4[&quot;Amplitude Damping: K₀, K₁ Kraus operators&quot;]
+    end
+
+    subgraph Output[&quot;Output (Received Qubit)&quot;]
+        OQ[&quot;|ψ&#39;⟩ (noisy, may be None)&quot;]
+    end
+
+    Input --&gt; Loss --&gt; Eve --&gt; Physical --&gt; NoiseModel --&gt; Output
+
+    style Input fill:#bbdefb,stroke:#1565c0
+    style Loss fill:#ffe0b2,stroke:#e65100
+    style Eve fill:#ffcdd2,stroke:#c62828
+    style Physical fill:#e1bee7,stroke:#6a1b9a
+    style NoiseModel fill:#d1c4e9,stroke:#4527a0
+    style Output fill:#c8e6c9,stroke:#2e7d32
+</pre></div>
+</div>
+</section>
+<section id="noise-model-kraus-operators">
+<h2>Noise Model Kraus Operators<a class="headerlink" href="#noise-model-kraus-operators" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>graph TD
+    subgraph Depol[&quot;Depolarizing Channel&quot;]
+        D0[&quot;K₀ = √(1-p) · I&quot;]
+        D1[&quot;K₁ = √(p/3) · X&quot;]
+        D2[&quot;K₂ = √(p/3) · Y&quot;]
+        D3[&quot;K₃ = √(p/3) · Z&quot;]
+        D0 --- D1 --- D2 --- D3
+        D_APPLY[&quot;ρ → Σ KᵢρKᵢ†&lt;br/&gt;Trajectory: apply random non-identity Pauli&quot;]
+    end
+
+    subgraph AmpDamp[&quot;Amplitude Damping&quot;]
+        AD0[&quot;K₀ = [[1, 0], [0, √(1-γ)]]&quot;]
+        AD1[&quot;K₁ = [[0, √γ], [0, 0]]&quot;]
+        AD0 --- AD1
+        AD_APPLY[&quot;Jump: |1⟩ → |0⟩ with prob γ|β|²&lt;br/&gt;No-jump: damp |1⟩ by √(1-γ)&quot;]
+    end
+
+    subgraph PhaseFlip[&quot;Phase Flip (Dephasing)&quot;]
+        PF0[&quot;K₀ = √(1-p) · I&quot;]
+        PF1[&quot;K₁ = √p · Z&quot;]
+        PF0 --- PF1
+        PF_APPLY[&quot;Apply Z with prob p&lt;br/&gt;Decoheres off-diagonals&quot;]
+    end
+</pre></div>
+</div>
+</section>
+<section id="security-analysis">
+<h2>Security Analysis<a class="headerlink" href="#security-analysis" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart LR
+    subgraph Metrics[&quot;Security Metrics&quot;]
+        M1[&quot;QBER: Error rate in sample&quot;]
+        M2[&quot;CHSH S-value for E91&quot;]
+        M3[&quot;Eve&#39;s mutual information&quot;]
+        M4[&quot;Key rate: final/raw ratio&quot;]
+    end
+
+    subgraph Thresholds[&quot;Thresholds&quot;]
+        T1[&quot;BB84: QBER ≤ 11%&quot;]
+        T2[&quot;E91: |S| &gt; 2 (Bell violation)&quot;]
+        T3[&quot;B92: QBER ≤ 4.6%&quot;]
+        T4[&quot;DI-QKD: CHSH &gt; 2&quot;]
+    end
+
+    subgraph Attacks[&quot;Attack Detection&quot;]
+        A1[&quot;Intercept-resend → QBER spike&quot;]
+        A2[&quot;PNS attack → Multi-photon rate&quot;]
+        A3[&quot;Entanglement → Bell violation drop&quot;]
+    end
+
+    Metrics --&gt; Thresholds
+    Thresholds --&gt; Attacks
+</pre></div>
+</div>
+</section>
+<section id="bloch-sphere-representation">
+<h2>Bloch Sphere Representation<a class="headerlink" href="#bloch-sphere-representation" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>graph TD
+    subgraph States[&quot;Qubit States on Bloch Sphere&quot;]
+        ZERO[&quot;|0⟩ = (0,0,1)&lt;br/&gt;Computational 0&quot;]
+        ONE[&quot;|1⟩ = (0,0,-1)&lt;br/&gt;Computational 1&quot;]
+        PLUS[&quot;|+⟩ = (1,0,0)&lt;br/&gt;Hadamard 0&quot;]
+        MINUS[&quot;|-⟩ = (-1,0,0)&lt;br/&gt;Hadamard 1&quot;]
+        YPLUS[&quot;|y+⟩ = (0,1,0)&lt;br/&gt;Circular 0&quot;]
+        YMINUS[&quot;|y-⟩ = (0,-1,0)&lt;br/&gt;Circular 1&quot;]
+    end
+
+    subgraph Gates[&quot;Gate Rotations&quot;]
+        RX[&quot;Rx(θ): rotate around X axis&lt;br/&gt;[[cos(θ/2), -i·sin(θ/2)],&lt;br/&gt;[-i·sin(θ/2), cos(θ/2)]]&quot;]
+        RY[&quot;Ry(θ): rotate around Y axis&lt;br/&gt;[[cos(θ/2), -sin(θ/2)],&lt;br/&gt;[sin(θ/2), cos(θ/2)]]&quot;]
+        RZ[&quot;Rz(θ): rotate around Z axis&lt;br/&gt;[[e^(-iθ/2), 0],&lt;br/&gt;[0, e^(iθ/2)]]&quot;]
+        H[&quot;H: X ↦ Z basis swap&lt;br/&gt;[[1,1],[1,-1]]/√2&quot;]
+    end
+
+    States -.-&gt;|measurement projects| Gates
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

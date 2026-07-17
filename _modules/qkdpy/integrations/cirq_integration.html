@@ -1,0 +1,472 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.integrations.cirq_integration &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.integrations.cirq_integration</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.integrations.cirq_integration</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Cirq integration plugin for QKDpy.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span><span class="w"> </span><span class="nn">cirq</span>
+
+    <span class="n">CIRQ_AVAILABLE</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">CIRQ_AVAILABLE</span> <span class="o">=</span> <span class="kc">False</span>
+
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_choice</span><span class="p">,</span> <span class="n">secure_randint</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumChannel</span><span class="p">,</span> <span class="n">Qubit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..protocols.bb84</span><span class="w"> </span><span class="kn">import</span> <span class="n">BB84</span>
+
+
+<div class="viewcode-block" id="CirqIntegration">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CirqIntegration</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Integration with Cirq quantum computing framework.&quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="CirqIntegration.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize Cirq integration.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">CIRQ_AVAILABLE</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ImportError</span><span class="p">(</span>
+                <span class="s2">&quot;Cirq is not installed. Please install it with &#39;pip install cirq&#39; &quot;</span>
+                <span class="s2">&quot;to use Cirq integration.&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CirqIntegration.qubit_to_cirq">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.qubit_to_cirq">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">qubit_to_cirq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qkdpy_qubit</span><span class="p">:</span> <span class="n">Qubit</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a QKDpy Qubit to a Cirq state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qkdpy_qubit: QKDpy Qubit object</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Cirq-compatible state (raw numpy state vector in Cirq 1.x, which</span>
+<span class="sd">            can be passed directly to `cirq.Simulator().simulate(...,</span>
+<span class="sd">            initial_state=...)` instead of the removed</span>
+<span class="sd">            `StateVectorSimulationState(state_vector=...)` constructor.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Extract the state vector from QKDpy Qubit</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">qkdpy_qubit</span><span class="o">.</span><span class="n">state</span>
+        <span class="c1"># Return raw state vector (Cirq 1.x accepts ndarray for initial_state)</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="CirqIntegration.cirq_to_qubit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.cirq_to_qubit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cirq_to_qubit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">cirq_state</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Qubit</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a Cirq state to a QKDpy Qubit.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            cirq_state: Cirq state</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            QKDpy Qubit representing the same quantum state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Cirq 1.x dropped .state_vector(); callers should pass the raw np</span>
+        <span class="c1"># state vector, but we keep a small adaptation layer for backward</span>
+        <span class="c1"># compatibility with anything that may still hold a Cirq state.</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">cirq_state</span><span class="o">.</span><span class="n">state_vector</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">cirq_state</span><span class="p">,</span> <span class="s2">&quot;state_vector&quot;</span><span class="p">)</span>
+            <span class="k">else</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">cirq_state</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># Create QKDpy Qubit</span>
+        <span class="k">return</span> <span class="n">Qubit</span><span class="p">(</span><span class="n">state</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">state</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span></div>
+
+
+<div class="viewcode-block" id="CirqIntegration.create_bb84_circuit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.create_bb84_circuit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_bb84_circuit</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span>
+        <span class="n">alice_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">bob_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a Cirq circuit implementing the BB84 protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_qubits: Number of qubits to use</span>
+<span class="sd">            alice_bases: List of bases Alice uses (&#39;Z&#39; for computational, &#39;X&#39; for Hadamard)</span>
+<span class="sd">            bob_bases: List of bases Bob uses (&#39;Z&#39; for computational, &#39;X&#39; for Hadamard)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Cirq Circuit implementing BB84</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">alice_bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Randomly choose bases for Alice</span>
+            <span class="n">alice_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+        <span class="k">if</span> <span class="n">bob_bases</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Randomly choose bases for Bob</span>
+            <span class="n">bob_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+
+        <span class="c1"># Create qubits</span>
+        <span class="n">qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">cirq</span><span class="o">.</span><span class="n">LineQubit</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+
+        <span class="c1"># Create circuit</span>
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">cirq</span><span class="o">.</span><span class="n">Circuit</span><span class="p">()</span>
+
+        <span class="c1"># Alice prepares qubits</span>
+        <span class="k">for</span> <span class="n">_i</span><span class="p">,</span> <span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">qubit</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">alice_bases</span><span class="p">,</span> <span class="n">qubits</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>  <span class="c1"># Hadamard basis</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">qubit</span><span class="p">))</span>
+
+        <span class="c1"># Bob measures qubits</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">qubit</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">bob_bases</span><span class="p">,</span> <span class="n">qubits</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>  <span class="c1"># Hadamard basis measurement</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">qubit</span><span class="p">))</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;result_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">circuit</span></div>
+
+
+<div class="viewcode-block" id="CirqIntegration.simulate_bb84_with_cirq">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.simulate_bb84_with_cirq">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">simulate_bb84_with_cirq</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">noise_model</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">noise_level</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">bool</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate BB84 protocol using Cirq.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_qubits: Number of qubits to simulate</span>
+<span class="sd">            noise_model: Type of noise to add (&#39;bit_flip&#39;, &#39;phase_flip&#39;, &#39;depolarizing&#39;)</span>
+<span class="sd">            noise_level: Noise level (0.0 to 1.0)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (alice_bits, bob_bits, matching_bases)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Randomly generate Alice&#39;s bits and bases</span>
+        <span class="n">alice_bits</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+        <span class="n">alice_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+        <span class="n">bob_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+
+        <span class="c1"># Create qubits</span>
+        <span class="n">qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">cirq</span><span class="o">.</span><span class="n">LineQubit</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">)]</span>
+
+        <span class="c1"># Create circuit</span>
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">cirq</span><span class="o">.</span><span class="n">Circuit</span><span class="p">()</span>
+
+        <span class="c1"># Alice prepares qubits</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">bit</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">alice_bits</span><span class="p">,</span> <span class="n">alice_bases</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">X</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>  <span class="c1"># Prepare |1⟩</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>  <span class="c1"># Hadamard basis</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+
+        <span class="c1"># Add noise if specified</span>
+        <span class="k">if</span> <span class="n">noise_model</span> <span class="ow">and</span> <span class="n">noise_level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">noise_model</span> <span class="o">==</span> <span class="s2">&quot;bit_flip&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">bit_flip</span><span class="p">(</span><span class="n">noise_level</span><span class="p">)</span><span class="o">.</span><span class="n">on_each</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">noise_model</span> <span class="o">==</span> <span class="s2">&quot;phase_flip&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">phase_flip</span><span class="p">(</span><span class="n">noise_level</span><span class="p">)</span><span class="o">.</span><span class="n">on_each</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">noise_model</span> <span class="o">==</span> <span class="s2">&quot;depolarizing&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">depolarize</span><span class="p">(</span><span class="n">noise_level</span><span class="p">)</span><span class="o">.</span><span class="n">on_each</span><span class="p">(</span><span class="n">qubits</span><span class="p">))</span>
+
+        <span class="c1"># Bob measures qubits</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="p">(</span><span class="n">basis</span><span class="p">,</span> <span class="n">qubit</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">bob_bases</span><span class="p">,</span> <span class="n">qubits</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>  <span class="c1"># Hadamard basis measurement</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">qubit</span><span class="p">))</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">qubit</span><span class="p">,</span> <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;result_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+
+        <span class="c1"># Simulate the circuit</span>
+        <span class="n">simulator</span> <span class="o">=</span> <span class="n">cirq</span><span class="o">.</span><span class="n">Simulator</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">simulator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Extract Bob&#39;s measurement results</span>
+        <span class="n">bob_bits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="n">bob_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurements</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;result_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]))</span>
+
+        <span class="c1"># Determine matching bases</span>
+        <span class="n">matching_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">a</span> <span class="o">==</span> <span class="n">b</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">alice_bases</span><span class="p">,</span> <span class="n">bob_bases</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">alice_bits</span><span class="p">,</span> <span class="n">bob_bits</span><span class="p">,</span> <span class="n">matching_bases</span></div>
+
+
+<div class="viewcode-block" id="CirqIntegration.convert_channel_to_cirq">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.convert_channel_to_cirq">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">convert_channel_to_cirq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qkdpy_channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert a QKDpy QuantumChannel to Cirq noise gates.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qkdpy_channel: QKDpy QuantumChannel</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of Cirq gates representing the same channel characteristics</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">noise_gates</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Add loss as amplitude damping (simplified model)</span>
+        <span class="k">if</span> <span class="n">qkdpy_channel</span><span class="o">.</span><span class="n">loss</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="c1"># Loss is typically handled at the protocol level</span>
+            <span class="k">pass</span>
+
+        <span class="c1"># Add noise based on noise model</span>
+        <span class="k">if</span> <span class="n">qkdpy_channel</span><span class="o">.</span><span class="n">noise_level</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">qkdpy_channel</span><span class="o">.</span><span class="n">noise_model</span> <span class="o">==</span> <span class="s2">&quot;depolarizing&quot;</span><span class="p">:</span>
+                <span class="n">noise_gates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">depolarize</span><span class="p">(</span><span class="n">qkdpy_channel</span><span class="o">.</span><span class="n">noise_level</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">qkdpy_channel</span><span class="o">.</span><span class="n">noise_model</span> <span class="o">==</span> <span class="s2">&quot;bit_flip&quot;</span><span class="p">:</span>
+                <span class="n">noise_gates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">bit_flip</span><span class="p">(</span><span class="n">qkdpy_channel</span><span class="o">.</span><span class="n">noise_level</span><span class="p">))</span>
+            <span class="k">elif</span> <span class="n">qkdpy_channel</span><span class="o">.</span><span class="n">noise_model</span> <span class="o">==</span> <span class="s2">&quot;phase_flip&quot;</span><span class="p">:</span>
+                <span class="n">noise_gates</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">phase_flip</span><span class="p">(</span><span class="n">qkdpy_channel</span><span class="o">.</span><span class="n">noise_level</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">noise_gates</span></div>
+
+
+<div class="viewcode-block" id="CirqIntegration.create_entanglement_circuit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.create_entanglement_circuit">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">create_entanglement_circuit</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Any</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a Cirq circuit for generating entangled pairs.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_pairs: Number of entangled pairs to create</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Cirq Circuit creating entangled pairs</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Create qubits for Alice and Bob</span>
+        <span class="n">alice_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">cirq</span><span class="o">.</span><span class="n">LineQubit</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)]</span>
+        <span class="n">bob_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">cirq</span><span class="o">.</span><span class="n">LineQubit</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">num_pairs</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)]</span>
+
+        <span class="c1"># Create circuit</span>
+        <span class="n">circuit</span> <span class="o">=</span> <span class="n">cirq</span><span class="o">.</span><span class="n">Circuit</span><span class="p">()</span>
+
+        <span class="c1"># Create entangled pairs using Hadamard and CNOT</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">):</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">alice_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>  <span class="c1"># Create superposition</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="n">cirq</span><span class="o">.</span><span class="n">CNOT</span><span class="p">(</span><span class="n">alice_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">bob_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="p">)</span>  <span class="c1"># Create entanglement</span>
+
+        <span class="k">return</span> <span class="n">circuit</span></div>
+
+
+<div class="viewcode-block" id="CirqIntegration.e91_with_cirq">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.e91_with_cirq">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">e91_with_cirq</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">num_pairs</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Simulate the E91 protocol using Cirq entangled pairs.</span>
+
+<span class="sd">        Alice and Bob each measure their half of every Bell pair in a</span>
+<span class="sd">        randomly chosen basis (Z or X), then sift the runs where their</span>
+<span class="sd">        bases matched to build a shared raw key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_pairs: Number of entangled Bell pairs to generate.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with the sifted key and run metadata.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">num_pairs</span> <span class="o">&lt;</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;num_pairs must be at least 1&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Build entangled pairs using the existing helper.</span>
+        <span class="n">circuit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">create_entanglement_circuit</span><span class="p">(</span><span class="n">num_pairs</span><span class="o">=</span><span class="n">num_pairs</span><span class="p">)</span>
+
+        <span class="c1"># Qubits: first num_pairs are Alice&#39;s, next num_pairs are Bob&#39;s.</span>
+        <span class="n">alice_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">cirq</span><span class="o">.</span><span class="n">LineQubit</span><span class="p">(</span><span class="n">i</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)]</span>
+        <span class="n">bob_qubits</span> <span class="o">=</span> <span class="p">[</span><span class="n">cirq</span><span class="o">.</span><span class="n">LineQubit</span><span class="p">(</span><span class="n">i</span> <span class="o">+</span> <span class="n">num_pairs</span><span class="p">)</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)]</span>
+
+        <span class="c1"># Randomly choose measurement bases for each party.</span>
+        <span class="n">alice_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)]</span>
+        <span class="n">bob_bases</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_choice</span><span class="p">([</span><span class="s2">&quot;Z&quot;</span><span class="p">,</span> <span class="s2">&quot;X&quot;</span><span class="p">])</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">)]</span>
+
+        <span class="c1"># Apply local basis rotations before measurement.</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">basis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">alice_bases</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">alice_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">alice_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;alice_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">basis</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">bob_bases</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;X&quot;</span><span class="p">:</span>
+                <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">H</span><span class="p">(</span><span class="n">bob_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">]))</span>
+            <span class="n">circuit</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cirq</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">bob_qubits</span><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">key</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;bob_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">))</span>
+
+        <span class="c1"># Simulate the circuit once.</span>
+        <span class="n">simulator</span> <span class="o">=</span> <span class="n">cirq</span><span class="o">.</span><span class="n">Simulator</span><span class="p">()</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">simulator</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">circuit</span><span class="p">,</span> <span class="n">repetitions</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="c1"># Collect sifted bits where both parties measured in the same basis.</span>
+        <span class="n">final_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_pairs</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">alice_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">bob_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">alice_bit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurements</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;alice_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="n">bob_bit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="o">.</span><span class="n">measurements</span><span class="p">[</span><span class="sa">f</span><span class="s2">&quot;bob_</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+                <span class="c1"># In a Bell pair, same-basis measurements are perfectly correlated.</span>
+                <span class="n">final_key</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">alice_bit</span> <span class="k">if</span> <span class="n">alice_bit</span> <span class="o">==</span> <span class="n">bob_bit</span> <span class="k">else</span> <span class="n">alice_bit</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;final_key&quot;</span><span class="p">:</span> <span class="n">final_key</span><span class="p">,</span>
+            <span class="s2">&quot;sifted_length&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_key</span><span class="p">),</span>
+            <span class="s2">&quot;num_pairs&quot;</span><span class="p">:</span> <span class="n">num_pairs</span><span class="p">,</span>
+            <span class="s2">&quot;protocol&quot;</span><span class="p">:</span> <span class="s2">&quot;E91&quot;</span><span class="p">,</span>
+        <span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="CirqIntegration.benchmark_qkdpy_vs_cirq">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.integrations.cirq_integration.CirqIntegration.benchmark_qkdpy_vs_cirq">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">benchmark_qkdpy_vs_cirq</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">num_qubits</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span> <span class="n">num_trials</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Benchmark QKDpy against Cirq for BB84 protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            num_qubits: Number of qubits to simulate</span>
+<span class="sd">            num_trials: Number of trials to run</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with benchmark results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">import</span><span class="w"> </span><span class="nn">time</span>
+
+        <span class="c1"># Benchmark QKDpy</span>
+        <span class="n">qkdpy_times</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
+            <span class="n">channel</span> <span class="o">=</span> <span class="n">QuantumChannel</span><span class="p">(</span>
+                <span class="n">loss</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">noise_model</span><span class="o">=</span><span class="s2">&quot;depolarizing&quot;</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mf">0.05</span>
+            <span class="p">)</span>
+            <span class="n">protocol</span> <span class="o">=</span> <span class="n">BB84</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="n">num_qubits</span><span class="p">)</span>
+
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">protocol</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="n">qkdpy_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+
+        <span class="c1"># Benchmark Cirq</span>
+        <span class="n">cirq_times</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_trials</span><span class="p">):</span>
+            <span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">alice_bits</span><span class="p">,</span> <span class="n">bob_bits</span><span class="p">,</span> <span class="n">matching_bases</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">simulate_bb84_with_cirq</span><span class="p">(</span>
+                <span class="n">num_qubits</span><span class="o">=</span><span class="n">num_qubits</span><span class="p">,</span> <span class="n">noise_model</span><span class="o">=</span><span class="s2">&quot;depolarizing&quot;</span><span class="p">,</span> <span class="n">noise_level</span><span class="o">=</span><span class="mf">0.05</span>
+            <span class="p">)</span>
+            <span class="n">end_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+            <span class="n">cirq_times</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">end_time</span> <span class="o">-</span> <span class="n">start_time</span><span class="p">)</span>
+
+        <span class="c1"># Calculate statistics</span>
+        <span class="n">qkdpy_avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">qkdpy_times</span><span class="p">)</span>
+        <span class="n">qkdpy_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">qkdpy_times</span><span class="p">)</span>
+        <span class="n">cirq_avg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">cirq_times</span><span class="p">)</span>
+        <span class="n">cirq_std</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">std</span><span class="p">(</span><span class="n">cirq_times</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;qkdpy_average_time&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qkdpy_avg</span><span class="p">),</span>
+            <span class="s2">&quot;qkdpy_std_time&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">qkdpy_std</span><span class="p">),</span>
+            <span class="s2">&quot;cirq_average_time&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cirq_avg</span><span class="p">),</span>
+            <span class="s2">&quot;cirq_std_time&quot;</span><span class="p">:</span> <span class="nb">float</span><span class="p">(</span><span class="n">cirq_std</span><span class="p">),</span>
+            <span class="s2">&quot;speedup_factor&quot;</span><span class="p">:</span> <span class="p">(</span>
+                <span class="nb">float</span><span class="p">(</span><span class="n">qkdpy_avg</span> <span class="o">/</span> <span class="n">cirq_avg</span><span class="p">)</span> <span class="k">if</span> <span class="n">cirq_avg</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="nb">float</span><span class="p">(</span><span class="s2">&quot;inf&quot;</span><span class="p">)</span>
+            <span class="p">),</span>
+            <span class="s2">&quot;num_qubits&quot;</span><span class="p">:</span> <span class="n">num_qubits</span><span class="p">,</span>
+            <span class="s2">&quot;num_trials&quot;</span><span class="p">:</span> <span class="n">num_trials</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

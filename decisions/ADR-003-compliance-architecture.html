@@ -1,0 +1,229 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ADR-003: Enterprise Compliance Architecture &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ADR-003: Enterprise Compliance Architecture</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/decisions/ADR-003-compliance-architecture.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="adr-003-enterprise-compliance-architecture">
+<h1>ADR-003: Enterprise Compliance Architecture<a class="headerlink" href="#adr-003-enterprise-compliance-architecture" title="Link to this heading"></a></h1>
+<section id="status">
+<h2>Status<a class="headerlink" href="#status" title="Link to this heading"></a></h2>
+<p>Accepted</p>
+</section>
+<section id="date">
+<h2>Date<a class="headerlink" href="#date" title="Link to this heading"></a></h2>
+<p>2026-07-09</p>
+</section>
+<section id="context">
+<h2>Context<a class="headerlink" href="#context" title="Link to this heading"></a></h2>
+<p>QKD deployments increasingly require compliance with emerging standards:</p>
+<ul class="simple">
+<li><p><strong>ETSI GS QKD 014</strong> — KME-SA Interface (key delivery, authentication, status)</p></li>
+<li><p><strong>ETSI GS QKD 016</strong> — Common Criteria Protection Profile (security target, audit)</p></li>
+<li><p><strong>ISO/IEC 23837-1/2</strong> — QKD Security Requirements (key length, QBER thresholds)</p></li>
+<li><p><strong>NIST SP 800-57</strong> — Key Management (key length, algorithm lifetime)</p></li>
+<li><p><strong>FIPS 140-2/140-3</strong> — Cryptographic Module (approved algorithms, module integrity)</p></li>
+<li><p><strong>ISO 27001</strong> — Information Security (access control, logging, crypto policy)</p></li>
+</ul>
+<p>We need a compliance engine that:</p>
+<ul class="simple">
+<li><p>Runs a checklist of checks against QKDpy configuration</p></li>
+<li><p>Supports multiple standards with different check sets</p></li>
+<li><p>Produces structured reports (summary, per-check pass/fail, severity, recommendations)</p></li>
+<li><p>Can be extended without modifying the checker (new standards = new check lists)</p></li>
+<li><p>Exports to multiple formats (Markdown, HTML, JSON)</p></li>
+</ul>
+</section>
+<section id="decision">
+<h2>Decision<a class="headerlink" href="#decision" title="Link to this heading"></a></h2>
+<p>Build a <strong>pluggable compliance checker</strong> with a <code class="docutils literal notranslate"><span class="pre">(standard)</span> <span class="pre">→</span> <span class="pre">list[checks]</span></code>
+dispatch pattern.</p>
+<section id="architecture">
+<h3>Architecture<a class="headerlink" href="#architecture" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ComplianceChecker
+│
+├─ _check_etsi_qkd_014()         → list[ComplianceCheck]
+├─ _check_etsi_qkd_016()         → list[ComplianceCheck]
+├─ _check_iso_23837()            → list[ComplianceCheck]   (shared for 23837-1 and 23837-2)
+├─ _check_nist_800_57()          → list[ComplianceCheck]
+├─ _check_fips_140_2()           → list[ComplianceCheck]
+└─ _check_iso_27001()            → list[ComplianceCheck]
+</pre></div>
+</div>
+<p>Each <code class="docutils literal notranslate"><span class="pre">_check_*</span></code> method is a pure function that takes config and returns a list
+of <code class="docutils literal notranslate"><span class="pre">ComplianceCheck</span></code> results.  The <code class="docutils literal notranslate"><span class="pre">ComplianceChecker.check_compliance()</span></code> method
+iterates the requested standards and dispatches via an <code class="docutils literal notranslate"><span class="pre">if/elif</span></code> chain to the
+appropriate method, aggregating results into a <code class="docutils literal notranslate"><span class="pre">ComplianceReport</span></code>.</p>
+</section>
+<section id="report-structure">
+<h3>Report structure<a class="headerlink" href="#report-structure" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>ComplianceReport
+├─ report_id            ← str (hex token, 16 chars)
+├─ generated_at         ← datetime
+├─ standards_checked    ← list[ComplianceStandard]
+├─ checks               ← list[ComplianceCheck]
+│                        (check_id, requirement, description, passed,
+│                         severity, details, recommendation)
+├─ overall_compliant    ← bool (False if any CRITICAL or HIGH fails)
+├─ passed_checks        ← int
+├─ failed_checks        ← int
+├─ get_failed_checks()  → filter
+├─ get_summary()        → dict
+├─ export_markdown()    → str
+└─ export_html()        → str
+</pre></div>
+</div>
+</section>
+<section id="check-design">
+<h3>Check design<a class="headerlink" href="#check-design" title="Link to this heading"></a></h3>
+<p>Each check has a stable <code class="docutils literal notranslate"><span class="pre">check_id</span></code> (e.g., <code class="docutils literal notranslate"><span class="pre">ETSI-014-001</span></code>), a human-readable
+<code class="docutils literal notranslate"><span class="pre">requirement</span></code>, a <code class="docutils literal notranslate"><span class="pre">description</span></code>, a <code class="docutils literal notranslate"><span class="pre">severity</span></code> (critical/high/medium/low), and
+a <code class="docutils literal notranslate"><span class="pre">recommendation</span></code> for remediation.  This ensures reports are actionable, not
+just diagnostic.</p>
+</section>
+<section id="product-tier-gating">
+<h3>Product tier gating<a class="headerlink" href="#product-tier-gating" title="Link to this heading"></a></h3>
+<p>Compliance checking is gated behind <code class="docutils literal notranslate"><span class="pre">Feature.COMPLIANCE_REPORTING</span></code> (ENTERPRISE)
+and <code class="docutils literal notranslate"><span class="pre">Feature.COMPLIANCE_HTML_EXPORT</span></code> (ENTERPRISE) via the
+<code class="docutils literal notranslate"><span class="pre">require_feature</span></code> decorator.  FREE-tier users cannot generate compliance
+reports.</p>
+</section>
+</section>
+<section id="alternatives-considered">
+<h2>Alternatives Considered<a class="headerlink" href="#alternatives-considered" title="Link to this heading"></a></h2>
+<section id="plugin-based-register-standards-via-entry-points">
+<h3>Plugin-based (register standards via entry points)<a class="headerlink" href="#plugin-based-register-standards-via-entry-points" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Pros:</strong> Third-party standards without modifying core</p></li>
+<li><p><strong>Cons:</strong> Premature extensibility — we know all the standards we need to
+support for v1.  Plugins add complexity in discovery, validation, and error
+handling.</p></li>
+<li><p><strong>Rejected:</strong> YAGNI.  Will revisit when a user requests a custom standard.</p></li>
+</ul>
+</section>
+<section id="yaml-dsl-defined-checks-declarative-not-code">
+<h3>YAML/DSL-defined checks (declarative, not code)<a class="headerlink" href="#yaml-dsl-defined-checks-declarative-not-code" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><strong>Pros:</strong> Non-developers can add checks</p></li>
+<li><p><strong>Cons:</strong> Every check evaluates Python objects (config dataclasses) against
+Python conditions.  A YAML DSL would need to reimplement Python expressions,
+or we’d end up with a <code class="docutils literal notranslate"><span class="pre">lambda:</span> <span class="pre">field</span></code> escaping mechanism that’s harder to
+read than just writing Python.</p></li>
+<li><p><strong>Rejected:</strong> Code-defined checks are simpler, more powerful, and equally
+testable.</p></li>
+</ul>
+</section>
+</section>
+<section id="consequences">
+<h2>Consequences<a class="headerlink" href="#consequences" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Adding a new standard requires writing one <code class="docutils literal notranslate"><span class="pre">_check_*</span></code> method and adding a
+new entry to the dispatch <code class="docutils literal notranslate"><span class="pre">if/elif</span></code> chain.  No base class changes needed.</p></li>
+<li><p>Report exporters are methods on <code class="docutils literal notranslate"><span class="pre">ComplianceReport</span></code>, not separate classes,
+because the report is a data container with no serialisation logic of its
+own.  If export formats proliferate (&gt;5), extract to a <code class="docutils literal notranslate"><span class="pre">renderers/</span></code> package.</p></li>
+<li><p>The compliance engine is enterprise-gated but the core check logic has no
+licensing awareness — it returns results and lets the caller apply access
+control.  This keeps the engine testable in unit tests without setting a
+premium tier.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

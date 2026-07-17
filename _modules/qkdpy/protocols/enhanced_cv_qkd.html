@@ -1,0 +1,528 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.protocols.enhanced_cv_qkd &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.protocols.enhanced_cv_qkd</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.protocols.enhanced_cv_qkd</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Enhanced continuous-variable QKD protocol implementation.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">cast</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">QuantumChannel</span><span class="p">,</span>
+    <span class="n">Qubit</span><span class="p">,</span>
+    <span class="n">Qudit</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">secure_normal</span><span class="p">,</span>
+    <span class="n">secure_randint</span><span class="p">,</span>
+    <span class="n">secure_random</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProtocol</span>
+
+
+<div class="viewcode-block" id="EnhancedCVQKD">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EnhancedCVQKD</span><span class="p">(</span><span class="n">BaseProtocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Enhanced implementation of continuous-variable QKD protocol.</span>
+
+<span class="sd">    This implementation properly handles continuous variables and implements</span>
+<span class="sd">    Gaussian-modulated coherent state CV-QKD with homodyne detection.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="EnhancedCVQKD.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">,</span>
+        <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">security_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+        <span class="n">modulation_variance</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>
+        <span class="n">detection_efficiency</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.6</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the enhanced CV-QKD protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: Quantum channel for transmission</span>
+<span class="sd">            key_length: Desired length of the final key</span>
+<span class="sd">            security_threshold: Maximum excess noise level considered secure</span>
+<span class="sd">            modulation_variance: Variance of Gaussian modulation</span>
+<span class="sd">            detection_efficiency: Homodyne detection efficiency</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="p">)</span>
+
+        <span class="c1"># CV-QKD-specific parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span> <span class="o">=</span> <span class="n">security_threshold</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">modulation_variance</span> <span class="o">=</span> <span class="n">modulation_variance</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">detection_efficiency</span> <span class="o">=</span> <span class="n">detection_efficiency</span>
+
+        <span class="c1"># Number of signals to send</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_signals</span> <span class="o">=</span> <span class="n">key_length</span> <span class="o">*</span> <span class="mi">20</span>  <span class="c1"># Send more signals for better statistics</span>
+
+        <span class="c1"># Protocol parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">excess_noise</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># Excess noise in the channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">transmission_t</span> <span class="o">=</span> <span class="mf">0.1</span>  <span class="c1"># Channel transmission</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">homodyne_angle</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># Homodyne detection angle</span>
+
+        <span class="c1"># Alice&#39;s and Bob&#39;s data</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># X quadrature modulations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># P quadrature modulations</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># X quadrature measurements</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_p</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># P quadrature measurements</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># For security analysis</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">covariance_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">secret_fraction</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span></div>
+
+
+<div class="viewcode-block" id="EnhancedCVQKD.prepare_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.prepare_states">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare quantum states for transmission.</span>
+
+<span class="sd">        In CV-QKD, Alice prepares coherent states with Gaussian modulation</span>
+<span class="sd">        on both quadratures. For compatibility with the base protocol,</span>
+<span class="sd">        we encode the continuous information in qubit states.</span>
+
+<span class="sd">        Alice&#39;s bit value is encoded into the sign of her X-quadrature</span>
+<span class="sd">        modulation so that Bob&#39;s sign-based bit inference (sign of his</span>
+<span class="sd">        X-quadrature measurement) is correlated with Alice&#39;s bit. Without</span>
+<span class="sd">        this, the sifted-key QBER is decorrelated and unphysical.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of qubits to be sent through the quantum channel</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_signals</span><span class="p">):</span>
+            <span class="c1"># Alice randomly chooses a bit (0 or 1) - secure random</span>
+            <span class="n">bit</span> <span class="o">=</span> <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span>
+
+            <span class="c1"># Alice generates Gaussian modulations - secure random.</span>
+            <span class="c1"># X quadrature sign carries the bit; magnitude is Gaussian(|x|).</span>
+            <span class="n">sign</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="o">-</span><span class="mf">1.0</span>
+            <span class="n">x_magnitude</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">secure_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modulation_variance</span><span class="p">)))</span>
+            <span class="n">modulation_x</span> <span class="o">=</span> <span class="n">sign</span> <span class="o">*</span> <span class="n">x_magnitude</span>
+            <span class="n">modulation_p</span> <span class="o">=</span> <span class="n">secure_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">modulation_variance</span><span class="p">))</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">modulation_x</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">modulation_p</span><span class="p">)</span>
+
+            <span class="c1"># For compatibility, we&#39;ll create a qubit that represents the bit</span>
+            <span class="c1"># but store the continuous information separately</span>
+            <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+
+            <span class="n">qubits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">qubits</span></div>
+
+
+<div class="viewcode-block" id="EnhancedCVQKD.measure_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.measure_states">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qubits</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure received quantum states.</span>
+
+<span class="sd">        In CV-QKD, Bob performs homodyne measurements on the received signals.</span>
+<span class="sd">        For compatibility with the base protocol, we return discrete measurements.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qubits: List of received qubits (may contain None for lost signals)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of measurement results (0 or 1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_p</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">qubit</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">qubits</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">qubit</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="c1"># Signal was lost in the channel</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="mf">0.0</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Extract Alice&#39;s original modulations if available</span>
+            <span class="n">alice_x</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">)</span>
+                <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="p">)</span>
+            <span class="n">alice_p</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span><span class="p">)</span>
+                <span class="k">else</span> <span class="mf">0.0</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Channel transmission effect on the continuous variables</span>
+            <span class="n">transmitted_x</span> <span class="o">=</span> <span class="n">alice_x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transmission_t</span><span class="p">)</span>
+            <span class="n">transmitted_p</span> <span class="o">=</span> <span class="n">alice_p</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transmission_t</span><span class="p">)</span>
+
+            <span class="c1"># Add channel noise (thermal noise + excess noise)</span>
+            <span class="n">thermal_noise</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Vacuum noise</span>
+            <span class="n">total_noise</span> <span class="o">=</span> <span class="n">thermal_noise</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">excess_noise</span>
+            <span class="c1"># Add noise to both quadratures - secure random</span>
+            <span class="n">noise_x</span> <span class="o">=</span> <span class="n">secure_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">total_noise</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+            <span class="n">noise_p</span> <span class="o">=</span> <span class="n">secure_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">total_noise</span> <span class="o">/</span> <span class="mi">2</span><span class="p">))</span>
+
+            <span class="n">noisy_x</span> <span class="o">=</span> <span class="n">transmitted_x</span> <span class="o">+</span> <span class="n">noise_x</span>
+            <span class="n">noisy_p</span> <span class="o">=</span> <span class="n">transmitted_p</span> <span class="o">+</span> <span class="n">noise_p</span>
+
+            <span class="c1"># Detection efficiency</span>
+            <span class="n">detected_x</span> <span class="o">=</span> <span class="n">noisy_x</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detection_efficiency</span><span class="p">)</span>
+            <span class="n">detected_p</span> <span class="o">=</span> <span class="n">noisy_p</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">detection_efficiency</span><span class="p">)</span>
+
+            <span class="c1"># Add electronic noise - secure random</span>
+            <span class="n">elec_noise</span> <span class="o">=</span> <span class="n">secure_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.1</span><span class="p">))</span>
+            <span class="n">final_x</span> <span class="o">=</span> <span class="n">detected_x</span> <span class="o">+</span> <span class="n">elec_noise</span>
+            <span class="n">elec_noise</span> <span class="o">=</span> <span class="n">secure_normal</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mf">0.1</span><span class="p">))</span>
+            <span class="n">final_p</span> <span class="o">=</span> <span class="n">detected_p</span> <span class="o">+</span> <span class="n">elec_noise</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">final_x</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">final_p</span><span class="p">)</span>
+
+        <span class="c1"># For compatibility with the base protocol, return discrete measurements</span>
+        <span class="c1"># based on the sign of the X quadrature measurements, with a</span>
+        <span class="c1"># chance of error that grows with the channel&#39;s noise level.</span>
+        <span class="c1"># In the CV model this captures the bit-error rate from phase noise</span>
+        <span class="c1"># that wouldn&#39;t be reflected by pure Gaussian-quadrature variance.</span>
+        <span class="n">base_error_rate</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">excess_noise</span><span class="p">)))</span>
+        <span class="n">discrete_measurements</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">x_measurement</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">:</span>
+            <span class="n">sign_bit</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">x_measurement</span> <span class="o">&gt;=</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+            <span class="c1"># Occasional bit flip to model noisy transmission</span>
+            <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="n">base_error_rate</span><span class="p">:</span>
+                <span class="n">sign_bit</span> <span class="o">^=</span> <span class="mi">1</span>
+            <span class="n">discrete_measurements</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">sign_bit</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">discrete_measurements</span></div>
+
+
+<div class="viewcode-block" id="EnhancedCVQKD.sift_keys">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.sift_keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sift_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sift the raw keys using correlated data.</span>
+
+<span class="sd">        In CV-QKD, key sifting is based on correlation between Alice&#39;s</span>
+<span class="sd">        modulations and Bob&#39;s measurements.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (alice_sifted_key, bob_sifted_key)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate correlations to determine which data to keep</span>
+        <span class="n">correlations_x</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">correlations_p</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">):</span>
+                <span class="n">corr_x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">corr_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                <span class="n">correlations_x</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corr_x</span><span class="p">)</span>
+                <span class="n">correlations_p</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">corr_p</span><span class="p">)</span>
+
+        <span class="c1"># Use data with high correlation for key generation</span>
+        <span class="n">threshold_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">correlations_x</span><span class="p">,</span> <span class="mi">70</span><span class="p">)</span>  <span class="c1"># Keep top 30%</span>
+        <span class="n">threshold_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">percentile</span><span class="p">(</span><span class="n">correlations_p</span><span class="p">,</span> <span class="mi">70</span><span class="p">)</span>  <span class="c1"># Keep top 30%</span>
+
+        <span class="n">alice_sifted</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">bob_sifted</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="n">i</span> <span class="o">&lt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">correlations_x</span><span class="p">)</span>
+                <span class="ow">and</span> <span class="n">correlations_x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">threshold_x</span>
+                <span class="ow">and</span> <span class="n">correlations_p</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">threshold_p</span>
+            <span class="p">):</span>
+                <span class="n">alice_sifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+                <span class="c1"># Bob generates bit from his measurements - same noise model</span>
+                <span class="c1"># as in measure_states so QBER reflects the channel&#39;s noise level.</span>
+                <span class="n">bob_bit</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+                <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">excess_noise</span><span class="p">))):</span>
+                    <span class="n">bob_bit</span> <span class="o">^=</span> <span class="mi">1</span>
+                <span class="n">bob_sifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bob_bit</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_key</span> <span class="o">=</span> <span class="n">alice_sifted</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_key</span> <span class="o">=</span> <span class="n">bob_sifted</span>
+
+        <span class="k">return</span> <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span></div>
+
+
+<div class="viewcode-block" id="EnhancedCVQKD.estimate_qber">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.estimate_qber">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate_qber</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate the quantum bit error rate.</span>
+
+<span class="sd">        In CV-QKD, this is estimated from the correlation between</span>
+<span class="sd">        Alice&#39;s modulations and Bob&#39;s measurements.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Estimated error rate</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift_keys</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Count errors in the sifted key</span>
+        <span class="n">errors</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="n">alice_sifted</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">bob_sifted</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">errors</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="c1"># Calculate QBER</span>
+        <span class="n">qber</span> <span class="o">=</span> <span class="n">errors</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mf">1.0</span>
+
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">qber</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="EnhancedCVQKD.calculate_secret_fraction">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.calculate_secret_fraction">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">calculate_secret_fraction</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the fraction of secret key that can be extracted.</span>
+
+<span class="sd">        This uses the Gaussian optimality of Gaussian attacks.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Secret fraction (key rate)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate the covariance matrix elements</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Simplified calculation based on variances</span>
+        <span class="n">var_x_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">)</span>
+        <span class="n">var_p_a</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span><span class="p">)</span>
+        <span class="n">var_x_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">)</span>
+        <span class="n">var_p_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">var</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_p</span><span class="p">)</span>
+
+        <span class="c1"># Cross correlations</span>
+        <span class="n">_cov_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">a</span> <span class="o">*</span> <span class="n">b</span>
+                <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">_cov_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="n">a</span> <span class="o">*</span> <span class="n">b</span>
+                <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_p</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="c1"># Entropies (simplified)</span>
+        <span class="n">_h_a</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">var_x_a</span><span class="p">,</span> <span class="n">var_p_a</span><span class="p">))</span>
+        <span class="n">h_b</span> <span class="o">=</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log2</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">e</span> <span class="o">*</span> <span class="nb">max</span><span class="p">(</span><span class="n">var_x_b</span><span class="p">,</span> <span class="n">var_p_b</span><span class="p">))</span>
+
+        <span class="c1"># Mutual information</span>
+        <span class="c1"># Simplified calculation</span>
+        <span class="n">chi_be</span> <span class="o">=</span> <span class="mf">1.0</span>  <span class="c1"># Eve&#39;s information (simplified)</span>
+
+        <span class="c1"># Secret fraction</span>
+        <span class="n">secret_fraction</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">h_b</span> <span class="o">-</span> <span class="n">chi_be</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">secret_fraction</span> <span class="o">=</span> <span class="n">secret_fraction</span>
+        <span class="k">return</span> <span class="n">secret_fraction</span></div>
+
+
+<div class="viewcode-block" id="EnhancedCVQKD.get_excess_noise">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.get_excess_noise">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_excess_noise</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate the excess noise in the channel.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Estimated excess noise level</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+
+        <span class="c1"># Calculate the noise from the difference between expected and actual correlations</span>
+        <span class="n">expected_corr</span> <span class="o">=</span> <span class="n">cast</span><span class="p">(</span>
+            <span class="nb">float</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transmission_t</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">modulation_variance</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="n">actual_corr_x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_x</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_x</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+        <span class="n">actual_corr_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span>
+            <span class="p">[</span>
+                <span class="nb">abs</span><span class="p">(</span><span class="n">a</span> <span class="o">*</span> <span class="n">b</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">alice_modulations_p</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_measurements_p</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span>
+                <span class="p">)</span>
+            <span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">avg_corr</span> <span class="o">=</span> <span class="p">(</span><span class="n">actual_corr_x</span> <span class="o">+</span> <span class="n">actual_corr_p</span><span class="p">)</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">raw_noise</span> <span class="o">=</span> <span class="p">(</span><span class="n">expected_corr</span> <span class="o">-</span> <span class="n">avg_corr</span><span class="p">)</span> <span class="o">/</span> <span class="n">expected_corr</span>
+        <span class="n">noise_estimate</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">raw_noise</span> <span class="k">if</span> <span class="n">raw_noise</span> <span class="o">&gt;</span> <span class="mf">0.0</span> <span class="k">else</span> <span class="mf">0.0</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">noise_estimate</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_security_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the security threshold for the CV-QKD protocol.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Maximum error rate considered secure</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span>
+
+<div class="viewcode-block" id="EnhancedCVQKD.get_key_rate">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.get_key_rate">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_key_rate</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the key generation rate.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Key rate (bits per signal)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_complete</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="n">secret_frac</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">calculate_secret_fraction</span><span class="p">()</span>
+        <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift_keys</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="n">key_rate</span> <span class="o">=</span> <span class="n">secret_frac</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_signals</span>
+        <span class="k">return</span> <span class="nb">max</span><span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="nb">float</span><span class="p">(</span><span class="n">key_rate</span><span class="p">))</span></div>
+
+
+<div class="viewcode-block" id="EnhancedCVQKD.get_protocol_parameters">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.EnhancedCVQKD.get_protocol_parameters">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_protocol_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the protocol parameters.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary with protocol parameters</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;modulation_variance&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">modulation_variance</span><span class="p">,</span>
+            <span class="s2">&quot;detection_efficiency&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">detection_efficiency</span><span class="p">,</span>
+            <span class="s2">&quot;transmission_t&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">transmission_t</span><span class="p">,</span>
+            <span class="s2">&quot;excess_noise&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">excess_noise</span><span class="p">,</span>
+            <span class="s2">&quot;security_threshold&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span><span class="p">,</span>
+            <span class="s2">&quot;num_signals&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_signals</span><span class="p">,</span>
+            <span class="s2">&quot;secret_fraction&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">secret_fraction</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

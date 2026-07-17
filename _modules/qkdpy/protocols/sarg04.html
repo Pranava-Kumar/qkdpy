@@ -1,0 +1,383 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.protocols.sarg04 &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.protocols.sarg04</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.protocols.sarg04</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;SARG04 QKD protocol implementation.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">Measurement</span><span class="p">,</span>
+    <span class="n">QuantumChannel</span><span class="p">,</span>
+    <span class="n">Qubit</span><span class="p">,</span>
+    <span class="n">Qudit</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">secure_choice</span><span class="p">,</span>
+    <span class="n">secure_randint</span><span class="p">,</span>
+    <span class="n">secure_sample</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProtocol</span>
+
+
+<div class="viewcode-block" id="SARG04">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SARG04">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SARG04</span><span class="p">(</span><span class="n">BaseProtocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implementation of the SARG04 quantum key distribution protocol.</span>
+
+<span class="sd">    SARG04 is a variant of BB84 proposed by Scarani, Acín, Ribordy, and Gisin in 2004.</span>
+<span class="sd">    It is more robust to certain types of eavesdropping attacks than BB84.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SARG04.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SARG04.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">,</span> <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the SARG04 protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: Quantum channel for qubit transmission</span>
+<span class="sd">            key_length: Desired length of the final key</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="p">)</span>
+
+        <span class="c1"># SARG04-specific parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bases</span> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;computational&quot;</span><span class="p">,</span> <span class="s2">&quot;hadamard&quot;</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span> <span class="o">=</span> <span class="mf">0.11</span>  <span class="c1"># Similar to BB84</span>
+
+        <span class="c1"># Number of qubits to send (we&#39;ll send more than needed to account for sifting)</span>
+        <span class="c1"># SARG04 efficiency is ~25%, so we need ~4x raw bits. Adding buffer.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span> <span class="o">=</span> <span class="n">key_length</span> <span class="o">*</span> <span class="mi">6</span>  <span class="c1"># Send 6x more qubits than needed</span>
+
+        <span class="c1"># Alice&#39;s random bits and bases</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Bob&#39;s measurement results and bases</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># SARG04 specific: Bob&#39;s measurement guesses</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_guesses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">announced_sets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="SARG04.prepare_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SARG04.prepare_states">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare quantum states for transmission.</span>
+
+<span class="sd">        In SARG04, Alice prepares states like BB84 but also selects a &#39;partner&#39; state</span>
+<span class="sd">        to form a non-orthogonal set for announcement.</span>
+
+<span class="sd">        Mapping:</span>
+<span class="sd">        - Bit 0: ``|0&gt;`` (Z) or ``|+&gt;`` (X)</span>
+<span class="sd">        - Bit 1: ``|1&gt;`` (Z) or ``|-&gt;`` (X)</span>
+
+<span class="sd">        Announcement Pairs (one sent, one partner with opposite bit):</span>
+<span class="sd">        - If sending ``|0&gt;`` (Bit 0), partner is ``|-&gt;`` (Bit 1). Set: ``{|0&gt;, |-&gt;}``</span>
+<span class="sd">        - If sending ``|1&gt;`` (Bit 1), partner is ``|+&gt;`` (Bit 0). Set: ``{|1&gt;, |+&gt;}``</span>
+<span class="sd">        - If sending ``|+&gt;`` (Bit 0), partner is ``|1&gt;`` (Bit 1). Set: ``{|+&gt;, |1&gt;}``</span>
+<span class="sd">        - If sending ``|-&gt;`` (Bit 1), partner is ``|0&gt;`` (Bit 0). Set: ``{|-&gt;, |0&gt;}``</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of quantum states (qubits or qudits) to be sent through the quantum channel</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">qubits</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">announced_sets</span> <span class="o">=</span> <span class="p">[]</span>  <span class="c1"># Stores the two states in the set (e.g., (&quot;0&quot;, &quot;-&quot;))</span>
+
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="c1"># Alice randomly chooses a bit (0 or 1)</span>
+            <span class="n">bit</span> <span class="o">=</span> <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span>
+
+            <span class="c1"># Alice randomly chooses a basis</span>
+            <span class="n">basis</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+
+            <span class="c1"># Prepare state and select partner</span>
+            <span class="n">qubit</span><span class="p">:</span> <span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span>
+            <span class="n">partner_state</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="n">sent_state_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+            <span class="k">if</span> <span class="n">basis</span> <span class="o">==</span> <span class="s2">&quot;computational&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()</span>
+                    <span class="n">sent_state_str</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>
+                    <span class="n">partner_state</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>  <span class="c1"># |0&gt; paired with |-&gt;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">one</span><span class="p">()</span>
+                    <span class="n">sent_state_str</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+                    <span class="n">partner_state</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span>  <span class="c1"># |1&gt; paired with |+&gt;</span>
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># hadamard</span>
+                <span class="k">if</span> <span class="n">bit</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">plus</span><span class="p">()</span>
+                    <span class="n">sent_state_str</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span>
+                    <span class="n">partner_state</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>  <span class="c1"># |+&gt; paired with |1&gt;</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">qubit</span> <span class="o">=</span> <span class="n">Qubit</span><span class="o">.</span><span class="n">minus</span><span class="p">()</span>
+                    <span class="n">sent_state_str</span> <span class="o">=</span> <span class="s2">&quot;-&quot;</span>
+                    <span class="n">partner_state</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>  <span class="c1"># |-&gt; paired with |0&gt;</span>
+
+            <span class="n">qubits</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">qubit</span><span class="p">)</span>
+
+            <span class="c1"># Randomize order in announcement to hide which one was sent</span>
+            <span class="k">if</span> <span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">announced_sets</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">sent_state_str</span><span class="p">,</span> <span class="n">partner_state</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">announced_sets</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">partner_state</span><span class="p">,</span> <span class="n">sent_state_str</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">qubits</span></div>
+
+
+<div class="viewcode-block" id="SARG04.measure_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SARG04.measure_states">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure received quantum states.</span>
+
+<span class="sd">        Bob measures in a random basis.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            states: List of received quantum states (may contain None for lost states)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of measurement results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">quantum_state</span> <span class="ow">in</span> <span class="n">states</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">quantum_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Bob randomly chooses a basis</span>
+            <span class="n">basis</span> <span class="o">=</span> <span class="n">secure_choice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bases</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">basis</span><span class="p">)</span>
+
+            <span class="c1"># Measure in the chosen basis</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">quantum_state</span><span class="p">,</span> <span class="n">Qubit</span><span class="p">):</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">Measurement</span><span class="o">.</span><span class="n">measure_in_basis</span><span class="p">(</span><span class="n">quantum_state</span><span class="p">,</span> <span class="n">basis</span><span class="p">)</span>
+                <span class="c1"># measure_in_basis already collapses the state via qubit.measure()</span>
+            <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">quantum_state</span><span class="p">,</span> <span class="n">Qudit</span><span class="p">):</span>
+                <span class="c1"># For qudits, basis needs to be converted if using Qudit.measure</span>
+                <span class="c1"># For simplicity, assuming a default computational measurement</span>
+                <span class="n">result</span> <span class="o">=</span> <span class="n">quantum_state</span><span class="o">.</span><span class="n">measure_computational</span><span class="p">()</span>
+                <span class="n">quantum_state</span><span class="o">.</span><span class="n">collapse_state</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">result</span><span class="p">)</span>
+
+        <span class="c1"># Filter out None values to return only int results</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">result</span> <span class="k">for</span> <span class="n">result</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span> <span class="k">if</span> <span class="n">result</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="SARG04.sift_keys">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SARG04.sift_keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sift_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sift the raw keys based on SARG04 logic.</span>
+
+<span class="sd">        Bob keeps the bit if his measurement result is orthogonal to one of the</span>
+<span class="sd">        states in the announced set. This allows him to infer the *other* state</span>
+<span class="sd">        was the one sent.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (alice_sifted_key, bob_sifted_key)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alice_sifted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">bob_sifted</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_qubits</span><span class="p">):</span>
+            <span class="c1"># Skip if Bob didn&#39;t receive the qubit</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">s1</span><span class="p">,</span> <span class="n">s2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">announced_sets</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">bob_basis</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">bob_result</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="c1"># Determine Bob&#39;s measured state string</span>
+            <span class="n">measured_state</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+            <span class="k">if</span> <span class="n">bob_basis</span> <span class="o">==</span> <span class="s2">&quot;computational&quot;</span><span class="p">:</span>
+                <span class="n">measured_state</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span> <span class="k">if</span> <span class="n">bob_result</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;1&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">measured_state</span> <span class="o">=</span> <span class="s2">&quot;+&quot;</span> <span class="k">if</span> <span class="n">bob_result</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s2">&quot;-&quot;</span>
+
+            <span class="c1"># Check orthogonality</span>
+            <span class="c1"># Orthogonal pairs: (0, 1), (+, -)</span>
+            <span class="n">is_ortho_s1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_are_orthogonal</span><span class="p">(</span><span class="n">measured_state</span><span class="p">,</span> <span class="n">s1</span><span class="p">)</span>
+            <span class="n">is_ortho_s2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_are_orthogonal</span><span class="p">(</span><span class="n">measured_state</span><span class="p">,</span> <span class="n">s2</span><span class="p">)</span>
+
+            <span class="n">inferred_bit</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span>
+
+            <span class="k">if</span> <span class="n">is_ortho_s1</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_ortho_s2</span><span class="p">:</span>
+                <span class="c1"># Orthogonal to s1, so must be s2</span>
+                <span class="n">inferred_bit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_bit_from_state</span><span class="p">(</span><span class="n">s2</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">is_ortho_s2</span> <span class="ow">and</span> <span class="ow">not</span> <span class="n">is_ortho_s1</span><span class="p">:</span>
+                <span class="c1"># Orthogonal to s2, so must be s1</span>
+                <span class="n">inferred_bit</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_bit_from_state</span><span class="p">(</span><span class="n">s1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Inconclusive (orthogonal to neither or both - both impossible for these sets)</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># If we have a conclusive result, keep the bit</span>
+            <span class="n">alice_sifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_bits</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">bob_sifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">inferred_bit</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_are_orthogonal</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state1</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">state2</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if two state strings are orthogonal.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">state1</span> <span class="o">==</span> <span class="s2">&quot;0&quot;</span> <span class="ow">and</span> <span class="n">state2</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">state1</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span> <span class="ow">and</span> <span class="n">state2</span> <span class="o">==</span> <span class="s2">&quot;0&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">state1</span> <span class="o">==</span> <span class="s2">&quot;+&quot;</span> <span class="ow">and</span> <span class="n">state2</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">if</span> <span class="n">state1</span> <span class="o">==</span> <span class="s2">&quot;-&quot;</span> <span class="ow">and</span> <span class="n">state2</span> <span class="o">==</span> <span class="s2">&quot;+&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">True</span>
+        <span class="k">return</span> <span class="kc">False</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_bit_from_state</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the bit encoded by a state string.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;0&quot;</span><span class="p">,</span> <span class="s2">&quot;+&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">state</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;1&quot;</span><span class="p">,</span> <span class="s2">&quot;-&quot;</span><span class="p">]:</span>
+            <span class="k">return</span> <span class="mi">1</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Unknown state: </span><span class="si">{</span><span class="n">state</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SARG04.estimate_qber">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SARG04.estimate_qber">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate_qber</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate the Quantum Bit Error Rate (QBER).&quot;&quot;&quot;</span>
+        <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift_keys</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">10</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+
+        <span class="n">sample_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.2</span><span class="p">))</span>
+        <span class="n">indices</span> <span class="o">=</span> <span class="n">secure_sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">))),</span> <span class="n">sample_size</span><span class="p">)</span>
+
+        <span class="n">errors</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">idx</span> <span class="ow">in</span> <span class="n">indices</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">alice_sifted</span><span class="p">[</span><span class="n">idx</span><span class="p">]</span> <span class="o">!=</span> <span class="n">bob_sifted</span><span class="p">[</span><span class="n">idx</span><span class="p">]:</span>
+                <span class="n">errors</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">errors</span> <span class="o">/</span> <span class="n">sample_size</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_security_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span>
+
+<div class="viewcode-block" id="SARG04.get_sifting_efficiency">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.SARG04.get_sifting_efficiency">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_sifting_efficiency</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift_keys</span><span class="p">()</span>
+        <span class="n">received_count</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">basis</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span> <span class="k">if</span> <span class="n">basis</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">)</span> <span class="o">/</span> <span class="n">received_count</span> <span class="k">if</span> <span class="n">received_count</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">0</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

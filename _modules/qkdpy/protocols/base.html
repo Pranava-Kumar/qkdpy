@@ -1,0 +1,492 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.protocols.base &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.protocols.base</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.protocols.base</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Base class for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">QuantumChannel</span><span class="p">,</span>
+    <span class="n">Qubit</span><span class="p">,</span>
+    <span class="n">Qudit</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_bits</span>
+
+
+<div class="viewcode-block" id="BaseProtocol">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">BaseProtocol</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract base class for QKD protocols.</span>
+
+<span class="sd">    This class defines the interface that all QKD protocol implementations should follow.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="BaseProtocol.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">,</span> <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: Quantum channel for qubit transmission</span>
+<span class="sd">            key_length: Desired length of the final key</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">QuantumChannel</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;channel must be an instance of QuantumChannel, got </span><span class="si">{</span><span class="nb">type</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span> <span class="o">=</span> <span class="n">channel</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">key_length</span> <span class="o">=</span> <span class="n">key_length</span>
+
+        <span class="c1"># Protocol statistics</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sifted_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qber</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Basis information</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span> <span class="o">|</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Error correction and privacy amplification parameters</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_correction_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;cascade&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">privacy_amplification_method</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;universal_hashing&quot;</span>
+
+        <span class="c1"># Protocol status</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_complete</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">False</span></div>
+
+
+<div class="viewcode-block" id="BaseProtocol.prepare_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.prepare_states">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare quantum states for transmission.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of quantum states (qubits or qudits) to be sent through the channel</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="BaseProtocol.measure_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.measure_states">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Qudit</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure received quantum states.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            states: List of received quantum states (may contain None for lost states)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of measurement results</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="BaseProtocol.sift_keys">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.sift_keys">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sift_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sift the raw keys to keep only measurements in matching bases.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of (alice_sifted_key, bob_sifted_key)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="BaseProtocol.estimate_qber">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.estimate_qber">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate_qber</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate the Quantum Bit Error Rate (QBER).</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Estimated QBER value</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="BaseProtocol.error_correction">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.error_correction">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">error_correction</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform error correction on the sifted keys.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s sifted key</span>
+<span class="sd">            bob_key: Bob&#39;s sifted key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of corrected (alice_key, bob_key)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_correction_method</span> <span class="o">==</span> <span class="s2">&quot;cascade&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cascade_error_correction</span><span class="p">(</span><span class="n">alice_key</span><span class="p">,</span> <span class="n">bob_key</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown error correction method: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">error_correction_method</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseProtocol.privacy_amplification">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.privacy_amplification">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">privacy_amplification</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">leak</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform privacy amplification to reduce Eve&#39;s information.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Key to be amplified</span>
+<span class="sd">            leak: Estimated amount of information leaked to Eve</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Shortened, more secure key</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">privacy_amplification_method</span> <span class="o">==</span> <span class="s2">&quot;universal_hashing&quot;</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_universal_hashing_privacy_amplification</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">leak</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Unknown privacy amplification method: </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">privacy_amplification_method</span><span class="si">}</span><span class="s2">&quot;</span>
+            <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="BaseProtocol.execute">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">bool</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Execute the full QKD protocol.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Dictionary containing protocol results and statistics</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Lazy imports to avoid circular dependency (protocols → utils.instrumentation → utils.__init__ → ..protocols.base)</span>
+        <span class="kn">from</span><span class="w"> </span><span class="nn">..utils.instrumentation</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>  <span class="c1"># noqa: PLC0415</span>
+            <span class="n">OperationSpan</span><span class="p">,</span>
+            <span class="n">record_protocol_execution</span><span class="p">,</span>
+            <span class="n">record_qber_diagnostic</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">with</span> <span class="n">OperationSpan</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;protocol.execute.</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">):</span>
+            <span class="c1"># Reset statistics</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+            <span class="c1"># Step 1: Alice prepares quantum states</span>
+            <span class="n">qubits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">prepare_states</span><span class="p">()</span>
+
+            <span class="c1"># Step 2: Transmit qubits through the quantum channel</span>
+            <span class="n">received_qubits</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">transmit_batch</span><span class="p">(</span><span class="n">qubits</span><span class="p">)</span>
+
+            <span class="c1"># Step 3: Bob measures the received states</span>
+            <span class="n">measurement_results</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure_states</span><span class="p">(</span><span class="n">received_qubits</span><span class="p">)</span>
+
+            <span class="c1"># Step 4: Sift keys based on matching bases</span>
+            <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift_keys</span><span class="p">()</span>
+
+            <span class="c1"># Step 5: Estimate QBER</span>
+            <span class="n">qber</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimate_qber</span><span class="p">()</span>
+            <span class="n">record_qber_diagnostic</span><span class="p">(</span>
+                <span class="n">protocol</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="n">qber</span><span class="o">=</span><span class="n">qber</span><span class="p">,</span>
+                <span class="n">threshold</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_get_security_threshold</span><span class="p">(),</span>
+                <span class="n">key_size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_sifted</span><span class="p">),</span>
+                <span class="n">distance_km</span><span class="o">=</span><span class="nb">getattr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="p">,</span> <span class="s2">&quot;distance_km&quot;</span><span class="p">,</span> <span class="kc">None</span><span class="p">),</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Step 6: Error correction</span>
+            <span class="n">alice_corrected</span><span class="p">,</span> <span class="n">bob_corrected</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_correction</span><span class="p">(</span>
+                <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span>
+            <span class="p">)</span>
+
+            <span class="c1"># Convert to Python integers to avoid numpy.int32 issues</span>
+            <span class="n">alice_corrected</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">alice_corrected</span><span class="p">]</span>
+            <span class="n">bob_corrected</span> <span class="o">=</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">bob_corrected</span><span class="p">]</span>
+
+            <span class="c1"># Step 7: Privacy amplification</span>
+            <span class="c1"># Estimate information leak based on QBER</span>
+            <span class="n">leak</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_estimate_eve_information</span><span class="p">(</span><span class="n">qber</span><span class="p">))</span>
+            <span class="n">final_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">privacy_amplification</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">,</span> <span class="n">leak</span><span class="p">)</span>
+
+            <span class="c1"># Truncate to requested key length if necessary</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">final_key</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_length</span><span class="p">:</span>
+                <span class="n">final_key</span> <span class="o">=</span> <span class="n">final_key</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_length</span><span class="p">]</span>
+
+            <span class="c1"># Update protocol status</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_key</span> <span class="o">=</span> <span class="n">measurement_results</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sifted_key</span> <span class="o">=</span> <span class="n">alice_sifted</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">final_key</span> <span class="o">=</span> <span class="n">final_key</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qber</span> <span class="o">=</span> <span class="n">qber</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_complete</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span> <span class="o">=</span> <span class="n">qber</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_security_threshold</span><span class="p">()</span>
+
+            <span class="c1"># Build result dict</span>
+            <span class="n">result</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span>
+                <span class="nb">str</span><span class="p">,</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">bool</span> <span class="o">|</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">int</span> <span class="o">|</span> <span class="nb">float</span> <span class="o">|</span> <span class="nb">bool</span><span class="p">]</span>
+            <span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
+                <span class="s2">&quot;raw_key&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_key</span><span class="p">,</span>
+                <span class="s2">&quot;sifted_key&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">sifted_key</span><span class="p">,</span>
+                <span class="s2">&quot;final_key&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_key</span><span class="p">,</span>
+                <span class="s2">&quot;qber&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qber</span><span class="p">,</span>
+                <span class="s2">&quot;is_secure&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span><span class="p">,</span>
+                <span class="s2">&quot;channel_stats&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">get_statistics</span><span class="p">(),</span>
+            <span class="p">}</span>
+
+            <span class="n">record_protocol_execution</span><span class="p">(</span>
+                <span class="n">protocol_name</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+                <span class="n">key_length</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">key_length</span><span class="p">,</span>
+                <span class="n">qber</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">qber</span><span class="p">,</span>
+                <span class="n">final_key_size</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">final_key</span><span class="p">),</span>
+                <span class="n">is_secure</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span><span class="p">,</span>
+                <span class="n">duration_ms</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+                <span class="n">channel_stats</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">get_statistics</span><span class="p">(),</span>
+            <span class="p">)</span>
+            <span class="k">return</span> <span class="n">result</span></div>
+
+
+<div class="viewcode-block" id="BaseProtocol.reset">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.BaseProtocol.reset">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">reset</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reset the protocol state.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_key</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sifted_key</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_key</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qber</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_bases</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_bases</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_complete</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">reset_statistics</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_cascade_error_correction</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cascade error correction protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s sifted key</span>
+<span class="sd">            bob_key: Bob&#39;s sifted key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of corrected (alice_key, bob_key)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># This is a simplified implementation of the Cascade protocol</span>
+        <span class="c1"># A full implementation would involve multiple passes with different block sizes</span>
+
+        <span class="c1"># Make copies of the keys</span>
+        <span class="n">alice_corrected</span> <span class="o">=</span> <span class="n">alice_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">bob_corrected</span> <span class="o">=</span> <span class="n">bob_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Initial pass with a fixed block size</span>
+        <span class="n">block_size</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="n">num_blocks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">//</span> <span class="n">block_size</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_blocks</span><span class="p">):</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">block_size</span>
+            <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">block_size</span>
+
+            <span class="c1"># Calculate parity for the block</span>
+            <span class="n">alice_parity</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span>
+            <span class="n">bob_parity</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bob_corrected</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span>
+
+            <span class="c1"># If parities don&#39;t match, find and correct the error</span>
+            <span class="k">if</span> <span class="n">alice_parity</span> <span class="o">!=</span> <span class="n">bob_parity</span><span class="p">:</span>
+                <span class="c1"># Binary search to find the error</span>
+                <span class="n">left</span> <span class="o">=</span> <span class="n">start</span>
+                <span class="n">right</span> <span class="o">=</span> <span class="n">end</span>
+
+                <span class="k">while</span> <span class="n">right</span> <span class="o">-</span> <span class="n">left</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+
+                    <span class="n">alice_parity_left</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">:</span><span class="n">mid</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span>
+                    <span class="n">bob_parity_left</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">:</span><span class="n">mid</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span>
+
+                    <span class="k">if</span> <span class="n">alice_parity_left</span> <span class="o">!=</span> <span class="n">bob_parity_left</span><span class="p">:</span>
+                        <span class="n">right</span> <span class="o">=</span> <span class="n">mid</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">left</span> <span class="o">=</span> <span class="n">mid</span>
+
+                <span class="c1"># Correct the error</span>
+                <span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">alice_corrected</span><span class="p">,</span> <span class="n">bob_corrected</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_universal_hashing_privacy_amplification</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">leak</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Universal hashing for privacy amplification.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key: Key to be amplified</span>
+<span class="sd">            leak: Estimated amount of information leaked to Eve</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Shortened, more secure key</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Calculate the length of the final key</span>
+        <span class="c1"># We&#39;ll use the leftover hash lemma: r = n - s - leak</span>
+        <span class="c1"># where n is the original key length, s is a security parameter</span>
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key</span><span class="p">)</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="mi">10</span>  <span class="c1"># Security parameter</span>
+
+        <span class="n">r</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">n</span> <span class="o">-</span> <span class="n">s</span> <span class="o">-</span> <span class="n">leak</span><span class="p">)</span>  <span class="c1"># Ensure at least 1 bit remains</span>
+
+        <span class="c1"># Convert the key to a binary string</span>
+        <span class="n">key_str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="nb">map</span><span class="p">(</span><span class="nb">str</span><span class="p">,</span> <span class="n">key</span><span class="p">))</span>
+
+        <span class="c1"># Use a simple universal hash function (Toeplitz matrix)</span>
+        <span class="c1"># In a real implementation, we would use a cryptographically secure hash function</span>
+
+        <span class="c1"># Generate a random seed for the hash function</span>
+        <span class="c1"># Generate a random seed for the hash function using CSPRNG</span>
+        <span class="n">seed</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+            <span class="n">seed</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">secure_bits</span><span class="p">(</span><span class="n">n</span><span class="p">))</span>
+
+        <span class="c1"># Apply the hash function</span>
+        <span class="n">result</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">r</span><span class="p">):</span>
+            <span class="c1"># Compute the dot product modulo 2</span>
+            <span class="n">bit</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">seed</span><span class="p">[</span><span class="n">i</span><span class="p">][</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="nb">int</span><span class="p">(</span><span class="n">key_str</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+            <span class="n">result</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">result</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_estimate_eve_information</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate the amount of information Eve has based on QBER.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            qber: Quantum Bit Error Rate</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Estimated fraction of information leaked to Eve</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># This is a simplified model</span>
+        <span class="c1"># In a real implementation, this would depend on the specific protocol and attack model</span>
+
+        <span class="c1"># For BB84, the relationship between QBER and Eve&#39;s information is well-studied</span>
+        <span class="c1"># For simplicity, we&#39;ll use a linear model here</span>
+        <span class="k">return</span> <span class="nb">min</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">qber</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_security_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the security threshold for the protocol.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Maximum QBER value considered secure</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

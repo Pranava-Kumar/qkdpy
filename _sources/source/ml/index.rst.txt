@@ -1,0 +1,36 @@
+Machine Learning
+================
+
+QKDpy integrates machine learning techniques to optimize QKD system
+performance, predict channel conditions, and detect anomalies.
+
+Components
+----------
+
+.. list-table::
+   :header-rows: 1
+   :widths: 25 25 50
+
+   * - Component
+     - Class
+     - Description
+   * - QKD Optimizer
+     - :class:`~qkdpy.ml.qkd_optimizer.QKDOptimizer`
+     - Optimizes protocol parameters for maximum key rate under given channel conditions
+   * - Anomaly Detector
+     - :class:`~qkdpy.ml.qkd_optimizer.QKDAnomalyDetector`
+     - Detects anomalies in QKD system operation using ML-based analysis
+   * - Efficient Predictor
+     - :class:`~qkdpy.ml.efficient_models.EfficientQKDPredictor`
+     - Lightweight model for real-time key rate prediction
+   * - Knowledge Distillation
+     - :class:`~qkdpy.ml.knowledge_distillation.KnowledgeDistillation`
+     - Compresses complex QKD models for edge deployment
+   * - Model Selector
+     - :class:`~qkdpy.ml.model_selector.AdaptiveModelSelector`
+     - Dynamically selects the best ML model based on current conditions
+
+API Reference
+-------------
+
+For detailed API documentation, see the :ref:`ML Module <api_reference>` section.

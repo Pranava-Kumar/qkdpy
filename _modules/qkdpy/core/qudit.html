@@ -1,0 +1,450 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.core.qudit &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.core.qudit</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.core.qudit</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Qudit class for representing and manipulating d-dimensional quantum systems.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_weighted_choice</span>
+
+
+<div class="viewcode-block" id="Qudit">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">Qudit</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Represents a d-dimensional quantum system (qudit) with state manipulation capabilities.</span>
+
+<span class="sd">    A qudit state is represented as a complex vector in a d-dimensional Hilbert space:</span>
+<span class="sd">    ``|ψ&gt; = Σ α_i |i&gt;`` where i ∈ {0, 1, ..., d-1} and Σ |α_i|² = 1</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Qudit.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">,</span> <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize a qudit with given state vector.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            state: Complex state vector of length &#39;dimension&#39;</span>
+<span class="sd">            dimension: Dimension of the qudit system</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the state is not properly normalized or has incorrect length</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">!=</span> <span class="n">dimension</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;State vector length (</span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">state</span><span class="p">)</span><span class="si">}</span><span class="s2">) must match dimension (</span><span class="si">{</span><span class="n">dimension</span><span class="si">}</span><span class="s2">)&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Normalize the state vector</span>
+        <span class="n">norm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">state</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">norm</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Cannot create a qudit with zero norm&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">=</span> <span class="n">state</span> <span class="o">/</span> <span class="n">norm</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">=</span> <span class="n">dimension</span></div>
+
+
+<div class="viewcode-block" id="Qudit.computational_basis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.computational_basis">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">computational_basis</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Qudit&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a qudit in a computational basis state ``|level&gt;``.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            level: Computational basis level (0 to dimension-1)</span>
+<span class="sd">            dimension: Dimension of the qudit system</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Qudit in the specified computational basis state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">level</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">level</span> <span class="o">&gt;=</span> <span class="n">dimension</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Level must be between 0 and </span><span class="si">{</span><span class="n">dimension</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dimension</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">state</span><span class="p">[</span><span class="n">level</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">dimension</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Qudit.uniform_superposition">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.uniform_superposition">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">uniform_superposition</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Qudit&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a qudit in a uniform superposition state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            dimension: Dimension of the qudit system</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Qudit in uniform superposition state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="n">dimension</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">dimension</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Qudit.fourier_basis">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.fourier_basis">[docs]</a>
+    <span class="nd">@classmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fourier_basis</span><span class="p">(</span><span class="bp">cls</span><span class="p">,</span> <span class="n">level</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Qudit&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create a qudit in a Fourier basis state.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            level: Fourier basis level (0 to dimension-1)</span>
+<span class="sd">            dimension: Dimension of the qudit system</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Qudit in the specified Fourier basis state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">level</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">level</span> <span class="o">&gt;=</span> <span class="n">dimension</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Level must be between 0 and </span><span class="si">{</span><span class="n">dimension</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">dimension</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">dimension</span><span class="p">):</span>
+            <span class="n">state</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="mi">2</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">level</span> <span class="o">*</span> <span class="n">j</span> <span class="o">/</span> <span class="n">dimension</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">dimension</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">cls</span><span class="p">(</span><span class="n">state</span><span class="p">,</span> <span class="n">dimension</span><span class="p">)</span></div>
+
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">state</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the state vector of the qudit.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">probabilities</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get the probabilities of measuring each computational basis state.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of probabilities for each computational basis state</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">]</span>
+
+<div class="viewcode-block" id="Qudit.apply_unitary">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.apply_unitary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">apply_unitary</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Apply a unitary operator to the qudit.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            operator: d×d unitary matrix representing the quantum operation</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the operator is not a valid d×d unitary matrix</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">operator</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Operator must be a </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="si">}</span><span class="s2">×</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="si">}</span><span class="s2"> matrix&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Check if operator is unitary (U * U† = I)</span>
+        <span class="n">identity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">operator</span> <span class="o">@</span> <span class="n">operator</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">identity</span><span class="p">,</span> <span class="n">atol</span><span class="o">=</span><span class="mf">1e-10</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Operator must be unitary&quot;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">operator</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span></div>
+
+
+<div class="viewcode-block" id="Qudit.measure">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.measure">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">basis_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the qudit in the specified basis.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            basis_matrix: d×d unitary matrix defining the measurement basis.</span>
+<span class="sd">                         If None, measures in computational basis.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Measurement result (integer from 0 to dimension-1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">basis_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Measure in computational basis</span>
+            <span class="n">probabilities</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">probabilities</span>
+            <span class="c1"># Sample according to probabilities</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">secure_weighted_choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">)),</span> <span class="n">probabilities</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Transform to the measurement basis</span>
+            <span class="k">if</span> <span class="n">basis_matrix</span><span class="o">.</span><span class="n">shape</span> <span class="o">!=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                    <span class="sa">f</span><span class="s2">&quot;Basis matrix must be </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="si">}</span><span class="s2">×</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="si">}</span><span class="s2">&quot;</span>
+                <span class="p">)</span>
+
+            <span class="c1"># Apply inverse of the basis transformation to the state</span>
+            <span class="n">transformed_state</span> <span class="o">=</span> <span class="n">basis_matrix</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span>
+            <span class="n">probabilities</span> <span class="o">=</span> <span class="p">[</span><span class="nb">float</span><span class="p">(</span><span class="nb">abs</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span> <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="n">transformed_state</span><span class="p">]</span>
+
+            <span class="c1"># Sample according to probabilities</span>
+            <span class="n">result</span> <span class="o">=</span> <span class="n">secure_weighted_choice</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">)),</span> <span class="n">probabilities</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">int</span><span class="p">(</span><span class="n">result</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Qudit.measure_computational">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.measure_computational">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_computational</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the qudit in the computational basis.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Measurement result (integer from 0 to dimension-1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="kc">None</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Qudit.measure_fourier">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.measure_fourier">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_fourier</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Measure the qudit in the Fourier basis.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Measurement result (integer from 0 to dimension-1)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Fourier basis transformation matrix</span>
+        <span class="n">fourier_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">):</span>
+                <span class="n">fourier_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span>
+                    <span class="mi">2</span><span class="n">j</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">j</span> <span class="o">*</span> <span class="n">k</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span>
+                <span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="n">fourier_matrix</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Qudit.collapse_state">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.collapse_state">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">collapse_state</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">result</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">basis_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Collapse the qudit&#39;s state to a specific measurement result.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            result: The measurement result (0 to dimension-1)</span>
+<span class="sd">            basis_matrix: The measurement basis matrix used, or None for computational basis</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">result</span> <span class="o">&lt;</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">result</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Result must be between 0 and </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="w"> </span><span class="o">-</span><span class="w"> </span><span class="mi">1</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">basis_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Collapses to computational basis state ``|result&gt;``</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+            <span class="n">new_state</span><span class="p">[</span><span class="n">result</span><span class="p">]</span> <span class="o">=</span> <span class="mf">1.0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">new_state</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Get the basis vector corresponding to the measurement result</span>
+            <span class="n">basis_vectors</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">basis_matrix</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span><span class="o">.</span><span class="n">T</span>
+            <span class="p">)</span>  <span class="c1"># Columns of the conjugate transpose are the basis vectors</span>
+            <span class="n">new_state</span> <span class="o">=</span> <span class="n">basis_vectors</span><span class="p">[:,</span> <span class="n">result</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_state</span> <span class="o">=</span> <span class="n">new_state</span></div>
+
+
+<div class="viewcode-block" id="Qudit.fidelity">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.fidelity">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">fidelity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other_qudit</span><span class="p">:</span> <span class="s2">&quot;Qudit&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the fidelity between this qudit and another.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other_qudit: Another qudit to calculate fidelity with</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Fidelity value between 0 and 1</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">!=</span> <span class="n">other_qudit</span><span class="o">.</span><span class="n">dimension</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Qudits must have the same dimension for fidelity calculation&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">overlap</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">vdot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span> <span class="n">other_qudit</span><span class="o">.</span><span class="n">_state</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span>
+        <span class="k">return</span> <span class="nb">float</span><span class="p">(</span><span class="n">overlap</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Qudit.tensor_product">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.tensor_product">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">tensor_product</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="s2">&quot;Qudit&quot;</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Qudit&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Create the tensor product of this qudit with another.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            other: Another qudit to tensor with this one</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            New qudit representing the tensor product (has dimension self.dimension * other.dimension)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">new_state</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_state</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">Qudit</span><span class="p">(</span><span class="n">new_state</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">*</span> <span class="n">other</span><span class="o">.</span><span class="n">dimension</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="Qudit.partial_trace">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.Qudit.partial_trace">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">partial_trace</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">subsystem_index</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">subsystem_dimension</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="s2">&quot;Qudit&quot;</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Perform partial trace over a subsystem.</span>
+
+<span class="sd">        Uses statevector tensordot (same approach as MultiQubitState).</span>
+<span class="sd">        Only works for bipartite systems where the result is a pure state</span>
+<span class="sd">        (i.e., the original bipartite state is separable across the partition).</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            subsystem_index: Index of the subsystem to trace out (0 or 1)</span>
+<span class="sd">            subsystem_dimension: Dimension of the subsystem to trace out</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Qudit representing the remaining subsystem&#39;s pure state</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            ValueError: If the reduced state is mixed (entangled original state)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">%</span> <span class="n">subsystem_dimension</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;System dimension must be divisible by subsystem dimension&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">total_subsystem_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">//</span> <span class="n">subsystem_dimension</span>
+
+        <span class="c1"># Reshape statevector into (d1, d2) tensor for bipartite system</span>
+        <span class="n">state_tensor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="o">.</span><span class="n">reshape</span><span class="p">((</span><span class="n">subsystem_dimension</span><span class="p">,</span> <span class="n">total_subsystem_dim</span><span class="p">))</span>
+
+        <span class="c1"># Partial trace via tensordot over the traced-out axis</span>
+        <span class="k">if</span> <span class="n">subsystem_index</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">rho_reduced</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span>
+                <span class="n">state_tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">state_tensor</span><span class="p">),</span> <span class="n">axes</span><span class="o">=</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">rho_reduced</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tensordot</span><span class="p">(</span>
+                <span class="n">state_tensor</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">state_tensor</span><span class="p">),</span> <span class="n">axes</span><span class="o">=</span><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Normalize</span>
+        <span class="n">rho_reduced</span> <span class="o">=</span> <span class="n">rho_reduced</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">trace</span><span class="p">(</span><span class="n">rho_reduced</span><span class="p">)</span>
+
+        <span class="c1"># Extract statevector if pure (Qudit cannot represent mixed states)</span>
+        <span class="n">eigenvalues</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">rho_reduced</span><span class="p">)</span>
+        <span class="n">purity</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">eigenvalues</span><span class="o">**</span><span class="mi">2</span><span class="p">))</span>
+        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">purity</span> <span class="o">-</span> <span class="mf">1.0</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>  <span class="c1"># Mixed state</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span>
+                <span class="s2">&quot;Partial trace of entangled state produces mixed density matrix, &quot;</span>
+                <span class="s2">&quot;cannot represent as Qudit statevector&quot;</span>
+            <span class="p">)</span>
+
+        <span class="c1"># Extract the dominant eigenvector as the pure state</span>
+        <span class="n">eigvals</span><span class="p">,</span> <span class="n">eigvecs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="n">rho_reduced</span><span class="p">)</span>
+        <span class="n">max_idx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">eigvals</span><span class="p">))</span>
+        <span class="n">reduced_state</span> <span class="o">=</span> <span class="n">eigvecs</span><span class="p">[:,</span> <span class="n">max_idx</span><span class="p">]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="c1"># Fix global phase so the first non-zero element is real-positive</span>
+        <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="n">reduced_state</span><span class="p">:</span>
+            <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mf">1e-10</span><span class="p">:</span>
+                <span class="n">reduced_state</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">conj</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span> <span class="o">/</span> <span class="nb">abs</span><span class="p">(</span><span class="n">coeff</span><span class="p">)</span>
+                <span class="k">break</span>
+
+        <span class="k">return</span> <span class="n">Qudit</span><span class="p">(</span><span class="n">reduced_state</span><span class="p">,</span> <span class="n">total_subsystem_dim</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;String representation of the qudit.&quot;&quot;&quot;</span>
+        <span class="n">state_str</span> <span class="o">=</span> <span class="s2">&quot;, &quot;</span><span class="o">.</span><span class="n">join</span><span class="p">([</span><span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">coeff</span><span class="si">:</span><span class="s2">.3f</span><span class="si">}</span><span class="s2">&quot;</span> <span class="k">for</span> <span class="n">coeff</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">])</span>
+        <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;Qudit(dimension=</span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">dimension</span><span class="si">}</span><span class="s2">, state=[</span><span class="si">{</span><span class="n">state_str</span><span class="si">}</span><span class="s2">])&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">:</span> <span class="nb">object</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if two qudits have the same state.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="n">Qudit</span><span class="p">):</span>
+            <span class="k">return</span> <span class="bp">NotImplemented</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">dimension</span> <span class="o">!=</span> <span class="n">other</span><span class="o">.</span><span class="n">dimension</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="k">return</span> <span class="nb">bool</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_state</span><span class="p">,</span> <span class="n">other</span><span class="o">.</span><span class="n">_state</span><span class="p">))</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

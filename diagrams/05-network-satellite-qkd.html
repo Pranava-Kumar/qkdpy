@@ -1,0 +1,262 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>5. Network &amp; Satellite QKD &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">5. Network &amp; Satellite QKD</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/diagrams/05-network-satellite-qkd.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="network-satellite-qkd">
+<h1>5. Network &amp; Satellite QKD<a class="headerlink" href="#network-satellite-qkd" title="Link to this heading"></a></h1>
+<section id="satellite-qkd-architecture">
+<h2>Satellite QKD Architecture<a class="headerlink" href="#satellite-qkd-architecture" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    subgraph Space[&quot;Space Segment&quot;]
+        SAT[&quot;LEO Satellite (altitude: 300-2000 km)&quot;]
+        OPT_PAYLOAD[&quot;Optical Payload&lt;br/&gt;Telescope + Tracking&quot;]
+        QKD_MOD[&quot;QKD Module&lt;br/&gt;Source + Encoding&quot;]
+        ACS[&quot;Attitude Control&lt;br/&gt;Pointing accuracy: 1-10 μrad&quot;]
+
+        SAT --&gt; OPT_PAYLOAD
+        SAT --&gt; QKD_MOD
+        SAT --&gt; ACS
+    end
+
+    subgraph Channel[&quot;Free-Space Optical Channel&quot;]
+        ATMOS[&quot;Atmospheric Effects&quot;]
+        TURB[&quot;Turbulence (Fried parameter r₀)&quot;]
+        SCAT[&quot;Scattering (Rayleigh + Mie)&quot;]
+        GEO[&quot;Geometric Spreading&quot;]
+        POINT[&quot;Pointing Loss&quot;]
+
+        ATMOS --&gt; TURB
+        ATMOS --&gt; SCAT
+        GEO --&gt; POINT
+    end
+
+    subgraph Ground[&quot;Ground Segment&quot;]
+        GS[&quot;Ground Station&quot;]
+        TELESCOPE[&quot;Receiving Telescope&quot;]
+        DETECTOR[&quot;Single-Photon Detectors&quot;]
+        TIME_SYNC[&quot;Time Synchronization&lt;br/&gt;(GPS/GNSS)&quot;]
+
+        GS --&gt; TELESCOPE --&gt; DETECTOR
+        GS --&gt; TIME_SYNC
+    end
+
+    subgraph Orbit[&quot;Orbit Parameters&quot;]
+        ORB_TYPE{&quot;Orbit Type&quot;}
+        LEO[&quot;LEO: 300-2000 km&lt;br/&gt;Short pass: ~5-15 min&quot;]
+        MEO[&quot;MEO: 10,000-20,000 km&lt;br/&gt;GPS/Galileo&quot;]
+        GEO[&quot;GEO: 35,786 km&lt;br/&gt;Continuous coverage&quot;]
+    end
+
+    Space --&gt; Channel --&gt; Ground
+    ORB_TYPE --&gt; LEO
+    ORB_TYPE --&gt; MEO
+    ORB_TYPE --&gt; GEO
+
+    style Space fill:#e3f2fd,stroke:#0d47a1
+    style Channel fill:#fff3e0,stroke:#e65100
+    style Ground fill:#e8f5e9,stroke:#1b5e20
+    style Orbit fill:#f3e5f5,stroke:#4a148c
+</pre></div>
+</div>
+</section>
+<section id="satellite-pass-simulation">
+<h2>Satellite Pass Simulation<a class="headerlink" href="#satellite-pass-simulation" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>sequenceDiagram
+    participant User as User
+    participant SAT_API as SatelliteQKD
+    participant ORBIT as OrbitCalc
+    participant ATMOS as Atmosphere
+    participant CH as QuantumChannel
+
+    User-&gt;&gt;SAT_API: simulate_pass(duration=300s, atmosphere)
+    SAT_API-&gt;&gt;ORBIT: compute_orbit(altitude, lat, lon)
+
+    loop Every time step (0.1s)
+        ORBIT-&gt;&gt;SAT_API: elevation_angle, slant_range, velocity
+
+        SAT_API-&gt;&gt;ATMOS: atmospheric_transmittance(elevation)
+        ATMOS--&gt;&gt;SAT_API: transmittance, turbulence, scattering
+
+        SAT_API-&gt;&gt;CH: compute_channel_loss(slant_range, transmittance)
+        CH--&gt;&gt;SAT_API: loss_probability, quantum_bit_rate
+
+        SAT_API-&gt;&gt;SAT_API: accumulate_key_bits()
+    end
+
+    SAT_API--&gt;&gt;User: {total_key_bits, key_rate,&lt;br/&gt;elevation_profile, channel_stats}
+</pre></div>
+</div>
+</section>
+<section id="multi-party-quantum-network">
+<h2>Multi-Party Quantum Network<a class="headerlink" href="#multi-party-quantum-network" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>graph TB
+    subgraph NetworkTopology[&quot;Quantum Network Topology&quot;]
+        NODE_A[&quot;Alice Node&lt;br/&gt;(QKD Source)&quot;]
+        NODE_B[&quot;Bob Node&lt;br/&gt;(QKD Receiver)&quot;]
+        NODE_C[&quot;Charlie Node&lt;br/&gt;(QKD Receiver)&quot;]
+        NODE_D[&quot;Trusted Relay&lt;br/&gt;(Measure-Forward)&quot;]
+        NODE_E[&quot;Eve Node&lt;br/&gt;(Eavesdropper, untrusted)&quot;]
+
+        NODE_A &lt;---&gt;|Fiber/Free-space| NODE_D
+        NODE_D &lt;---&gt;|Fiber/Free-space| NODE_B
+        NODE_D &lt;---&gt;|Fiber/Free-space| NODE_C
+        NODE_A -.-&gt;|Intercept| NODE_E
+        NODE_B -.-&gt;|Intercept| NODE_E
+    end
+
+    subgraph Routing[&quot;Network Routing (Dijkstra)&quot;]
+        R1[&quot;Graph with vertices = nodes&quot;]
+        R2[&quot;Edge weights = channel loss&quot;]
+        R3[&quot;Find path with minimum loss&quot;]
+        R4[&quot;Establish QKD along path&quot;]
+    end
+
+    subgraph MultiParty[&quot;Multi-Party QKD&quot;]
+        M1[&quot;Pairwise key establishment&quot;]
+        M2[&quot;Global key from pairwise XOR&quot;]
+        M3[&quot;Broadcast authentication&quot;]
+    end
+
+    style NODE_A fill:#bbdefb,stroke:#1565c0
+    style NODE_B fill:#c8e6c9,stroke:#2e7d32
+    style NODE_C fill:#c8e6c9,stroke:#2e7d32
+    style NODE_D fill:#ffe0b2,stroke:#e65100
+    style NODE_E fill:#ffcdd2,stroke:#c62828
+</pre></div>
+</div>
+</section>
+<section id="realistic-quantum-network-model">
+<h2>Realistic Quantum Network Model<a class="headerlink" href="#realistic-quantum-network-model" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart TD
+    subgraph RN[&quot;RealisticQuantumNetwork&quot;]
+        RN_NODES[&quot;Nodes: list of QuantumNetworkNode&quot;]
+        RN_LINKS[&quot;Links: (node_i, node_j, distance, loss)&quot;]
+        RN_CHANNELS[&quot;Channels: per-link QuantumChannel instances&quot;]
+        RN_ROUTING[&quot;Routing table (Dijkstra on loss)&quot;]
+    end
+
+    subgraph NodeConfig[&quot;Node Configuration&quot;]
+        NC_DETECTORS[&quot;Detector array&quot;]
+        NC_SOURCE[&quot;Photon source&quot;]
+        NC_MEMORY[&quot;Quantum memory (if available)&quot;]
+        NC_CLASSICAL[&quot;Classical communication link&quot;]
+    end
+
+    subgraph Process[&quot;Key Establishment Process&quot;]
+        P1[&quot;Select path via routing&quot;]
+        P2[&quot;Establish per-hop QKD&quot;]
+        P3[&quot;Forward keys via trusted relays&quot;]
+        P4[&quot;End-to-end key distillation&quot;]
+    end
+
+    RN_NODES --&gt; NodeConfig
+    RN_LINKS --&gt; RN_CHANNELS
+    RN --&gt; Process
+
+    style RN fill:#e3f2fd,stroke:#0d47a1
+    style NodeConfig fill:#e8f5e9,stroke:#1b5e20
+    style Process fill:#d1c4e9,stroke:#4527a0
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

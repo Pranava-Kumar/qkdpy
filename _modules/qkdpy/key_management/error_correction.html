@@ -1,0 +1,746 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.key_management.error_correction &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.key_management.error_correction</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.key_management.error_correction</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Error correction methods for QKD protocols.&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_sample</span><span class="p">,</span> <span class="n">secure_shuffle</span>
+
+
+<div class="viewcode-block" id="ErrorCorrection">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ErrorCorrection">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ErrorCorrection</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Provides various error correction methods for QKD protocols.</span>
+
+<span class="sd">    This class implements different error correction algorithms that can be used</span>
+<span class="sd">    to reconcile Alice&#39;s and Bob&#39;s keys after the quantum transmission phase.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="ErrorCorrection.cascade">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ErrorCorrection.cascade">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">cascade</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">block_sizes</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">random_permute</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Cascade error correction protocol with realistic improvements.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            block_sizes: List of block sizes for each iteration (default: [4, 8, 16, 32])</span>
+<span class="sd">            iterations: Number of iterations of the protocol</span>
+<span class="sd">            random_permute: Whether to randomly permute keys between iterations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of corrected (alice_key, bob_key)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">block_sizes</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Default block sizes for each iteration</span>
+            <span class="n">block_sizes</span> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">8</span><span class="p">,</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">32</span><span class="p">]</span>
+
+        <span class="c1"># Make copies of the keys</span>
+        <span class="n">alice_corrected</span> <span class="o">=</span> <span class="n">alice_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">bob_corrected</span> <span class="o">=</span> <span class="n">bob_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Keep track of which bits have been corrected in previous iterations</span>
+        <span class="n">corrected_bits</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Store original index mapping if permutation is used</span>
+        <span class="n">permuted_indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
+            <span class="c1"># Randomly permute keys between iterations to avoid systematic errors</span>
+            <span class="k">if</span> <span class="n">random_permute</span><span class="p">:</span>
+                <span class="c1"># Create a random permutation for this iteration</span>
+                <span class="n">perm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)))</span>
+                <span class="n">secure_shuffle</span><span class="p">(</span><span class="n">perm</span><span class="p">)</span>
+
+                <span class="c1"># Apply permutation to both keys</span>
+                <span class="n">alice_corrected</span> <span class="o">=</span> <span class="p">[</span><span class="n">alice_corrected</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">perm</span><span class="p">]</span>
+                <span class="n">bob_corrected</span> <span class="o">=</span> <span class="p">[</span><span class="n">bob_corrected</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">perm</span><span class="p">]</span>
+
+                <span class="c1"># Update the index mapping</span>
+                <span class="n">permuted_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">permuted_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">perm</span><span class="p">]</span>
+
+            <span class="n">block_size</span> <span class="o">=</span> <span class="n">block_sizes</span><span class="p">[</span><span class="n">iteration</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">block_sizes</span><span class="p">)]</span>
+
+            <span class="c1"># Divide the key into blocks of the current size</span>
+            <span class="n">num_blocks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)</span> <span class="o">//</span> <span class="n">block_size</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_blocks</span><span class="p">):</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">block_size</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">block_size</span>
+
+                <span class="c1"># Calculate parity for the block</span>
+                <span class="n">alice_parity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">bob_parity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">bob_corrected</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+
+                <span class="c1"># If parities don&#39;t match, find and correct the error</span>
+                <span class="k">if</span> <span class="n">alice_parity</span> <span class="o">!=</span> <span class="n">bob_parity</span><span class="p">:</span>
+                    <span class="c1"># Binary search to find the error</span>
+                    <span class="n">left</span> <span class="o">=</span> <span class="n">start</span>
+                    <span class="n">right</span> <span class="o">=</span> <span class="n">end</span>
+
+                    <span class="k">while</span> <span class="n">right</span> <span class="o">-</span> <span class="n">left</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+
+                        <span class="n">alice_parity_left</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">:</span><span class="n">mid</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="n">bob_parity_left</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">:</span><span class="n">mid</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="n">alice_parity_left</span> <span class="o">!=</span> <span class="n">bob_parity_left</span><span class="p">:</span>
+                            <span class="n">right</span> <span class="o">=</span> <span class="n">mid</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">left</span> <span class="o">=</span> <span class="n">mid</span>
+
+                    <span class="c1"># Correct the error</span>
+                    <span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">]</span>
+                    <span class="n">corrected_bits</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                        <span class="n">permuted_indices</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="k">if</span> <span class="n">random_permute</span> <span class="k">else</span> <span class="n">left</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># If keys were permuted, restore original order</span>
+        <span class="k">if</span> <span class="n">random_permute</span><span class="p">:</span>
+            <span class="c1"># Create inverse permutation</span>
+            <span class="n">inv_perm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">permuted_indices</span><span class="p">):</span>
+                <span class="n">inv_perm</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+
+            <span class="c1"># Apply inverse permutation</span>
+            <span class="n">alice_restored</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)</span>
+            <span class="n">bob_restored</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_corrected</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">orig_idx</span><span class="p">,</span> <span class="n">new_idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inv_perm</span><span class="p">):</span>
+                <span class="n">alice_restored</span><span class="p">[</span><span class="n">orig_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">alice_corrected</span><span class="p">[</span><span class="n">new_idx</span><span class="p">]</span>
+                <span class="n">bob_restored</span><span class="p">[</span><span class="n">orig_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">bob_corrected</span><span class="p">[</span><span class="n">new_idx</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">alice_restored</span><span class="p">,</span> <span class="n">bob_restored</span>
+
+        <span class="k">return</span> <span class="n">alice_corrected</span><span class="p">,</span> <span class="n">bob_corrected</span></div>
+
+
+<div class="viewcode-block" id="ErrorCorrection.winnow">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ErrorCorrection.winnow">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">winnow</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">block_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">4</span><span class="p">,</span>
+        <span class="n">random_permute</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Winnow error correction protocol with realistic improvements.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            block_size: Size of blocks for parity checks</span>
+<span class="sd">            iterations: Number of iterations of the protocol</span>
+<span class="sd">            random_permute: Whether to randomly permute keys between iterations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of corrected (alice_key, bob_key)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Make copies of the keys</span>
+        <span class="n">alice_corrected</span> <span class="o">=</span> <span class="n">alice_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">bob_corrected</span> <span class="o">=</span> <span class="n">bob_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Keep track of which bits have been corrected</span>
+        <span class="n">corrected_bits</span><span class="p">:</span> <span class="nb">set</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="nb">set</span><span class="p">()</span>
+
+        <span class="c1"># Store original index mapping if permutation is used</span>
+        <span class="n">permuted_indices</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)))</span>
+
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">iterations</span><span class="p">):</span>
+            <span class="c1"># Randomly permute keys between iterations</span>
+            <span class="k">if</span> <span class="n">random_permute</span> <span class="ow">and</span> <span class="n">iteration</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>  <span class="c1"># Skip permutation in first iteration</span>
+                <span class="n">perm</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)))</span>
+                <span class="n">secure_shuffle</span><span class="p">(</span><span class="n">perm</span><span class="p">)</span>
+
+                <span class="c1"># Apply permutation to both keys</span>
+                <span class="n">alice_corrected</span> <span class="o">=</span> <span class="p">[</span><span class="n">alice_corrected</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">perm</span><span class="p">]</span>
+                <span class="n">bob_corrected</span> <span class="o">=</span> <span class="p">[</span><span class="n">bob_corrected</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">perm</span><span class="p">]</span>
+
+                <span class="c1"># Update the index mapping</span>
+                <span class="n">permuted_indices</span> <span class="o">=</span> <span class="p">[</span><span class="n">permuted_indices</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">perm</span><span class="p">]</span>
+
+            <span class="c1"># Divide the key into blocks of the specified size</span>
+            <span class="n">num_blocks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)</span> <span class="o">//</span> <span class="n">block_size</span>
+
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">num_blocks</span><span class="p">):</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">i</span> <span class="o">*</span> <span class="n">block_size</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="n">start</span> <span class="o">+</span> <span class="n">block_size</span>
+
+                <span class="c1"># Skip if this block contains a bit that was already corrected</span>
+                <span class="k">if</span> <span class="nb">any</span><span class="p">(</span><span class="n">start</span> <span class="o">&lt;=</span> <span class="n">bit</span> <span class="o">&lt;</span> <span class="n">end</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">corrected_bits</span><span class="p">):</span>
+                    <span class="k">continue</span>
+
+                <span class="c1"># Calculate parity for the block</span>
+                <span class="n">alice_parity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+                <span class="n">bob_parity</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">bob_corrected</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+
+                <span class="c1"># If parities don&#39;t match, find and correct the error</span>
+                <span class="k">if</span> <span class="n">alice_parity</span> <span class="o">!=</span> <span class="n">bob_parity</span><span class="p">:</span>
+                    <span class="c1"># Binary search to find the error</span>
+                    <span class="n">left</span> <span class="o">=</span> <span class="n">start</span>
+                    <span class="n">right</span> <span class="o">=</span> <span class="n">end</span>
+
+                    <span class="k">while</span> <span class="n">right</span> <span class="o">-</span> <span class="n">left</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">mid</span> <span class="o">=</span> <span class="p">(</span><span class="n">left</span> <span class="o">+</span> <span class="n">right</span><span class="p">)</span> <span class="o">//</span> <span class="mi">2</span>
+
+                        <span class="n">alice_parity_left</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">:</span><span class="n">mid</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+                        <span class="n">bob_parity_left</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">sum</span><span class="p">(</span><span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">:</span><span class="n">mid</span><span class="p">])</span> <span class="o">%</span> <span class="mi">2</span><span class="p">)</span>
+
+                        <span class="k">if</span> <span class="n">alice_parity_left</span> <span class="o">!=</span> <span class="n">bob_parity_left</span><span class="p">:</span>
+                            <span class="n">right</span> <span class="o">=</span> <span class="n">mid</span>
+                        <span class="k">else</span><span class="p">:</span>
+                            <span class="n">left</span> <span class="o">=</span> <span class="n">mid</span>
+
+                    <span class="c1"># Correct the error</span>
+                    <span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">-</span> <span class="n">bob_corrected</span><span class="p">[</span><span class="n">left</span><span class="p">]</span>
+                    <span class="n">corrected_bits</span><span class="o">.</span><span class="n">add</span><span class="p">(</span>
+                        <span class="n">permuted_indices</span><span class="p">[</span><span class="n">left</span><span class="p">]</span> <span class="k">if</span> <span class="n">random_permute</span> <span class="k">else</span> <span class="n">left</span>
+                    <span class="p">)</span>
+
+        <span class="c1"># If keys were permuted, restore original order</span>
+        <span class="k">if</span> <span class="n">random_permute</span><span class="p">:</span>
+            <span class="c1"># Create inverse permutation</span>
+            <span class="n">inv_perm</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">p</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">permuted_indices</span><span class="p">):</span>
+                <span class="n">inv_perm</span><span class="p">[</span><span class="n">p</span><span class="p">]</span> <span class="o">=</span> <span class="n">i</span>
+
+            <span class="c1"># Apply inverse permutation</span>
+            <span class="n">alice_restored</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_corrected</span><span class="p">)</span>
+            <span class="n">bob_restored</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_corrected</span><span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">orig_idx</span><span class="p">,</span> <span class="n">new_idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">inv_perm</span><span class="p">):</span>
+                <span class="n">alice_restored</span><span class="p">[</span><span class="n">orig_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">alice_corrected</span><span class="p">[</span><span class="n">new_idx</span><span class="p">]</span>
+                <span class="n">bob_restored</span><span class="p">[</span><span class="n">orig_idx</span><span class="p">]</span> <span class="o">=</span> <span class="n">bob_corrected</span><span class="p">[</span><span class="n">new_idx</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">alice_restored</span><span class="p">,</span> <span class="n">bob_restored</span>
+
+        <span class="k">return</span> <span class="n">alice_corrected</span><span class="p">,</span> <span class="n">bob_corrected</span></div>
+
+
+<div class="viewcode-block" id="ErrorCorrection.biconf">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ErrorCorrection.biconf">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">biconf</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">10</span><span class="p">,</span>
+        <span class="n">error_rate_estimate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.1</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;BICONF (Binary Confirmation) error correction protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            max_iterations: Maximum number of iterations</span>
+<span class="sd">            error_rate_estimate: Estimated initial error rate</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of corrected (alice_key, bob_key)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="n">alice_corrected</span> <span class="o">=</span> <span class="n">alice_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="n">bob_corrected</span> <span class="o">=</span> <span class="n">bob_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+
+        <span class="c1"># Initial estimate of errors</span>
+        <span class="n">initial_errors</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">*</span> <span class="n">error_rate_estimate</span><span class="p">)</span>
+        <span class="n">remaining_iterations</span> <span class="o">=</span> <span class="n">max_iterations</span>
+
+        <span class="c1"># Process in chunks to handle errors more efficiently</span>
+        <span class="k">while</span> <span class="n">remaining_iterations</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> <span class="n">initial_errors</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">chunk_size</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">//</span> <span class="n">initial_errors</span><span class="p">)</span>
+
+            <span class="c1"># Divide key into chunks and process each</span>
+            <span class="k">for</span> <span class="n">start</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">),</span> <span class="n">chunk_size</span><span class="p">):</span>
+                <span class="n">end</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">start</span> <span class="o">+</span> <span class="n">chunk_size</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">))</span>
+                <span class="n">chunk_alice</span> <span class="o">=</span> <span class="n">alice_corrected</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+                <span class="n">chunk_bob</span> <span class="o">=</span> <span class="n">bob_corrected</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">end</span><span class="p">]</span>
+
+                <span class="c1"># If chunk differs, try to locate and fix errors</span>
+                <span class="k">if</span> <span class="n">chunk_alice</span> <span class="o">!=</span> <span class="n">chunk_bob</span><span class="p">:</span>
+                    <span class="c1"># Use simple bit flipping for now, could implement more sophisticated methods</span>
+                    <span class="n">errors_in_chunk</span> <span class="o">=</span> <span class="mi">0</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">chunk_alice</span><span class="p">)):</span>
+                        <span class="k">if</span> <span class="n">chunk_alice</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">chunk_bob</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                            <span class="c1"># Decide which bit to flip based on additional info if available</span>
+                            <span class="c1"># For simplicity, flip Bob&#39;s bit</span>
+                            <span class="n">bob_corrected</span><span class="p">[</span><span class="n">start</span> <span class="o">+</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">chunk_alice</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                            <span class="n">errors_in_chunk</span> <span class="o">+=</span> <span class="mi">1</span>
+
+                    <span class="c1"># Update remaining error estimate</span>
+                    <span class="n">initial_errors</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">initial_errors</span> <span class="o">-</span> <span class="n">errors_in_chunk</span><span class="p">)</span>
+
+                    <span class="k">if</span> <span class="n">initial_errors</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">break</span>
+
+            <span class="n">remaining_iterations</span> <span class="o">-=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">alice_corrected</span><span class="p">,</span> <span class="n">bob_corrected</span></div>
+
+
+<div class="viewcode-block" id="ErrorCorrection.low_density_parity_check">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ErrorCorrection.low_density_parity_check">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">low_density_parity_check</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">code_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">0.5</span><span class="p">,</span>
+        <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">50</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Low-Density Parity-Check (LDPC) error correction with realistic implementation.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            code_rate: Code rate (information bits / total bits)</span>
+<span class="sd">            max_iterations: Maximum number of decoding iterations</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of corrected (alice_key, bob_key, number_of_iterations_used)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">n</span> <span class="o">*</span> <span class="n">code_rate</span><span class="p">)</span>  <span class="c1"># Information bits</span>
+        <span class="n">m</span> <span class="o">=</span> <span class="n">n</span> <span class="o">-</span> <span class="n">k</span>  <span class="c1"># Parity check bits</span>
+
+        <span class="c1"># Generate a proper LDPC parity check matrix</span>
+        <span class="c1"># Using a simplified approach based on Gallager&#39;s construction</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">ErrorCorrection</span><span class="o">.</span><span class="n">_generate_ldpc_matrix</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">)</span>
+
+        <span class="c1"># Calculate syndrome for Bob&#39;s key</span>
+        <span class="n">syndrome</span> <span class="o">=</span> <span class="p">(</span><span class="n">H</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bob_key</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span>
+
+        <span class="c1"># If syndrome is zero, keys are already consistent</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">syndrome</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">bob_key</span><span class="p">,</span> <span class="mi">0</span>
+
+        <span class="c1"># Use belief propagation for LDPC decoding</span>
+        <span class="c1"># Initialize log-likelihood ratios (LLR) based on Alice and Bob&#39;s differences</span>
+        <span class="n">llr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">alice_key</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">bob_key</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="c1"># Higher confidence if values match</span>
+                <span class="n">llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># Lower confidence (or negative) if values differ</span>
+                <span class="n">llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">2.0</span>
+
+        <span class="c1"># Initialize messages between variable nodes and check nodes</span>
+        <span class="c1"># Shape: (n, m) - each variable node sends a message to each check node</span>
+        <span class="n">var_to_check</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n</span><span class="p">,</span> <span class="n">m</span><span class="p">))</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+                <span class="n">var_to_check</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Decode using belief propagation</span>
+        <span class="n">iteration</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iterations</span><span class="p">):</span>
+            <span class="c1"># Update check-to-variable messages</span>
+            <span class="n">check_to_var</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">))</span>
+
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>  <span class="c1"># For each check node</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>  <span class="c1"># For each variable node in check j</span>
+                    <span class="k">if</span> <span class="n">H</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># If variable i is connected to check j</span>
+                        <span class="c1"># Compute message from check j to variable i</span>
+                        <span class="c1"># Using the sum-product algorithm</span>
+                        <span class="n">product</span> <span class="o">=</span> <span class="mf">1.0</span>
+                        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">i</span> <span class="ow">and</span> <span class="n">H</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="n">tanh_val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">var_to_check</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+                                <span class="n">product</span> <span class="o">*=</span> <span class="n">tanh_val</span>
+
+                        <span class="c1"># Calculate check-to-variable message</span>
+                        <span class="k">if</span> <span class="nb">abs</span><span class="p">(</span><span class="n">product</span><span class="p">)</span> <span class="o">&gt;=</span> <span class="mf">1.0</span><span class="p">:</span>
+                            <span class="n">product</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sign</span><span class="p">(</span><span class="n">product</span><span class="p">)</span> <span class="o">*</span> <span class="mf">0.999</span>  <span class="c1"># Avoid numerical issues</span>
+                        <span class="n">check_to_var</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctanh</span><span class="p">(</span><span class="n">product</span><span class="p">)</span>
+
+            <span class="c1"># Update variable-to-check messages</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+                    <span class="k">if</span> <span class="n">H</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1"># Sum all incoming check messages except from check j</span>
+                        <span class="n">total</span> <span class="o">=</span> <span class="n">llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">j_prime</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+                            <span class="k">if</span> <span class="n">j_prime</span> <span class="o">!=</span> <span class="n">j</span> <span class="ow">and</span> <span class="n">H</span><span class="p">[</span><span class="n">j_prime</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="n">total</span> <span class="o">+=</span> <span class="n">check_to_var</span><span class="p">[</span><span class="n">j_prime</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                        <span class="n">var_to_check</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">total</span>
+
+            <span class="c1"># Make hard decisions</span>
+            <span class="n">final_llr</span> <span class="o">=</span> <span class="n">llr</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+                    <span class="n">final_llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">check_to_var</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+
+            <span class="c1"># Generate decoded key</span>
+            <span class="n">decoded</span> <span class="o">=</span> <span class="p">(</span><span class="n">final_llr</span> <span class="o">&lt;=</span> <span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+
+            <span class="c1"># Check if the syndrome is now zero</span>
+            <span class="n">new_syndrome</span> <span class="o">=</span> <span class="p">(</span><span class="n">H</span> <span class="o">@</span> <span class="n">decoded</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">new_syndrome</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># Check if decoded key matches Alice&#39;s</span>
+                <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">array_equal</span><span class="p">(</span><span class="n">decoded</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)):</span>
+                    <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">decoded</span><span class="o">.</span><span class="n">tolist</span><span class="p">(),</span> <span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="c1"># If it matches the syndrome but not Alice&#39;s key,</span>
+                    <span class="c1"># try to adjust based on Alice&#39;s key</span>
+                    <span class="n">corrected_bob</span> <span class="o">=</span> <span class="n">bob_key</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+                    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                        <span class="k">if</span> <span class="n">alice_key</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="n">decoded</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                            <span class="n">corrected_bob</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">alice_key</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+                    <span class="c1"># Verify the correction</span>
+                    <span class="n">final_syndrome</span> <span class="o">=</span> <span class="p">(</span><span class="n">H</span> <span class="o">@</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">corrected_bob</span><span class="p">))</span> <span class="o">%</span> <span class="mi">2</span>
+                    <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">final_syndrome</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                        <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="p">,</span> <span class="n">iteration</span> <span class="o">+</span> <span class="mi">1</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="k">continue</span>  <span class="c1"># Continue iterating</span>
+
+        <span class="c1"># If maximum iterations reached without convergence</span>
+        <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">bob_key</span><span class="p">,</span> <span class="n">max_iterations</span></div>
+
+
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">_generate_ldpc_matrix</span><span class="p">(</span><span class="n">n</span><span class="p">:</span> <span class="nb">int</span><span class="p">,</span> <span class="n">m</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a regular LDPC parity-check matrix using a simplified approach.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            n: Length of codeword (total number of bits)</span>
+<span class="sd">            m: Number of parity checks (rows in H)</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            LDPC parity-check matrix H (m x n)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Simplified LDPC matrix construction based on random regular graph</span>
+        <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+        <span class="c1"># Determine how many 1&#39;s per row and column based on regular structure</span>
+        <span class="c1"># For a (j, k)-regular LDPC code: j * m = k * n</span>
+        <span class="c1"># We&#39;ll use j=3 (checks per bit), determine k accordingly</span>
+        <span class="n">j</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># number of 1s per column (connections per variable node)</span>
+        <span class="n">k</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">//</span> <span class="n">m</span>  <span class="c1"># number of 1s per row (connections per check node)</span>
+
+        <span class="c1"># Ensure j*n is divisible by m by adjusting m if necessary</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">j</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">%</span> <span class="n">m</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">k</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="nb">round</span><span class="p">((</span><span class="n">j</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">/</span> <span class="n">m</span><span class="p">))</span>
+            <span class="n">effective_m</span> <span class="o">=</span> <span class="p">(</span><span class="n">j</span> <span class="o">*</span> <span class="n">n</span><span class="p">)</span> <span class="o">//</span> <span class="n">k</span>
+            <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">effective_m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">effective_m</span>
+
+        <span class="c1"># Fill matrix with random 1s maintaining regularity</span>
+        <span class="k">for</span> <span class="n">col</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="c1"># Choose j positions randomly for the 1s in this column</span>
+            <span class="n">rows</span> <span class="o">=</span> <span class="n">secure_sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">)),</span> <span class="n">j</span><span class="p">)</span>
+            <span class="n">H</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">col</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Check if each row has the expected number of 1s on average</span>
+        <span class="c1"># If not, adjust randomly to balance</span>
+        <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+            <span class="n">row_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">H</span><span class="p">[</span><span class="n">row</span><span class="p">])</span>
+            <span class="k">if</span> <span class="n">row_sum</span> <span class="o">&lt;</span> <span class="n">k</span><span class="p">:</span>
+                <span class="c1"># Add more 1s to reach desired degree</span>
+                <span class="n">zeros</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">H</span><span class="p">[</span><span class="n">row</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">zeros</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">add_count</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">k</span> <span class="o">-</span> <span class="n">row_sum</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">zeros</span><span class="p">))</span>
+                    <span class="n">chosen_cols</span> <span class="o">=</span> <span class="n">secure_sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">zeros</span><span class="p">),</span> <span class="n">add_count</span><span class="p">)</span>
+                    <span class="n">H</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">chosen_cols</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">return</span> <span class="n">H</span>
+
+<div class="viewcode-block" id="ErrorCorrection.ldpc">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ErrorCorrection.ldpc">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">ldpc</span><span class="p">(</span>
+        <span class="n">alice_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">bob_key</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span>
+        <span class="n">parity_check_matrix</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">max_iterations</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;LDPC (Low-Density Parity-Check) error correction.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            alice_key: Alice&#39;s binary key</span>
+<span class="sd">            bob_key: Bob&#39;s binary key</span>
+<span class="sd">            parity_check_matrix: Parity check matrix for LDPC codes</span>
+<span class="sd">            max_iterations: Maximum number of iterations for the belief propagation algorithm</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Tuple of corrected (alice_key, bob_key)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">bob_key</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Alice&#39;s and Bob&#39;s keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="n">n</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span>
+
+        <span class="c1"># If no parity check matrix is provided, create a random one</span>
+        <span class="k">if</span> <span class="n">parity_check_matrix</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># Create a regular LDPC matrix with 3 ones per column and 6 ones per row</span>
+            <span class="n">m</span> <span class="o">=</span> <span class="n">n</span> <span class="o">//</span> <span class="mi">2</span>  <span class="c1"># Number of parity checks</span>
+
+            <span class="c1"># Initialize an empty matrix</span>
+            <span class="n">parity_check_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+            <span class="c1"># Fill the matrix with 1s to satisfy the constraints</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="c1"># Randomly choose 3 rows to put 1s in this column</span>
+                <span class="n">rows</span> <span class="o">=</span> <span class="n">secure_sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">)),</span> <span class="mi">3</span><span class="p">)</span>
+                <span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">rows</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+            <span class="c1"># Ensure each row has approximately 6 ones</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">m</span><span class="p">):</span>
+                <span class="n">row_sum</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="k">if</span> <span class="n">row_sum</span> <span class="o">&lt;</span> <span class="mi">6</span><span class="p">:</span>
+                    <span class="c1"># Randomly choose additional columns to put 1s</span>
+                    <span class="n">cols</span> <span class="o">=</span> <span class="n">secure_sample</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">)),</span> <span class="mi">6</span> <span class="o">-</span> <span class="n">row_sum</span><span class="p">)</span>
+                    <span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">cols</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="c1"># Convert keys to numpy arrays</span>
+        <span class="n">alice_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">alice_key</span><span class="p">)</span>
+        <span class="n">bob_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">bob_key</span><span class="p">)</span>
+
+        <span class="c1"># Calculate the syndrome (parity checks)</span>
+        <span class="n">syndrome</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="p">,</span> <span class="n">bob_array</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
+
+        <span class="c1"># If the syndrome is all zeros, no errors are detected</span>
+        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">syndrome</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="n">bob_key</span>
+
+        <span class="c1"># Belief propagation algorithm for LDPC decoding</span>
+        <span class="c1"># This is a simplified implementation</span>
+
+        <span class="c1"># Initialize likelihood ratios</span>
+        <span class="n">llr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">alice_array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="n">bob_array</span><span class="p">[</span><span class="n">i</span><span class="p">]:</span>
+                <span class="n">llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">10.0</span>  <span class="c1"># High confidence that the bit is correct</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="o">-</span><span class="mf">10.0</span>  <span class="c1"># High confidence that the bit is incorrect</span>
+
+        <span class="c1"># Initialize messages from variable nodes to check nodes</span>
+        <span class="n">v_to_c_messages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="k">if</span> <span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="n">v_to_c_messages</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="c1"># Belief propagation iterations</span>
+        <span class="k">for</span> <span class="n">_iteration</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">max_iterations</span><span class="p">):</span>
+            <span class="c1"># Check to variable messages</span>
+            <span class="n">c_to_v_messages</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+                <span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="p">)</span>
+
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1"># Compute the product of incoming messages from other variable nodes</span>
+                        <span class="n">product</span> <span class="o">=</span> <span class="mf">1.0</span>
+                        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]):</span>
+                            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">i</span> <span class="ow">and</span> <span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="n">product</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">tanh</span><span class="p">(</span><span class="n">v_to_c_messages</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.0</span><span class="p">)</span>
+
+                        <span class="c1"># Compute the check to variable message</span>
+                        <span class="n">c_to_v_messages</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mf">2.0</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">arctanh</span><span class="p">(</span>
+                            <span class="n">product</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">syndrome</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                        <span class="p">)</span>
+
+            <span class="c1"># Update variable to check messages</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="c1"># Sum all incoming check messages except the one from check j</span>
+                        <span class="n">total</span> <span class="o">=</span> <span class="n">llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+                        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                            <span class="k">if</span> <span class="n">k</span> <span class="o">!=</span> <span class="n">j</span> <span class="ow">and</span> <span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                                <span class="n">total</span> <span class="o">+=</span> <span class="n">c_to_v_messages</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+
+                        <span class="n">v_to_c_messages</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">]</span> <span class="o">=</span> <span class="n">total</span>
+
+            <span class="c1"># Compute the total likelihood for each variable</span>
+            <span class="n">total_llr</span> <span class="o">=</span> <span class="n">llr</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]):</span>
+                    <span class="k">if</span> <span class="n">parity_check_matrix</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                        <span class="n">total_llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+=</span> <span class="n">c_to_v_messages</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+
+            <span class="c1"># Make a hard decision based on the total likelihood</span>
+            <span class="n">corrected_bob</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n</span><span class="p">):</span>
+                <span class="n">corrected_bob</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span> <span class="k">if</span> <span class="n">total_llr</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="k">else</span> <span class="mi">1</span>
+
+            <span class="c1"># Check if the syndrome is now all zeros</span>
+            <span class="n">new_syndrome</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">parity_check_matrix</span><span class="p">,</span> <span class="n">corrected_bob</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span>
+            <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">all</span><span class="p">(</span><span class="n">new_syndrome</span> <span class="o">==</span> <span class="mi">0</span><span class="p">):</span>
+                <span class="k">break</span>
+
+        <span class="c1"># If we reach the maximum number of iterations without converging,</span>
+        <span class="c1"># return the best estimate we have</span>
+        <span class="k">return</span> <span class="n">alice_key</span><span class="p">,</span> <span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">bit</span><span class="p">)</span> <span class="k">for</span> <span class="n">bit</span> <span class="ow">in</span> <span class="n">corrected_bob</span><span class="o">.</span><span class="n">tolist</span><span class="p">()]</span></div>
+
+
+<div class="viewcode-block" id="ErrorCorrection.hamming_distance">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ErrorCorrection.hamming_distance">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">hamming_distance</span><span class="p">(</span><span class="n">key1</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">key2</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the Hamming distance between two keys.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key1: First binary key</span>
+<span class="sd">            key2: Second binary key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Number of positions where the keys differ</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key2</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="ErrorCorrection.error_rate">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.ErrorCorrection.error_rate">[docs]</a>
+    <span class="nd">@staticmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">error_rate</span><span class="p">(</span><span class="n">key1</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="n">key2</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate the error rate between two keys.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key1: First binary key</span>
+<span class="sd">            key2: Second binary key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Fraction of positions where the keys differ</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="n">key2</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Keys must have the same length&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+
+        <span class="k">return</span> <span class="n">ErrorCorrection</span><span class="o">.</span><span class="n">hamming_distance</span><span class="p">(</span><span class="n">key1</span><span class="p">,</span> <span class="n">key2</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">key1</span><span class="p">)</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

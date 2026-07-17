@@ -1,0 +1,803 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.enterprise.hsm_interface &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.enterprise.hsm_interface</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.enterprise.hsm_interface</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Hardware Security Module (HSM) interface for QKDpy.</span>
+
+<span class="sd">This module provides an abstract HSM interface and implementations for</span>
+<span class="sd">secure key storage and management in enterprise environments.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">secrets</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">ABC</span><span class="p">,</span> <span class="n">abstractmethod</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">Enum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives</span><span class="w"> </span><span class="kn">import</span> <span class="n">hashes</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives.ciphers.aead</span><span class="w"> </span><span class="kn">import</span> <span class="n">AESGCM</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">cryptography.hazmat.primitives.kdf.pbkdf2</span><span class="w"> </span><span class="kn">import</span> <span class="n">PBKDF2HMAC</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..exceptions</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">HSMError</span><span class="p">,</span>
+    <span class="n">HSMNotAvailableError</span><span class="p">,</span>
+    <span class="n">KeyNotFoundError</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># PBKDF2 iteration count. 100k HMAC-SHA256 is the OWASP floor for PBKDF2 today;</span>
+<span class="c1"># a real HSM would not derive keys this way at all (it holds the raw key), but for</span>
+<span class="c1"># this software simulation we must not use a raw-digest &quot;KDF&quot; (a single SHA-256 of</span>
+<span class="c1"># key||constant is reversible-in-strength-equivalent to no KDF and offers no</span>
+<span class="c1"># defense against offline brute force if key material ever leaves memory).</span>
+<span class="n">_PBKDF2_ITERATIONS</span> <span class="o">=</span> <span class="mi">100_000</span>
+<span class="n">_PBKDF2_SALT_BYTES</span> <span class="o">=</span> <span class="mi">16</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_derive_aes_key</span><span class="p">(</span><span class="n">key_material</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">salt</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Derive a 32-byte AES-256 key from key material using PBKDF2-HMAC-SHA256.</span>
+
+<span class="sd">    The salt MUST be unique per key (see ``SoftwareHSM``). It is stored alongside</span>
+<span class="sd">    the key handle so the same key material + salt always reproduces the same</span>
+<span class="sd">    derived key for decrypt/unwrap, while a different salt yields a different key.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">salt</span><span class="p">)</span> <span class="o">!=</span> <span class="n">_PBKDF2_SALT_BYTES</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="n">HSMError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;PBKDF2 salt must be </span><span class="si">{</span><span class="n">_PBKDF2_SALT_BYTES</span><span class="si">}</span><span class="s2"> bytes, got </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><span class="n">salt</span><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span>
+        <span class="p">)</span>
+    <span class="n">kdf</span> <span class="o">=</span> <span class="n">PBKDF2HMAC</span><span class="p">(</span>
+        <span class="n">algorithm</span><span class="o">=</span><span class="n">hashes</span><span class="o">.</span><span class="n">SHA256</span><span class="p">(),</span>
+        <span class="n">length</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">salt</span><span class="o">=</span><span class="n">salt</span><span class="p">,</span>
+        <span class="n">iterations</span><span class="o">=</span><span class="n">_PBKDF2_ITERATIONS</span><span class="p">,</span>
+    <span class="p">)</span>
+    <span class="k">return</span> <span class="n">kdf</span><span class="o">.</span><span class="n">derive</span><span class="p">(</span><span class="n">key_material</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="HSMProvider">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMProvider">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HSMProvider</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Supported HSM providers.</span>
+
+<span class="sd">    Only ``SOFTWARE`` is implemented in this build. It is an in-memory</span>
+<span class="sd">    simulation intended for development and testing only — it is NOT</span>
+<span class="sd">    hardware-backed and MUST NOT be used in production. The cloud/PKCS#11</span>
+<span class="sd">    providers were previously advertised as stubs; that over-promised support</span>
+<span class="sd">    that does not exist, so they have been removed rather than shipped as</span>
+<span class="sd">    NotImplementedError traps.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">SOFTWARE</span> <span class="o">=</span> <span class="s2">&quot;software&quot;</span>  <span class="c1"># Software-based in-memory simulation (NOT production-grade)</span></div>
+
+
+
+<div class="viewcode-block" id="HSMKeyHandle">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMKeyHandle">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Handle to a key stored in the HSM.</span>
+
+<span class="sd">    ``key_salt`` is the per-key PBKDF2 salt used to derive the AES wrapping</span>
+<span class="sd">    key from the stored key material. It is public (non-secret) but MUST be</span>
+<span class="sd">    persisted with the handle, or wrapped-key exports cannot be unwrapped.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">key_type</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">created_at</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">expires_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">|</span> <span class="kc">None</span>
+    <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span>
+    <span class="n">key_salt</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="n">_PBKDF2_SALT_BYTES</span><span class="p">)</span>
+    <span class="p">)</span>
+
+<div class="viewcode-block" id="HSMKeyHandle.is_expired">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMKeyHandle.is_expired">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_expired</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the key has expired.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">expires_at</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">False</span>
+        <span class="k">return</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">expires_at</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="HSMInterface">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HSMInterface</span><span class="p">(</span><span class="n">ABC</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Abstract interface for Hardware Security Module operations.</span>
+
+<span class="sd">    This interface defines the operations that an HSM must support</span>
+<span class="sd">    for QKD key management. Implementations can target different</span>
+<span class="sd">    HSM providers (PKCS#11, cloud HSMs, etc.).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="HSMInterface.initialize">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.initialize">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize connection to the HSM.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            config: HSM-specific configuration</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            HSMError: If initialization fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.is_available">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.is_available">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if the HSM is available and connected.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if HSM is available</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.generate_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.generate_key">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">expires_in_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a new key in the HSM.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key_id: Unique identifier for the key</span>
+<span class="sd">            key_length: Key length in bits</span>
+<span class="sd">            metadata: Optional metadata to store with the key</span>
+<span class="sd">            expires_in_seconds: Key expiration time</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Handle to the generated key</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            HSMError: If key generation fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.import_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.import_key">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">import_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_material</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">expires_in_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Import an existing key into the HSM.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key_id: Unique identifier for the key</span>
+<span class="sd">            key_material: Raw key bytes</span>
+<span class="sd">            metadata: Optional metadata to store with the key</span>
+<span class="sd">            expires_in_seconds: Key expiration time</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Handle to the imported key</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            HSMError: If import fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.get_key_handle">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.get_key_handle">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_key_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get a handle to an existing key.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key_id: Key identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Handle to the key</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            KeyNotFoundError: If key doesn&#39;t exist</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.delete_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.delete_key">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete a key from the HSM.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key_id: Key identifier</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            True if key was deleted</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            KeyNotFoundError: If key doesn&#39;t exist</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.encrypt">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.encrypt">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">encrypt</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">plaintext</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">aad</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encrypt data using a key in the HSM.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key_id: Key to use for encryption</span>
+<span class="sd">            plaintext: Data to encrypt</span>
+<span class="sd">            aad: Additional authenticated data</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Encrypted data (including IV/nonce)</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            KeyNotFoundError: If key doesn&#39;t exist</span>
+<span class="sd">            HSMError: If encryption fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.decrypt">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.decrypt">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decrypt</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ciphertext</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">aad</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decrypt data using a key in the HSM.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            key_id: Key to use for decryption</span>
+<span class="sd">            ciphertext: Data to decrypt</span>
+<span class="sd">            aad: Additional authenticated data</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Decrypted data</span>
+
+<span class="sd">        Raises:</span>
+<span class="sd">            KeyNotFoundError: If key doesn&#39;t exist</span>
+<span class="sd">            HSMError: If decryption fails</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.wrap_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.wrap_key">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrap_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">wrapping_key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_to_wrap</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap (encrypt) a key for secure export.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            wrapping_key_id: Key to use for wrapping</span>
+<span class="sd">            key_to_wrap: Key material to wrap</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Wrapped key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.unwrap_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.unwrap_key">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unwrap_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">wrapping_key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">wrapped_key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="n">new_key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unwrap (decrypt) a wrapped key and import it.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            wrapping_key_id: Key to use for unwrapping</span>
+<span class="sd">            wrapped_key: Wrapped key material</span>
+<span class="sd">            new_key_id: ID for the imported key</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            Handle to the unwrapped key</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.list_keys">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.list_keys">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">HSMKeyHandle</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;List all keys in the HSM.</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of key handles</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+
+<div class="viewcode-block" id="HSMInterface.close">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.HSMInterface.close">[docs]</a>
+    <span class="nd">@abstractmethod</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close connection to the HSM.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="SoftwareHSM">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">SoftwareHSM</span><span class="p">(</span><span class="n">HSMInterface</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Software-based HSM implementation for development and testing.</span>
+
+<span class="sd">    WARNING: This is NOT secure for production use. It stores keys</span>
+<span class="sd">    in memory and uses software-based cryptography. Use a real HSM</span>
+<span class="sd">    for production deployments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SoftwareHSM.__init__">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize software HSM.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="c1"># Stored form per key: (wrapped_key_material, salt). The raw key material</span>
+        <span class="c1"># is never kept in plaintext; it is wrapped under a per-session master KEK</span>
+        <span class="c1"># (see ``_wrap_material`` / ``_unwrap_material``). ``salt`` is the per-key</span>
+        <span class="c1"># PBKDF2 salt used to derive the AES data-encryption key on encrypt/decrypt.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">HSMKeyHandle</span><span class="p">]]</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="c1"># Session master KEK used to wrap stored key material. It is purely an</span>
+        <span class="c1"># in-memory obfuscation layer for the software simulation and provides NO</span>
+        <span class="c1"># real security — a process inspector can read it. Documented so nobody</span>
+        <span class="c1"># mistakes this for hardware-backed key isolation.</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_master_kek</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="mi">32</span><span class="p">)</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
+            <span class="s2">&quot;SoftwareHSM initialized - NOT FOR PRODUCTION USE&quot;</span><span class="p">,</span>
+            <span class="n">provider</span><span class="o">=</span><span class="n">HSMProvider</span><span class="o">.</span><span class="n">SOFTWARE</span><span class="o">.</span><span class="n">value</span><span class="p">,</span>
+        <span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.initialize">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.initialize">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the software HSM.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;SoftwareHSM initialized&quot;</span><span class="p">,</span> <span class="n">config_keys</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><span class="n">config</span><span class="o">.</span><span class="n">keys</span><span class="p">()))</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.is_available">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.is_available">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">is_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Check if HSM is available.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_check_available</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Raise if HSM not available.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HSMNotAvailableError</span><span class="p">(</span><span class="s2">&quot;HSM not initialized&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_wrap_material</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_material</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">bytes</span><span class="p">,</span> <span class="nb">bytes</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap raw key material so it is never stored as plaintext.</span>
+
+<span class="sd">        Returns ``(wrapped, salt)`` where ``wrapped`` is AES-256-GCM</span>
+<span class="sd">        ciphertext of the material under the per-session master KEK. ``salt``</span>
+<span class="sd">        is a random per-key PBKDF2 salt used to derive the data-encryption key.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">salt</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="n">_PBKDF2_SALT_BYTES</span><span class="p">)</span>
+        <span class="n">nonce</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+        <span class="n">wrapped</span> <span class="o">=</span> <span class="n">AESGCM</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_master_kek</span><span class="p">)</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">nonce</span><span class="p">,</span> <span class="n">key_material</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">nonce</span> <span class="o">+</span> <span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_unwrap_material</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wrapped</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span> <span class="n">salt</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Reverse of :meth:`_wrap_material`.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">wrapped</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">12</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HSMError</span><span class="p">(</span><span class="s2">&quot;Wrapped key material is malformed&quot;</span><span class="p">)</span>
+        <span class="n">nonce</span><span class="p">,</span> <span class="n">body</span> <span class="o">=</span> <span class="n">wrapped</span><span class="p">[:</span><span class="mi">12</span><span class="p">],</span> <span class="n">wrapped</span><span class="p">[</span><span class="mi">12</span><span class="p">:]</span>
+        <span class="k">return</span> <span class="n">AESGCM</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_master_kek</span><span class="p">)</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">nonce</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SoftwareHSM.generate_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.generate_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">256</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">expires_in_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate a key using secrets module.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_available</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">key_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HSMError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key_id</span><span class="si">}</span><span class="s2"> already exists&quot;</span><span class="p">)</span>
+
+        <span class="c1"># Generate random key material</span>
+        <span class="n">key_bytes</span> <span class="o">=</span> <span class="n">key_length</span> <span class="o">//</span> <span class="mi">8</span>
+        <span class="n">key_material</span> <span class="o">=</span> <span class="n">secrets</span><span class="o">.</span><span class="n">token_bytes</span><span class="p">(</span><span class="n">key_bytes</span><span class="p">)</span>
+
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
+        <span class="n">expires_at</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">expires_in_seconds</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+
+            <span class="n">expires_at</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">expires_in_seconds</span><span class="p">)</span>
+
+        <span class="n">handle</span> <span class="o">=</span> <span class="n">HSMKeyHandle</span><span class="p">(</span>
+            <span class="n">key_id</span><span class="o">=</span><span class="n">key_id</span><span class="p">,</span>
+            <span class="n">key_type</span><span class="o">=</span><span class="s2">&quot;AES&quot;</span><span class="p">,</span>
+            <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">,</span>
+            <span class="n">expires_at</span><span class="o">=</span><span class="n">expires_at</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
+        <span class="p">)</span>
+
+        <span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_material</span><span class="p">(</span><span class="n">key_material</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="n">key_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span><span class="p">,</span> <span class="n">handle</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">audit</span><span class="p">(</span>
+            <span class="s2">&quot;hsm_key_generated&quot;</span><span class="p">,</span>
+            <span class="n">resource</span><span class="o">=</span><span class="n">key_id</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+            <span class="n">key_length</span><span class="o">=</span><span class="n">key_length</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">handle</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.import_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.import_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">import_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_material</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">expires_in_seconds</span><span class="p">:</span> <span class="nb">int</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Import a key into the software HSM.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_available</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">key_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HSMError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key_id</span><span class="si">}</span><span class="s2"> already exists&quot;</span><span class="p">)</span>
+
+        <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
+        <span class="n">expires_at</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">if</span> <span class="n">expires_in_seconds</span><span class="p">:</span>
+            <span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">timedelta</span>
+
+            <span class="n">expires_at</span> <span class="o">=</span> <span class="n">now</span> <span class="o">+</span> <span class="n">timedelta</span><span class="p">(</span><span class="n">seconds</span><span class="o">=</span><span class="n">expires_in_seconds</span><span class="p">)</span>
+
+        <span class="n">handle</span> <span class="o">=</span> <span class="n">HSMKeyHandle</span><span class="p">(</span>
+            <span class="n">key_id</span><span class="o">=</span><span class="n">key_id</span><span class="p">,</span>
+            <span class="n">key_type</span><span class="o">=</span><span class="s2">&quot;AES&quot;</span><span class="p">,</span>
+            <span class="n">created_at</span><span class="o">=</span><span class="n">now</span><span class="p">,</span>
+            <span class="n">expires_at</span><span class="o">=</span><span class="n">expires_at</span><span class="p">,</span>
+            <span class="n">metadata</span><span class="o">=</span><span class="n">metadata</span> <span class="ow">or</span> <span class="p">{},</span>
+        <span class="p">)</span>
+
+        <span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_wrap_material</span><span class="p">(</span><span class="n">key_material</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="n">key_id</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span><span class="p">,</span> <span class="n">handle</span><span class="p">)</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">audit</span><span class="p">(</span>
+            <span class="s2">&quot;hsm_key_imported&quot;</span><span class="p">,</span>
+            <span class="n">resource</span><span class="o">=</span><span class="n">key_id</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+            <span class="n">key_length</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><span class="n">key_material</span><span class="p">)</span> <span class="o">*</span> <span class="mi">8</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">handle</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.get_key_handle">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.get_key_handle">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_key_handle</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Get handle to a key.</span>
+
+<span class="sd">        The handle intentionally exposes NO key bytes — only metadata and the</span>
+<span class="sd">        (non-secret) PBKDF2 salt. Raw key material is never returned.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_available</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">key_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">KeyNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="n">key_id</span><span class="p">][</span><span class="mi">2</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.delete_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.delete_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">delete_key</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Delete a key.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_available</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">key_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">KeyNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="n">key_id</span><span class="p">]</span>
+
+        <span class="n">logger</span><span class="o">.</span><span class="n">audit</span><span class="p">(</span>
+            <span class="s2">&quot;hsm_key_deleted&quot;</span><span class="p">,</span>
+            <span class="n">resource</span><span class="o">=</span><span class="n">key_id</span><span class="p">,</span>
+            <span class="n">result</span><span class="o">=</span><span class="s2">&quot;success&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="kc">True</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.encrypt">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.encrypt">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">encrypt</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">plaintext</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">aad</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Encrypt using AES-256-GCM.</span>
+
+<span class="sd">        Wire format: ``nonce (12 bytes) || ciphertext || tag (16 bytes)``.</span>
+<span class="sd">        AES-GCM appends its authentication tag automatically, so this matches</span>
+<span class="sd">        the previous IV+ciphertext+tag layout byte-for-byte at the call site.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_available</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">key_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">KeyNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+
+        <span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span><span class="p">,</span> <span class="n">_handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="n">key_id</span><span class="p">]</span>
+        <span class="n">key_material</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unwrap_material</span><span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span><span class="p">)</span>
+        <span class="c1"># PBKDF2-HMAC-SHA256 (100k iters) derives the data key from the key</span>
+        <span class="c1"># material + this key&#39;s unique salt. Different salt -&gt; different key.</span>
+        <span class="n">aes_key</span> <span class="o">=</span> <span class="n">_derive_aes_key</span><span class="p">(</span><span class="n">key_material</span><span class="p">,</span> <span class="n">salt</span><span class="p">)</span>
+
+        <span class="c1"># 96-bit nonce is the AES-GCM-recommended size.</span>
+        <span class="n">nonce</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">urandom</span><span class="p">(</span><span class="mi">12</span><span class="p">)</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">ciphertext</span> <span class="o">=</span> <span class="n">AESGCM</span><span class="p">(</span><span class="n">aes_key</span><span class="p">)</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">nonce</span><span class="p">,</span> <span class="n">plaintext</span><span class="p">,</span> <span class="n">aad</span><span class="p">)</span>
+        <span class="k">except</span> <span class="p">(</span><span class="ne">ValueError</span><span class="p">,</span> <span class="ne">TypeError</span><span class="p">):</span>
+            <span class="c1"># cryptography raises ValueError on key-size mismatch and TypeError on</span>
+            <span class="c1"># bad input types. Re-raise as HSMError so callers get a domain error.</span>
+            <span class="k">raise</span> <span class="n">HSMError</span><span class="p">(</span><span class="s2">&quot;Encryption failed&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="kc">None</span>
+        <span class="k">return</span> <span class="n">nonce</span> <span class="o">+</span> <span class="n">ciphertext</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.decrypt">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.decrypt">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">decrypt</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">ciphertext</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">aad</span><span class="p">:</span> <span class="nb">bytes</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Decrypt using AES-256-GCM.</span>
+
+<span class="sd">        AES-GCM authenticates the ciphertext and (optionally) ``aad``; tampering</span>
+<span class="sd">        of any byte raises ``cryptography.exceptions.InvalidTag`` which we</span>
+<span class="sd">        surface as ``HSMError``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_available</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">key_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">KeyNotFoundError</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Key </span><span class="si">{</span><span class="n">key_id</span><span class="si">}</span><span class="s2"> not found&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ciphertext</span><span class="p">)</span> <span class="o">&lt;</span> <span class="mi">12</span> <span class="o">+</span> <span class="mi">16</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="n">HSMError</span><span class="p">(</span><span class="s2">&quot;Ciphertext too short&quot;</span><span class="p">)</span>
+
+        <span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span><span class="p">,</span> <span class="n">_handle</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="p">[</span><span class="n">key_id</span><span class="p">]</span>
+        <span class="n">key_material</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_unwrap_material</span><span class="p">(</span><span class="n">wrapped</span><span class="p">,</span> <span class="n">salt</span><span class="p">)</span>
+        <span class="n">aes_key</span> <span class="o">=</span> <span class="n">_derive_aes_key</span><span class="p">(</span><span class="n">key_material</span><span class="p">,</span> <span class="n">salt</span><span class="p">)</span>
+
+        <span class="n">nonce</span> <span class="o">=</span> <span class="n">ciphertext</span><span class="p">[:</span><span class="mi">12</span><span class="p">]</span>
+        <span class="n">body</span> <span class="o">=</span> <span class="n">ciphertext</span><span class="p">[</span><span class="mi">12</span><span class="p">:]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">AESGCM</span><span class="p">(</span><span class="n">aes_key</span><span class="p">)</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">nonce</span><span class="p">,</span> <span class="n">body</span><span class="p">,</span> <span class="n">aad</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+            <span class="c1"># cryptography.exceptions.InvalidTag (or any tag failure) lands here.</span>
+            <span class="k">raise</span> <span class="n">HSMError</span><span class="p">(</span><span class="s2">&quot;Authentication tag verification failed&quot;</span><span class="p">)</span> <span class="kn">from</span><span class="w"> </span><span class="nn">e</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.wrap_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.wrap_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">wrap_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">wrapping_key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">key_to_wrap</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bytes</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Wrap a key using encryption.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">encrypt</span><span class="p">(</span><span class="n">wrapping_key_id</span><span class="p">,</span> <span class="n">key_to_wrap</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.unwrap_key">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.unwrap_key">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">unwrap_key</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">wrapping_key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="n">wrapped_key</span><span class="p">:</span> <span class="nb">bytes</span><span class="p">,</span>
+        <span class="n">new_key_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMKeyHandle</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Unwrap and import a key.&quot;&quot;&quot;</span>
+        <span class="n">key_material</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">decrypt</span><span class="p">(</span><span class="n">wrapping_key_id</span><span class="p">,</span> <span class="n">wrapped_key</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">import_key</span><span class="p">(</span><span class="n">new_key_id</span><span class="p">,</span> <span class="n">key_material</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.list_keys">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.list_keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">list_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">HSMKeyHandle</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;List all keys.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_check_available</span><span class="p">()</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">handle</span> <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">_</span><span class="p">,</span> <span class="n">handle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="o">.</span><span class="n">values</span><span class="p">()]</span></div>
+
+
+<div class="viewcode-block" id="SoftwareHSM.close">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.SoftwareHSM.close">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">close</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Close and clear all keys.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_keys</span><span class="o">.</span><span class="n">clear</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_initialized</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;SoftwareHSM closed&quot;</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="get_hsm">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.hsm_interface.get_hsm">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">get_hsm</span><span class="p">(</span>
+    <span class="n">provider</span><span class="p">:</span> <span class="n">HSMProvider</span> <span class="o">=</span> <span class="n">HSMProvider</span><span class="o">.</span><span class="n">SOFTWARE</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">HSMInterface</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Factory function to get an HSM instance.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        provider: HSM provider to use</span>
+<span class="sd">        config: Provider-specific configuration</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        HSM instance</span>
+
+<span class="sd">    Raises:</span>
+<span class="sd">        HSMNotAvailableError: If provider not available</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">provider</span> <span class="o">==</span> <span class="n">HSMProvider</span><span class="o">.</span><span class="n">SOFTWARE</span><span class="p">:</span>
+        <span class="n">hsm</span> <span class="o">=</span> <span class="n">SoftwareHSM</span><span class="p">()</span>
+        <span class="n">hsm</span><span class="o">.</span><span class="n">initialize</span><span class="p">(</span><span class="n">config</span> <span class="ow">or</span> <span class="p">{})</span>
+        <span class="k">return</span> <span class="n">hsm</span>
+
+    <span class="k">else</span><span class="p">:</span>
+        <span class="c1"># Only HSMProvider.SOFTWARE is implemented. Cloud HSM (AWS/Azure/GCP)</span>
+        <span class="c1"># and PKCS#11 providers were previously advertised but never implemented;</span>
+        <span class="c1"># we fail closed instead of pretending support exists.</span>
+        <span class="k">raise</span> <span class="n">HSMNotAvailableError</span><span class="p">(</span>
+            <span class="sa">f</span><span class="s2">&quot;HSM provider </span><span class="si">{</span><span class="n">provider</span><span class="o">.</span><span class="n">value</span><span class="si">!r}</span><span class="s2"> is not implemented in this &quot;</span>
+            <span class="s2">&quot;software-simulation build. Only HSMProvider.SOFTWARE is available.&quot;</span>
+        <span class="p">)</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

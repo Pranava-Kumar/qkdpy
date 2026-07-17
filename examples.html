@@ -1,0 +1,333 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="./">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="_static/jquery.js?v=5d32c60e"></script>
+      <script src="_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="API Reference" href="api.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api.html">API Reference</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Examples</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#advanced-protocol-usage">Advanced Protocol Usage</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#observability-instrumentation">Observability &amp; Instrumentation</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#enterprise-compliance-checking">Enterprise Compliance Checking</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#quantum-safe-migration-toolkit">Quantum-Safe Migration Toolkit</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#product-tier-gating">Product Tier Gating</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Examples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="_sources/examples.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<section id="advanced-protocol-usage">
+<h2>Advanced Protocol Usage<a class="headerlink" href="#advanced-protocol-usage" title="Link to this heading"></a></h2>
+<p>QKDpy supports advanced protocols and features:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">DeviceIndependentQKD</span><span class="p">,</span>
+    <span class="n">QuantumKeyManager</span><span class="p">,</span>
+    <span class="n">QuantumRandomNumberGenerator</span><span class="p">,</span>
+    <span class="n">QuantumNetwork</span><span class="p">,</span>
+    <span class="n">HDQKD</span><span class="p">,</span>
+    <span class="n">QKDOptimizer</span>
+<span class="p">)</span>
+
+<span class="c1"># Device-independent QKD</span>
+<span class="n">di_qkd</span> <span class="o">=</span> <span class="n">DeviceIndependentQKD</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">results</span> <span class="o">=</span> <span class="n">di_qkd</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+<span class="c1"># Quantum key management</span>
+<span class="n">key_manager</span> <span class="o">=</span> <span class="n">QuantumKeyManager</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+<span class="n">key_id</span> <span class="o">=</span> <span class="n">key_manager</span><span class="o">.</span><span class="n">generate_key</span><span class="p">(</span><span class="s2">&quot;secure_session&quot;</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="mi">128</span><span class="p">)</span>
+
+<span class="c1"># Quantum random number generation</span>
+<span class="n">qrng</span> <span class="o">=</span> <span class="n">QuantumRandomNumberGenerator</span><span class="p">(</span><span class="n">channel</span><span class="p">)</span>
+<span class="n">random_bits</span> <span class="o">=</span> <span class="n">qrng</span><span class="o">.</span><span class="n">generate_random_bits</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+
+<span class="c1"># Quantum network simulation</span>
+<span class="n">network</span> <span class="o">=</span> <span class="n">QuantumNetwork</span><span class="p">(</span><span class="s2">&quot;Research Network&quot;</span><span class="p">)</span>
+<span class="n">network</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">)</span>
+<span class="n">network</span><span class="o">.</span><span class="n">add_node</span><span class="p">(</span><span class="s2">&quot;Bob&quot;</span><span class="p">)</span>
+<span class="n">network</span><span class="o">.</span><span class="n">add_connection</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="n">channel</span><span class="p">)</span>
+<span class="n">key</span> <span class="o">=</span> <span class="n">network</span><span class="o">.</span><span class="n">establish_key_between_nodes</span><span class="p">(</span><span class="s2">&quot;Alice&quot;</span><span class="p">,</span> <span class="s2">&quot;Bob&quot;</span><span class="p">,</span> <span class="mi">128</span><span class="p">)</span>
+
+<span class="c1"># High-dimensional QKD</span>
+<span class="n">hd_qkd</span> <span class="o">=</span> <span class="n">HDQKD</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">dimension</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">hd_results</span> <span class="o">=</span> <span class="n">hd_qkd</span><span class="o">.</span><span class="n">execute</span><span class="p">()</span>
+
+<span class="c1"># ML-based QKD optimization</span>
+<span class="n">optimizer</span> <span class="o">=</span> <span class="n">QKDOptimizer</span><span class="p">(</span><span class="s2">&quot;BB84&quot;</span><span class="p">)</span>
+<span class="n">parameter_space</span> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;loss&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">),</span>
+    <span class="s2">&quot;noise_level&quot;</span><span class="p">:</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">)</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="observability-instrumentation">
+<h2>Observability &amp; Instrumentation<a class="headerlink" href="#observability-instrumentation" title="Link to this heading"></a></h2>
+<p>Protocol executions are automatically instrumented with structured telemetry. You can also add custom instrumentation:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">OperationSpan</span><span class="p">,</span> <span class="n">instrument</span>
+
+<span class="c1"># Track execution time and emit structured events</span>
+<span class="k">with</span> <span class="n">OperationSpan</span><span class="p">(</span><span class="s2">&quot;custom.operation&quot;</span><span class="p">,</span> <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;BB84&quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">span</span><span class="p">:</span>
+    <span class="c1"># ... your code ...</span>
+    <span class="n">span</span><span class="o">.</span><span class="n">set_metadata</span><span class="p">(</span><span class="n">qber</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span> <span class="n">key_size</span><span class="o">=</span><span class="mi">256</span><span class="p">)</span>
+
+<span class="c1"># Decorate any function for automatic instrumentation</span>
+<span class="nd">@instrument</span><span class="p">(</span><span class="s2">&quot;ml.train&quot;</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">train_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">):</span>
+    <span class="c1"># Function is automatically wrapped in OperationSpan</span>
+    <span class="o">...</span>
+
+<span class="c1"># Record domain-specific events</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">record_protocol_execution</span><span class="p">,</span> <span class="n">record_ml_training</span>
+
+<span class="n">record_protocol_execution</span><span class="p">(</span>
+    <span class="n">protocol_name</span><span class="o">=</span><span class="s2">&quot;BB84&quot;</span><span class="p">,</span>
+    <span class="n">key_length</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+    <span class="n">qber</span><span class="o">=</span><span class="mf">0.025</span><span class="p">,</span>
+    <span class="n">final_key_size</span><span class="o">=</span><span class="mi">192</span><span class="p">,</span>
+    <span class="n">is_secure</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">duration_ms</span><span class="o">=</span><span class="mf">145.2</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">record_ml_training</span><span class="p">(</span>
+    <span class="n">model_name</span><span class="o">=</span><span class="s2">&quot;QKDPredictor&quot;</span><span class="p">,</span>
+    <span class="n">protocol</span><span class="o">=</span><span class="s2">&quot;BB84&quot;</span><span class="p">,</span>
+    <span class="n">input_dim</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+    <span class="n">training_samples</span><span class="o">=</span><span class="mi">5000</span><span class="p">,</span>
+    <span class="n">training_time_ms</span><span class="o">=</span><span class="mf">3200.5</span><span class="p">,</span>
+    <span class="n">final_loss</span><span class="o">=</span><span class="mf">0.023</span><span class="p">,</span>
+    <span class="n">convergence_iterations</span><span class="o">=</span><span class="mi">42</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="enterprise-compliance-checking">
+<h2>Enterprise Compliance Checking<a class="headerlink" href="#enterprise-compliance-checking" title="Link to this heading"></a></h2>
+<p>Requires ENTERPRISE tier:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;QKDPY_PRODUCT_TIER&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;enterprise&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.enterprise</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ComplianceChecker</span><span class="p">,</span>
+    <span class="n">ComplianceStandard</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Initialize compliance checker</span>
+<span class="n">checker</span> <span class="o">=</span> <span class="n">ComplianceChecker</span><span class="p">()</span>
+
+<span class="c1"># Run checks against multiple standards</span>
+<span class="n">report</span> <span class="o">=</span> <span class="n">checker</span><span class="o">.</span><span class="n">check_compliance</span><span class="p">([</span>
+    <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">ETSI_GS_QKD_014</span><span class="p">,</span>
+    <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">NIST_SP_800_57</span><span class="p">,</span>
+    <span class="n">ComplianceStandard</span><span class="o">.</span><span class="n">FIPS_140_2</span><span class="p">,</span>
+<span class="p">])</span>
+
+<span class="c1"># Export reports in multiple formats</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">report</span><span class="o">.</span><span class="n">export_markdown</span><span class="p">())</span>
+<span class="n">html</span> <span class="o">=</span> <span class="n">report</span><span class="o">.</span><span class="n">export_html</span><span class="p">()</span>  <span class="c1"># Enterprise-gated feature</span>
+
+<span class="c1"># Analyze results</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Overall compliant: </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">overall_compliant</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Passed: </span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">passed_checks</span><span class="si">}</span><span class="s2">/</span><span class="si">{</span><span class="n">report</span><span class="o">.</span><span class="n">passed_checks</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="n">report</span><span class="o">.</span><span class="n">failed_checks</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">check</span> <span class="ow">in</span> <span class="n">report</span><span class="o">.</span><span class="n">get_failed_checks</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;[</span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">severity</span><span class="o">.</span><span class="n">upper</span><span class="p">()</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">check_id</span><span class="si">}</span><span class="s2">: </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">requirement</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  → </span><span class="si">{</span><span class="n">check</span><span class="o">.</span><span class="n">recommendation</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="quantum-safe-migration-toolkit">
+<h2>Quantum-Safe Migration Toolkit<a class="headerlink" href="#quantum-safe-migration-toolkit" title="Link to this heading"></a></h2>
+<p>Requires PREMIUM tier:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;QKDPY_PRODUCT_TIER&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;premium&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.enterprise.quantum_safe</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">classic_enterprise_profile</span><span class="p">,</span>
+    <span class="n">generate_roadmap</span><span class="p">,</span>
+    <span class="n">QuantumSafeAssessment</span><span class="p">,</span>
+    <span class="n">CryptoAsset</span><span class="p">,</span>
+    <span class="n">CryptoAlgorithmType</span><span class="p">,</span>
+    <span class="n">QuantumResistance</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Use the preset classic enterprise profile</span>
+<span class="n">inventory</span> <span class="o">=</span> <span class="n">classic_enterprise_profile</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Total cryptographic assets: </span><span class="si">{</span><span class="n">inventory</span><span class="o">.</span><span class="n">total_assets</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Vulnerable to quantum attacks: </span><span class="si">{</span><span class="n">inventory</span><span class="o">.</span><span class="n">vulnerable_count</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Overall risk score: </span><span class="si">{</span><span class="n">inventory</span><span class="o">.</span><span class="n">risk_score</span><span class="si">:</span><span class="s2">.0%</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Generate a phased migration roadmap</span>
+<span class="n">roadmap</span> <span class="o">=</span> <span class="n">generate_roadmap</span><span class="p">(</span><span class="n">inventory</span><span class="p">)</span>
+<span class="n">summary</span> <span class="o">=</span> <span class="n">roadmap</span><span class="o">.</span><span class="n">get_summary</span><span class="p">()</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Target completion: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;target_completion&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Migration steps: </span><span class="si">{</span><span class="n">summary</span><span class="p">[</span><span class="s1">&#39;total_steps&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">step</span> <span class="ow">in</span> <span class="n">roadmap</span><span class="o">.</span><span class="n">steps</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;  [</span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">phase</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">] </span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">title</span><span class="si">}</span><span class="s2"> - </span><span class="si">{</span><span class="n">step</span><span class="o">.</span><span class="n">estimated_effort</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Create a full assessment with recommendations</span>
+<span class="n">assessment</span> <span class="o">=</span> <span class="n">QuantumSafeAssessment</span><span class="p">(</span>
+    <span class="n">inventory</span><span class="o">=</span><span class="n">inventory</span><span class="p">,</span>
+    <span class="n">roadmap</span><span class="o">=</span><span class="n">roadmap</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">assessment_dict</span> <span class="o">=</span> <span class="n">assessment</span><span class="o">.</span><span class="n">to_dict</span><span class="p">()</span>
+<span class="k">for</span> <span class="n">rec</span> <span class="ow">in</span> <span class="n">assessment_dict</span><span class="p">[</span><span class="s2">&quot;recommendations&quot;</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;- </span><span class="si">{</span><span class="n">rec</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Build a custom inventory</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">datetime</span><span class="p">,</span> <span class="n">UTC</span>
+
+<span class="n">custom_inventory</span> <span class="o">=</span> <span class="n">CryptoInventoryReport</span><span class="p">(</span>
+    <span class="n">scanned_at</span><span class="o">=</span><span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">),</span>
+    <span class="n">system_description</span><span class="o">=</span><span class="s2">&quot;My Custom System&quot;</span><span class="p">,</span>
+    <span class="n">assets</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">CryptoAsset</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RSA-2048&quot;</span><span class="p">,</span>
+            <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">ASYMMETRIC</span><span class="p">,</span>
+            <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
+            <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">VULNERABLE</span><span class="p">,</span>
+            <span class="n">location</span><span class="o">=</span><span class="s2">&quot;tls-certificates&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">CryptoAsset</span><span class="p">(</span>
+            <span class="n">name</span><span class="o">=</span><span class="s2">&quot;AES-256&quot;</span><span class="p">,</span>
+            <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">SYMMETRIC</span><span class="p">,</span>
+            <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+            <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">SAFE</span><span class="p">,</span>
+            <span class="n">location</span><span class="o">=</span><span class="s2">&quot;storage-encryption&quot;</span><span class="p">,</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="product-tier-gating">
+<h2>Product Tier Gating<a class="headerlink" href="#product-tier-gating" title="Link to this heading"></a></h2>
+<p>The licensing system gates features at runtime. Each tier is cumulative:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.enterprise</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">ProductTier</span><span class="p">,</span>
+    <span class="n">Feature</span><span class="p">,</span>
+    <span class="n">get_active_tier</span><span class="p">,</span>
+    <span class="n">set_active_tier</span><span class="p">,</span>
+    <span class="n">feature_available</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="c1"># Check current tier</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Active tier: </span><span class="si">{</span><span class="n">get_active_tier</span><span class="p">()</span><span class="o">.</span><span class="n">value</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+<span class="c1"># Check feature availability</span>
+<span class="k">if</span> <span class="n">feature_available</span><span class="p">(</span><span class="n">Feature</span><span class="o">.</span><span class="n">COMPLIANCE_REPORTING</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Compliance reporting is available&quot;</span><span class="p">)</span>
+
+<span class="c1"># Features raise LicenseError when called without the right tier</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">qkdpy.enterprise</span><span class="w"> </span><span class="kn">import</span> <span class="n">require_feature</span><span class="p">,</span> <span class="n">LicenseError</span>
+
+<span class="nd">@require_feature</span><span class="p">(</span><span class="n">Feature</span><span class="o">.</span><span class="n">QUANTUM_SAFE_MIGRATION</span><span class="p">)</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_migration_assessment</span><span class="p">():</span>
+    <span class="o">...</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="n">run_migration_assessment</span><span class="p">()</span>
+<span class="k">except</span> <span class="n">LicenseError</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;License error: </span><span class="si">{</span><span class="n">e</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="api.html" class="btn btn-neutral float-left" title="API Reference" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,305 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>6. Integration Layer &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">6. Integration Layer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/diagrams/06-integration-layer.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="integration-layer">
+<h1>6. Integration Layer<a class="headerlink" href="#integration-layer" title="Link to this heading"></a></h1>
+<section id="framework-integration-architecture">
+<h2>Framework Integration Architecture<a class="headerlink" href="#framework-integration-architecture" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>graph TB
+    subgraph QKDPY[&quot;QKDpy Core&quot;]
+        QUBIT[&quot;Qubit&quot;]
+        MULTI[&quot;MultiQubitState&quot;]
+        CHANNEL[&quot;QuantumChannel&quot;]
+        PROTOCOLS[&quot;BaseProtocol&quot;]
+    end
+
+    subgraph QISKIT[&quot;Qiskit Integration (IBM)&quot;]
+        QI[&quot;QiskitIntegration&quot;]
+        QI_CREATE[&quot;create_e91_circuit()&quot;]
+        QI_SIM[&quot;simulate_e91()&quot;]
+        QI_BELL[&quot;simulate_bell_test()&quot;]
+        QI_CONV[&quot;qubit_to_qiskit()&lt;br/&gt;qiskit_to_qubit()&quot;]
+        QI_PARTIAL[&quot;partial_trace_qiskit()&quot;]
+        QI_ENTROPY[&quot;entropy_qiskit()&quot;]
+
+        QI --&gt; QI_CREATE
+        QI --&gt; QI_SIM
+        QI --&gt; QI_BELL
+        QI --&gt; QI_CONV
+        QI --&gt; QI_PARTIAL
+        QI --&gt; QI_ENTROPY
+    end
+
+    subgraph PENNYLANE[&quot;PennyLane Integration (Xanadu)&quot;]
+        PL[&quot;PennyLaneIntegration&quot;]
+        PL_CREATE[&quot;create_entanglement_circuit()&quot;]
+        PL_SIM[&quot;simulate_e91()&quot;]
+        PL_CHSH[&quot;chsh_correlation_strength()&quot;]
+        PL_TELEPORT[&quot;quantum_teleportation_demo()&quot;]
+        PL_STATE[&quot;quick_state_experiment()&quot;]
+        PL_QNODE[&quot;cached QNode for CHSH&quot;]
+
+        PL --&gt; PL_CREATE
+        PL --&gt; PL_SIM
+        PL --&gt; PL_CHSH
+        PL --&gt; PL_TELEPORT
+        PL --&gt; PL_QNODE
+    end
+
+    subgraph CIRQ[&quot;Cirq Integration (Google)&quot;]
+        CI[&quot;CirqIntegration&quot;]
+        CI_CREATE[&quot;create_e91_circuit()&quot;]
+        CI_SIM[&quot;simulate_e91()&quot;]
+        CI_BELL[&quot;simulate_bell_test()&quot;]
+        CI_CONV[&quot;qubit_to_cirq()&lt;br/&gt;cirq_to_qubit()&quot;]
+        CI_PARTIAL[&quot;partial_trace_cirq()&quot;]
+        CI_NOISE[&quot;with_depolarizing_noise()&quot;]
+
+        CI --&gt; CI_CREATE
+        CI --&gt; CI_SIM
+        CI --&gt; CI_BELL
+        CI --&gt; CI_CONV
+        CI --&gt; CI_PARTIAL
+    end
+
+    subgraph QPIAI[&quot;QpiAI Integration&quot;]
+        QP[&quot;QpiAIIntegration&quot;]
+        QP_CREATE[&quot;create_e91_circuit()&quot;]
+        QP_SIM[&quot;simulate_e91()&quot;]
+        QP_BELL[&quot;simulate_bell_test()&quot;]
+        QP_CONV[&quot;qubit_to_qpiai()&lt;br/&gt;qpiai_to_qubit()&quot;]
+        QP_STATE[&quot;state_preparation()&quot;]
+
+        QP --&gt; QP_CREATE
+        QP --&gt; QP_SIM
+        QP --&gt; QP_BELL
+        QP --&gt; QP_CONV
+    end
+
+    QISKIT -.-&gt;|wraps| Qiskit
+    PENNYLANE -.-&gt;|wraps| PennyLane
+    CIRQ -.-&gt;|wraps| Cirq
+    QPIAI -.-&gt;|wraps| QpiAI
+
+    QUBIT -.-&gt;|converted| QI_CONV
+    QUBIT -.-&gt;|converted| CI_CONV
+    QUBIT -.-&gt;|converted| QP_CONV
+    MULTI -.-&gt;|used by| QI_SIM
+    MULTI -.-&gt;|used by| CI_SIM
+    CHANNEL -.-&gt;|bypassed in simulation| QI_SIM
+    PROTOCOLS -.-&gt;|implemented| QI_CREATE
+
+    style QISKIT fill:#e3f2fd,stroke:#1565c0
+    style PENNYLANE fill:#e8f5e9,stroke:#2e7d32
+    style CIRQ fill:#fce4ec,stroke:#c62828
+    style QPIAI fill:#fff3e0,stroke:#e65100
+    style QKDPY fill:#f3e5f5,stroke:#4a148c
+</pre></div>
+</div>
+</section>
+<section id="integration-conversion-flow">
+<h2>Integration Conversion Flow<a class="headerlink" href="#integration-conversion-flow" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart LR
+    subgraph QKDPY_State[&quot;QKDpy State&quot;]
+        S1[&quot;Qubit(α, β)&lt;br/&gt;state vector [α, β]&quot;]
+        M1[&quot;MultiQubitState&lt;br/&gt;n-qubit vector&quot;]
+    end
+
+    subgraph QISKIT_State[&quot;Qiskit State&quot;]
+        S2[&quot;QuantumCircuit&lt;br/&gt;+ StatevectorSimulator&quot;]
+        S3[&quot;Statevector object&quot;]
+    end
+
+    subgraph PENNYLANE_State[&quot;PennyLane State&quot;]
+        S4[&quot;QNode + Device&lt;br/&gt;(default.qubit)&quot;]
+        S5[&quot;Circuit graph&quot;]
+    end
+
+    subgraph CIRQ_State[&quot;Cirq State&quot;]
+        S6[&quot;Circuit&lt;br/&gt;+ Simulator&quot;]
+        S7[&quot;StateVectorMixin&quot;]
+    end
+
+    S1 --&gt;|to_qiskit| S2
+    S3 --&gt;|from_qiskit| S1
+    S1 --&gt;|via pennylane| S4
+    S5 --&gt;|extract state| S1
+    S1 --&gt;|to_cirq| S6
+    S7 --&gt;|from_cirq| S1
+
+    M1 --&gt;|partial_trace_qiskit| QISKIT_State
+    M1 --&gt;|partial_trace_cirq| CIRQ_State
+</pre></div>
+</div>
+</section>
+<section id="integration-comparison">
+<h2>Integration Comparison<a class="headerlink" href="#integration-comparison" title="Link to this heading"></a></h2>
+<table class="docutils align-default">
+<thead>
+<tr class="row-odd"><th class="head"><p>Feature</p></th>
+<th class="head"><p>Qiskit</p></th>
+<th class="head"><p>PennyLane</p></th>
+<th class="head"><p>Cirq</p></th>
+<th class="head"><p>QpiAI</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>E91 circuit</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-odd"><td><p>Bell test</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-even"><td><p>Partial trace</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-odd"><td><p>Entropy calc</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-even"><td><p>State conversion</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+<td><p>✅</p></td>
+<td><p>✅</p></td>
+</tr>
+<tr class="row-odd"><td><p>Noise simulation</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-even"><td><p>Quantum teleportation</p></td>
+<td><p>❌</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-odd"><td><p>QNode caching</p></td>
+<td><p>❌</p></td>
+<td><p>✅</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+</tr>
+<tr class="row-even"><td><p>State tomography</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+<td><p>❌</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

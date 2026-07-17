@@ -1,0 +1,381 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.protocols.di_qkd &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.protocols.di_qkd</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.protocols.di_qkd</h1><div class="highlight"><pre>
+<span></span><span class="kn">from</span><span class="w"> </span><span class="nn">collections.abc</span><span class="w"> </span><span class="kn">import</span> <span class="n">Sequence</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantumChannel</span><span class="p">,</span> <span class="n">Qubit</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.gates</span><span class="w"> </span><span class="kn">import</span> <span class="n">Ry</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.multiqubit</span><span class="w"> </span><span class="kn">import</span> <span class="n">MultiQubitState</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..core.secure_random</span><span class="w"> </span><span class="kn">import</span> <span class="n">secure_randint</span><span class="p">,</span> <span class="n">secure_random</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">.base</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseProtocol</span>
+
+
+<div class="viewcode-block" id="DeviceIndependentQKD">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DeviceIndependentQKD">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DeviceIndependentQKD</span><span class="p">(</span><span class="n">BaseProtocol</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Implementation of a device-independent QKD protocol (based on CHSH).</span>
+
+<span class="sd">    This implementation simulates a true entanglement-based protocol using</span>
+<span class="sd">    MultiQubitState to represent Bell pairs. It verifies security through</span>
+<span class="sd">    the violation of the CHSH inequality.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="DeviceIndependentQKD.__init__">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DeviceIndependentQKD.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">channel</span><span class="p">:</span> <span class="n">QuantumChannel</span><span class="p">,</span>
+        <span class="n">key_length</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+        <span class="n">security_threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">=</span> <span class="mf">2.0</span><span class="p">,</span>  <span class="c1"># CHSH value &gt; 2.0 implies quantum correlations</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize the device-independent QKD protocol.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            channel: Quantum channel for qubit transmission</span>
+<span class="sd">            key_length: Desired length of the final key</span>
+<span class="sd">            security_threshold: Minimum Bell inequality violation for security</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">channel</span><span class="p">,</span> <span class="n">key_length</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span> <span class="o">=</span> <span class="n">security_threshold</span>
+
+        <span class="c1"># We need a significant number of pairs for statistical significance in CHSH test</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">num_pairs</span> <span class="o">=</span> <span class="nb">max</span><span class="p">(</span><span class="n">key_length</span> <span class="o">*</span> <span class="mi">20</span><span class="p">,</span> <span class="mi">2000</span><span class="p">)</span>
+
+        <span class="c1"># Measurement settings (angles for Ry rotations)</span>
+        <span class="c1"># We use 3 settings to allow for both Key Generation and CHSH Test</span>
+        <span class="c1"># Index 0: Key Generation (Aligned bases)</span>
+        <span class="c1"># Index 1, 2: CHSH Test Bases</span>
+
+        <span class="c1"># Alice:</span>
+        <span class="c1"># 0: 0 (Key)</span>
+        <span class="c1"># 1: 0 (CHSH A0)</span>
+        <span class="c1"># 2: pi/2 (CHSH A1)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_angles</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">2</span><span class="p">]</span>
+
+        <span class="c1"># Bob:</span>
+        <span class="c1"># 0: 0 (Key)</span>
+        <span class="c1"># 1: pi/4 (CHSH B0)</span>
+        <span class="c1"># 2: -pi/4 (CHSH B1)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_angles</span> <span class="o">=</span> <span class="p">[</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">,</span> <span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">4</span><span class="p">]</span>
+
+        <span class="c1"># Data storage</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_settings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_settings</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span></div>
+
+
+<div class="viewcode-block" id="DeviceIndependentQKD.prepare_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DeviceIndependentQKD.prepare_states">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">prepare_states</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Prepare quantum states.</span>
+
+<span class="sd">        In this entanglement-based protocol, we generate pairs on demand</span>
+<span class="sd">        during the &#39;measure&#39; phase to simulate the source distributing them.</span>
+<span class="sd">        We return placeholders to satisfy the interface.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_pairs</span></div>
+
+
+<div class="viewcode-block" id="DeviceIndependentQKD.measure_states">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DeviceIndependentQKD.measure_states">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">measure_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">states</span><span class="p">:</span> <span class="n">Sequence</span><span class="p">[</span><span class="n">Qubit</span> <span class="o">|</span> <span class="n">Any</span> <span class="o">|</span> <span class="kc">None</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Distribute and measure entangled states.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            states: Placeholders</span>
+
+<span class="sd">        Returns:</span>
+<span class="sd">            List of Bob&#39;s measurement results</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_settings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_settings</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="c1"># Pre-generate settings for efficiency (using secure random)</span>
+        <span class="c1"># 0, 1, or 2 for setting choice</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">alice_settings</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pairs</span><span class="p">)]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bob_settings</span> <span class="o">=</span> <span class="p">[</span><span class="n">secure_randint</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span> <span class="k">for</span> <span class="n">_</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pairs</span><span class="p">)]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">num_pairs</span><span class="p">):</span>
+            <span class="c1"># 1. Create a Bell pair (|00&gt; + |11&gt;) / sqrt(2)</span>
+            <span class="n">bell_pair</span> <span class="o">=</span> <span class="n">MultiQubitState</span><span class="o">.</span><span class="n">ghz</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+            <span class="c1"># 2. Simulate Channel Transmission (Loss and Noise)</span>
+            <span class="k">if</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">loss</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="k">if</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">noise_model</span> <span class="o">==</span> <span class="s2">&quot;depolarizing&quot;</span>
+                <span class="ow">and</span> <span class="n">secure_random</span><span class="p">()</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">channel</span><span class="o">.</span><span class="n">noise_level</span>
+            <span class="p">):</span>
+                <span class="n">gate_idx</span> <span class="o">=</span> <span class="n">secure_randint</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">4</span><span class="p">)</span>  <span class="c1"># 1=X, 2=Y, 3=Z (skip Identity)</span>
+                <span class="k">if</span> <span class="n">gate_idx</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>  <span class="c1"># X</span>
+                    <span class="n">bell_pair</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="k">elif</span> <span class="n">gate_idx</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>  <span class="c1"># Y</span>
+                    <span class="n">bell_pair</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">),</span> <span class="mi">1</span>
+                    <span class="p">)</span>
+                <span class="k">elif</span> <span class="n">gate_idx</span> <span class="o">==</span> <span class="mi">3</span><span class="p">:</span>  <span class="c1"># Z</span>
+                    <span class="n">bell_pair</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">),</span> <span class="mi">1</span><span class="p">)</span>
+
+            <span class="c1"># 3. Alice Measures</span>
+            <span class="n">a_setting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_settings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">angle_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_angles</span><span class="p">[</span><span class="n">a_setting</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">angle_a</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">rot_gate_a</span> <span class="o">=</span> <span class="n">Ry</span><span class="p">(</span><span class="n">angle_a</span><span class="p">)</span><span class="o">.</span><span class="n">matrix</span>
+                <span class="n">bell_pair</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">rot_gate_a</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="n">res_a</span><span class="p">,</span> <span class="n">collapsed_state</span> <span class="o">=</span> <span class="n">bell_pair</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res_a</span><span class="p">)</span>
+
+            <span class="c1"># 4. Bob Measures</span>
+            <span class="k">if</span> <span class="n">collapsed_state</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="k">continue</span>
+
+            <span class="n">b_setting</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_settings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">angle_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_angles</span><span class="p">[</span><span class="n">b_setting</span><span class="p">]</span>
+
+            <span class="k">if</span> <span class="n">angle_b</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">rot_gate_b</span> <span class="o">=</span> <span class="n">Ry</span><span class="p">(</span><span class="n">angle_b</span><span class="p">)</span><span class="o">.</span><span class="n">matrix</span>
+                <span class="n">collapsed_state</span><span class="o">.</span><span class="n">apply_gate</span><span class="p">(</span><span class="n">rot_gate_b</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+            <span class="n">res_b</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">collapsed_state</span><span class="o">.</span><span class="n">measure</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">res_b</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="p">[</span><span class="n">r</span> <span class="k">if</span> <span class="n">r</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="k">else</span> <span class="mi">0</span> <span class="k">for</span> <span class="n">r</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">]</span></div>
+
+
+<div class="viewcode-block" id="DeviceIndependentQKD.sift_keys">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DeviceIndependentQKD.sift_keys">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">sift_keys</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">],</span> <span class="nb">list</span><span class="p">[</span><span class="nb">int</span><span class="p">]]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Sift keys for key generation.</span>
+
+<span class="sd">        We only use results where both Alice and Bob chose setting 0 (Key Generation).</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">alice_sifted</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">bob_sifted</span> <span class="o">=</span> <span class="p">[]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">!=</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># Check for Key Generation match (Setting 0 for both)</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_settings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_settings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">alice_sifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                    <span class="n">bob_sifted</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">alice_sifted</span><span class="p">,</span> <span class="n">bob_sifted</span></div>
+
+
+<div class="viewcode-block" id="DeviceIndependentQKD.test_bell_inequality">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DeviceIndependentQKD.test_bell_inequality">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">test_bell_inequality</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">float</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Calculate CHSH statistic S using settings 1 and 2.&quot;&quot;&quot;</span>
+        <span class="c1"># We use indices 1 and 2 for the CHSH test</span>
+        <span class="c1"># Alice 1 -&gt; 0 (A0), Alice 2 -&gt; pi/2 (A1)</span>
+        <span class="c1"># Bob 1 -&gt; pi/4 (B0), Bob 2 -&gt; -pi/4 (B1)</span>
+
+        <span class="n">counts</span> <span class="o">=</span> <span class="p">{}</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">==</span> <span class="o">-</span><span class="mi">1</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="n">a_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_settings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">b_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_settings</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="c1"># Only consider CHSH settings (1 and 2)</span>
+            <span class="k">if</span> <span class="n">a_idx</span> <span class="o">==</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">b_idx</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="k">continue</span>
+
+            <span class="c1"># Map 1-&gt;0, 2-&gt;1 for easier logic</span>
+            <span class="n">a</span> <span class="o">=</span> <span class="n">a_idx</span> <span class="o">-</span> <span class="mi">1</span>
+            <span class="n">b</span> <span class="o">=</span> <span class="n">b_idx</span> <span class="o">-</span> <span class="mi">1</span>
+
+            <span class="n">res_a</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">alice_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">res_b</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">bob_results</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+            <span class="n">key</span> <span class="o">=</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">key</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">counts</span><span class="p">:</span>
+                <span class="n">counts</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;match&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">,</span> <span class="s2">&quot;total&quot;</span><span class="p">:</span> <span class="mi">0</span><span class="p">}</span>
+
+            <span class="n">counts</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+            <span class="k">if</span> <span class="n">res_a</span> <span class="o">==</span> <span class="n">res_b</span><span class="p">:</span>
+                <span class="n">counts</span><span class="p">[</span><span class="n">key</span><span class="p">][</span><span class="s2">&quot;match&quot;</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>
+
+        <span class="n">correlations</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+            <span class="k">for</span> <span class="n">b</span> <span class="ow">in</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]:</span>
+                <span class="k">if</span> <span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)</span> <span class="ow">in</span> <span class="n">counts</span> <span class="ow">and</span> <span class="n">counts</span><span class="p">[(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)][</span><span class="s2">&quot;total&quot;</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                    <span class="n">match_prob</span> <span class="o">=</span> <span class="n">counts</span><span class="p">[(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)][</span><span class="s2">&quot;match&quot;</span><span class="p">]</span> <span class="o">/</span> <span class="n">counts</span><span class="p">[(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)][</span><span class="s2">&quot;total&quot;</span><span class="p">]</span>
+                    <span class="n">correlations</span><span class="p">[(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)]</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">match_prob</span> <span class="o">-</span> <span class="mi">1</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">correlations</span><span class="p">[(</span><span class="n">a</span><span class="p">,</span> <span class="n">b</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.0</span>
+
+        <span class="c1"># Calculate S</span>
+        <span class="c1"># S = E(0,0) + E(0,1) + E(1,0) - E(1,1)</span>
+        <span class="n">e00</span> <span class="o">=</span> <span class="n">correlations</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">e01</span> <span class="o">=</span> <span class="n">correlations</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">e10</span> <span class="o">=</span> <span class="n">correlations</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">e11</span> <span class="o">=</span> <span class="n">correlations</span><span class="o">.</span><span class="n">get</span><span class="p">((</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">s_value</span> <span class="o">=</span> <span class="n">e00</span> <span class="o">+</span> <span class="n">e01</span> <span class="o">+</span> <span class="n">e10</span> <span class="o">-</span> <span class="n">e11</span>
+
+        <span class="k">return</span> <span class="p">{</span><span class="s2">&quot;s_value&quot;</span><span class="p">:</span> <span class="n">s_value</span><span class="p">,</span> <span class="s2">&quot;e00&quot;</span><span class="p">:</span> <span class="n">e00</span><span class="p">,</span> <span class="s2">&quot;e01&quot;</span><span class="p">:</span> <span class="n">e01</span><span class="p">,</span> <span class="s2">&quot;e10&quot;</span><span class="p">:</span> <span class="n">e10</span><span class="p">,</span> <span class="s2">&quot;e11&quot;</span><span class="p">:</span> <span class="n">e11</span><span class="p">}</span></div>
+
+
+<div class="viewcode-block" id="DeviceIndependentQKD.estimate_qber">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DeviceIndependentQKD.estimate_qber">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">estimate_qber</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Estimate QBER.&quot;&quot;&quot;</span>
+        <span class="c1"># For DI-QKD, QBER is less relevant than S-value, but we can calculate</span>
+        <span class="c1"># the raw mismatch rate of the sifted key.</span>
+        <span class="n">alice</span><span class="p">,</span> <span class="n">bob</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift_keys</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">alice</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">1.0</span>
+
+        <span class="n">mismatches</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="mi">1</span> <span class="k">for</span> <span class="n">a</span><span class="p">,</span> <span class="n">b</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">alice</span><span class="p">,</span> <span class="n">bob</span><span class="p">,</span> <span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span> <span class="k">if</span> <span class="n">a</span> <span class="o">!=</span> <span class="n">b</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">mismatches</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice</span><span class="p">)</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_get_security_threshold</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span>
+
+<div class="viewcode-block" id="DeviceIndependentQKD.execute">
+<a class="viewcode-back" href="../../../source/api_reference.html#qkdpy.DeviceIndependentQKD.execute">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">execute</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">:</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">reset</span><span class="p">()</span>
+
+        <span class="c1"># 1. Prepare &amp; Measure (simulated together)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">measure_states</span><span class="p">([</span><span class="n">Qubit</span><span class="o">.</span><span class="n">zero</span><span class="p">()]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_pairs</span><span class="p">)</span>
+
+        <span class="c1"># 2. Bell Test</span>
+        <span class="n">bell_stats</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">test_bell_inequality</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span> <span class="o">=</span> <span class="nb">abs</span><span class="p">(</span><span class="n">bell_stats</span><span class="p">[</span><span class="s2">&quot;s_value&quot;</span><span class="p">])</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">security_threshold</span>
+
+        <span class="c1"># 3. Sift</span>
+        <span class="n">alice_key</span><span class="p">,</span> <span class="n">bob_key</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sift_keys</span><span class="p">()</span>
+
+        <span class="c1"># 4. Finalize</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">final_key</span> <span class="o">=</span> <span class="n">alice_key</span><span class="p">[:</span> <span class="bp">self</span><span class="o">.</span><span class="n">key_length</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">qber</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">estimate_qber</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">is_complete</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;final_key&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">final_key</span><span class="p">,</span>
+            <span class="s2">&quot;qber&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">qber</span><span class="p">,</span>
+            <span class="s2">&quot;is_secure&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_secure</span><span class="p">,</span>
+            <span class="s2">&quot;bell_test&quot;</span><span class="p">:</span> <span class="n">bell_stats</span><span class="p">,</span>
+            <span class="s2">&quot;raw_key_length&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="n">alice_key</span><span class="p">),</span>
+        <span class="p">}</span></div>
+</div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

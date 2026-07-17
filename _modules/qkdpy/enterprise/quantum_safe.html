@@ -1,0 +1,579 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.enterprise.quantum_safe &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.enterprise.quantum_safe</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.enterprise.quantum_safe</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;Quantum-safe migration toolkit (PREMIUM tier).</span>
+
+<span class="sd">Helps enterprise security teams inventory their classical crypto assets,</span>
+<span class="sd">assess QKD vs PQC fit, and generate a phased migration roadmap.</span>
+
+<span class="sd">This module is gated behind ``Feature.QUANTUM_SAFE_MIGRATION`` and</span>
+<span class="sd">``Feature.CRYPTO_INVENTORY`` in the PREMIUM tier.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">__future__</span><span class="w"> </span><span class="kn">import</span> <span class="n">annotations</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span><span class="p">,</span> <span class="n">field</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">datetime</span><span class="w"> </span><span class="kn">import</span> <span class="n">UTC</span><span class="p">,</span> <span class="n">datetime</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">enum</span><span class="w"> </span><span class="kn">import</span> <span class="n">StrEnum</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">..config</span><span class="w"> </span><span class="kn">import</span> <span class="n">QKDConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">..utils.logging_config</span><span class="w"> </span><span class="kn">import</span> <span class="n">get_logger</span>
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">get_logger</span><span class="p">(</span><span class="vm">__name__</span><span class="p">)</span>
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Crypto inventory</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="CryptoAlgorithmType">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.CryptoAlgorithmType">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CryptoAlgorithmType</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Category of a cryptographic algorithm found in an inventory scan.&quot;&quot;&quot;</span>
+
+    <span class="n">SYMMETRIC</span> <span class="o">=</span> <span class="s2">&quot;symmetric&quot;</span>
+    <span class="n">ASYMMETRIC</span> <span class="o">=</span> <span class="s2">&quot;asymmetric&quot;</span>
+    <span class="n">HASH</span> <span class="o">=</span> <span class="s2">&quot;hash&quot;</span>
+    <span class="n">KEY_EXCHANGE</span> <span class="o">=</span> <span class="s2">&quot;key_exchange&quot;</span>
+    <span class="n">SIGNATURE</span> <span class="o">=</span> <span class="s2">&quot;signature&quot;</span>
+    <span class="n">RANDOM</span> <span class="o">=</span> <span class="s2">&quot;random&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="QuantumResistance">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.QuantumResistance">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumResistance</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;How resistant an algorithm is known to be against quantum attacks.&quot;&quot;&quot;</span>
+
+    <span class="n">VULNERABLE</span> <span class="o">=</span> <span class="s2">&quot;vulnerable&quot;</span>  <span class="c1"># e.g., RSA, ECDSA, Diffie-Hellman</span>
+    <span class="n">MIGRATE_SOON</span> <span class="o">=</span> <span class="s2">&quot;migrate_soon&quot;</span>  <span class="c1"># e.g., 128-bit AES (Grover&#39;s halves security)</span>
+    <span class="n">SAFE</span> <span class="o">=</span> <span class="s2">&quot;safe&quot;</span>  <span class="c1"># e.g., 256-bit AES, SHA-3</span>
+    <span class="n">PQC_READY</span> <span class="o">=</span> <span class="s2">&quot;pqc_ready&quot;</span>  <span class="c1"># already using a standardised PQC algorithm</span></div>
+
+
+
+<div class="viewcode-block" id="CryptoAsset">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.CryptoAsset">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CryptoAsset</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single cryptographic asset found in the system.&quot;&quot;&quot;</span>
+
+    <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">algorithm_type</span><span class="p">:</span> <span class="n">CryptoAlgorithmType</span>
+    <span class="n">key_size_bits</span><span class="p">:</span> <span class="nb">int</span>
+    <span class="n">resistance</span><span class="p">:</span> <span class="n">QuantumResistance</span>
+    <span class="n">location</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g. &quot;TLS cert for api.example.com&quot;, &quot;code-signing key&quot;</span>
+    <span class="n">notes</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="CryptoInventoryReport">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.CryptoInventoryReport">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">CryptoInventoryReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Complete inventory of cryptographic assets in a system.&quot;&quot;&quot;</span>
+
+    <span class="n">scanned_at</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">assets</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">CryptoAsset</span><span class="p">]</span>
+    <span class="n">system_description</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">total_assets</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">vulnerable_count</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span>
+            <span class="mi">1</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets</span>
+            <span class="k">if</span> <span class="n">a</span><span class="o">.</span><span class="n">resistance</span>
+            <span class="ow">in</span> <span class="p">(</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">VULNERABLE</span><span class="p">,</span> <span class="n">QuantumResistance</span><span class="o">.</span><span class="n">MIGRATE_SOON</span><span class="p">)</span>
+        <span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">risk_score</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Normalised risk score 0.0 – 1.0 based on vulnerable asset ratio.&quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">:</span>
+            <span class="k">return</span> <span class="mf">0.0</span>
+        <span class="n">weights</span> <span class="o">=</span> <span class="p">{</span>
+            <span class="n">QuantumResistance</span><span class="o">.</span><span class="n">VULNERABLE</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span>
+            <span class="n">QuantumResistance</span><span class="o">.</span><span class="n">MIGRATE_SOON</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
+            <span class="n">QuantumResistance</span><span class="o">.</span><span class="n">SAFE</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+            <span class="n">QuantumResistance</span><span class="o">.</span><span class="n">PQC_READY</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+        <span class="p">}</span>
+        <span class="k">return</span> <span class="nb">sum</span><span class="p">(</span><span class="n">weights</span><span class="p">[</span><span class="n">a</span><span class="o">.</span><span class="n">resistance</span><span class="p">]</span> <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">assets</span><span class="p">)</span>
+
+<div class="viewcode-block" id="CryptoInventoryReport.get_summary">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.CryptoInventoryReport.get_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return a JSON-serialisable summary dict.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;scanned_at&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">scanned_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;total_assets&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">total_assets</span><span class="p">,</span>
+            <span class="s2">&quot;vulnerable_count&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">vulnerable_count</span><span class="p">,</span>
+            <span class="s2">&quot;risk_score&quot;</span><span class="p">:</span> <span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">risk_score</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span>
+            <span class="s2">&quot;system_description&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">system_description</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Pre-built inventory presets</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+<span class="c1"># Common enterprise crypto profiles — used when no real scan is available.</span>
+
+
+<div class="viewcode-block" id="classic_enterprise_profile">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.classic_enterprise_profile">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">classic_enterprise_profile</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="n">CryptoInventoryReport</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a representative crypto inventory for a typical enterprise.&quot;&quot;&quot;</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">CryptoInventoryReport</span><span class="p">(</span>
+        <span class="n">scanned_at</span><span class="o">=</span><span class="n">now</span><span class="p">,</span>
+        <span class="n">system_description</span><span class="o">=</span><span class="s2">&quot;Typical enterprise with web services, code-signing, and internal PKI&quot;</span><span class="p">,</span>
+        <span class="n">assets</span><span class="o">=</span><span class="p">[</span>
+            <span class="n">CryptoAsset</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RSA-2048&quot;</span><span class="p">,</span>
+                <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">ASYMMETRIC</span><span class="p">,</span>
+                <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">VULNERABLE</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="s2">&quot;TLS server certificates (Nginx / reverse-proxy)&quot;</span><span class="p">,</span>
+                <span class="n">notes</span><span class="o">=</span><span class="s2">&quot;Most widely deployed certificate key type&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">CryptoAsset</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;RSA-4096&quot;</span><span class="p">,</span>
+                <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">ASYMMETRIC</span><span class="p">,</span>
+                <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">VULNERABLE</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="s2">&quot;Code-signing certificate (internal PKI)&quot;</span><span class="p">,</span>
+                <span class="n">notes</span><span class="o">=</span><span class="s2">&quot;Long-lived — hardest to rotate&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">CryptoAsset</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;ECDSA-P256&quot;</span><span class="p">,</span>
+                <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">SIGNATURE</span><span class="p">,</span>
+                <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">VULNERABLE</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="s2">&quot;SSH host keys, JWT signing&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">CryptoAsset</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;AES-128-GCM&quot;</span><span class="p">,</span>
+                <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">SYMMETRIC</span><span class="p">,</span>
+                <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">MIGRATE_SOON</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="s2">&quot;TLS session encryption, VPN (WireGuard / IPsec)&quot;</span><span class="p">,</span>
+                <span class="n">notes</span><span class="o">=</span><span class="s2">&quot;Grover&#39;s algorithm halves effective security to 64 bits&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">CryptoAsset</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;AES-256-GCM&quot;</span><span class="p">,</span>
+                <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">SYMMETRIC</span><span class="p">,</span>
+                <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">SAFE</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="s2">&quot;Vault / HSM storage encryption&quot;</span><span class="p">,</span>
+                <span class="n">notes</span><span class="o">=</span><span class="s2">&quot;Comfortably post-quantum secure at 256 bits&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">CryptoAsset</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;SHA-256&quot;</span><span class="p">,</span>
+                <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">HASH</span><span class="p">,</span>
+                <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">SAFE</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="s2">&quot;Certificate signatures, integrity checks&quot;</span><span class="p">,</span>
+                <span class="n">notes</span><span class="o">=</span><span class="s2">&quot;Hash functions are relatively resistant to quantum attacks&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">CryptoAsset</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;Diffie-Hellman (2048-bit)&quot;</span><span class="p">,</span>
+                <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">KEY_EXCHANGE</span><span class="p">,</span>
+                <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">VULNERABLE</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="s2">&quot;TLS key agreement, legacy VPN&quot;</span><span class="p">,</span>
+                <span class="n">notes</span><span class="o">=</span><span class="s2">&quot;Shor&#39;s algorithm completely breaks finite-field DH&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+            <span class="n">CryptoAsset</span><span class="p">(</span>
+                <span class="n">name</span><span class="o">=</span><span class="s2">&quot;HMAC-SHA256&quot;</span><span class="p">,</span>
+                <span class="n">algorithm_type</span><span class="o">=</span><span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">SYMMETRIC</span><span class="p">,</span>
+                <span class="n">key_size_bits</span><span class="o">=</span><span class="mi">256</span><span class="p">,</span>
+                <span class="n">resistance</span><span class="o">=</span><span class="n">QuantumResistance</span><span class="o">.</span><span class="n">SAFE</span><span class="p">,</span>
+                <span class="n">location</span><span class="o">=</span><span class="s2">&quot;API authentication tokens, webhooks&quot;</span><span class="p">,</span>
+            <span class="p">),</span>
+        <span class="p">],</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Migration roadmap</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="MigrationPhase">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.MigrationPhase">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MigrationPhase</span><span class="p">(</span><span class="n">StrEnum</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Phases of a quantum-safe migration.&quot;&quot;&quot;</span>
+
+    <span class="n">ASSESS</span> <span class="o">=</span> <span class="s2">&quot;assess&quot;</span>
+    <span class="n">PLAN</span> <span class="o">=</span> <span class="s2">&quot;plan&quot;</span>
+    <span class="n">PILOT</span> <span class="o">=</span> <span class="s2">&quot;pilot&quot;</span>
+    <span class="n">MIGRATE</span> <span class="o">=</span> <span class="s2">&quot;migrate&quot;</span>
+    <span class="n">VERIFY</span> <span class="o">=</span> <span class="s2">&quot;verify&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="MigrationStep">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.MigrationStep">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MigrationStep</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A single action item in a migration roadmap.&quot;&quot;&quot;</span>
+
+    <span class="n">phase</span><span class="p">:</span> <span class="n">MigrationPhase</span>
+    <span class="n">priority</span><span class="p">:</span> <span class="nb">int</span>  <span class="c1"># 1 = highest</span>
+    <span class="n">title</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">description</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">estimated_effort</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g. &quot;2 weeks&quot;, &quot;3 months&quot;</span>
+    <span class="n">depends_on</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="nb">list</span><span class="p">)</span></div>
+
+
+
+<div class="viewcode-block" id="MigrationRoadmap">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.MigrationRoadmap">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">MigrationRoadmap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Full quantum-safe migration roadmap for an organisation.&quot;&quot;&quot;</span>
+
+    <span class="n">generated_at</span><span class="p">:</span> <span class="n">datetime</span>
+    <span class="n">inventory</span><span class="p">:</span> <span class="n">CryptoInventoryReport</span>
+    <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MigrationStep</span><span class="p">]</span>
+    <span class="n">target_completion</span><span class="p">:</span> <span class="nb">str</span>  <span class="c1"># e.g. &quot;Q4 2028&quot;</span>
+
+<div class="viewcode-block" id="MigrationRoadmap.get_summary">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.MigrationRoadmap.get_summary">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">get_summary</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;generated_at&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">generated_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;target_completion&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">target_completion</span><span class="p">,</span>
+            <span class="s2">&quot;total_steps&quot;</span><span class="p">:</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">steps</span><span class="p">),</span>
+            <span class="s2">&quot;risk_score&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">risk_score</span><span class="p">,</span>
+            <span class="s2">&quot;vulnerable_assets&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">vulnerable_count</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="generate_roadmap">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.generate_roadmap">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">generate_roadmap</span><span class="p">(</span>
+    <span class="n">inventory</span><span class="p">:</span> <span class="n">CryptoInventoryReport</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="o">*</span><span class="p">,</span>
+    <span class="n">config</span><span class="p">:</span> <span class="n">QKDConfig</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">MigrationRoadmap</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Generate a quantum-safe migration roadmap based on the crypto inventory.</span>
+
+<span class="sd">    If no inventory is provided a representative enterprise profile is used so</span>
+<span class="sd">    the function is useful for demonstration and pre-sales.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">inv</span> <span class="o">=</span> <span class="n">inventory</span> <span class="k">if</span> <span class="n">inventory</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">classic_enterprise_profile</span><span class="p">()</span>
+    <span class="n">now</span> <span class="o">=</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">)</span>
+    <span class="n">_</span> <span class="o">=</span> <span class="n">config</span>  <span class="c1"># reserved for future target-compliance-year injection</span>
+
+    <span class="n">steps</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">MigrationStep</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+
+    <span class="c1"># Phase 1: Assess</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">ASSESS</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Complete crypto inventory&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Catalog all </span><span class="si">{</span><span class="n">inv</span><span class="o">.</span><span class="n">total_assets</span><span class="si">}</span><span class="s2"> cryptographic assets across &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;the organisation — TLS certs, code-signing keys, SSH keys, &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;document signatures. </span><span class="si">{</span><span class="n">inv</span><span class="o">.</span><span class="n">vulnerable_count</span><span class="si">}</span><span class="s2"> assets are &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;quantum-vulnerable.&quot;</span>
+            <span class="p">),</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;4–6 weeks&quot;</span><span class="p">,</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">ASSESS</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Identify high-risk assets&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Prioritise long-lived certificates (code-signing, CA) and &quot;</span>
+            <span class="s2">&quot;externally-facing TLS endpoints for earliest migration.&quot;</span><span class="p">,</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;2 weeks&quot;</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Complete crypto inventory&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Phase 2: Plan</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">PLAN</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Select replacement algorithms&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Evaluate ML-KEM (FIPS 203) for key exchange, ML-DSA (FIPS 204) &quot;</span>
+            <span class="s2">&quot;for signatures, and SLH-DSA (FIPS 205) for stateless hash-based &quot;</span>
+            <span class="s2">&quot;signatures alongside QKD for symmetric key distribution.&quot;</span><span class="p">,</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;4 weeks&quot;</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Identify high-risk assets&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">PLAN</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Define hybrid deployment strategy&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Plan hybrid PQC + classical cipher suites (e.g., X25519+ML-KEM &quot;</span>
+            <span class="s2">&quot;for TLS 1.3) to maintain interoperability during transition.&quot;</span><span class="p">,</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;2 weeks&quot;</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Select replacement algorithms&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Phase 3: Pilot</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">PILOT</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Enable QKD simulation for key distribution&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Deploy QKDpy simulation to model QKD-based key distribution &quot;</span>
+            <span class="s2">&quot;for select high-security links. Validate key rate and distance &quot;</span>
+            <span class="s2">&quot;parameters match operational requirements.&quot;</span><span class="p">,</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;6–8 weeks&quot;</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Define hybrid deployment strategy&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">PILOT</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;PQC pilot on non-critical services&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Enable ML-KEM / ML-DSA on internal staging services. &quot;</span>
+            <span class="s2">&quot;Monitor performance impact, interoperability, and certificate &quot;</span>
+            <span class="s2">&quot;management overhead.&quot;</span><span class="p">,</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;4 weeks&quot;</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;Define hybrid deployment strategy&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Phase 4: Migrate</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">MIGRATE</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">7</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Migrate external-facing TLS&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Roll out hybrid PQC cipher suites on public-facing endpoints. &quot;</span>
+            <span class="s2">&quot;Requires CDN / load-balancer support.&quot;</span><span class="p">,</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;4–8 weeks&quot;</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;PQC pilot on non-critical services&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">MIGRATE</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Rotate long-lived signing keys&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Replace code-signing and CA certificates with PQC equivalents. &quot;</span>
+            <span class="s2">&quot;Coordinate with hardware vendors for HSM firmware updates.&quot;</span><span class="p">,</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;8–12 weeks&quot;</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;PQC pilot on non-critical services&quot;</span><span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="c1"># Phase 5: Verify</span>
+    <span class="n">steps</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+        <span class="n">MigrationStep</span><span class="p">(</span>
+            <span class="n">phase</span><span class="o">=</span><span class="n">MigrationPhase</span><span class="o">.</span><span class="n">VERIFY</span><span class="p">,</span>
+            <span class="n">priority</span><span class="o">=</span><span class="mi">9</span><span class="p">,</span>
+            <span class="n">title</span><span class="o">=</span><span class="s2">&quot;Continuous compliance monitoring&quot;</span><span class="p">,</span>
+            <span class="n">description</span><span class="o">=</span><span class="s2">&quot;Use QKDpy Enterprise compliance suite to continuously monitor &quot;</span>
+            <span class="s2">&quot;crypto hygiene. Alert on any new vulnerable asset deployments.&quot;</span><span class="p">,</span>
+            <span class="n">estimated_effort</span><span class="o">=</span><span class="s2">&quot;Ongoing&quot;</span><span class="p">,</span>
+            <span class="n">depends_on</span><span class="o">=</span><span class="p">[</span>
+                <span class="s2">&quot;Migrate external-facing TLS&quot;</span><span class="p">,</span>
+                <span class="s2">&quot;Rotate long-lived signing keys&quot;</span><span class="p">,</span>
+            <span class="p">],</span>
+        <span class="p">)</span>
+    <span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">MigrationRoadmap</span><span class="p">(</span>
+        <span class="n">generated_at</span><span class="o">=</span><span class="n">now</span><span class="p">,</span>
+        <span class="n">inventory</span><span class="o">=</span><span class="n">inv</span><span class="p">,</span>
+        <span class="n">steps</span><span class="o">=</span><span class="n">steps</span><span class="p">,</span>
+        <span class="n">target_completion</span><span class="o">=</span><span class="s2">&quot;Q4 2028&quot;</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="c1"># ---------------------------------------------------------------------------</span>
+<span class="c1"># Assessment report</span>
+<span class="c1"># ---------------------------------------------------------------------------</span>
+
+
+<div class="viewcode-block" id="QuantumSafeAssessment">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.QuantumSafeAssessment">[docs]</a>
+<span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantumSafeAssessment</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Full assessment combining inventory, roadmap, and recommendations.&quot;&quot;&quot;</span>
+
+    <span class="n">inventory</span><span class="p">:</span> <span class="n">CryptoInventoryReport</span>
+    <span class="n">roadmap</span><span class="p">:</span> <span class="n">MigrationRoadmap</span>
+    <span class="n">assessed_at</span><span class="p">:</span> <span class="n">datetime</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default_factory</span><span class="o">=</span><span class="k">lambda</span><span class="p">:</span> <span class="n">datetime</span><span class="o">.</span><span class="n">now</span><span class="p">(</span><span class="n">UTC</span><span class="p">))</span>
+
+<div class="viewcode-block" id="QuantumSafeAssessment.to_dict">
+<a class="viewcode-back" href="../../../source/enterprise/index.html#qkdpy.enterprise.quantum_safe.QuantumSafeAssessment.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Full assessment as a serialisable dict.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;assessed_at&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">assessed_at</span><span class="o">.</span><span class="n">isoformat</span><span class="p">(),</span>
+            <span class="s2">&quot;inventory&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">get_summary</span><span class="p">(),</span>
+            <span class="s2">&quot;roadmap&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">roadmap</span><span class="o">.</span><span class="n">get_summary</span><span class="p">(),</span>
+            <span class="s2">&quot;recommendations&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recommendations</span><span class="p">(),</span>
+        <span class="p">}</span></div>
+
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_recommendations</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Generate plain-english recommendations based on the inventory.&quot;&quot;&quot;</span>
+        <span class="n">recs</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">vuln</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">vulnerable_count</span>
+
+        <span class="k">if</span> <span class="n">vuln</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">recs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="sa">f</span><span class="s2">&quot;Start quantum-safe migration planning immediately — &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">vuln</span><span class="si">}</span><span class="s2"> of </span><span class="si">{</span><span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">total_assets</span><span class="si">}</span><span class="s2"> crypto assets are &quot;</span>
+                <span class="sa">f</span><span class="s2">&quot;quantum-vulnerable.&quot;</span>
+            <span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">recs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s2">&quot;No quantum-vulnerable crypto assets detected.&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="nb">any</span><span class="p">(</span>
+            <span class="n">a</span><span class="o">.</span><span class="n">key_size_bits</span> <span class="o">==</span> <span class="mi">128</span> <span class="ow">and</span> <span class="n">a</span><span class="o">.</span><span class="n">algorithm_type</span> <span class="o">==</span> <span class="n">CryptoAlgorithmType</span><span class="o">.</span><span class="n">SYMMETRIC</span>
+            <span class="k">for</span> <span class="n">a</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">inventory</span><span class="o">.</span><span class="n">assets</span>
+        <span class="p">):</span>
+            <span class="n">recs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+                <span class="s2">&quot;Upgrade 128-bit AES deployments to 256-bit to maintain &quot;</span>
+                <span class="s2">&quot;128-bit post-quantum security margin.&quot;</span>
+            <span class="p">)</span>
+
+        <span class="n">recs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span>
+            <span class="s2">&quot;Use QKDpy&#39;s compliance suite to establish a baseline and &quot;</span>
+            <span class="s2">&quot;track migration progress against ETSI / NIST timelines.&quot;</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">recs</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="s2">&quot;CryptoAlgorithmType&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CryptoAsset&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CryptoInventoryReport&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MigrationPhase&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MigrationRoadmap&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MigrationStep&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;QuantumResistance&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;QuantumSafeAssessment&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;classic_enterprise_profile&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;generate_roadmap&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

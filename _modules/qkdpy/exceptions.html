@@ -1,0 +1,703 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>qkdpy.exceptions &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">qkdpy.exceptions</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for qkdpy.exceptions</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;QKDpy Exception Hierarchy.</span>
+
+<span class="sd">This module provides a structured exception hierarchy for enterprise-grade</span>
+<span class="sd">error handling in QKD applications. All exceptions inherit from a base</span>
+<span class="sd">QKDException class and provide detailed context for debugging and auditing.</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+<span class="n">_REDACT_KEYS</span><span class="p">:</span> <span class="nb">frozenset</span><span class="p">[</span><span class="nb">str</span><span class="p">]</span> <span class="o">=</span> <span class="nb">frozenset</span><span class="p">(</span>
+    <span class="p">{</span>
+        <span class="s2">&quot;raw_key&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;key_material&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;secret_key&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;shared_secret&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;password&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;token&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;api_key&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;private_key&quot;</span><span class="p">,</span>
+        <span class="s2">&quot;session_key&quot;</span><span class="p">,</span>
+    <span class="p">}</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_redact_context</span><span class="p">(</span><span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a copy of ``context`` with sensitive keys redacted.</span>
+
+<span class="sd">    Uses the same denylist as the structured logger to avoid leaking</span>
+<span class="sd">    secrets into logs or external error reporting.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">redacted</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">=</span> <span class="p">{}</span>
+    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">context</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+        <span class="k">if</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">_REDACT_KEYS</span><span class="p">:</span>
+            <span class="n">redacted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;[REDACTED]&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">redacted</span><span class="p">[</span><span class="n">key</span><span class="p">]</span> <span class="o">=</span> <span class="n">value</span>
+    <span class="k">return</span> <span class="n">redacted</span>
+
+
+<div class="viewcode-block" id="QKDException">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.QKDException">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">QKDException</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base exception for all QKDpy errors.</span>
+
+<span class="sd">    Provides structured error information including error codes,</span>
+<span class="sd">    context data, and recovery suggestions for enterprise deployments.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="s2">&quot;QKD_GENERIC_ERROR&quot;</span>
+
+<div class="viewcode-block" id="QKDException.__init__">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.QKDException.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">error_code</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">context</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">cause</span><span class="p">:</span> <span class="ne">Exception</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">recoverable</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Initialize QKD exception.</span>
+
+<span class="sd">        Args:</span>
+<span class="sd">            message: Human-readable error message</span>
+<span class="sd">            error_code: Machine-readable error code for logging</span>
+<span class="sd">            context: Additional context data for debugging</span>
+<span class="sd">            cause: Original exception that caused this error</span>
+<span class="sd">            recoverable: Whether the operation can be retried</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">error_code</span> <span class="o">=</span> <span class="n">error_code</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="n">error_code</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">context</span> <span class="o">=</span> <span class="n">context</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">cause</span> <span class="o">=</span> <span class="n">cause</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">recoverable</span> <span class="o">=</span> <span class="n">recoverable</span>
+
+        <span class="c1"># Chain the original exception if provided</span>
+        <span class="k">if</span> <span class="n">cause</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">__cause__</span> <span class="o">=</span> <span class="n">cause</span></div>
+
+
+<div class="viewcode-block" id="QKDException.to_dict">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.QKDException.to_dict">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="nf">to_dict</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">]:</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Convert exception to dictionary for logging/serialization.</span>
+
+<span class="sd">        Context values keyed by names in the sensitive-data denylist</span>
+<span class="sd">        (e.g., ``raw_key``, ``secret_key``) are redacted to ``[REDACTED]``</span>
+<span class="sd">        before return so error reports do not leak secrets.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">{</span>
+            <span class="s2">&quot;error_type&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="vm">__class__</span><span class="o">.</span><span class="vm">__name__</span><span class="p">,</span>
+            <span class="s2">&quot;error_code&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">error_code</span><span class="p">,</span>
+            <span class="s2">&quot;message&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="p">),</span>
+            <span class="s2">&quot;context&quot;</span><span class="p">:</span> <span class="n">_redact_context</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">context</span><span class="p">),</span>
+            <span class="s2">&quot;recoverable&quot;</span><span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">recoverable</span><span class="p">,</span>
+            <span class="s2">&quot;cause&quot;</span><span class="p">:</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">cause</span><span class="p">)</span> <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">cause</span> <span class="k">else</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="p">}</span></div>
+</div>
+
+
+
+<span class="c1"># === Protocol Errors ===</span>
+
+
+<div class="viewcode-block" id="ProtocolError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ProtocolError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProtocolError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for protocol-related errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_PROTOCOL_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ProtocolSecurityError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ProtocolSecurityError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProtocolSecurityError</span><span class="p">(</span><span class="n">ProtocolError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Security violation detected in protocol execution.</span>
+
+<span class="sd">    Raised when QBER exceeds threshold, eavesdropping is detected,</span>
+<span class="sd">    or other security conditions are violated.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_SECURITY_VIOLATION&quot;</span>
+
+<div class="viewcode-block" id="ProtocolSecurityError.__init__">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ProtocolSecurityError.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">qber</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">threshold</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">attack_type</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">qber</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;qber&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">qber</span>
+        <span class="k">if</span> <span class="n">threshold</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;threshold&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">threshold</span>
+        <span class="k">if</span> <span class="n">attack_type</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;attack_type&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">attack_type</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="n">recoverable</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ProtocolStateError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ProtocolStateError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ProtocolStateError</span><span class="p">(</span><span class="n">ProtocolError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Protocol is in an invalid state for the requested operation.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_PROTOCOL_STATE_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="InsufficientKeyError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.InsufficientKeyError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InsufficientKeyError</span><span class="p">(</span><span class="n">ProtocolError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Insufficient key material generated.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_INSUFFICIENT_KEY&quot;</span></div>
+
+
+
+<span class="c1"># === Channel Errors ===</span>
+
+
+<div class="viewcode-block" id="ChannelError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ChannelError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChannelError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for quantum channel errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_CHANNEL_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ChannelLossError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ChannelLossError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChannelLossError</span><span class="p">(</span><span class="n">ChannelError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Excessive loss detected in quantum channel.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_CHANNEL_LOSS&quot;</span>
+
+<div class="viewcode-block" id="ChannelLossError.__init__">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ChannelLossError.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">loss_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">expected_rate</span><span class="p">:</span> <span class="nb">float</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">loss_rate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;loss_rate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">loss_rate</span>
+        <span class="k">if</span> <span class="n">expected_rate</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;expected_rate&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">expected_rate</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="ChannelNoiseError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ChannelNoiseError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChannelNoiseError</span><span class="p">(</span><span class="n">ChannelError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Excessive noise detected in quantum channel.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_CHANNEL_NOISE&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ChannelCalibrationError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ChannelCalibrationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ChannelCalibrationError</span><span class="p">(</span><span class="n">ChannelError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Channel calibration failed or is required.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_CHANNEL_CALIBRATION&quot;</span></div>
+
+
+
+<span class="c1"># === Key Management Errors ===</span>
+
+
+<div class="viewcode-block" id="KeyManagementError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.KeyManagementError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeyManagementError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for key management errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_KEY_MANAGEMENT_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="KeyNotFoundError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.KeyNotFoundError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeyNotFoundError</span><span class="p">(</span><span class="n">KeyManagementError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Requested key not found in storage.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_KEY_NOT_FOUND&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="KeyExpiredError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.KeyExpiredError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeyExpiredError</span><span class="p">(</span><span class="n">KeyManagementError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Key has expired and cannot be used.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_KEY_EXPIRED&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="KeyExhaustedError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.KeyExhaustedError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeyExhaustedError</span><span class="p">(</span><span class="n">KeyManagementError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Key usage limit has been reached.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_KEY_EXHAUSTED&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="KeyStorageError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.KeyStorageError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">KeyStorageError</span><span class="p">(</span><span class="n">KeyManagementError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Error accessing key storage.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_KEY_STORAGE_ERROR&quot;</span></div>
+
+
+
+<span class="c1"># === Cryptographic Errors ===</span>
+
+
+<div class="viewcode-block" id="CryptoError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.CryptoError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">CryptoError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for cryptographic operation errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_CRYPTO_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="EncryptionError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.EncryptionError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">EncryptionError</span><span class="p">(</span><span class="n">CryptoError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Encryption operation failed.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_ENCRYPTION_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="DecryptionError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.DecryptionError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DecryptionError</span><span class="p">(</span><span class="n">CryptoError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Decryption operation failed.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_DECRYPTION_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="AuthenticationError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.AuthenticationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">AuthenticationError</span><span class="p">(</span><span class="n">CryptoError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Authentication failed.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_AUTHENTICATION_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="IntegrityError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.IntegrityError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">IntegrityError</span><span class="p">(</span><span class="n">CryptoError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Data integrity check failed.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_INTEGRITY_ERROR&quot;</span></div>
+
+
+
+<span class="c1"># === Validation Errors ===</span>
+
+
+<div class="viewcode-block" id="ValidationError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ValidationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ValidationError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for input validation errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_VALIDATION_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ParameterError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ParameterError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ParameterError</span><span class="p">(</span><span class="n">ValidationError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Invalid parameter value.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_PARAMETER_ERROR&quot;</span>
+
+<div class="viewcode-block" id="ParameterError.__init__">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ParameterError.__init__">[docs]</a>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">message</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
+        <span class="o">*</span><span class="p">,</span>
+        <span class="n">parameter</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">value</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="n">expected</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+        <span class="o">**</span><span class="n">kwargs</span><span class="p">:</span> <span class="n">Any</span><span class="p">,</span>
+    <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">context</span> <span class="o">=</span> <span class="n">kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s2">&quot;context&quot;</span><span class="p">,</span> <span class="p">{})</span>
+        <span class="k">if</span> <span class="n">parameter</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;parameter&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">parameter</span>
+        <span class="k">if</span> <span class="n">value</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;value&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">repr</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">expected</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">context</span><span class="p">[</span><span class="s2">&quot;expected&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="n">expected</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="n">message</span><span class="p">,</span> <span class="n">context</span><span class="o">=</span><span class="n">context</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span></div>
+</div>
+
+
+
+<div class="viewcode-block" id="RangeError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.RangeError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">RangeError</span><span class="p">(</span><span class="n">ParameterError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameter value out of valid range.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_RANGE_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="TypeValidationError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.TypeValidationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">TypeValidationError</span><span class="p">(</span><span class="n">ParameterError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Parameter has wrong type.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_TYPE_ERROR&quot;</span></div>
+
+
+
+<span class="c1"># === Configuration Errors ===</span>
+
+
+<div class="viewcode-block" id="ConfigurationError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ConfigurationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConfigurationError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for configuration errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_CONFIG_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="MissingConfigError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.MissingConfigError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MissingConfigError</span><span class="p">(</span><span class="n">ConfigurationError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Required configuration is missing.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_MISSING_CONFIG&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="InvalidConfigError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.InvalidConfigError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InvalidConfigError</span><span class="p">(</span><span class="n">ConfigurationError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Configuration value is invalid.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_INVALID_CONFIG&quot;</span></div>
+
+
+
+<span class="c1"># === Network Errors ===</span>
+
+
+<div class="viewcode-block" id="NetworkError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.NetworkError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NetworkError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for quantum network errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_NETWORK_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="NodeNotFoundError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.NodeNotFoundError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">NodeNotFoundError</span><span class="p">(</span><span class="n">NetworkError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Node not found in network.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_NODE_NOT_FOUND&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ConnectionError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ConnectionError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ConnectionError</span><span class="p">(</span><span class="n">NetworkError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Failed to establish connection between nodes.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_CONNECTION_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="PathNotFoundError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.PathNotFoundError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">PathNotFoundError</span><span class="p">(</span><span class="n">NetworkError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;No path found between source and destination.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_PATH_NOT_FOUND&quot;</span></div>
+
+
+
+<span class="c1"># === Hardware/HSM Errors ===</span>
+
+
+<div class="viewcode-block" id="HardwareError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.HardwareError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HardwareError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for hardware-related errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_HARDWARE_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="HSMError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.HSMError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HSMError</span><span class="p">(</span><span class="n">HardwareError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Hardware Security Module error.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_HSM_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="HSMNotAvailableError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.HSMNotAvailableError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">HSMNotAvailableError</span><span class="p">(</span><span class="n">HSMError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;HSM is not available or not configured.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_HSM_NOT_AVAILABLE&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="DetectorError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.DetectorError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">DetectorError</span><span class="p">(</span><span class="n">HardwareError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quantum detector error.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_DETECTOR_ERROR&quot;</span></div>
+
+
+
+<span class="c1"># === ML Errors ===</span>
+
+
+<div class="viewcode-block" id="MLError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.MLError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">MLError</span><span class="p">(</span><span class="n">QKDException</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Base class for machine learning errors.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_ML_ERROR&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="ModelNotTrainedError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.ModelNotTrainedError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelNotTrainedError</span><span class="p">(</span><span class="n">MLError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Model has not been trained.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_MODEL_NOT_TRAINED&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="InsufficientDataError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.InsufficientDataError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">InsufficientDataError</span><span class="p">(</span><span class="n">MLError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Insufficient data for training or prediction.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_INSUFFICIENT_DATA&quot;</span></div>
+
+
+
+<div class="viewcode-block" id="OptimizationError">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.OptimizationError">[docs]</a>
+<span class="k">class</span><span class="w"> </span><span class="nc">OptimizationError</span><span class="p">(</span><span class="n">MLError</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Optimization failed to converge.&quot;&quot;&quot;</span>
+
+    <span class="n">error_code</span> <span class="o">=</span> <span class="s2">&quot;QKD_OPTIMIZATION_ERROR&quot;</span></div>
+
+
+
+<span class="c1"># === Exception utilities ===</span>
+
+
+<div class="viewcode-block" id="wrap_exception">
+<a class="viewcode-back" href="../../source/api_reference.html#qkdpy.wrap_exception">[docs]</a>
+<span class="k">def</span><span class="w"> </span><span class="nf">wrap_exception</span><span class="p">(</span>
+    <span class="n">original</span><span class="p">:</span> <span class="ne">Exception</span><span class="p">,</span>
+    <span class="n">qkd_exception_class</span><span class="p">:</span> <span class="nb">type</span><span class="p">[</span><span class="n">QKDException</span><span class="p">]</span> <span class="o">=</span> <span class="n">QKDException</span><span class="p">,</span>
+    <span class="n">message</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">QKDException</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Wrap a standard exception in a QKD exception.</span>
+
+<span class="sd">    The wrapped exception carries the original via Python&#39;s ``__cause__``,</span>
+<span class="sd">    so tracebacks preserve the full chain.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        original: Original exception to wrap</span>
+<span class="sd">        qkd_exception_class: QKD exception class to use</span>
+<span class="sd">        message: Optional custom message (defaults to original message)</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        Wrapped QKD exception with original as cause</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">qkd_exception_class</span><span class="p">(</span>
+        <span class="n">message</span> <span class="ow">or</span> <span class="nb">str</span><span class="p">(</span><span class="n">original</span><span class="p">),</span>
+        <span class="n">cause</span><span class="o">=</span><span class="n">original</span><span class="p">,</span>
+    <span class="p">)</span></div>
+
+
+
+<span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
+    <span class="c1"># Exception classes</span>
+    <span class="s2">&quot;QKDException&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ProtocolError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ProtocolSecurityError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ProtocolStateError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;InsufficientKeyError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ChannelError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ChannelLossError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ChannelNoiseError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ChannelCalibrationError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;KeyManagementError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;KeyNotFoundError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;KeyExpiredError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;KeyExhaustedError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;KeyStorageError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;CryptoError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;EncryptionError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DecryptionError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;AuthenticationError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;IntegrityError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ValidationError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ParameterError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;RangeError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;TypeValidationError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ConfigurationError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MissingConfigError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;InvalidConfigError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NetworkError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;NodeNotFoundError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ConnectionError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;PathNotFoundError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HardwareError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HSMError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;HSMNotAvailableError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;DetectorError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;MLError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;ModelNotTrainedError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;InsufficientDataError&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;OptimizationError&quot;</span><span class="p">,</span>
+    <span class="c1"># Utilities</span>
+    <span class="s2">&quot;wrap_exception&quot;</span><span class="p">,</span>
+<span class="p">]</span>
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

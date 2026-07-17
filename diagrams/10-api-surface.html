@@ -1,0 +1,315 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10. API Surface &amp; Usage Patterns &mdash; QKDpy 0.6.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=b86133f3" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=9edc463e" />
+
+  
+      <script src="../_static/jquery.js?v=5d32c60e"></script>
+      <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+      <script src="../_static/documentation_options.js?v=1c28bd9a"></script>
+      <script src="../_static/doctools.js?v=fd6eb6e6"></script>
+      <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            QKDpy
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quick Start</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api.html">API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples.html">Examples</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">QKDpy</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">10. API Surface &amp; Usage Patterns</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/diagrams/10-api-surface.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="api-surface-usage-patterns">
+<h1>10. API Surface &amp; Usage Patterns<a class="headerlink" href="#api-surface-usage-patterns" title="Link to this heading"></a></h1>
+<section id="public-api-overview">
+<h2>Public API Overview<a class="headerlink" href="#public-api-overview" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>graph TD
+    subgraph PublicAPI[&quot;QKDpy Public API&quot;]
+        subgraph CoreAPI[&quot;Core Classes&quot;]
+            C1[&quot;Qubit(alpha, beta)&quot;]
+            C2[&quot;Qubit.zero() / one() / plus() / minus()&quot;]
+            C3[&quot;MultiQubitState(state)&quot;]
+            C4[&quot;MultiQubitState.ghz(n) / w_state(n)&quot;]
+            C5[&quot;QuantumChannel(distance, noise_model, ...)&quot;]
+            C6[&quot;QuantumDetector(efficiency, ...)&quot;]
+            C7[&quot;Measurement.measure_in_basis(qubit, basis)&quot;]
+        end
+
+        subgraph ProtocolAPI[&quot;Protocol Classes&quot;]
+            P1[&quot;BB84(channel, key_length)&quot;]
+            P2[&quot;B92(channel, key_length)&quot;]
+            P3[&quot;E91(channel, key_length)&quot;]
+            P4[&quot;SARG04(channel, key_length)&quot;]
+            P5[&quot;DI_QKD(channel, key_length)&quot;]
+            P6[&quot;CV_QKD(channel, key_length)&quot;]
+            P7[&quot;HD_QKD(channel, key_length)&quot;]
+            P8[&quot;DecoyStateBB84(channel, key_length)&quot;]
+            P9[&quot;TwistedPairQKD(channel, key_length)&quot;]
+        end
+
+        subgraph KeyMgmtAPI[&quot;Key Management&quot;]
+            K1[&quot;KeyDistillation(ec_method, pa_method)&quot;]
+            K2[&quot;KeyDistillation.distill(alice_key, bob_key, qber)&quot;]
+            K3[&quot;ErrorCorrection.cascade(a, b)&quot;]
+            K4[&quot;ErrorCorrection.winnow(a, b)&quot;]
+            K5[&quot;ErrorCorrection.ldpc(a, b)&quot;]
+            K6[&quot;PrivacyAmplification.universal_hashing(key, len)&quot;]
+            K7[&quot;KeyManager(security_level)&quot;]
+        end
+
+        subgraph NetworkAPI[&quot;Network / Satellite&quot;]
+            N1[&quot;SatelliteQKD(orbit_type, altitude, ...)&quot;]
+            N2[&quot;SatelliteQKD.simulate_pass(duration)&quot;]
+            N3[&quot;QuantumNetwork(nodes)&quot;]
+            N4[&quot;MultiPartyQKD(participants)&quot;]
+        end
+
+        subgraph IntegrationAPI[&quot;Integrations&quot;]
+            I1[&quot;QiskitIntegration.simulate_e91(...)&quot;]
+            I2[&quot;PennyLaneIntegration.simulate_e91(...)&quot;]
+            I3[&quot;CirqIntegration.simulate_e91(...)&quot;]
+            I4[&quot;QpiAIIntegration.simulate_e91(...)&quot;]
+        end
+
+        subgraph CryptoAPI[&quot;Crypto&quot;]
+            CR1[&quot;QuantumHash.quantum_hash(bits)&quot;]
+            CR2[&quot;QuantumCommitment.commit(value)&quot;]
+            CR3[&quot;QuantumZeroKnowledge.schnorr_proof(secret, pub)&quot;]
+        end
+
+        subgraph MLAPI[&quot;ML&quot;]
+            M1[&quot;QKDOptimizer.optimize(protocol_class, ...)&quot;]
+            M2[&quot;EfficientQKDPredictor.predict(features)&quot;]
+            M3[&quot;ModelSelector.select_best(channel_conditions)&quot;]
+        end
+
+        subgraph EnterpriseAPI[&quot;Enterprise&quot;]
+            E1[&quot;HSMInterface.initialize(slot, pin)&quot;]
+            E2[&quot;ComplianceFramework.check_compliance(standard)&quot;]
+            E3[&quot;AuditLogger.log_event(type, data)&quot;]
+        end
+    end
+</pre></div>
+</div>
+</section>
+<section id="common-usage-pattern-bb84">
+<h2>Common Usage Pattern: BB84<a class="headerlink" href="#common-usage-pattern-bb84" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>sequenceDiagram
+    participant User as User Code
+    participant BB84 as BB84 Protocol
+    participant Channel as QuantumChannel
+    participant Qubit as Qubit Factory
+    participant Meas as Measurement
+
+    User-&gt;&gt;BB84: BB84(channel, key_length=100)
+    User-&gt;&gt;BB84: execute()
+
+    BB84-&gt;&gt;BB84: prepare_states()
+    Note over BB84,Qubit: Alice: random bits + random bases → qubits
+
+    BB84-&gt;&gt;Channel: transmit_batch(qubits)
+    Note over Channel: Noise, loss, eavesdropping
+
+    Channel--&gt;&gt;BB84: received_qubits (some None)
+
+    BB84-&gt;&gt;Meas: measure_in_basis(received_qubit, basis)
+    Meas--&gt;&gt;BB84: 0 or 1
+
+    BB84-&gt;&gt;BB84: sift_keys()
+    Note over BB84: Match bases → keep ~50%
+
+    BB84-&gt;&gt;BB84: estimate_qber()
+    Note over BB84: Compare sample → error rate
+
+    BB84-&gt;&gt;BB84: error_correction(sifted_a, sifted_b)
+    Note over BB84: Cascade protocol → identical keys
+
+    BB84-&gt;&gt;BB84: privacy_amplification(corrected, leak)
+    Note over BB84: Universal hashing → secure key
+
+    BB84--&gt;&gt;User: {final_key, qber, is_secure, channel_stats}
+</pre></div>
+</div>
+</section>
+<section id="common-usage-pattern-satellite-qkd">
+<h2>Common Usage Pattern: Satellite QKD<a class="headerlink" href="#common-usage-pattern-satellite-qkd" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>sequenceDiagram
+    participant User as User Code
+    participant SAT as SatelliteQKD
+    participant ORBIT as Orbit Calculation
+    participant CH as QuantumChannel
+
+    User-&gt;&gt;SAT: SatelliteQKD(orbit_type=LEO, altitude=500)
+    Note over SAT: Configures orbital parameters
+
+    User-&gt;&gt;SAT: simulate_pass(duration=300)
+
+    loop Every time step
+        SAT-&gt;&gt;ORBIT: Compute elevation, range, velocity
+        ORBIT--&gt;&gt;SAT: elevation=45°, range=707km, v=7.5km/s
+
+        SAT-&gt;&gt;CH: Compute atmospheric transmittance
+        CH--&gt;&gt;SAT: T_atm = 0.85
+
+        SAT-&gt;&gt;CH: Compute channel loss from range + atmosphere
+        CH--&gt;&gt;SAT: loss = 0.3
+
+        SAT-&gt;&gt;SAT: Check elevation &gt; minimum (10°)
+        alt Elevation okay
+            SAT-&gt;&gt;SAT: Run QKD protocol segment
+            Note over SAT: Accumulates key bits
+        else Below horizon
+            SAT-&gt;&gt;SAT: Skip (no line of sight)
+        end
+    end
+
+    SAT--&gt;&gt;User: {total_key_bits: 12345, key_rate: 41.2 bit/s,&lt;br/&gt;elevation_profile: [...], peak_elevation: 67.3°}
+</pre></div>
+</div>
+</section>
+<section id="package-import-map">
+<h2>Package Import Map<a class="headerlink" href="#package-import-map" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>graph TD
+    subgraph Imports[&quot;Public Import Paths&quot;]
+        IMP1[&quot;from qkdpy import Qubit, Qudit&quot;]
+        IMP2[&quot;from qkdpy import QuantumChannel&quot;]
+        IMP3[&quot;from qkdpy import BB84, B92, E91&quot;]
+        IMP4[&quot;from qkdpy import CV_QKD, HD_QKD&quot;]
+        IMP5[&quot;from qkdpy import KeyDistillation&quot;]
+        IMP6[&quot;from qkdpy import ErrorCorrection&quot;]
+        IMP7[&quot;from qkdpy import PrivacyAmplification&quot;]
+        IMP8[&quot;from qkdpy import SatelliteQKD&quot;]
+        IMP9[&quot;from qkdpy import QuantumNetwork&quot;]
+        IMP10[&quot;from qkdpy import QKDOptimizer&quot;]
+        IMP11[&quot;from qkdpy import QuantumHash&quot;]
+        IMP12[&quot;from qkdpy.integrations import QiskitIntegration&quot;]
+        IMP13[&quot;from qkdpy.integrations import PennyLaneIntegration&quot;]
+        IMP14[&quot;from qkdpy.network import AtmosphericProfile&quot;]
+    end
+
+    subgraph Init[&quot;__init__.py exports&quot;]
+        INIT[&quot;qkdpy/__init__.py&quot;]
+        INIT --&gt;|re-exports| CORE[&quot;core/*&quot;]
+        INIT --&gt;|re-exports| PROTO[&quot;protocols/*&quot;]
+        INIT --&gt;|re-exports| KM[&quot;key_management/*&quot;]
+        INIT --&gt;|re-exports| NET[&quot;network/*&quot;]
+        INIT --&gt;|re-exports| CRYPTO[&quot;crypto/*&quot;]
+        INIT --&gt;|re-exports| INTEG[&quot;integrations/*&quot;]
+    end
+
+    IMP1 -.-&gt; INIT
+    IMP2 -.-&gt; INIT
+    IMP3 -.-&gt; INIT
+</pre></div>
+</div>
+</section>
+<section id="configuration-system">
+<h2>Configuration System<a class="headerlink" href="#configuration-system" title="Link to this heading"></a></h2>
+<div class="highlight-mermaid notranslate"><div class="highlight"><pre><span></span>flowchart LR
+    subgraph Config[&quot;Configuration Sources&quot;]
+        CFG1[&quot;config.py&lt;br/&gt;DefaultConfig class&quot;]
+        CFG2[&quot;Environment variables&lt;br/&gt;(QKDPY_*)&quot;]
+        CFG3[&quot;User kwargs at init&quot;]
+    end
+
+    subgraph Resolved[&quot;Resolved Configuration&quot;]
+        RC1[&quot;Hashing algorithm&quot;]
+        RC2[&quot;Security parameter s&quot;]
+        RC3[&quot;Default protocol parameters&quot;]
+        RC4[&quot;Logging level&quot;]
+        RC5[&quot;HSM configuration&quot;]
+    end
+
+    CFG1 --&gt;|default| RC1
+    CFG2 --&gt;|override| RC1
+    CFG3 --&gt;|final override| RC1
+
+    style Config fill:#e3f2fd,stroke:#1565c0
+    style Resolved fill:#c8e6c9,stroke:#2e7d32
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2025, Pranava-Kumar.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
