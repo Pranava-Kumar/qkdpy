@@ -1,33 +1,33 @@
 """Integration plugins for QKDpy."""
 
-# Import integrations individually with error handling
-try:
-    from .qiskit_integration import QiskitIntegration  # noqa: F401
+import logging
 
-    QISKIT_AVAILABLE = True
-except (ImportError, NameError):
-    QISKIT_AVAILABLE = False
+logger = logging.getLogger(__name__)
 
-try:
-    from .cirq_integration import CirqIntegration  # noqa: F401
 
-    CIRQ_AVAILABLE = True
-except (ImportError, NameError):
-    CIRQ_AVAILABLE = False
+def _try_import(module_name: str, class_name: str) -> bool:
+    """Import an integration module, marking it unavailable on a missing dep.
 
-try:
-    from .pennylane_integration import PennyLaneIntegration  # noqa: F401
+    Only ``ImportError`` (missing optional dependency) is treated as a soft
+    "feature unavailable" signal. Any other exception indicates a genuine bug
+    in the integration module and is re-raised so it surfaces in CI/tests
+    rather than being silently swallowed as "unavailable".
+    """
+    try:
+        module = __import__(f"qkdpy.integrations.{module_name}", fromlist=[class_name])
+        globals()[class_name] = getattr(module, class_name)
+        return True
+    except ImportError:
+        return False
+    except Exception:  # noqa: BLE001 - re-raise real bugs, don't mask them
+        logger.exception("Failed to import integration %s", module_name)
+        raise
 
-    PENNYLANE_AVAILABLE = True
-except (ImportError, NameError):
-    PENNYLANE_AVAILABLE = False
 
-try:
-    from .qpiai_integration import QpiAIIntegration  # noqa: F401
-
-    QPIAI_AVAILABLE = True
-except (ImportError, NameError):
-    QPIAI_AVAILABLE = False
+QISKIT_AVAILABLE = _try_import("qiskit_integration", "QiskitIntegration")
+CIRQ_AVAILABLE = _try_import("cirq_integration", "CirqIntegration")
+PENNYLANE_AVAILABLE = _try_import("pennylane_integration", "PennyLaneIntegration")
+QPIAI_AVAILABLE = _try_import("qpiai_integration", "QpiAIIntegration")
 
 __all__ = []
 

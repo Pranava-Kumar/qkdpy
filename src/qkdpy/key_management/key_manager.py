@@ -36,7 +36,16 @@ class QuantumKeyManager:
 
         Returns:
             Key identifier if successful, None otherwise
+
+        Raises:
+            ValueError: If ``key_length`` is not a positive integer.
         """
+        if not isinstance(key_length, int) or isinstance(key_length, bool):
+            raise ValueError(
+                f"key_length must be an int, got {type(key_length).__name__}"
+            )
+        if key_length <= 0:
+            raise ValueError(f"key_length must be positive, got {key_length}")
         try:
             # Create a QKD protocol instance
             if protocol == "BB84":
@@ -104,21 +113,36 @@ class QuantumKeyManager:
             print(f"Error generating key: {e}")
             return None
 
-    def get_key(self, key_id: str) -> list[int] | None:
+    def get_key(self, key_id: str, return_hash: bool = False) -> list[int] | str | None:
         """Retrieve a key by its identifier.
+
+        This manager is the trusted in-memory key store, so ``get_key`` returns
+        the raw key material by design (the key is never persisted to disk or
+        logged otherwise). Callers that only need to *prove* possession of a key
+        (e.g. for authentication) should pass ``return_hash=True`` to receive a
+        SHA-256 fingerprint instead of the raw bits.
 
         Args:
             key_id: Unique identifier for the key
+            return_hash: If True, return a hex SHA-256 digest of the key
+                rather than the raw key bits. Use this when the caller must not
+                handle the plaintext key.
 
         Returns:
-            The key if found, None otherwise
+            The key (list[int]) if ``return_hash`` is False, a hex digest
+            (str) if True, or None if the key is not found.
         """
-        if key_id in self.key_store:
-            key_data = self.key_store[key_id]["key"]
-            # Ensure we return a list of integers
-            if isinstance(key_data, list):
-                return [int(bit) for bit in key_data]
-        return None
+        if key_id not in self.key_store:
+            return None
+        key_data = self.key_store[key_id]["key"]
+        if not isinstance(key_data, list):
+            return None
+        raw = [int(bit) for bit in key_data]
+        if return_hash:
+            import hashlib
+
+            return hashlib.sha256(bytes("".join(map(str, raw)), "utf-8")).hexdigest()
+        return raw
 
     def delete_key(self, key_id: str) -> bool:
         """Delete a key from storage.

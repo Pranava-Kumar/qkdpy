@@ -251,8 +251,15 @@ class IntegrityError(CryptoError):
 # === Validation Errors ===
 
 
-class ValidationError(QKDException):
-    """Base class for input validation errors."""
+class ValidationError(QKDException, ValueError):
+    """Base class for input validation errors.
+
+    Subclasses both :class:`QKDException` (the library's error hierarchy) and
+    the builtin :class:`ValueError` so that validators raising
+    ``ParameterError`` are caught by both library-specific handlers and legacy
+    ``except ValueError`` blocks, matching Python's convention for invalid
+    input values.
+    """
 
     error_code = "QKD_VALIDATION_ERROR"
 

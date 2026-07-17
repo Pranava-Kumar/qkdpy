@@ -35,6 +35,10 @@ class Qudit:
         self._state: np.ndarray = state / norm
         self.dimension = dimension
 
+    def clone(self) -> "Qudit":
+        """Return an independent copy of this qudit."""
+        return Qudit(self._state.copy(), self.dimension)
+
     @classmethod
     def computational_basis(cls, level: int, dimension: int) -> "Qudit":
         """Create a qudit in a computational basis state ``|level>``.

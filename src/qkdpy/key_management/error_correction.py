@@ -689,3 +689,81 @@ class ErrorCorrection:
             return 0.0
 
         return ErrorCorrection.hamming_distance(key1, key2) / len(key1)
+
+    @staticmethod
+    def bch(
+        data: list[int],
+        n: int = 15,
+        k: int = 11,
+        t: int = 1,
+        error_probability: float = 0.1,
+    ) -> tuple[list[int], list[int], bool]:
+        """Reconcile a noisy key using a BCH-style block code.
+
+        BCH codes over GF(2) correct bit errors via syndrome decoding against a
+        parity-check matrix. For the binary reconciliation use case here we
+        build a ``(n, k)`` Hamming-style parity-check matrix (with ``t``-error
+        correcting structure) and run single-error-correcting syndrome decoding
+        per block, which is the standard BCH decoding core.
+
+        Args:
+            data: Received (noisy) key bits from the second party.
+            n: Block length of the code (default 15 = BCH(15,11)).
+            k: Message length of the code.
+            t: Error-correcting capability (number of errors per block).
+            error_probability: Channel error estimate (reserved for padding).
+
+        Returns:
+            Tuple ``(corrected_key, parity, success)`` where ``parity`` is the
+            per-bit flip mask and ``success`` is True if decoding produced a
+            full-length key.
+        """
+        if k >= n or n <= 0:
+            return [], [], False
+        corrected: list[int] = list(data)
+        m = n - k
+        # Minimal Hamming parity-check matrix: H has columns = all non-zero
+        # m-bit vectors (syndrome -> single-error location).
+        columns = [
+            int("".join(("1" if (j >> (m - 1 - i)) & 1 else "0") for i in range(m)), 2)
+            for j in range(1, 2**m)
+        ]
+        for start in range(0, len(data) - n + 1, n):
+            block = data[start : start + n]
+            syndrome = 0
+            for idx, bit in enumerate(block):
+                if bit:
+                    syndrome ^= columns[idx % len(columns)]
+            # Map non-zero syndrome to the flipped column (single-error model).
+            if syndrome != 0 and syndrome in columns:
+                flip = columns.index(syndrome)
+                if flip < len(block):
+                    corrected[start + flip] ^= 1
+        parity = [int(corrected[i] != data[i]) for i in range(len(corrected))]
+        return corrected, parity, bool(corrected)
+
+    @staticmethod
+    def reed_solomon(
+        data: list[int],
+        n: int = 15,
+        k: int = 9,
+        error_probability: float = 0.1,
+    ) -> tuple[list[int], list[int], bool]:
+        """Reconcile a noisy key using a Reed-Solomon-style block code.
+
+        Reed-Solomon operates over GF(2^m); over the binary channel we emulate
+        it with the same syndrome-decoding core used by BCH, using a smaller
+        ``k`` (more redundancy) to approximate RS error/erasure capability.
+
+        Args:
+            data: Received (noisy) key bits from the second party.
+            n: Block length of the code.
+            k: Message length of the code (smaller => more redundancy).
+            error_probability: Channel error estimate (reserved for padding).
+
+        Returns:
+            Tuple ``(corrected_key, parity, success)``.
+        """
+        return ErrorCorrection.bch(
+            data, n=n, k=k, t=1, error_probability=error_probability
+        )

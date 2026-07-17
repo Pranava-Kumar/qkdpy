@@ -113,8 +113,9 @@ class PNSAttack:
         r = secure_random()
         if r < self.vacuum_probability:
             self.vacuum_pulses += 1
-            # Vacuum: nothing to split, forward untouched.
-            return qubit, False
+            # Vacuum: nothing to split, forward an independent copy so the
+            # caller's source object cannot be mutated through the forwarded one.
+            return qubit.clone(), False
 
         if r < self.vacuum_probability + self.single_photon_probability:
             # Single photon: cannot be split without detection.
@@ -122,12 +123,14 @@ class PNSAttack:
                 self.single_photons_blocked += 1
                 self.detected_events += 1
                 return None, True  # Blocked -> Bob sees loss.
-            return qubit, False
+            return qubit.clone(), False
 
         # Multi-photon: Eve keeps one, forwards the rest with the beam splitter.
         self.multi_photons_split += 1
         if secure_random() < self.beam_splitter_transmission:
-            return qubit, False  # Stealthy: only elevated loss is visible.
+            # Stealthy: only elevated loss is visible. Return a clone so the
+            # residual pulse Eve forwards is decoupled from the source.
+            return qubit.clone(), False
         # Rare: Eve's tap also drops the residual pulse (counts as loss).
         self.detected_events += 1
         return None, True

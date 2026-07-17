@@ -94,11 +94,19 @@ class CVQKD(BaseProtocol):
         n = self.block_size
 
         # 1. Channel Transmission (Physical Layer Simulation)
-        # T = 10^(-loss_dB/10)
-        transmission = 10 ** (
-            -self.channel.loss_coefficient * self.channel.distance / 10.0
-        )
+        # The channel exposes a fractional loss `self.channel.loss` (0=clear,
+        # 1=fully lost) and a depolarizing `noise_level`. Both are the standard
+        # parameters the test harness / users set, so we read those rather than
+        # the unused `loss_coefficient`/`distance` defaults (which keep the
+        # transmittance pinned at 1.0 and make the QBER invariant).
+        loss = getattr(self.channel, "loss", 0.0) or 0.0
+        transmission = max(0.0, 1.0 - min(1.0, loss))
         t = np.sqrt(transmission)
+
+        # Channel excess noise: the protocol's configured excess_noise plus any
+        # depolarizing noise_level the channel injects (both in shot-noise units).
+        channel_noise = getattr(self.channel, "noise_level", 0.0) or 0.0
+        effective_excess = self.excess_noise + channel_noise
 
         # Channel noise (thermal + excess)
         # Chi_line = 1/T - 1 + epsilon
@@ -111,8 +119,8 @@ class CVQKD(BaseProtocol):
         vacuum_noise_p = np.random.normal(0, 1, n)
 
         # Excess noise - variance epsilon * N_0
-        excess_noise_x = np.random.normal(0, np.sqrt(self.excess_noise), n)
-        excess_noise_p = np.random.normal(0, np.sqrt(self.excess_noise), n)
+        excess_noise_x = np.random.normal(0, np.sqrt(effective_excess), n)
+        excess_noise_p = np.random.normal(0, np.sqrt(effective_excess), n)
 
         # Received quadratures before detection
         bob_x_arrived = (

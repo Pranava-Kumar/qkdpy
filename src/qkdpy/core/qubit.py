@@ -58,6 +58,14 @@ class Qubit:
         """Get the state vector of the qubit."""
         return self._state.copy()
 
+    def __copy__(self) -> "Qubit":
+        """Return a deep copy so callers never share the underlying array."""
+        return Qubit(self._state[0], self._state[1])
+
+    def clone(self) -> "Qubit":
+        """Return an independent copy of this qubit."""
+        return self.__copy__()
+
     @property
     def probabilities(self) -> tuple[float, float]:
         """Get the probabilities of measuring ``|0>`` and ``|1>``.
