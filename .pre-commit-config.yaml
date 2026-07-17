@@ -19,6 +19,12 @@ repos:
         entry: black
         language: system
         types: [python]
+        # scripts/blackbox/*.py are 1700-line blackbox diagnostic scripts that
+        # place imports inside print / try blocks; isort+black disagree on the
+        # long-wrap and oscillate. Also black 25+ on Linux reformats them
+        # differently than on Windows (AST line-ending sensitivity), causing a
+        # CI-only formatting loop. Keep excluded from all formatters.
+        exclude: ^scripts/blackbox/.*\.py$
 
       - id: isort
         name: isort
