@@ -30,10 +30,6 @@ References:
       Phys. Rev. Lett. 108, 130503 (2012).
 """
 
-from collections.abc import Callable
-
-import numpy as np
-
 from ..core import QuantumChannel
 from ..core.qubit import Qubit
 from ..core.secure_random import secure_choice, secure_random
@@ -66,7 +62,9 @@ class MDIQKD(BaseProtocol):
             random_basis: If True, Alice and Bob each pick a random basis per
                 pulse (standard BB84-style); otherwise fixed Z basis.
         """
-        super().__init__(channel=channel_alice or QuantumChannel(), key_length=num_qubits)
+        super().__init__(
+            channel=channel_alice or QuantumChannel(), key_length=num_qubits
+        )
         self.num_qubits = num_qubits
         self.channel_alice = channel_alice or QuantumChannel()
         self.channel_bob = channel_bob or QuantumChannel()
@@ -97,7 +95,7 @@ class MDIQKD(BaseProtocol):
             self.generate_keys()
         return [
             self.prepare_pulse(b, basis)
-            for b, basis in zip(self.alice_bits, self.alice_bases)
+            for b, basis in zip(self.alice_bits, self.alice_bases, strict=True)
         ]
 
     def measure_states(self, states: object) -> list[int]:
@@ -108,9 +106,7 @@ class MDIQKD(BaseProtocol):
         """Return the QBER security threshold for this protocol."""
         return self.security_threshold
 
-    def bell_state_measurement(
-        self, alice_bit: int, bob_bit: int
-    ) -> str | None:
+    def bell_state_measurement(self, alice_bit: int, bob_bit: int) -> str | None:
         """Model Charlie's BSM on the two incoming pulses.
 
         With matching bases the Bell state is fully determined by whether the
@@ -170,8 +166,12 @@ class MDIQKD(BaseProtocol):
             if self.alice_bases[i] != self.bob_bases[i]:
                 continue
             # Each party sends her/his pulse; channels model loss/noise.
-            qa = self.channel_alice.transmit(self.prepare_pulse(self.alice_bits[i], self.alice_bases[i]))
-            qb = self.channel_bob.transmit(self.prepare_pulse(self.bob_bits[i], self.bob_bases[i]))
+            qa = self.channel_alice.transmit(
+                self.prepare_pulse(self.alice_bits[i], self.alice_bases[i])
+            )
+            qb = self.channel_bob.transmit(
+                self.prepare_pulse(self.bob_bits[i], self.bob_bases[i])
+            )
             if qa is None or qb is None:
                 continue  # lost at the channel, never reaches Charlie
             # Measure the (possibly channel-degraded) pulses in their bases.
@@ -181,14 +181,18 @@ class MDIQKD(BaseProtocol):
             b_meas = qb.measure(meas_basis_b)
 
             # Ideal (noise-free) reconciliation from the prepared bits.
-            ideal_outcome = self.bell_state_measurement(self.alice_bits[i], self.bob_bits[i])
+            ideal_outcome = self.bell_state_measurement(
+                self.alice_bits[i], self.bob_bits[i]
+            )
             if ideal_outcome is None:
                 continue
             # Both parties derive the SAME key bit from the public BSM outcome,
             # so the established key is self-consistent (this is what makes
             # MDI-QKD immune to detector side-channels: Charlie learns nothing).
             ideal_key = (
-                self.alice_bits[i] if ideal_outcome.startswith("phi") else 1 - self.alice_bits[i]
+                self.alice_bits[i]
+                if ideal_outcome.startswith("phi")
+                else 1 - self.alice_bits[i]
             )
 
             # Noisy reconciliation from the measured (post-channel) bits.
@@ -205,7 +209,9 @@ class MDIQKD(BaseProtocol):
         self.sifted_key = alice_sift
         self.bob_sifted_key = bob_sift
         basis_matches = sum(
-            1 for i in range(self.num_qubits) if self.alice_bases[i] == self.bob_bases[i]
+            1
+            for i in range(self.num_qubits)
+            if self.alice_bases[i] == self.bob_bases[i]
         )
         self.basis_reconciliation_rate = basis_matches / max(self.num_qubits, 1)
         return alice_sift, bob_sift
@@ -222,7 +228,9 @@ class MDIQKD(BaseProtocol):
             self.qber = 0.0
             return self.qber
         mismatches = sum(
-            1 for noisy, ideal in zip(self.sifted_key, self.ideal_key) if noisy != ideal
+            1
+            for noisy, ideal in zip(self.sifted_key, self.ideal_key, strict=True)
+            if noisy != ideal
         )
         self.qber = mismatches / len(self.sifted_key)
         return self.qber
@@ -238,6 +246,7 @@ class MDIQKD(BaseProtocol):
         if self.qber <= 0.0:
             self.key_rate = self.bsm_success_count / max(self.num_qubits, 1)
             return self.key_rate
+
         # Binary entropy.
         def h2(p: float) -> float:
             if p <= 0.0 or p >= 1.0:
@@ -248,7 +257,9 @@ class MDIQKD(BaseProtocol):
         # Here Q_11 ~ bsm_success_count/N and e_11 ~ qber (single-photon).
         q11 = self.bsm_success_count / max(self.num_qubits, 1)
         q_mu = n_sift / max(self.num_qubits, 1)
-        rate = q11 * (1.0 - h2(self.qber)) - q_mu * error_correction_efficiency * h2(self.qber)
+        rate = q11 * (1.0 - h2(self.qber)) - q_mu * error_correction_efficiency * h2(
+            self.qber
+        )
         self.key_rate = max(rate, 0.0)
         return self.key_rate
 
@@ -258,7 +269,9 @@ class MDIQKD(BaseProtocol):
         self.sift_keys()
         self.estimate_qber()
         self.get_key_rate()
-        self.is_secure = self.qber < self.security_threshold and self.bsm_success_count > 0
+        self.is_secure = (
+            self.qber < self.security_threshold and self.bsm_success_count > 0
+        )
         self.final_key = self.sifted_key if self.is_secure else []
 
         return {

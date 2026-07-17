@@ -2,12 +2,12 @@
 
 from .turbulence import (
     AtmosphericTurbulenceChannel,
-    von_karman_spectrum,
-    hufnagel_valley_cn2,
     fried_parameter,
+    generate_phase_screen,
+    hufnagel_valley_cn2,
     rytov_variance,
     scintillation_index,
-    generate_phase_screen,
+    von_karman_spectrum,
 )
 
 __all__ = [

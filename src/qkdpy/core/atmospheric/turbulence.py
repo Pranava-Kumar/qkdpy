@@ -22,8 +22,6 @@ References:
     * Rytov variance: a standard measure of the strength of optical turbulence.
 """
 
-from collections.abc import Callable
-
 import numpy as np
 
 from ..channels import QuantumChannel
@@ -60,7 +58,12 @@ def hufnagel_valley_cn2(
     h_km = max(altitude_m, 0.0) / 1000.0
     # Calibrated HV turbulence layer (peak ~ 1e-13 night, ~1e-12 day).
     layer_coeff = 1.0e-12 if is_night else 1.0e-11
-    layer = layer_coeff * (wind_speed / 21.0) ** 2 * (h_km / 10.0) ** 10 * np.exp(-h_km / 1.2)
+    layer = (
+        layer_coeff
+        * (wind_speed / 21.0) ** 2
+        * (h_km / 10.0) ** 10
+        * np.exp(-h_km / 1.2)
+    )
     # Background clear-air profile (day/night differ mainly in ground strength).
     if is_night:
         background = 1.0e-15 * np.exp(-h_km / 3.0)
@@ -91,12 +94,7 @@ def von_karman_spectrum(
     k1 = 1.0 / inner_scale
     term = (kappa**2 + k0**2) ** (11.0 / 6.0)
     # Kolmogorov core scaled by the von Karman inner/outer cutoffs.
-    spectrum = (
-        0.033
-        * cn2
-        * np.exp(-(kappa**2) / (k1**2))
-        / term
-    )
+    spectrum = 0.033 * cn2 * np.exp(-(kappa**2) / (k1**2)) / term
     return spectrum
 
 
@@ -153,8 +151,12 @@ def scintillation_index(
     beta_squared = 0.5 * rytov_variance(path_cn2, wavelength_m, path_length_m)
     if beta_squared <= 0.0:
         return 0.0
-    term1 = (0.49 * beta_squared) / (1.0 + 1.11 * beta_squared ** (12.0 / 5.0)) ** (7.0 / 5.0)
-    term2 = (0.51 * beta_squared) / (1.0 + 0.69 * beta_squared ** (12.0 / 5.0)) ** (5.0 / 3.0)
+    term1 = (0.49 * beta_squared) / (1.0 + 1.11 * beta_squared ** (12.0 / 5.0)) ** (
+        7.0 / 5.0
+    )
+    term2 = (0.51 * beta_squared) / (1.0 + 0.69 * beta_squared ** (12.0 / 5.0)) ** (
+        5.0 / 3.0
+    )
     return float(np.exp(term1 + term2) - 1.0)
 
 
@@ -254,9 +256,7 @@ class AtmosphericTurbulenceChannel(QuantumChannel):
         self.rytov = rytov_variance(
             self.path_cn2, self.wavelength_m, self.path_length_m
         )
-        self.r0 = fried_parameter(
-            self.path_cn2, self.wavelength_m, self.path_length_m
-        )
+        self.r0 = fried_parameter(self.path_cn2, self.wavelength_m, self.path_length_m)
         # Scintillation loss from the (bounded) Andrews scintillation index,
         # reduced by aperture averaging for larger receivers. A pulse is lost
         # when a deep fade drives its received power below the detection
@@ -266,9 +266,7 @@ class AtmosphericTurbulenceChannel(QuantumChannel):
         )
         aperture_averaging = 1.0 / (1.0 + telescope_diameter_m / max(self.r0, 1e-3))
         self.scintillation_index = float(sigma_i2)
-        self.scintillation_loss = float(
-            min(0.9, sigma_i2 * aperture_averaging * 2.0)
-        )
+        self.scintillation_loss = float(min(0.9, sigma_i2 * aperture_averaging * 2.0))
 
     def _integrate_cn2(self) -> float:
         """Average the HV ``Cn2`` profile over the slant path.
@@ -301,9 +299,7 @@ class AtmosphericTurbulenceChannel(QuantumChannel):
             "wavelength_nm": self.wavelength_nm,
         }
 
-    def transmit(
-        self, qubit: _Pulse, timestamp: float = 0.0
-    ) -> _Pulse | None:
+    def transmit(self, qubit: _Pulse, timestamp: float = 0.0) -> _Pulse | None:
         """Transmit a qubit, applying turbulence scintillation loss first."""
         # Turbulence drop-out is modelled as an additional loss channel on top
         # of the base (Beer-Lambert / geometric) loss.

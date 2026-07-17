@@ -11,7 +11,6 @@ Covers the enhancements requested from the end-to-end stress-test report:
 * LDPC blind protocol variant
 """
 
-import math
 import unittest
 import warnings
 
@@ -20,8 +19,8 @@ import numpy as np
 from qkdpy.core import (
     AtmosphericTurbulenceChannel,
     PNSAttack,
-    Qubit,
     QuantumChannel,
+    Qubit,
     fried_parameter,
     hufnagel_valley_cn2,
     photon_number_splitting_attack,
@@ -38,7 +37,10 @@ from qkdpy.network import (
     link_direction_factor,
     modtran_band_transmittance,
 )
-from qkdpy.protocols import BB84, DecoyStateBB84, MDIQKD
+from qkdpy.protocols import (
+    MDIQKD,
+    DecoyStateBB84,
+)
 
 warnings.filterwarnings("ignore")
 
@@ -88,7 +90,9 @@ class TestPNSAttack(unittest.TestCase):
     def test_static_callable_mirror(self):
         """photon_number_splitting_attack is a drop-in channel callable."""
         ch = QuantumChannel(distance=0.0, loss=0.0)
-        ch.set_eavesdropper(lambda q: photon_number_splitting_attack(q, mean_photon_number=0.1))
+        ch.set_eavesdropper(
+            lambda q: photon_number_splitting_attack(q, mean_photon_number=0.1)
+        )
         # Should not raise; some pulses blocked.
         out = [ch.transmit(Qubit.zero()) for _ in range(200)]
         self.assertTrue(any(o is None for o in out) or True)
@@ -141,7 +145,10 @@ class TestMDIQKD(unittest.TestCase):
         """On a clean channel, MDI-QKD yields a secure key with low QBER."""
         ch = QuantumChannel(distance=0.0, loss=0.0)
         res = MDIQKD(
-            num_qubits=2000, channel_alice=ch, channel_bob=ch, bsm_success_probability=0.5
+            num_qubits=2000,
+            channel_alice=ch,
+            channel_bob=ch,
+            bsm_success_probability=0.5,
         ).execute()
         self.assertTrue(res["is_secure"])
         self.assertLess(res["qber"], 0.05)
@@ -149,9 +156,14 @@ class TestMDIQKD(unittest.TestCase):
 
     def test_noisy_channel_insecure(self):
         """Strong depolarizing noise pushes QBER above the security threshold."""
-        ch = QuantumChannel(distance=0.0, loss=0.0, noise_model="depolarizing", noise_level=0.4)
+        ch = QuantumChannel(
+            distance=0.0, loss=0.0, noise_model="depolarizing", noise_level=0.4
+        )
         proto = MDIQKD(
-            num_qubits=2000, channel_alice=ch, channel_bob=ch, bsm_success_probability=0.5
+            num_qubits=2000,
+            channel_alice=ch,
+            channel_bob=ch,
+            bsm_success_probability=0.5,
         )
         res = proto.execute()
         self.assertGreater(res["qber"], proto.security_threshold)
@@ -160,9 +172,14 @@ class TestMDIQKD(unittest.TestCase):
         """QBER should increase monotonically with channel noise level."""
         qbers = []
         for nl in (0.0, 0.1, 0.2, 0.3):
-            ch = QuantumChannel(distance=0.0, loss=0.0, noise_model="depolarizing", noise_level=nl)
+            ch = QuantumChannel(
+                distance=0.0, loss=0.0, noise_model="depolarizing", noise_level=nl
+            )
             r = MDIQKD(
-                num_qubits=1500, channel_alice=ch, channel_bob=ch, bsm_success_probability=0.5
+                num_qubits=1500,
+                channel_alice=ch,
+                channel_bob=ch,
+                bsm_success_probability=0.5,
             ).execute()
             qbers.append(r["qber"])
         self.assertLess(qbers[0], qbers[-1])
@@ -176,7 +193,12 @@ class TestFiniteKeyDecoy(unittest.TestCase):
         penalties = {}
         for n in (100, 1000, 10000):
             ch = QuantumChannel(distance=10.0, loss_coefficient=0.2)
-            p = DecoyStateBB84(channel=ch, key_length=n // 5, weak_pulse_intensity=0.5, decoy_intensity=0.1)
+            p = DecoyStateBB84(
+                channel=ch,
+                key_length=n // 5,
+                weak_pulse_intensity=0.5,
+                decoy_intensity=0.1,
+            )
             p.execute()
             p.analyze_decoy_states()
             p.calculate_secure_key_rate()
@@ -188,7 +210,9 @@ class TestFiniteKeyDecoy(unittest.TestCase):
     def test_yields_estimated(self):
         """Vacuum/single-photon/error yields are populated and non-negative."""
         ch = QuantumChannel(distance=10.0, loss_coefficient=0.2)
-        p = DecoyStateBB84(channel=ch, key_length=200, weak_pulse_intensity=0.5, decoy_intensity=0.1)
+        p = DecoyStateBB84(
+            channel=ch, key_length=200, weak_pulse_intensity=0.5, decoy_intensity=0.1
+        )
         p.execute()
         ana = p.analyze_decoy_states()
         self.assertGreaterEqual(ana["y1"], 0.0)
@@ -221,10 +245,18 @@ class TestSatelliteDayNight(unittest.TestCase):
     def test_fso_channel_carries_factors(self):
         """FreeSpaceOpticalChannel exposes the new day/night + direction data."""
         pos = SatellitePosition(
-            slant_range_km=500.0, altitude_km=500.0, latitude=0.0, longitude=0.0, elevation_angle=90.0
+            slant_range_km=500.0,
+            altitude_km=500.0,
+            latitude=0.0,
+            longitude=0.0,
+            elevation_angle=90.0,
         )
-        night = FreeSpaceOpticalChannel(pos, wavelength_nm=850.0, is_night=True, link_direction="downlink")
-        day = FreeSpaceOpticalChannel(pos, wavelength_nm=850.0, is_night=False, link_direction="downlink")
+        night = FreeSpaceOpticalChannel(
+            pos, wavelength_nm=850.0, is_night=True, link_direction="downlink"
+        )
+        day = FreeSpaceOpticalChannel(
+            pos, wavelength_nm=850.0, is_night=False, link_direction="downlink"
+        )
         self.assertGreater(day.stray_count_rate, night.stray_count_rate)
         metrics = night.get_channel_metrics()
         self.assertIn("modtran_transmittance", metrics)
@@ -255,7 +287,8 @@ class TestLDPCBlind(unittest.TestCase):
         for i in rng.choice(n, size=int(0.04 * n), replace=False):
             bob[i] = 1 - bob[i]
         kd = KeyDistillation(
-            error_correction_method="ldpc_blind", privacy_amplification_method="universal_hashing"
+            error_correction_method="ldpc_blind",
+            privacy_amplification_method="universal_hashing",
         )
         res = kd.distill(alice, bob, qber=0.04)
         self.assertIn("final_length", res)
