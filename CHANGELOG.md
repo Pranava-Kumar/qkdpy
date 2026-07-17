@@ -2,6 +2,27 @@
 
 All notable changes to this project are documented here.
 
+## [0.6.2] - 2026-07-17
+
+### Added
+
+- Raised test coverage from 73% to 85%: 325+ new tests across 10+ test files
+- Added coverage tests for timing (17 tests, 32%→85%), crypto (20 tests, ~40%→90%+), extended_channels (12 tests, 59%→94%), gate_utils, helpers, qudit, measurements, network_core_extended (78 tests), qpiai_privacy (56 tests)
+- Added `colorama>=0.4.6` as Windows dependency to fix import crash with structlog's `ConsoleRenderer(colors=True)`
+- Added `qiskit` and `qpiai` optional extras to `pyproject.toml`
+- `CHANGELOG.md`: initial Keep-a-Changelog format
+
+### Fixed
+
+- Windows import crash: `colorama.init()` now called before structlog `ConsoleRenderer` initialization
+- PennyLane integration: replaced noise no-op with real `qml.NoiseModel` + `DepolarizingChannel` on `default.mixed`
+- QpiAI `simulate()`: now performs full statevector → probability → bitstring sampling when API key is present
+- Pre-commit: widened exclude pattern for `scripts/blackbox/` diagnostic scripts
+
+### Removed
+
+- Orphaned root-level diagnostic artifacts: `benchmarks/ml_vs_bruteforce.py`, `compile_comprehensive_report.py`, `compile_results.py`
+
 ## [0.6.1] - 2026-07-16
 
 ### Security

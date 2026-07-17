@@ -14,7 +14,7 @@ sys.path.insert(0, os.path.abspath("../src"))
 project = "QKDpy"
 copyright = "2025, Pranava-Kumar"
 author = "Pranava-Kumar"
-release = "0.6.1"
+release = "0.6.2"
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration

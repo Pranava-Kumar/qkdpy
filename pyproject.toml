@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qkdpy"
-version = "0.6.1"
+version = "0.6.2"
 description = "A Python Package for Quantum Key Distribution"
 readme = "README.md"
 license = "Apache-2.0"
@@ -252,6 +252,17 @@ omit = [
     "*/test_*",
     "setup.py",
 ]
+
+[tool.mutmut]
+paths_to_exclude = ["tests/"]
+source_paths = [
+    "src/qkdpy/core/secure_random.py",
+    "src/qkdpy/key_management/advanced_privacy_amplification.py",
+    "src/qkdpy/key_management/key_distillation.py",
+    "src/qkdpy/enterprise/hsm_interface.py",
+    "src/qkdpy/enterprise/audit.py",
+]
+runner = "pytest -q --tb=short -x -c /dev/null --no-header -p no:cacheprovider --ignore-glob=*advanced_crypto* {directory}/test_secure_rng_usage.py {directory}/test_csprng_usage.py {directory}/test_quantum_rng.py {directory}/test_advanced_privacy_amplification.py {directory}/test_key_distillation.py {directory}/test_enterprise.py {directory}/test_enterprise_compliance.py {directory}/test_enterprise_quantum_safe.py {directory}/test_security_comprehensive.py {directory}/test_quantum_auth.py {directory}/test_security_analysis_coverage.py"
 
 [tool.coverage.report]
 exclude_lines = [

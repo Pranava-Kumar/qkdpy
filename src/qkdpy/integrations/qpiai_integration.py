@@ -171,16 +171,16 @@ class QpiAIIntegration:
         """Create a circuit for Bell state (entangled pair) generation.
 
         Args:
-            state_type: Type of Bell state: '|Ψ+>', '|Ψ->', '|Φ+>', '|Φ->'
+            state_type: Type of Bell state: ``|Ψ+>``, ``|Ψ->``, ``|Φ+>``, ``|Φ->``
 
         Returns:
             Tuple of (QpiAI Circuit, description string)
         """
         descriptions = {
-            "|Ψ+>": "|01⟩ + |10⟩",
-            "|Ψ->": "|01⟩ - |10⟩",
-            "|Φ+>": "|00⟩ + |11⟩",
-            "|Φ->": "|00⟩ - |11⟩",
+            "|Ψ+>": "│01⟩ + │10⟩",
+            "|Ψ->": "│01⟩ - │10⟩",
+            "|Φ+>": "│00⟩ + │11⟩",
+            "|Φ->": "│00⟩ - │11⟩",
         }
 
         circuit = Circuit(2, 2)
@@ -200,7 +200,7 @@ class QpiAIIntegration:
     def create_ghz_circuit(self, num_qubits: int = 3) -> Circuit:
         """Create a circuit for GHZ state generation.
 
-        GHZ state: (|0...0⟩ + |1...1⟩)/√2 for multi-party QKD.
+        GHZ state: (``|0...0>`` + ``|1...1>``)/sqrt(2) for multi-party QKD.
 
         Args:
             num_qubits: Number of qubits (>= 2)

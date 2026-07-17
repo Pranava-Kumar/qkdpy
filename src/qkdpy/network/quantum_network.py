@@ -98,6 +98,17 @@ class SimpleGraph:
     def neighbors(self, node: Any) -> set[Any]:
         return self.adjacency_list.get(node, set())
 
+    def remove_node(self, node: Any) -> None:
+        """Remove a node and all its edges from the graph."""
+        if node in self.adjacency_list:
+            # Remove this node from all neighbors' adjacency sets
+            for neighbor in self.adjacency_list[node]:
+                if neighbor in self.adjacency_list:
+                    self.adjacency_list[neighbor].discard(node)
+            # Remove the node itself
+            del self.adjacency_list[node]
+        self._node_attrs.pop(node, None)
+
 
 def simple_dijkstra_path(graph: SimpleGraph, source: Any, target: Any) -> list[Any]:
     """Simple implementation of Dijkstra's algorithm."""
