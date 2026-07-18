@@ -24,7 +24,6 @@ language = "en"
 
 extensions = [
     "sphinx.ext.autodoc",
-    "sphinx.ext.viewcode",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "myst_parser",
@@ -48,6 +47,14 @@ exclude_patterns = [
     ".DS_Store",
     "source/*",
     "source/**/*",
+    # Engineering / maintainer-only material. Lives in the repo for the
+    # developer and AI agents but is not exposed on the public Pages
+    # site because it carries internal architecture sources, raw
+    # diagram code, and the open-core / commercial tier details.
+    "decisions/*",
+    "diagrams/*.md",
+    "OPEN_CORE.md",
+    "NEXT_STEPS.md",
 ]
 
 # -- Options for HTML output -------------------------------------------------
