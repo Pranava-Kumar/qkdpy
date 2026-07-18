@@ -182,7 +182,9 @@ class BB84(BaseProtocol):
 
         # Calculate QBER
         qber = errors / sample_size
-        print(f"BB84 Estimated QBER: {qber}")
+        # No stdout print here: QBER is surfaced via the structured
+        # qber_diagnostic log record (see BaseProtocol.execute) and the
+        # protocol result dict, keeping library execution silent.
         return qber
 
     def _get_security_threshold(self) -> float:

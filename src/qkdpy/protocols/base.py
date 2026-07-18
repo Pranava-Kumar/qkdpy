@@ -170,7 +170,8 @@ class BaseProtocol(ABC):
                 qber=qber,
                 threshold=self._get_security_threshold(),
                 key_size=len(alice_sifted),
-                distance_km=getattr(self.channel, "distance_km", None),
+                distance_km=getattr(self.channel, "distance_km", None)
+                or getattr(self.channel, "distance", None),
             )
 
             # Step 6: Error correction
@@ -331,21 +332,28 @@ class BaseProtocol(ABC):
         return result
 
     def _estimate_eve_information(self, qber: float) -> float:
-        """Estimate the amount of information Eve has based on QBER.
+        """Estimate the upper bound on information Eve holds, given the QBER.
 
         Args:
             qber: Quantum Bit Error Rate
 
         Returns:
-            Estimated fraction of information leaked to Eve
+            Estimated fraction of information leaked to Eve.
 
+        The naive ``min(1.0, 2 * qber)`` heuristic overestimates Eve's
+        knowledge (it can exceed the actual error fraction for small QBER and
+        is not grounded in the protocol's information theory). For BB84 against
+        the most general collective attack, the Devetak-Winter bound gives
+        Eve's accessible information as the binary entropy of the QBER,
+        ``h2(qber) = -qber log2(qber) - (1-qber) log2(1-qber)``. This is a
+        provable *upper* bound and is always conservative (h2(q) <= q for
+        q in (0, 1)), so it never under-amplifies privacy.
         """
-        # This is a simplified model
-        # In a real implementation, this would depend on the specific protocol and attack model
+        if qber <= 0.0 or qber >= 1.0:
+            return 0.0 if qber <= 0.0 else 1.0
+        from math import log2
 
-        # For BB84, the relationship between QBER and Eve's information is well-studied
-        # For simplicity, we'll use a linear model here
-        return min(1.0, qber * 2)
+        return float(-qber * log2(qber) - (1.0 - qber) * log2(1.0 - qber))
 
     @abstractmethod
     def _get_security_threshold(self) -> float:

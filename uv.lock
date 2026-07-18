@@ -2395,7 +2395,7 @@ wheels = [
 
 [[package]]
 name = "qkdpy"
-version = "0.6.3"
+version = "0.6.4"
 source = { editable = "." }
 dependencies = [
     { name = "colorama", marker = "sys_platform == 'win32'" },

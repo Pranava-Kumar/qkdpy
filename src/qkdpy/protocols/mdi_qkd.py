@@ -45,6 +45,7 @@ class MDIQKD(BaseProtocol):
         num_qubits: int = 1000,
         channel_alice: QuantumChannel | None = None,
         channel_bob: QuantumChannel | None = None,
+        channel: QuantumChannel | None = None,
         bsm_success_probability: float = 0.5,
         security_threshold: float = 0.11,
         misalignment_error: float = 0.01,
@@ -63,6 +64,12 @@ class MDIQKD(BaseProtocol):
             random_basis: If True, Alice and Bob each pick a random basis per
                 pulse (standard BB84-style); otherwise fixed Z basis.
         """
+        # Accept ``channel`` as a polymorphic alias for ``channel_alice`` so
+        # MDIQKD can be instantiated like any other BaseProtocol subclass
+        # (protocol-agnostic code passes ``channel=...``).
+        if channel is not None and channel_alice is None:
+            channel_alice = channel
+
         super().__init__(
             channel=channel_alice or QuantumChannel(), key_length=num_qubits
         )

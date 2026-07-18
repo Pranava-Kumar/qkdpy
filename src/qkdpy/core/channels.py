@@ -70,6 +70,14 @@ class QuantumChannel:
         self.noise_model = noise_model
         self.noise_level = noise_level
 
+        # If the caller set a positive noise_level but left the model at the
+        # default "none", the noise would silently have no effect. Promote the
+        # implicit noise to a depolarizing channel so a standalone
+        # ``QuantumChannel(noise_level=p)`` actually perturbs transmitted qubits
+        # (fixes the "noise_level has zero effect" audit finding).
+        if self.noise_model == "none" and self.noise_level > 0.0:
+            self.noise_model = "depolarizing"
+
         # Calculate initial loss based on distance and loss coefficient
         if loss is not None:
             self.loss = max(0.0, min(1.0, loss))
@@ -86,6 +94,15 @@ class QuantumChannel:
 
         # Thermal noise contribution based on temperature
         self.thermal_noise_factor = self._calculate_thermal_noise()
+
+    @property
+    def distance_km(self) -> float:
+        """Channel distance in kilometres (alias of :attr:`distance`).
+
+        Exposed so diagnostics that look up ``distance_km`` resolve correctly
+        instead of reading ``None``.
+        """
+        return self.distance
 
     def _calculate_loss_from_distance(self) -> float:
         """Calculate photon loss based on distance and loss coefficient.
