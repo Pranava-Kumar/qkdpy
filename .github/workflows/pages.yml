@@ -50,7 +50,7 @@ jobs:
           tail -n 50 sphinx-build.log
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v3
+        uses: actions/upload-pages-artifact@v5
         with:
           path: docs/_build
 
