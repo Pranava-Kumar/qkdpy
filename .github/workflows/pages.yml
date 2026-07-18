@@ -1,0 +1,65 @@
+name: Build and deploy GitHub Pages
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Allow only one deployment per ref at a time
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+# Pages needs write on contents (for legacy deploy) and on id-token for
+# the OIDC-verified deployment to Pages via actions/deploy-pages.
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+env:
+  UV_SYSTEM_PYTHON: true
+
+jobs:
+  build:
+    name: Build Sphinx site
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          version: "latest"
+          enable-cache: true
+
+      - name: Install docs dependencies
+        run: uv pip install --system ".[docs]"
+
+      - name: Build site with Sphinx
+        run: |
+          uv run sphinx-build -b html docs docs/_build -W --keep-going
+          touch docs/_build/.nojekyll
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/_build
+
+  deploy:
+    name: Deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Deploy to GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

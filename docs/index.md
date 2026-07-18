@@ -1,6 +1,14 @@
 # QKDpy Documentation
 
-Welcome to the documentation for **QKDpy**, a production-grade Python library for Quantum Key Distribution simulations at the intersection of **Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**.
+Welcome to the documentation for **QKDpy**, a Python library for **Quantum Key Distribution simulation** at the intersection of **Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**.
+
+> **Status & Scope.** QKDpy is a *research / educational simulator*. It
+> models QKD protocols, channels, and attacks with phenomenological
+> approximations. It is **not** validated for securing real key material
+> and **not** a hardened, standards-compliant codec. See the
+> [Status & Scope section in the README](https://github.com/Pranava-Kumar/qkdpy#-status--scope)
+> for the precise maturity level and [](OPEN_CORE.md) for what ships
+> FREE vs what is gated.
 
 ## Key Capabilities
 
@@ -10,7 +18,7 @@ Welcome to the documentation for **QKDpy**, a production-grade Python library fo
 | **QKD Protocols** | 10+ protocols (BB84, E91, CV-QKD, HD-QKD, B92, SARG04, SixState, DI-QKD) |
 | **AI/ML** | Bayesian optimization, neural network predictors, anomaly detection, adaptive protocols |
 | **Enterprise** | Three-tier licensing (FREE/ENTERPRISE/PREMIUM), compliance checking, HSM integration, audit logging |
-| **Observability** | Structured instrumentation via OperationSpan, @instrument decorator, domain-specific events |
+| **Observability** | Structured instrumentation via `OperationSpan`, `@instrument` decorator, domain-specific events |
 | **Quantum-Safe** | Crypto inventory assessment, risk scoring, phased migration roadmap (PREMIUM) |
 
 ## Contents
@@ -23,6 +31,8 @@ installation
 quickstart
 api
 examples
+OPEN_CORE
+NEXT_STEPS
 ```
 
 ## Architecture Decisions

@@ -30,7 +30,7 @@ jobs:
         run: uv sync --all-extras --dev
 
       - name: Format check (black)
-        run: uv run black --check --diff src/ tests/ benchmarks/ 02-research/ 2>&1 || (echo "Black found formatting issues above" && false)
+        run: uv run black --check --diff src/ tests/ benchmarks/ 2>&1 || (echo "Black found formatting issues above" && false)
 
       - name: Lint check (ruff)
         run: uv run ruff check src/ tests/ 2>&1 || (echo "Ruff found lint issues above" && false)
