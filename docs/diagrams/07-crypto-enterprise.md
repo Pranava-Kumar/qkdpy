@@ -144,32 +144,3 @@ graph TD
 
 
 ![07-crypto-enterprise — c](07-crypto-enterprisec.png)
-
-
-flowchart LR
-    subgraph COM["Community 🆓"]
-        COM_F["• BB84, B92, E91 protocols"]
-        COM_C["• Core quantum simulation"]
-        COM_K["• Basic key management"]
-        COM_V["• Visualization tools"]
-    end
-
-    subgraph PRO["Professional 💳"]
-        PRO_F["• All community features"]
-        PRO_C["• CV-QKD, HD-QKD, SARG04"]
-        PRO_K["• Advanced error correction"]
-        PRO_M["• ML optimizers"]
-        PRO_I["• Framework integrations"]
-    end
-
-    subgraph ENT["Enterprise 🏢"]
-        ENT_F["• All professional features"]
-        ENT_C["• HSM interface (PKCS#11)"]
-        ENT_K["• Compliance frameworks"]
-        ENT_A["• Audit logging"]
-        ENT_Q["• Quantum-safe migration"]
-        ENT_S["• Satellite QKD simulation"]
-        ENT_N["• Quantum network simulation"]
-    end
-
-    COM --> PRO --> ENT

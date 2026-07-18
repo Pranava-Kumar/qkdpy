@@ -215,36 +215,3 @@ flowchart TD
 
 
 ![04-key-management-pipeline — e](04-key-management-pipelinee.png)
-
-
-flowchart TD
-    subgraph KM["KeyManager"]
-        KM_STATE["state: dict<br/>tracks keys by protocol run"]
-        KM_GEN["generate_key(protocol, params)"]
-        KM_STORE["store_key(key_id, key)"]
-        KM_RETRIEVE["retrieve_key(key_id)"]
-        KM_ROTATE["rotate_key(key_id)"]
-        KM_DELETE["delete_key(key_id)"]
-    end
-
-    subgraph Protocols_KM["QKD Protocols"]
-        BB84_KM["BB84"]
-        E91_KM["E91"]
-        CV_KM["CV-QKD"]
-    end
-
-    subgraph Pipeline["Distillation Pipeline"]
-        KD_KM["KeyDistillation"]
-        EC_KM["ErrorCorrection"]
-        PA_KM["PrivacyAmplification"]
-    end
-
-    subgraph Storage["Key Storage"]
-        MEM["In-memory cache"]
-        DB["(Future) Key Store DB"]
-    end
-
-    KM -->|runs| Protocols_KM
-    KM -->|distills| Pipeline
-    KM -->|stores| Storage
-    EC_KM --> PA_KM

@@ -178,23 +178,3 @@ flowchart LR
 
 
 ![08-ml-optimization — e](08-ml-optimizatione.png)
-
-
-flowchart TD
-    MON["Monitor channel conditions<br/>QBER, loss rate, time of day"]
-    PRED["Predict expected performance<br/>for each protocol"]
-    SELECT["Select optimal protocol<br/>based on current conditions"]
-    EXEC["Execute selected protocol"]
-    ADAPT["Adapt parameters in real-time<br/>ML model adjusts thresholds"]
-
-    MON -->|data| PRED
-    PRED -->|scores| SELECT
-    SELECT --> EXEC
-    EXEC -->|results| ADAPT
-    ADAPT -->|updated params| MON
-
-    style MON fill:#e3f2fd,stroke:#1565c0
-    style PRED fill:#e8eaf6,stroke:#283593
-    style SELECT fill:#c8e6c9,stroke:#2e7d32
-    style EXEC fill:#fff3e0,stroke:#e65100
-    style ADAPT fill:#fce4ec,stroke:#c62828

@@ -198,26 +198,3 @@ graph TD
 
 
 ![10-api-surface — e](10-api-surfacee.png)
-
-
-flowchart LR
-    subgraph Config["Configuration Sources"]
-        CFG1["config.py<br/>DefaultConfig class"]
-        CFG2["Environment variables<br/>(QKDPY_*)"]
-        CFG3["User kwargs at init"]
-    end
-
-    subgraph Resolved["Resolved Configuration"]
-        RC1["Hashing algorithm"]
-        RC2["Security parameter s"]
-        RC3["Default protocol parameters"]
-        RC4["Logging level"]
-        RC5["HSM configuration"]
-    end
-
-    CFG1 -->|default| RC1
-    CFG2 -->|override| RC1
-    CFG3 -->|final override| RC1
-
-    style Config fill:#e3f2fd,stroke:#1565c0
-    style Resolved fill:#c8e6c9,stroke:#2e7d32

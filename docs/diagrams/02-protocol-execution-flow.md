@@ -174,24 +174,3 @@ flowchart TD
 
 
 ![02-protocol-execution-flow — d](02-protocol-execution-flowd.png)
-
-
-flowchart LR
-    subgraph Alice_CV["Alice (CV-QKD)"]
-        A_CV1["Generate coherent states<br/>Gaussian modulated"]
-        A_CV2["Send quadrature states<br/>X and P amplitudes"]
-    end
-
-    subgraph Channel_CV["Fiber/Freespace Channel"]
-        C_CV1["Phase noise"]
-        C_CV2["Excess noise ξ"]
-        C_CV3["Channel transmittance T"]
-    end
-
-    subgraph Bob_CV["Bob (Homodyne Detection)"]
-        B_CV1["Randomly choose X or P quadrature"]
-        B_CV2["Homodyne/heterodyne detection"]
-        B_CV3["Reverse reconciliation"]
-    end
-
-    A_CV1 --> A_CV2 --> Channel_CV --> B_CV1 --> B_CV2 --> B_CV3

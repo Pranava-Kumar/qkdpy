@@ -23,7 +23,6 @@ language = "en"
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
 
 extensions = [
-    "sphinx.ext.autodoc",
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "myst_parser",
@@ -47,14 +46,12 @@ exclude_patterns = [
     ".DS_Store",
     "source/*",
     "source/**/*",
-    # Engineering / maintainer-only material. Lives in the repo for the
-    # developer and AI agents but is not exposed on the public Pages
-    # site because it carries internal architecture sources, raw
-    # diagram code, and the open-core / commercial tier details.
-    "decisions/*",
-    "diagrams/*.md",
+    # Internal / governance documents. These stay on disk for the
+    # maintainer and AI agents' reference but are intentionally NOT
+    # compiled into the public-facing Pages site.
     "OPEN_CORE.md",
     "NEXT_STEPS.md",
+    "decisions/*",
 ]
 
 # -- Options for HTML output -------------------------------------------------

@@ -165,29 +165,3 @@ flowchart TD
 
 
 ![09-data-flow — d](09-data-flowd.png)
-
-
-flowchart LR
-    subgraph Events["Instrumented Events"]
-        E1["OperationSpan:<br/>• protocol.execute.BB84<br/>• protocol.execute.E91<br/>• error_correction.cascade"]
-        E2["record_protocol_execution()"]
-        E3["record_qber_diagnostic()"]
-    end
-
-    subgraph Metrics["Collected Metrics"]
-        M1["Protocol name"]
-        M2["Key length (requested)"]
-        M3["QBER value"]
-        M4["Final key size"]
-        M5["Is secure"]
-        M6["Duration (ms)"]
-        M7["Channel stats"]
-    end
-
-    subgraph OutputObs["Observability Output"]
-        O1["Console logging"]
-        O2["Structured metrics dict"]
-        O3["Span hierarchy for debugging"]
-    end
-
-    Events --> Metrics --> OutputObs

@@ -134,34 +134,3 @@ graph TB
 
 
 ![05-network-satellite-qkd — d](05-network-satellite-qkdd.png)
-
-
-flowchart TD
-    subgraph RN["RealisticQuantumNetwork"]
-        RN_NODES["Nodes: list of QuantumNetworkNode"]
-        RN_LINKS["Links: (node_i, node_j, distance, loss)"]
-        RN_CHANNELS["Channels: per-link QuantumChannel instances"]
-        RN_ROUTING["Routing table (Dijkstra on loss)"]
-    end
-
-    subgraph NodeConfig["Node Configuration"]
-        NC_DETECTORS["Detector array"]
-        NC_SOURCE["Photon source"]
-        NC_MEMORY["Quantum memory (if available)"]
-        NC_CLASSICAL["Classical communication link"]
-    end
-
-    subgraph Process["Key Establishment Process"]
-        P1["Select path via routing"]
-        P2["Establish per-hop QKD"]
-        P3["Forward keys via trusted relays"]
-        P4["End-to-end key distillation"]
-    end
-
-    RN_NODES --> NodeConfig
-    RN_LINKS --> RN_CHANNELS
-    RN --> Process
-
-    style RN fill:#e3f2fd,stroke:#0d47a1
-    style NodeConfig fill:#e8f5e9,stroke:#1b5e20
-    style Process fill:#d1c4e9,stroke:#4527a0

@@ -282,23 +282,3 @@ flowchart LR
 
 
 ![03-core-quantum-stack — e](03-core-quantum-stacke.png)
-
-
-graph TD
-    subgraph States["Qubit States on Bloch Sphere"]
-        ZERO["|0⟩ = (0,0,1)<br/>Computational 0"]
-        ONE["|1⟩ = (0,0,-1)<br/>Computational 1"]
-        PLUS["|+⟩ = (1,0,0)<br/>Hadamard 0"]
-        MINUS["|-⟩ = (-1,0,0)<br/>Hadamard 1"]
-        YPLUS["|y+⟩ = (0,1,0)<br/>Circular 0"]
-        YMINUS["|y-⟩ = (0,-1,0)<br/>Circular 1"]
-    end
-
-    subgraph Gates["Gate Rotations"]
-        RX["Rx(θ): rotate around X axis<br/>[[cos(θ/2), -i·sin(θ/2)],<br/>[-i·sin(θ/2), cos(θ/2)]]"]
-        RY["Ry(θ): rotate around Y axis<br/>[[cos(θ/2), -sin(θ/2)],<br/>[sin(θ/2), cos(θ/2)]]"]
-        RZ["Rz(θ): rotate around Z axis<br/>[[e^(-iθ/2), 0],<br/>[0, e^(iθ/2)]]"]
-        H["H: X ↦ Z basis swap<br/>[[1,1],[1,-1]]/√2"]
-    end
-
-    States -.->|measurement projects| Gates

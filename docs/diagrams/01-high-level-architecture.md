@@ -198,28 +198,3 @@ graph LR
 
 
 ![01-high-level-architecture — c](01-high-level-architecturec.png)
-
-
-graph TD
-    ROOT["qkdpy/"] --> CORE["core/<br/>Qubit, Qudit, MultiQubit,<br/>Gates, Channels, Detectors,<br/>Measurements, SecureRandom"]
-    ROOT --> PROTO["protocols/<br/>BB84, B92, E91, SARG04,<br/>DI-QKD, CV-QKD, HD-QKD,<br/>DecoyState, TwistedPair"]
-    ROOT --> KM["key_management/<br/>ErrorCorrection, PrivacyAmplification,<br/>KeyDistillation, KeyManager"]
-    ROOT --> CRYPTO["crypto/<br/>QuantumHash, Commitment,<br/>ZK-Proofs, Auth, Encryption"]
-    ROOT --> NET["network/<br/>SatelliteQKD, QuantumNetwork,<br/>MultiPartyQKD"]
-    ROOT --> INTEG["integrations/<br/>Qiskit, PennyLane, Cirq, QpiAI"]
-    ROOT --> ML_DIR["ml/<br/>Optimizer, Predictor,<br/>ModelSelector"]
-    ROOT --> ENT["enterprise/<br/>HSM, Compliance, Audit,<br/>QuantumSafe"]
-    ROOT --> UTILS["utils/<br/>Visualization, Instrumentation,<br/>Logging, Validation"]
-
-
-**Key Design Decisions:**
-
-| Decision | Choice | Rationale |
-|----------|--------|-----------|
-| State representation | Statevector (not density matrix) | Simpler, faster for pure states; density matrix computed on demand |
-| Randomness | CSPRNG (`secrets` module) | All cryptographic randomness uses secure entropy; never `numpy.random` for crypto |
-| Error handling | `Either<ClientException, T>` not used (pure Python) | Exceptions propagate naturally; no Arrow dependency |
-| Protocol orchestration | `BaseProtocol.execute()` template method | Consistent flow across all protocols: prepare → transmit → measure → sift → EC → PA |
-| Integrations | Separate wrappers, not inheritance | Each framework (Qiskit, PennyLane) wrapped independently; no coupling |
-| Noise simulation | Quantum trajectory (statevector unraveling) | Kraus operators applied stochastically; more efficient than full density matrix |
-| Key management | Modular pipeline | EC and PA are independent, composable stages |
