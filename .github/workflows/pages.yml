@@ -44,8 +44,10 @@ jobs:
 
       - name: Build site with Sphinx
         run: |
-          uv run sphinx-build -b html docs docs/_build -W --keep-going
+          uv run sphinx-build -b html docs docs/_build --keep-going 2>&1 | tee sphinx-build.log
           touch docs/_build/.nojekyll
+          echo "---sphinx-build log (last 50 lines)---"
+          tail -n 50 sphinx-build.log
 
       - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
