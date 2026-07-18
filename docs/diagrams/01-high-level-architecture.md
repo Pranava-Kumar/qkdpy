@@ -1,6 +1,12 @@
 # 1. High-Level Architecture
 
-```mermaid
+
+.. image:: 01-high-level-architecturea.png
+   :alt: 01-high-level-architecture (slide a)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 graph TB
     subgraph User["User / Application Layer"]
         API["Public API (qkdpy namespace)"]
@@ -148,11 +154,18 @@ graph TB
     style ML fill:#ede7f6,stroke:#311b92
     style Enterprise fill:#efebe9,stroke:#3e2723
     style Utils fill:#e0f2f1,stroke:#004d40
-```
+-->
+
 
 ## Module Dependency Graph
 
-```mermaid
+
+.. image:: 01-high-level-architectureb.png
+   :alt: 01-high-level-architecture (slide b)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 graph LR
     subgraph Layer1["Layer 1: Quantum Core"]
         CHANNEL_c["QuantumChannel"]
@@ -186,11 +199,18 @@ graph LR
     Layer3 --> Layer4
 
     INTEG["Integrations (Qiskit/PennyLane/Cirq)"] -.->|wraps| Layer1
-```
+-->
+
 
 ## Directory Structure
 
-```mermaid
+
+.. image:: 01-high-level-architecturec.png
+   :alt: 01-high-level-architecture (slide c)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 graph TD
     ROOT["qkdpy/"] --> CORE["core/<br/>Qubit, Qudit, MultiQubit,<br/>Gates, Channels, Detectors,<br/>Measurements, SecureRandom"]
     ROOT --> PROTO["protocols/<br/>BB84, B92, E91, SARG04,<br/>DI-QKD, CV-QKD, HD-QKD,<br/>DecoyState, TwistedPair"]
@@ -201,7 +221,8 @@ graph TD
     ROOT --> ML_DIR["ml/<br/>Optimizer, Predictor,<br/>ModelSelector"]
     ROOT --> ENT["enterprise/<br/>HSM, Compliance, Audit,<br/>QuantumSafe"]
     ROOT --> UTILS["utils/<br/>Visualization, Instrumentation,<br/>Logging, Validation"]
-```
+-->
+
 
 **Key Design Decisions:**
 

@@ -2,7 +2,13 @@
 
 ## Cryptographic Module
 
-```mermaid
+
+.. image:: 07-crypto-enterprisea.png
+   :alt: 07-crypto-enterprise (slide a)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 graph TD
     subgraph QuantumHash["QuantumHash"]
         QH1["sha3_256_hash(data) → bytes"]
@@ -54,11 +60,18 @@ graph TD
         QRNG1["QuantumRNG.generate(num_bits) → list[int]"]
         QRNG2["QuantumRNG.entropy_source() → float"]
     end
-```
+-->
+
 
 ## Enterprise Features
 
-```mermaid
+
+.. image:: 07-crypto-enterpriseb.png
+   :alt: 07-crypto-enterprise (slide b)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 graph TD
     subgraph HSM["HSM Interface (PKCS#11)"]
         HSM1["HSMInterface"]
@@ -132,11 +145,18 @@ graph TD
     style Audit fill:#fff3e0,stroke:#e65100
     style QuantumSafe fill:#fce4ec,stroke:#b71c1c
     style Licensing fill:#f3e5f5,stroke:#4a148c
-```
+-->
+
 
 ## Product Tiers
 
-```mermaid
+
+.. image:: 07-crypto-enterprisec.png
+   :alt: 07-crypto-enterprise (slide c)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 flowchart LR
     subgraph COM["Community 🆓"]
         COM_F["• BB84, B92, E91 protocols"]
@@ -164,4 +184,4 @@ flowchart LR
     end
 
     COM --> PRO --> ENT
-```
+-->

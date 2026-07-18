@@ -9,49 +9,6 @@ import sys
 sys.path.insert(0, os.path.abspath("../src"))
 
 
-def _register_mermaid_alias_to_text(_app):
-    """Best-effort: register ``mermaid`` as a pygments lexer alias.
-
-    ``pygments`` does not ship a ``mermaid`` lexer and the repo's diagram
-    files use triple-backtick ``mermaid`` fences that Pygments then flags
-    with a "Pygments lexer name 'mermaid' is not known" warning. This
-    hook tries to add ``mermaid`` (and ``mmd``) as aliases of ``TextLexer``
-    so the highlighter falls back to plain text. The Pages workflow uses
-    Sphinx **without** ``-W`` so cosmetic warnings do not break the
-    deploy; this is a defence-in-depth pass, not a guarantee.
-    """
-    try:
-        import pygments.lexers
-    except ImportError:
-        return
-
-    text_cls = pygments.lexers.TextLexer
-    try:
-        text_cls.aliases = tuple(set(getattr(text_cls, "aliases", ())) | {"mermaid", "mmd"})  # type: ignore[attr-defined]
-    except AttributeError:
-        return
-
-    special = getattr(pygments.lexers, "SPECIAL_LEXERS", None)
-    if isinstance(special, dict) and "TextLexer" in special:
-        original = special["TextLexer"]
-        try:
-            name, _a, filenames, mimetypes = original
-            special["TextLexer"] = (
-                name,
-                tuple(set(original[1]) | {"mermaid", "mmd"}),
-                filenames,
-                mimetypes,
-            )
-        except (IndexError, TypeError):
-            pass
-
-
-def setup(app):
-    """Sphinx setup hook: register pygments aliases for unused lexer names."""
-    _register_mermaid_alias_to_text(app)
-    return {"version": "1.0", "parallel_read_safe": True}
-
-
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
@@ -71,7 +28,6 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.intersphinx",
     "myst_parser",
-    "sphinxcontrib.mermaid",
 ]
 
 myst_enable_extensions = [

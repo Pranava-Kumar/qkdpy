@@ -2,7 +2,13 @@
 
 ## BaseProtocol.execute() — Template Method Pattern
 
-```mermaid
+
+.. image:: 02-protocol-execution-flowa.png
+   :alt: 02-protocol-execution-flow (slide a)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 sequenceDiagram
     participant Alice as Alice (Sender)
     participant Protocol as BaseProtocol.execute()
@@ -44,11 +50,18 @@ sequenceDiagram
         Protocol->>Protocol: is_secure = True
         Protocol-->>User: Result {final_key, qber, stats}
     end
-```
+-->
+
 
 ## BB84 Protocol (Prepare-and-Measure)
 
-```mermaid
+
+.. image:: 02-protocol-execution-flowb.png
+   :alt: 02-protocol-execution-flow (slide b)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 flowchart TD
     START(["BB84 Execution"])
 
@@ -103,11 +116,18 @@ flowchart TD
     style Sifting fill:#f8bbd0,stroke:#c2185b
     style QBER fill:#ffccbc,stroke:#bf360c
     style PostProc fill:#d1c4e9,stroke:#4527a0
-```
+-->
+
 
 ## E91 Protocol (Entanglement-Based)
 
-```mermaid
+
+.. image:: 02-protocol-execution-flowc.png
+   :alt: 02-protocol-execution-flow (slide c)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 flowchart TD
     START(["E91 Execution"])
 
@@ -159,11 +179,18 @@ flowchart TD
     style BobMeas fill:#c8e6c9,stroke:#2e7d32
     style BellTest fill:#ffccbc,stroke:#bf360c
     style KeyGen fill:#d1c4e9,stroke:#4527a0
-```
+-->
+
 
 ## CV-QKD Protocol (Continuous Variable)
 
-```mermaid
+
+.. image:: 02-protocol-execution-flowd.png
+   :alt: 02-protocol-execution-flow (slide d)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 flowchart LR
     subgraph Alice_CV["Alice (CV-QKD)"]
         A_CV1["Generate coherent states<br/>Gaussian modulated"]
@@ -183,4 +210,4 @@ flowchart LR
     end
 
     A_CV1 --> A_CV2 --> Channel_CV --> B_CV1 --> B_CV2 --> B_CV3
-```
+-->

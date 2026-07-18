@@ -2,7 +2,13 @@
 
 ## Complete QKD Pipeline: Input → Output
 
-```mermaid
+
+.. image:: 09-data-flowa.png
+   :alt: 09-data-flow (slide a)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 flowchart TD
     START(["User calls protocol.execute()"])
 
@@ -87,11 +93,18 @@ flowchart TD
     style PA_PP fill:#ede7f6,stroke:#311b92
     style Output fill:#ffe0b2,stroke:#bf360c
     style ABORT fill:#ffcdd2,stroke:#b71c1c
-```
+-->
+
 
 ## State Evolution Through Pipeline
 
-```mermaid
+
+.. image:: 09-data-flowb.png
+   :alt: 09-data-flow (slide b)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 flowchart LR
     subgraph S1["Step 1: Raw State"]
         ALICE_RAW["Alice raw bits:<br/>[1,0,1,1,0,0,1,0,...]"]
@@ -127,11 +140,18 @@ flowchart LR
     style S2 fill:#e1bee7,stroke:#6a1b9a
     style S3 fill:#c8e6c9,stroke:#2e7d32
     style S4 fill:#ffe0b2,stroke:#e65100
-```
+-->
+
 
 ## Data Type Conversions
 
-```mermaid
+
+.. image:: 09-data-flowc.png
+   :alt: 09-data-flow (slide c)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 flowchart TD
     subgraph Types["Data Through the Pipeline"]
         T1["Random bits (int: 0/1)<br/>→ encoded as qubit amplitudes (complex)"]
@@ -150,11 +170,18 @@ flowchart TD
         K3["Corrected: ~0.5N bits<br/>(same as sifted)"]
         K4["Final: ~0.3N bits<br/>(~300 after privacy amp)"]
     end
-```
+-->
+
 
 ## Instrumentation & Observability
 
-```mermaid
+
+.. image:: 09-data-flowd.png
+   :alt: 09-data-flow (slide d)
+   :width: 100%
+   :align: center
+
+<!-- Original mermaid source retained for editor / GitHub viewers.
 flowchart LR
     subgraph Events["Instrumented Events"]
         E1["OperationSpan:<br/>• protocol.execute.BB84<br/>• protocol.execute.E91<br/>• error_correction.cascade"]
@@ -179,4 +206,4 @@ flowchart LR
     end
 
     Events --> Metrics --> OutputObs
-```
+-->
