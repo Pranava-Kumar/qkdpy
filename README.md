@@ -7,9 +7,16 @@
 [![Tests](https://img.shields.io/badge/tests-610_passing-brightgreen.svg)](#-quick-start)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
-**A production-grade Python library for Quantum Key Distribution at the intersection of Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**
+**A Python library for Quantum Key Distribution simulation at the intersection of Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**
 
-[Features](#-features) • [Satellite QKD](#-satellite-qkd) • [ML Integration](#-ml-integration) • [Observability](#-observability--instrumentation) • [Product Tiers](#-product-tiers) • [Quantum-Safe Migration](#-quantum-safe-migration-toolkit) • [Quick Start](#-quick-start)
+> ⚠️ **This is a simulation / educational library, not a production cryptographic system.**
+> QKDpy models QKD protocols, channels, and attacks with *phenomenological*
+> approximations. It is **not** validated for securing real key material, and
+> its channel/noise/error-correction models are simplified. Do **not** use it to
+> generate or protect production secrets. See [Status & Scope](#-status--scope)
+> for the precise maturity level.
+
+[Features](#-features) • [Status & Scope](#-status--scope) • [Satellite QKD](#-satellite-qkd) • [ML Integration](#-ml-integration) • [Observability](#-observability--instrumentation) • [Product Tiers](#-product-tiers) • [Quantum-Safe Migration](#-quantum-safe-migration-toolkit) • [Quick Start](#-quick-start)
 
 </div>
 
@@ -108,6 +115,30 @@ All QKD protocols follow a template-method pattern defined in `BaseProtocol.exec
 *[Full diagram →](docs/diagrams/10-api-surface.md) — public API overview, sequence diagrams, import map, configuration system*
 
 ---
+
+## 📌 Status & Scope
+
+**Maturity:** Research / educational simulation — **not** a production-grade or
+security-validated QKD system.
+
+QKDpy is suitable for:
+- Learning how QKD protocols work and comparing them
+- Modeling channel loss, noise, turbulence, and eavesdropping qualitatively
+- Enterprise-architecture evaluation (licensing, compliance, audit tooling)
+- Protocol and ML-optimization research
+
+QKDpy is **not** suitable for:
+- Generating or protecting real production key material
+- Validating the security of an actual QKD deployment (QBER is not physically
+  rigorous; channel models are phenomenological, not quantum-optics solvers)
+- Relying on the LDPC error-correction path for a hardened, standards-compliant
+  codec (it uses a simplified belief-propagation path with fallbacks)
+- Treating the enterprise licensing as an anti-piracy / entitlement system (it
+  is a demo gate; opt-in key verification was added in v0.6.6 but is not a full
+  license server)
+
+Known-limitation tracking lives in [docs/OPEN_CORE.md](docs/OPEN_CORE.md) and
+the release notes ([CHANGELOG.md](CHANGELOG.md)).
 
 ## 🌟 Highlights
 

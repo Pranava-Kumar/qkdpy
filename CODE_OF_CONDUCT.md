@@ -56,6 +56,19 @@ Examples of representing our community include using an official e-mail address,
 posting via an official social media account, or acting as an appointed
 representative at an online or offline event.
 
+## Reporting Path
+
+Unacceptable behavior should be reported to the community leaders at
+`contact@qkdpy.org` (see **Enforcement** below for the formal escalation
+ladder). Reports are reviewed promptly and confidentially.
+
+If your concern is a **security vulnerability** — not a community conduct
+issue — please use the project's private security disclosure path
+instead of the conduct channel. Do **not** file it as a public GitHub
+issue before a fix is available. The maintainers treat security reports
+with the same urgency as conduct reports, and a reporter may include
+both in a single message if applicable.
+
 ## Enforcement
 
 Instances of abusive, harassing, or otherwise unacceptable behavior may be

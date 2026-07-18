@@ -85,3 +85,16 @@ test_final_*.txt
 test_output_*.txt
 TEST_RESULTS_COMPREHENSIVE.txt
 scripts/blackbox/outputs/
+
+# ─── Internal planning / commercial research (not for the public repo) ──
+# Pre-monetization / monetization-related material that lives on the
+# maintainer's machine but is not appropriate for the open-source repo.
+projects/qkdpy-commercial/
+02-research/
+audit-comparisons/
+ENHANCEMENT_PLAN.md
+scripts/blackbox/
+
+# ─── Rotating scratch / brainstorm (keep locally, not in the repo)  ──
+01-brainstorm/
+docs/NEXT_STEPS.local.md
