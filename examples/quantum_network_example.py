@@ -90,31 +90,33 @@ def multiparty_qkd_example():
     from qkdpy.network.quantum_network import MultiPartyQKD
 
     # Create a secret to share
+    # In production, never print full key material — log a truncated
+    # verification token (first 4 bits) instead.
     secret = [1, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0, 0, 1, 0, 1, 1]
-    print(f"Original secret: {secret}")
+    print(f"Original secret (truncated): {secret[:4]}... ({len(secret)} bits)")
 
     # Share the secret among 4 parties with threshold 3
     shares = MultiPartyQKD.quantum_secret_sharing(secret, 4, 3)
     print("\nSecret shares for 4 parties (threshold=3):")
     for i, share in enumerate(shares):
-        print(f"  Party {i + 1}: {share}")
+        print(f"  Party {i + 1}: {share[:4]}... ({len(share)} bits)  # truncated")
 
     # Reconstruct the secret with different subsets
     print("\nReconstruction tests:")
 
     # With all 4 shares
     reconstructed_all = MultiPartyQKD.reconstruct_secret(shares)
-    print(f"  With all 4 shares: {reconstructed_all}")
+    print(f"  With all 4 shares: {reconstructed_all[:4]}... ({len(reconstructed_all)} bits)  # truncated")
     print(f"  Correct: {reconstructed_all == secret}")
 
     # With first 3 shares
     reconstructed_3 = MultiPartyQKD.reconstruct_secret(shares[:3])
-    print(f"  With first 3 shares: {reconstructed_3}")
+    print(f"  With first 3 shares: {reconstructed_3[:4]}... ({len(reconstructed_3)} bits)  # truncated")
     print(f"  Correct: {reconstructed_3 == secret}")
 
     # With last 3 shares
     reconstructed_last3 = MultiPartyQKD.reconstruct_secret(shares[1:])
-    print(f"  With last 3 shares: {reconstructed_last3}")
+    print(f"  With last 3 shares: {reconstructed_last3[:4]}... ({len(reconstructed_last3)} bits)  # truncated")
     print(f"  Correct: {reconstructed_last3 == secret}")
 
 

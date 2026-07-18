@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main]
 
+# No write permissions needed for CI — checkout + run tests only
+permissions:
+  contents: read
+
 env:
   UV_SYSTEM_PYTHON: true
 
