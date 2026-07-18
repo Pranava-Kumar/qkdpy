@@ -3,12 +3,9 @@
 ## Public API Overview
 
 
-.. image:: 10-api-surfacea.png
-   :alt: 10-api-surface (slide a)
-   :width: 100%
-   :align: center
+![10-api-surface — a](10-api-surfacea.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 graph TD
     subgraph PublicAPI["QKDpy Public API"]
         subgraph CoreAPI["Core Classes"]
@@ -75,18 +72,14 @@ graph TD
             E3["AuditLogger.log_event(type, data)"]
         end
     end
--->
 
 
 ## Common Usage Pattern: BB84
 
 
-.. image:: 10-api-surfaceb.png
-   :alt: 10-api-surface (slide b)
-   :width: 100%
-   :align: center
+![10-api-surface — b](10-api-surfaceb.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 sequenceDiagram
     participant User as User Code
     participant BB84 as BB84 Protocol
@@ -121,18 +114,14 @@ sequenceDiagram
     Note over BB84: Universal hashing → secure key
 
     BB84-->>User: {final_key, qber, is_secure, channel_stats}
--->
 
 
 ## Common Usage Pattern: Satellite QKD
 
 
-.. image:: 10-api-surfacec.png
-   :alt: 10-api-surface (slide c)
-   :width: 100%
-   :align: center
+![10-api-surface — c](10-api-surfacec.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 sequenceDiagram
     participant User as User Code
     participant SAT as SatelliteQKD
@@ -164,18 +153,14 @@ sequenceDiagram
     end
 
     SAT-->>User: {total_key_bits: 12345, key_rate: 41.2 bit/s,<br/>elevation_profile: [...], peak_elevation: 67.3°}
--->
 
 
 ## Package Import Map
 
 
-.. image:: 10-api-surfaced.png
-   :alt: 10-api-surface (slide d)
-   :width: 100%
-   :align: center
+![10-api-surface — d](10-api-surfaced.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 graph TD
     subgraph Imports["Public Import Paths"]
         IMP1["from qkdpy import Qubit, Qudit"]
@@ -207,18 +192,14 @@ graph TD
     IMP1 -.-> INIT
     IMP2 -.-> INIT
     IMP3 -.-> INIT
--->
 
 
 ## Configuration System
 
 
-.. image:: 10-api-surfacee.png
-   :alt: 10-api-surface (slide e)
-   :width: 100%
-   :align: center
+![10-api-surface — e](10-api-surfacee.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart LR
     subgraph Config["Configuration Sources"]
         CFG1["config.py<br/>DefaultConfig class"]
@@ -240,4 +221,3 @@ flowchart LR
 
     style Config fill:#e3f2fd,stroke:#1565c0
     style Resolved fill:#c8e6c9,stroke:#2e7d32
--->

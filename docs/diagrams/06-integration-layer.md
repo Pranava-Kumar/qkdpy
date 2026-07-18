@@ -3,12 +3,9 @@
 ## Framework Integration Architecture
 
 
-.. image:: 06-integration-layera.png
-   :alt: 06-integration-layer (slide a)
-   :width: 100%
-   :align: center
+![06-integration-layer — a](06-integration-layera.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 graph TB
     subgraph QKDPY["QKDpy Core"]
         QUBIT["Qubit"]
@@ -98,18 +95,14 @@ graph TB
     style CIRQ fill:#fce4ec,stroke:#c62828
     style QPIAI fill:#fff3e0,stroke:#e65100
     style QKDPY fill:#f3e5f5,stroke:#4a148c
--->
 
 
 ## Integration Conversion Flow
 
 
-.. image:: 06-integration-layerb.png
-   :alt: 06-integration-layer (slide b)
-   :width: 100%
-   :align: center
+![06-integration-layer — b](06-integration-layerb.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart LR
     subgraph QKDPY_State["QKDpy State"]
         S1["Qubit(α, β)<br/>state vector [α, β]"]
@@ -140,7 +133,6 @@ flowchart LR
 
     M1 -->|partial_trace_qiskit| QISKIT_State
     M1 -->|partial_trace_cirq| CIRQ_State
--->
 
 
 ## Integration Comparison

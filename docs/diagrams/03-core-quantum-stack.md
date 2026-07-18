@@ -3,12 +3,9 @@
 ## Class Hierarchy
 
 
-.. image:: 03-core-quantum-stacka.png
-   :alt: 03-core-quantum-stack (slide a)
-   :width: 100%
-   :align: center
+![03-core-quantum-stack — a](03-core-quantum-stacka.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 classDiagram
     class Qubit {
         -_state: np.ndarray[complex]
@@ -159,18 +156,14 @@ classDiagram
     QuantumGate <|-- SWAP
 
     QuantumDetector --> DetectorArray : composed in
--->
 
 
 ## Physical Channel Effects
 
 
-.. image:: 03-core-quantum-stackb.png
-   :alt: 03-core-quantum-stack (slide b)
-   :width: 100%
-   :align: center
+![03-core-quantum-stack — b](03-core-quantum-stackb.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph Input["Input Qubit"]
         IQ["|ψ⟩ = α|0⟩ + β|1⟩"]
@@ -221,18 +214,14 @@ flowchart TD
     style Physical fill:#e1bee7,stroke:#6a1b9a
     style NoiseModel fill:#d1c4e9,stroke:#4527a0
     style Output fill:#c8e6c9,stroke:#2e7d32
--->
 
 
 ## Noise Model Kraus Operators
 
 
-.. image:: 03-core-quantum-stackc.png
-   :alt: 03-core-quantum-stack (slide c)
-   :width: 100%
-   :align: center
+![03-core-quantum-stack — c](03-core-quantum-stackc.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 graph TD
     subgraph Depol["Depolarizing Channel"]
         D0["K₀ = √(1-p) · I"]
@@ -256,18 +245,14 @@ graph TD
         PF0 --- PF1
         PF_APPLY["Apply Z with prob p<br/>Decoheres off-diagonals"]
     end
--->
 
 
 ## Security Analysis
 
 
-.. image:: 03-core-quantum-stackd.png
-   :alt: 03-core-quantum-stack (slide d)
-   :width: 100%
-   :align: center
+![03-core-quantum-stack — d](03-core-quantum-stackd.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart LR
     subgraph Metrics["Security Metrics"]
         M1["QBER: Error rate in sample"]
@@ -291,18 +276,14 @@ flowchart LR
 
     Metrics --> Thresholds
     Thresholds --> Attacks
--->
 
 
 ## Bloch Sphere Representation
 
 
-.. image:: 03-core-quantum-stacke.png
-   :alt: 03-core-quantum-stack (slide e)
-   :width: 100%
-   :align: center
+![03-core-quantum-stack — e](03-core-quantum-stacke.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 graph TD
     subgraph States["Qubit States on Bloch Sphere"]
         ZERO["|0⟩ = (0,0,1)<br/>Computational 0"]
@@ -321,4 +302,3 @@ graph TD
     end
 
     States -.->|measurement projects| Gates
--->

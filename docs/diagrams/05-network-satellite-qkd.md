@@ -3,12 +3,9 @@
 ## Satellite QKD Architecture
 
 
-.. image:: 05-network-satellite-qkda.png
-   :alt: 05-network-satellite-qkd (slide a)
-   :width: 100%
-   :align: center
+![05-network-satellite-qkd — a](05-network-satellite-qkda.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph Space["Space Segment"]
         SAT["LEO Satellite (altitude: 300-2000 km)"]
@@ -59,18 +56,14 @@ flowchart TD
     style Channel fill:#fff3e0,stroke:#e65100
     style Ground fill:#e8f5e9,stroke:#1b5e20
     style Orbit fill:#f3e5f5,stroke:#4a148c
--->
 
 
 ## Satellite Pass Simulation
 
 
-.. image:: 05-network-satellite-qkdb.png
-   :alt: 05-network-satellite-qkd (slide b)
-   :width: 100%
-   :align: center
+![05-network-satellite-qkd — b](05-network-satellite-qkdb.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 sequenceDiagram
     participant User as User
     participant SAT_API as SatelliteQKD
@@ -94,18 +87,14 @@ sequenceDiagram
     end
 
     SAT_API-->>User: {total_key_bits, key_rate,<br/>elevation_profile, channel_stats}
--->
 
 
 ## Multi-Party Quantum Network
 
 
-.. image:: 05-network-satellite-qkdc.png
-   :alt: 05-network-satellite-qkd (slide c)
-   :width: 100%
-   :align: center
+![05-network-satellite-qkd — c](05-network-satellite-qkdc.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 graph TB
     subgraph NetworkTopology["Quantum Network Topology"]
         NODE_A["Alice Node<br/>(QKD Source)"]
@@ -139,18 +128,14 @@ graph TB
     style NODE_C fill:#c8e6c9,stroke:#2e7d32
     style NODE_D fill:#ffe0b2,stroke:#e65100
     style NODE_E fill:#ffcdd2,stroke:#c62828
--->
 
 
 ## Realistic Quantum Network Model
 
 
-.. image:: 05-network-satellite-qkdd.png
-   :alt: 05-network-satellite-qkd (slide d)
-   :width: 100%
-   :align: center
+![05-network-satellite-qkd — d](05-network-satellite-qkdd.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph RN["RealisticQuantumNetwork"]
         RN_NODES["Nodes: list of QuantumNetworkNode"]
@@ -180,4 +165,3 @@ flowchart TD
     style RN fill:#e3f2fd,stroke:#0d47a1
     style NodeConfig fill:#e8f5e9,stroke:#1b5e20
     style Process fill:#d1c4e9,stroke:#4527a0
--->

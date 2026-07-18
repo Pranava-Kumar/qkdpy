@@ -3,12 +3,9 @@
 ## QKD Optimizer Architecture
 
 
-.. image:: 08-ml-optimizationa.png
-   :alt: 08-ml-optimization (slide a)
-   :width: 100%
-   :align: center
+![08-ml-optimization — a](08-ml-optimizationa.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph Optimizer["QKDOptimizer"]
         DIR{"Optimization Direction"}
@@ -49,18 +46,14 @@ flowchart TD
     style Parameters fill:#e3f2fd,stroke:#1565c0
     style Metrics fill:#c8e6c9,stroke:#2e7d32
     style Result fill:#fff3e0,stroke:#e65100
--->
 
 
 ## Efficient QKD Predictor
 
 
-.. image:: 08-ml-optimizationb.png
-   :alt: 08-ml-optimization (slide b)
-   :width: 100%
-   :align: center
+![08-ml-optimization — b](08-ml-optimizationb.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph Predictor["EfficientQKDPredictor"]
         NN["Neural Network:<br/>Multi-Layer Perceptron<br/>Hidden: (64, 32, 16)"]
@@ -102,18 +95,14 @@ flowchart TD
     style Features fill:#e3f2fd,stroke:#1565c0
     style Outputs fill:#c8e6c9,stroke:#2e7d32
     style DataSource fill:#fff3e0,stroke:#e65100
--->
 
 
 ## Model Selector
 
 
-.. image:: 08-ml-optimizationc.png
-   :alt: 08-ml-optimization (slide c)
-   :width: 100%
-   :align: center
+![08-ml-optimization — c](08-ml-optimizationc.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph Selector["ModelSelector"]
         SEL_INPUT["Given network conditions"]
@@ -148,18 +137,14 @@ flowchart TD
     Selector --> SEL_EC
     Selector --> SEL_PA
     Selector --> SEL_PROTO
--->
 
 
 ## Knowledge Distillation for Edge Deployment
 
 
-.. image:: 08-ml-optimizationd.png
-   :alt: 08-ml-optimization (slide d)
-   :width: 100%
-   :align: center
+![08-ml-optimization — d](08-ml-optimizationd.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart LR
     subgraph Teacher["Teacher Model<br/>(Full MLP)"]
         T["64 → 32 → 16 → 1<br/>Complex: high accuracy<br/>Slow: ~50ms inference"]
@@ -187,18 +172,14 @@ flowchart LR
     style Student fill:#c8e6c9,stroke:#2e7d32
     style Distill fill:#fff3e0,stroke:#e65100
     style Edge fill:#ffcdd2,stroke:#c62828
--->
 
 
 ## Adaptive Protocol Selection
 
 
-.. image:: 08-ml-optimizatione.png
-   :alt: 08-ml-optimization (slide e)
-   :width: 100%
-   :align: center
+![08-ml-optimization — e](08-ml-optimizatione.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     MON["Monitor channel conditions<br/>QBER, loss rate, time of day"]
     PRED["Predict expected performance<br/>for each protocol"]
@@ -217,4 +198,3 @@ flowchart TD
     style SELECT fill:#c8e6c9,stroke:#2e7d32
     style EXEC fill:#fff3e0,stroke:#e65100
     style ADAPT fill:#fce4ec,stroke:#c62828
--->

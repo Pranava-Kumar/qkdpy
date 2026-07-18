@@ -3,12 +3,9 @@
 ## Full Key Distillation Pipeline
 
 
-.. image:: 04-key-management-pipelinea.png
-   :alt: 04-key-management-pipeline (slide a)
-   :width: 100%
-   :align: center
+![04-key-management-pipeline — a](04-key-management-pipelinea.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     RAW["Raw Key Exchange<br/>Alice: random bits α₁α₂...αₙ<br/>Bob: measured bits β₁β₂...βₙ"]
 
@@ -105,18 +102,14 @@ flowchart TD
     style Toeplitz fill:#ede7f6,stroke:#311b92
     style CryptoHash fill:#ede7f6,stroke:#311b92
     style BennettBrassard fill:#ede7f6,stroke:#311b92
--->
 
 
 ## Error Correction: Cascade Protocol
 
 
-.. image:: 04-key-management-pipelineb.png
-   :alt: 04-key-management-pipeline (slide b)
-   :width: 100%
-   :align: center
+![04-key-management-pipeline — b](04-key-management-pipelineb.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 sequenceDiagram
     participant Alice as Alice Key
     participant Channel as Public Channel
@@ -149,18 +142,14 @@ sequenceDiagram
     end
 
     Note over Alice, Bob: Repeat for all blocks<br/>Then repeat with doubled block sizes<br/>Typically 4 passes total
--->
 
 
 ## LDPC Belief Propagation
 
 
-.. image:: 04-key-management-pipelinec.png
-   :alt: 04-key-management-pipeline (slide c)
-   :width: 100%
-   :align: center
+![04-key-management-pipeline — c](04-key-management-pipelinec.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph Init["Initialization"]
         I1["Build parity-check matrix H (m × n)"]
@@ -189,18 +178,14 @@ flowchart TD
     Init --> Iter
     Iter --> Decision
     Syndrome -->|non-zero| D1
--->
 
 
 ## Privacy Amplification: Toeplitz Hashing
 
 
-.. image:: 04-key-management-pipelined.png
-   :alt: 04-key-management-pipeline (slide d)
-   :width: 100%
-   :align: center
+![04-key-management-pipeline — d](04-key-management-pipelined.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph InputPA["Input"]
         PA_IN["Corrected key k (n bits)"]
@@ -224,18 +209,14 @@ flowchart TD
     end
 
     InputPA --> Matrix --> Multiply --> OutputPA
--->
 
 
 ## Key Manager Orchestration
 
 
-.. image:: 04-key-management-pipelinee.png
-   :alt: 04-key-management-pipeline (slide e)
-   :width: 100%
-   :align: center
+![04-key-management-pipeline — e](04-key-management-pipelinee.png)
 
-<!-- Original mermaid source retained for editor / GitHub viewers.
+
 flowchart TD
     subgraph KM["KeyManager"]
         KM_STATE["state: dict<br/>tracks keys by protocol run"]
@@ -267,4 +248,3 @@ flowchart TD
     KM -->|distills| Pipeline
     KM -->|stores| Storage
     EC_KM --> PA_KM
--->
