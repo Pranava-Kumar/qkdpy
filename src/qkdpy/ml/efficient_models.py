@@ -340,7 +340,7 @@ class EfficientQKDPredictor:
 
         for W in self.weights:
             mask = np.abs(W) < self.pruning_threshold
-            total_pruned += np.sum(mask)
+            total_pruned += int(np.sum(mask))
             total_weights += W.size
             W[mask] = 0.0
 
