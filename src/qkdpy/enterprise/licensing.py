@@ -8,6 +8,9 @@ of silently degraded behaviour.
 
 from __future__ import annotations
 
+import hashlib
+import hmac
+import os
 from collections.abc import Callable
 from enum import StrEnum
 from functools import wraps
@@ -16,6 +19,39 @@ from typing import Any, TypeVar
 from ..exceptions import QKDException
 
 F = TypeVar("F", bound=Callable[..., Any])
+
+# Optional license-key enforcement. By default the tier system is a local demo
+# gate (no anti-piracy). Set ``QKDPY_LICENSE_ENFORCEMENT=1`` to require a valid
+# HMAC-signed license key before a non-FREE tier can be activated — this makes
+# the audit finding (tier set without verification) addressable in deployments
+# that need it.
+LicenseKeyMissing = object()
+
+
+def _enforcement_enabled() -> bool:
+    return os.environ.get("QKDPY_LICENSE_ENFORCEMENT", "0") == "1"
+
+
+def _verify_license_key(tier: ProductTier, license_key: Any) -> bool:
+    """Verify a license key for the requested tier.
+
+    The key must be a string holding ``<tier>:<hmac>`` where ``<hmac>`` is an
+    HMAC-SHA256 of the tier name under the deployment secret
+    (``QKDPY_LICENSE_SECRET``). Without a configured secret the deployment is
+    treated as unlicensed (keys cannot be forged without the secret).
+    """
+    if not isinstance(license_key, str) or ":" not in license_key:
+        return False
+    declared_tier, received_hmac = license_key.split(":", 1)
+    if declared_tier != tier.value:
+        return False
+    secret = os.environ.get("QKDPY_LICENSE_SECRET", "")
+    if not secret:
+        return False
+    expected = hmac.new(
+        secret.encode(), tier.value.encode(), hashlib.sha256
+    ).hexdigest()
+    return hmac.compare_digest(expected, received_hmac)
 
 
 class ProductTier(StrEnum):
@@ -90,18 +126,29 @@ def get_active_tier() -> ProductTier:
     return _active_tier
 
 
-def set_active_tier(tier: ProductTier) -> None:
+def set_active_tier(tier: ProductTier, *, license_key: str | None = None) -> None:
     """Set the active product tier at runtime.
 
     Calling this with a non-FREE tier is the equivalent of activating an
-    enterprise or premium license key.
+    enterprise or premium license.
 
-    WARNING: This build performs NO cryptographic verification of any license
-    key. The tier is an in-memory runtime variable controlled entirely by the
-    caller (or the ``QKDPY_PRODUCT_TIER`` env var). Any operator can set a
-    non-FREE tier without a valid key. Treat this as a local demo gate only —
-    it provides feature availability, not license enforcement or anti-piracy.
+    By default this is a local demo gate: any caller can set a non-FREE tier
+    without a key (no anti-piracy). When ``QKDPY_LICENSE_ENFORCEMENT=1`` is set
+    in the environment, activating a non-FREE tier requires a valid HMAC-signed
+    ``license_key`` (``"<tier>:<hmac>"``) under ``QKDPY_LICENSE_SECRET``;
+    otherwise a ``LicenseError`` is raised.
+
+    Args:
+        tier: The tier to activate.
+        license_key: Optional signed license key. Required for non-FREE tiers
+            when enforcement is enabled.
     """
+    if tier != ProductTier.FREE and _enforcement_enabled():
+        if not _verify_license_key(tier, license_key):
+            raise LicenseError(
+                f"Activating tier '{tier.value}' requires a valid license key. "
+                f"Set QKDPY_LICENSE_ENFORCEMENT=0 to disable enforcement (demo mode)."
+            )
     global _active_tier
     _active_tier = tier
 
