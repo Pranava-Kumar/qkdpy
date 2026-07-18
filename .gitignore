@@ -68,23 +68,14 @@ issues.txt
 # ─── Mutation testing (mutmut) ────────────────────────────
 mutants/
 
-# ─── Architecture diagrams (rendered images / scripts) ────
-docs/diagrams/*.svg
-docs/diagrams/*.png
+# ─── Architecture diagrams ───────────────────────────────
+# PNGs / SVGs ship in the repo because they are the rendered
+# images that docs/diagrams/*.md embeds via ``.. image::``
+# directives — Pages needs them in the artifact. mmd / pdf /
+# the maintainer's local regeneration script stay ignored.
 docs/diagrams/*.mmd
 docs/diagrams/*.pdf
 docs/diagrams/render_diagrams.py
-
-# ─── Generated / diagnostic test artifacts ──────────────────
-# (root-level blackbox scripts are tracked; only their output
-# artefacts are ignored. The scripts themselves live under
-# scripts/blackbox/ now; their PNG / TXT outputs land in
-# scripts/blackbox/outputs/, also ignored.)
-test_*.png
-test_final_*.txt
-test_output_*.txt
-TEST_RESULTS_COMPREHENSIVE.txt
-scripts/blackbox/outputs/
 
 # ─── Internal planning / commercial research (not for the public repo) ──
 # Pre-monetization / monetization-related material that lives on the
