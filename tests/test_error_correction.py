@@ -138,7 +138,9 @@ class TestErrorCorrectionCascade(unittest.TestCase):
         bob[5] = 1 - bob[5]
         bob[23] = 1 - bob[23]
         bob[47] = 1 - bob[47]
-        corrected_a, corrected_b = ErrorCorrection.cascade(alice, bob, iterations=4)
+        corrected_a, corrected_b = ErrorCorrection.cascade(
+            alice, bob, iterations=4, random_permute=False
+        )
         self.assertEqual(corrected_a, corrected_b)
 
 
