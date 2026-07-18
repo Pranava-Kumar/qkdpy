@@ -1,0 +1,106 @@
+# Dependabot configuration for QKDpy
+#
+# Automatically checks for dependency updates and opens pull requests
+# to keep the project's dependencies current and secure.
+#
+# Docs: https://docs.github.com/en/code-security/dependabot/dependabot-version-updates
+
+version: 2
+updates:
+
+  # ── Python (pip) — Core + optional dependencies ──────────────────────────
+  - package-ecosystem: "pip"
+    directory: "/"                        # pyproject.toml lives at repo root
+    schedule:
+      interval: "weekly"                  # Check every Monday
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    # Group non-breaking updates into single PRs to reduce noise
+    groups:
+      core-deps:
+        patterns:
+          - "numpy"
+          - "scipy"
+          - "matplotlib"
+          - "cryptography"
+          - "structlog"
+          - "colorama"
+        update-types:
+          - "minor"
+          - "patch"
+      dev-tools:
+        patterns:
+          - "pytest*"
+          - "black"
+          - "ruff"
+          - "mypy"
+          - "isort"
+          - "bandit"
+          - "pre-commit"
+          - "hatchling"
+          - "build"
+          - "twine"
+        update-types:
+          - "minor"
+          - "patch"
+      docs-build:
+        patterns:
+          - "sphinx"
+          - "sphinx-rtd-theme"
+          - "myst-parser"
+        update-types:
+          - "minor"
+          - "patch"
+      ml-deps:
+        patterns:
+          - "pandas"
+          - "scikit-learn"
+          - "seaborn"
+        update-types:
+          - "minor"
+          - "patch"
+      quantum-framework-integrations:
+        patterns:
+          - "cirq"
+          - "pennylane"
+          - "qiskit"
+          - "qiskit-aer"
+          - "qpiai-quantum"
+        update-types:
+          - "minor"
+          - "patch"
+    # Major-version updates (breaking changes) come as individual PRs
+    # for careful review; grouped PRs cover minor/patch bumps only.
+    open-pull-requests-limit: 10          # Max simultaneous open PRs
+    labels:
+      - "dependencies"
+      - "python"
+    reviewers:
+      - "Pranava-Kumar"
+    assignees:
+      - "Pranava-Kumar"
+
+  # ── GitHub Actions ───────────────────────────────────────────────────────
+  - package-ecosystem: "github-actions"
+    directory: "/"                        # .github/workflows/*.yml
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Etc/UTC"
+    groups:
+      actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    reviewers:
+      - "Pranava-Kumar"
+    assignees:
+      - "Pranava-Kumar"
