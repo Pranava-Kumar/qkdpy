@@ -94,7 +94,7 @@ export QKDPY_LICENSE_ENFORCEMENT=1
 export QKDPY_LICENSE_SECRET="<your-commercial-license-key>"
 ```
 
-When enforcement is on, gated features raise a `LicenseError` if no valid key is found. This is **not** a full license server — see the [Status & Scope](../README.md#-status--scope) section in the README for caveats.
+When enforcement is on, gated features raise a `LicenseError` if no valid key is found. This is **not** a full license server — see the [Status & Scope section in the README](https://github.com/Pranava-Kumar/qkdpy#-status--scope) for caveats.
 
 ---
 

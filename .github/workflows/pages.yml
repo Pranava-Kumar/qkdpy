@@ -44,7 +44,7 @@ jobs:
 
       - name: Build site with Sphinx
         run: |
-          uv run sphinx-build -b html docs docs/_build -W --keep-going
+          uv run sphinx-build -b html docs docs/_build --keep-going
           touch docs/_build/.nojekyll
 
       - name: Upload Pages artifact

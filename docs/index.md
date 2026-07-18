@@ -37,11 +37,33 @@ NEXT_STEPS
 
 ## Architecture Decisions
 
-Key design decisions are documented as Architecture Decision Records (ADRs):
+```{toctree}
+:maxdepth: 1
+:caption: Architecture Decision Records:
 
-- [ADR-001: Product Tier Licensing Model](decisions/ADR-001-product-tier-licensing.md)
-- [ADR-002: Observability and Instrumentation](decisions/ADR-002-observability-and-instrumentation.md)
-- [ADR-003: Enterprise Compliance Architecture](decisions/ADR-003-compliance-architecture.md)
+decisions/ADR-001-product-tier-licensing
+decisions/ADR-002-observability-and-instrumentation
+decisions/ADR-003-compliance-architecture
+decisions/ADR-004-enterprise-hsm-is-software-simulation
+```
+
+## Architecture & Diagrams
+
+```{toctree}
+:maxdepth: 1
+:caption: Diagrams:
+
+diagrams/01-high-level-architecture
+diagrams/02-protocol-execution-flow
+diagrams/03-core-quantum-stack
+diagrams/04-key-management-pipeline
+diagrams/05-network-satellite-qkd
+diagrams/06-integration-layer
+diagrams/07-crypto-enterprise
+diagrams/08-ml-optimization
+diagrams/09-data-flow
+diagrams/10-api-surface
+```
 
 ## Indices and tables
 

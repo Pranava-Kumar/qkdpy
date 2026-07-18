@@ -74,7 +74,7 @@ export QKDPY_PRODUCT_TIER=enterprise   # or premium
 python -c "from qkdpy import set_config; set_config(product_tier='enterprise')"
 ```
 
-See the [Product Tiers](README.md#-product-tiers) section in the README for a full feature comparison.
+See the [Product Tiers section in the README](https://github.com/Pranava-Kumar/qkdpy#-product-tiers) for a full feature comparison.
 
 ## Verify Installation
 

@@ -6,6 +6,7 @@
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://img.shields.io/badge/tests-610_passing-brightgreen.svg)](#-quick-start)
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Documentation](https://github.com/Pranava-Kumar/qkdpy/actions/workflows/pages.yml/badge.svg)](https://pranava-kumar.github.io/qkdpy/)
 
 **A Python library for Quantum Key Distribution simulation at the intersection of Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**
 
