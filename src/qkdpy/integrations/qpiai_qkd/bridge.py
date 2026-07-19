@@ -33,9 +33,21 @@ from ._compat import (
 if qpiai_available():
     from qpiai_quantum import Circuit, Statevector
 else:  # pragma: no cover - import guard
-    Circuit = Statevector = None
+    Circuit = None
+    Statevector = None
 
 __all__ = ["QpiAIIntegration"]
+
+_SDK_INSTALL_HINT = (
+    "The QpiAI Quantum SDK (qpiai_quantum) is not installed. "
+    "Install it with: pip install qkdpy[qpiai]"
+)
+
+
+def _require_sdk() -> None:
+    """Raise :class:`QpiAISDKError` if the QpiAI SDK is not available."""
+    if not qpiai_available():
+        raise QpiAISDKError(_SDK_INSTALL_HINT)
 
 
 class QpiAIIntegration:
@@ -58,6 +70,7 @@ class QpiAIIntegration:
         qkdpy qubits store ``[|0>, |1>]`` amplitudes; that is exactly what a
         QpiAI ``Statevector`` expects.
         """
+        _require_sdk()
         alpha = complex(qubit.state[0])
         beta = complex(qubit.state[1])
         return Statevector([alpha, beta])
@@ -69,6 +82,7 @@ class QpiAIIntegration:
 
     def statevector_from_array(self, data: list[complex]) -> Any:
         """Create a QpiAI Statevector from a list of amplitudes."""
+        _require_sdk()
         return Statevector([complex(x) for x in data])
 
     # ------------------------------------------------------------------ #
@@ -106,6 +120,7 @@ class QpiAIIntegration:
         Returns:
             QpiAI Circuit for BB84.
         """
+        _require_sdk()
         if alice_bases is None:
             alice_bases = [secure_choice(["Z", "X"]) for _ in range(num_qubits)]
         if bob_bases is None:
@@ -139,6 +154,7 @@ class QpiAIIntegration:
         Returns:
             Tuple of (QpiAI Circuit, description string).
         """
+        _require_sdk()
         descriptions = {
             "|Ψ+>": "│01⟩ + │10⟩",
             "|Ψ->": "│01⟩ - │10⟩",
@@ -162,6 +178,7 @@ class QpiAIIntegration:
 
     def create_ghz_circuit(self, num_qubits: int = 3) -> Any:
         """Create a circuit for a GHZ state (|0...0> + |1...1>)/sqrt(2)."""
+        _require_sdk()
         circuit = Circuit(num_qubits, num_qubits)
         circuit.H(0)
         for i in range(1, num_qubits):
@@ -178,6 +195,7 @@ class QpiAIIntegration:
 
         Uses entangled pairs with measurement in Z, X, and W bases.
         """
+        _require_sdk()
         if alice_bases is None:
             alice_bases = [secure_choice(["Z", "X", "W"]) for _ in range(num_pairs)]
         if bob_bases is None:

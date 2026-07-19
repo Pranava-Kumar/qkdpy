@@ -128,13 +128,21 @@ class PrivacyAmplification:
     ) -> list[int]:
         """Privacy amplification using cryptographic hash functions.
 
+        Only collision-resistant hash functions are accepted. SHA-1 and MD5 are
+        rejected because they have known collision attacks that undermine the
+        security guarantees of privacy amplification.
+
         Args:
             key: Binary key to be amplified
             output_length: Desired length of the output key
-            hash_algorithm: Hash algorithm to use ('sha256', 'sha512', etc.)
+            hash_algorithm: Hash algorithm to use ('sha256', 'sha384', 'sha512',
+                'blake2b', 'blake2s'). SHA-1 and MD5 are **not** accepted.
 
         Returns:
             Shortened, more secure key
+
+        Raises:
+            ValueError: If the hash algorithm is unsupported or weak (sha1, md5).
 
         """
         if output_length <= 0:
@@ -147,15 +155,25 @@ class PrivacyAmplification:
             )
         )
 
-        # Choose the hash function
+        # Choose the hash function — only collision-resistant algorithms.
+        # SHA-1 and MD5 are explicitly rejected for privacy amplification because
+        # their known collision weaknesses undermine the leftover hash lemma.
         if hash_algorithm == "sha256":
             hash_func = hashlib.sha256
+        elif hash_algorithm == "sha384":
+            hash_func = hashlib.sha384
         elif hash_algorithm == "sha512":
             hash_func = hashlib.sha512
-        elif hash_algorithm == "sha1":
-            hash_func = hashlib.sha1
-        elif hash_algorithm == "md5":
-            hash_func = hashlib.md5
+        elif hash_algorithm == "blake2b":
+            hash_func = hashlib.blake2b
+        elif hash_algorithm == "blake2s":
+            hash_func = hashlib.blake2s
+        elif hash_algorithm in ("sha1", "md5"):
+            raise ValueError(
+                f"Hash algorithm {hash_algorithm!r} is not permitted for privacy "
+                f"amplification due to known collision weaknesses. "
+                f"Use 'sha256', 'sha384', 'sha512', 'blake2b', or 'blake2s'."
+            )
         else:
             raise ValueError(f"Unsupported hash algorithm: {hash_algorithm}")
 

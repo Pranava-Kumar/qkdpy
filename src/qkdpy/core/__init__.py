@@ -10,6 +10,7 @@ from .atmospheric import (
     von_karman_spectrum,
 )
 from .attacks import PNSAttack, photon_number_splitting_attack
+from .channel_base import ChannelBase
 from .channels import QuantumChannel
 from .detector import DetectorArray, QuantumDetector
 from .extended_channels import ExtendedQuantumChannel
@@ -68,6 +69,7 @@ __all__ = [
     "rytov_variance",
     "scintillation_index",
     "generate_phase_screen",
+    "ChannelBase",
     "QuantumChannel",
     "QuantumDetector",
     "DetectorArray",

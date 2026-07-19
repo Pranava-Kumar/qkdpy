@@ -1,6 +1,6 @@
 """Multi-qubit state representation and manipulation."""
 
-from typing import Optional
+from __future__ import annotations
 
 import numpy as np
 
@@ -242,7 +242,7 @@ class MultiQubitState:
         # Apply the gate (for single qubit case)
         self._state = full_gate @ self._state
 
-    def measure(self, target_qubit: int) -> tuple[int, Optional["MultiQubitState"]]:
+    def measure(self, target_qubit: int) -> tuple[int, "MultiQubitState" | None]:
         """Measure a specific qubit in the computational basis.
 
         Args:
