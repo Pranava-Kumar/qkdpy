@@ -29,6 +29,16 @@ CIRQ_AVAILABLE = _try_import("cirq_integration", "CirqIntegration")
 PENNYLANE_AVAILABLE = _try_import("pennylane_integration", "PennyLaneIntegration")
 QPIAI_AVAILABLE = _try_import("qpiai_integration", "QpiAIIntegration")
 
+# Standing companion subpackage (qkdpy[qpiai]). Importable as
+# ``from qkdpy.integrations.qpiai_qkd import QpiAIIntegration``.
+try:
+    from . import qpiai_qkd as qpiai_qkd
+
+    QPIAI_QKD_AVAILABLE = True
+except Exception:  # noqa: BLE001 - surface real bugs, don't mask them
+    logger.exception("Failed to import qpiai_qkd companion")
+    QPIAI_QKD_AVAILABLE = False
+
 __all__ = []
 
 if QISKIT_AVAILABLE:
@@ -42,3 +52,6 @@ if PENNYLANE_AVAILABLE:
 
 if QPIAI_AVAILABLE:
     __all__.append("QpiAIIntegration")
+
+if QPIAI_QKD_AVAILABLE:
+    __all__.append("qpiai_qkd")
