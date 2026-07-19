@@ -95,12 +95,12 @@ import os
 os.environ["QKDPY_PRODUCT_TIER"] = "enterprise"
 
 from qkdpy.enterprise import (
-    ComplianceChecker,
+    ConfigAudit,
     ComplianceStandard,
 )
 
-# Initialize compliance checker
-checker = ComplianceChecker()
+# Initialize config audit
+checker = ConfigAudit()
 
 # Run checks against multiple standards
 report = checker.check_compliance([

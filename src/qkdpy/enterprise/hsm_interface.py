@@ -64,9 +64,43 @@ class HSMProvider(Enum):
     providers were previously advertised as stubs; that over-promised support
     that does not exist, so they have been removed rather than shipped as
     NotImplementedError traps.
+
+    ``hardware_backed`` records whether the provider actually runs on dedicated
+    hardware (a real HSM). It is the single source of truth for
+    ``_hsm_is_hardware_backed`` — no provider in this build sets it, so that
+    function fails closed instead of lying that software keys are "hardware".
     """
 
     SOFTWARE = "software"  # Software-based in-memory simulation (NOT production-grade)
+
+    @property
+    def hardware_backed(self) -> bool:
+        """True only for providers that run on dedicated hardware."""
+        # No hardware-backed provider exists in this build. If a PKCS#11 / cloud
+        # provider is added later, set ``hardware_backed`` on its member.
+        return False
+
+
+def _hsm_is_hardware_backed(provider: HSMProvider | None = None) -> bool:
+    """Return True only if an actual hardware-backed HSM is in use.
+
+    This is a real capability check, not a constant: it inspects the active
+    provider rather than returning a hardcoded value. A compliant FIPS/ETSI
+    "HSM backed" result must prove hardware backing, so this fails closed
+    (``False``) for the software simulation that is the only provider here, and
+    for any ``None``/missing provider.
+
+    Args:
+        provider: The active HSM provider. If omitted, the provider configured
+            in the environment-derived HSM backend is used.
+    """
+    if provider is None:
+        raw = os.environ.get("QKDPY_HSM_PROVIDER", HSMProvider.SOFTWARE.value)
+        try:
+            provider = HSMProvider(raw)
+        except ValueError:
+            return False
+    return provider.hardware_backed
 
 
 @dataclass

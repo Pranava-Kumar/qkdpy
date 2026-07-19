@@ -1,7 +1,7 @@
-"""Compliance checking and reporting for QKDpy.
+"""Config auditing and reporting for QKDpy.
 
-This module provides automated compliance checks against security
-standards and generates compliance reports.
+This module provides automated configuration audits against security
+standards and generates audit reports.
 """
 
 from dataclasses import dataclass
@@ -16,6 +16,7 @@ from ..config import (
     get_config,
 )
 from ..utils.logging_config import get_logger
+from .hsm_interface import HSMProvider, _hsm_is_hardware_backed
 
 logger = get_logger(__name__)
 
@@ -28,17 +29,13 @@ logger = get_logger(__name__)
 # in-memory simulation that is explicitly NOT production-grade. We therefore must
 # not auto-mark "FIPS/HSM compliant" from the config flag alone. A compliant
 # FIPS/ETSI result requires a hardware-backed provider, which does not exist here.
-def _hsm_is_hardware_backed(config: QKDConfig) -> bool:
-    """Return True only if an actual hardware-backed HSM is in use.
-
-    Returns False in this build because only ``HSMProvider.SOFTWARE`` (a sim)
-    is implemented. Placeholder for when real providers are added: they would be
-    checked here and must fail closed (False) until proven hardware-backed.
-    """
-    if not config.enterprise.enable_hsm:
-        return False
-    # SoftwareHSM is a simulation, never hardware. Fail closed.
-    return False
+#
+# ``_hsm_is_hardware_backed`` lives in ``hsm_interface`` and performs a real
+# capability check (it inspects the active provider). This wrapper keeps the
+# config-aware signature used by the checks below.
+def _hsm_is_hardware_backed_for_config(config: QKDConfig) -> bool:
+    """Whether the configured HSM is actually hardware-backed."""
+    return _hsm_is_hardware_backed(HSMProvider.SOFTWARE if config.enterprise.enable_hsm else None)
 
 
 class ComplianceStandard(Enum):
@@ -238,15 +235,22 @@ class ComplianceReport:
 </html>"""
 
 
-class ComplianceChecker:
-    """Checks QKD system configuration against compliance standards."""
+class ConfigAudit:
+    """Audits QKD system configuration against named standards.
+
+    This is a *config audit*, not a third-party compliance certification. It
+    checks the local configuration against best-practice standards (ETSI,
+    NIST, ISO, FIPS) and reports findings. It does not certify compliance with
+    any external body, and it fails closed on capabilities it cannot prove
+    (e.g. hardware-backed HSM).
+    """
 
     def __init__(
         self,
         standards: list[ComplianceStandard] | None = None,
         config: QKDConfig | None = None,
     ) -> None:
-        """Initialize compliance checker.
+        """Initialize config audit.
 
         Args:
             standards: Standards to check (default: ETSI GS QKD 014)
@@ -396,17 +400,25 @@ class ComplianceChecker:
         checks: list[ComplianceCheck] = []
         config = self._config if self._config is not None else get_config()
 
-        # HSM requirement
+        # HSM requirement — must be a *hardware-backed* HSM, not just requested.
+        hsm_enabled = config.enterprise.enable_hsm
+        hsm_hardware_backed = _hsm_is_hardware_backed_for_config(config)
         checks.append(
             ComplianceCheck(
                 check_id="FIPS-140-001",
                 standard=ComplianceStandard.FIPS_140_2,
                 requirement="Hardware security module",
-                description="FIPS 140-2 Level 2+ requires HSM for key storage",
-                passed=config.enterprise.enable_hsm,
+                description="FIPS 140-2 Level 2+ requires a hardware-backed HSM for key storage",
+                passed=hsm_hardware_backed,
                 severity="critical",
-                details=f"HSM enabled: {config.enterprise.enable_hsm}",
-                recommendation="Enable HSM integration for FIPS compliance",
+                details=(
+                    f"HSM requested: {hsm_enabled}, "
+                    f"hardware-backed: {hsm_hardware_backed}"
+                ),
+                recommendation=(
+                    "Configure a hardware-backed HSM (e.g. PKCS#11 / cloud HSM). "
+                    "Software simulation does not satisfy FIPS 140-2 Level 2+."
+                ),
             )
         )
 
@@ -481,21 +493,29 @@ class ComplianceChecker:
         checks: list[ComplianceCheck] = []
         config = self._config if self._config is not None else get_config()
 
-        # KME-SA interface defined and HSM enabled
-        hsm_available = config.enterprise.enable_hsm
+        # KME-SA interface defined and backed by a *hardware* HSM
+        hsm_enabled = config.enterprise.enable_hsm
+        hsm_hardware_backed = _hsm_is_hardware_backed_for_config(config)
         checks.append(
             ComplianceCheck(
                 check_id="ETSI-014-001",
                 standard=ComplianceStandard.ETSI_GS_QKD_014,
                 requirement="KME-SA interface compliance",
                 description=(
-                    "Key Management Entity (KME) interface must be defined and HSM "
-                    "enabled to conform to ETSI GS QKD 014 key delivery specification"
+                    "Key Management Entity (KME) interface must be defined and backed "
+                    "by a hardware-backed HSM to conform to ETSI GS QKD 014 key "
+                    "delivery specification"
                 ),
-                passed=hsm_available,
+                passed=hsm_hardware_backed,
                 severity="critical",
-                details=f"HSM enabled: {hsm_available}",
-                recommendation="Enable HSM integration to provide a KME interface",
+                details=(
+                    f"HSM requested: {hsm_enabled}, "
+                    f"hardware-backed: {hsm_hardware_backed}"
+                ),
+                recommendation=(
+                    "Configure a hardware-backed HSM to provide a QKD-certified KME "
+                    "interface. Software simulation is insufficient."
+                ),
             )
         )
 

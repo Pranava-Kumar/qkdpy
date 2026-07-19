@@ -6,7 +6,7 @@ import tempfile
 import unittest
 
 from qkdpy.enterprise.audit import AuditEventType, AuditLogger
-from qkdpy.enterprise.compliance import ComplianceChecker
+from qkdpy.enterprise.compliance import ConfigAudit
 from qkdpy.enterprise.hsm_interface import (
     HSMError,
     KeyNotFoundError,
@@ -119,24 +119,24 @@ class TestAuditLogger(unittest.TestCase):
         self.assertNotIn("\n\n", raw)
 
 
-class TestComplianceChecker(unittest.TestCase):
-    """ComplianceChecker inference."""
+class TestConfigAudit(unittest.TestCase):
+    """ConfigAudit inference."""
 
     def test_check_compliance_returns_report(self):
-        checker = ComplianceChecker()
+        checker = ConfigAudit()
         report = checker.check_compliance()
         self.assertIsNotNone(report)
         self.assertIn(report.overall_compliant, {True, False})
 
     def test_check_compliance_score_range(self):
-        checker = ComplianceChecker()
+        checker = ConfigAudit()
         report = checker.check_compliance()
         score = report.get_summary().get("compliance_rate", 0.0)
         self.assertGreaterEqual(score, 0.0)
         self.assertLessEqual(score, 1.0)
 
     def test_check_compliance_recommendations(self):
-        checker = ComplianceChecker()
+        checker = ConfigAudit()
         summary = checker.check_compliance().get_summary()
         self.assertIsInstance(summary.get("standards", []), list)
 

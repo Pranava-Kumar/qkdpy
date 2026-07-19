@@ -71,10 +71,10 @@ export QKDPY_PRODUCT_TIER=enterprise
 ```
 
 ```python
-from qkdpy.enterprise import ComplianceChecker, ComplianceStandard
+from qkdpy.enterprise import ConfigAudit, ComplianceStandard
 
-# Run compliance checks against industry standards
-checker = ComplianceChecker()
+# Run a config audit against industry standards
+checker = ConfigAudit()
 report = checker.check_compliance(
     [ComplianceStandard.ETSI_GS_QKD_014,
      ComplianceStandard.NIST_SP_800_57]

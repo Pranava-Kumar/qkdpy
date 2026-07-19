@@ -89,3 +89,6 @@ scripts/blackbox/
 # ─── Rotating scratch / brainstorm (keep locally, not in the repo)  ──
 01-brainstorm/
 docs/NEXT_STEPS.local.md
+
+# ─── Confidential founder plan (not for the public repo) ──
+docs/founder-plan.md

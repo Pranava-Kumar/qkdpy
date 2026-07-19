@@ -43,25 +43,39 @@ class TestSetActiveTier(unittest.TestCase):
 
     def test_enterprise_enables_compliance(self):
         """ENTERPRISE tier enables compliance features."""
-        set_active_tier(ProductTier.ENTERPRISE)
+        set_active_tier(ProductTier.ENTERPRISE, license_key="demo-enterprise")
         self.assertTrue(feature_available(Feature.COMPLIANCE_REPORTING))
         self.assertTrue(feature_available(Feature.COMPLIANCE_HTML_EXPORT))
         self.assertTrue(feature_available(Feature.HSM_INTEGRATION))
 
     def test_enterprise_does_not_have_quantum_safe(self):
         """ENTERPRISE tier does not include quantum-safe features."""
-        set_active_tier(ProductTier.ENTERPRISE)
+        set_active_tier(ProductTier.ENTERPRISE, license_key="demo-enterprise")
         self.assertFalse(feature_available(Feature.QUANTUM_SAFE_MIGRATION))
         self.assertFalse(feature_available(Feature.CRYPTO_INVENTORY))
 
     def test_premium_has_all_features(self):
         """PREMIUM tier enables all features."""
-        set_active_tier(ProductTier.PREMIUM)
+        set_active_tier(ProductTier.PREMIUM, license_key="demo-premium")
         for feature in Feature:
             self.assertTrue(
                 feature_available(feature),
                 f"{feature.value} should be available in PREMIUM",
             )
+
+    def test_non_free_tier_refuses_without_license(self):
+        """A non-FREE tier must not silently activate without a license key."""
+        with self.assertRaises(LicenseError):
+            set_active_tier(ProductTier.ENTERPRISE)
+        with self.assertRaises(LicenseError):
+            set_active_tier(ProductTier.PREMIUM, license_key="")
+        # Tier must remain FREE after the refused switch.
+        self.assertEqual(get_active_tier(), ProductTier.FREE)
+
+    def test_free_tier_does_not_require_license(self):
+        """FREE tier activates without a license key."""
+        set_active_tier(ProductTier.FREE)
+        self.assertEqual(get_active_tier(), ProductTier.FREE)
 
 
 class TestRequireFeatureDecorator(unittest.TestCase):
@@ -76,7 +90,7 @@ class TestRequireFeatureDecorator(unittest.TestCase):
 
     def test_decorated_function_runs_when_feature_available(self):
         """@require_feature does not raise when feature is available."""
-        set_active_tier(ProductTier.PREMIUM)
+        set_active_tier(ProductTier.PREMIUM, license_key="demo-premium")
 
         @require_feature(Feature.QUANTUM_SAFE_MIGRATION)
         def do_migration() -> str:
@@ -107,7 +121,7 @@ class TestRequireFeatureDecorator(unittest.TestCase):
 
     def test_decorator_passes_args_through(self):
         """@require_feature does not interfere with function arguments."""
-        set_active_tier(ProductTier.PREMIUM)
+        set_active_tier(ProductTier.PREMIUM, license_key="demo-premium")
 
         @require_feature(Feature.ADVANCED_VISUALIZATION)
         def greet(name: str) -> str:

@@ -130,26 +130,44 @@ def set_active_tier(tier: ProductTier, *, license_key: str | None = None) -> Non
     """Set the active product tier at runtime.
 
     Calling this with a non-FREE tier is the equivalent of activating an
-    enterprise or premium license.
+    enterprise or premium license, so it MUST be accompanied by a license key.
+    The call refuses to silently pass: a non-FREE tier without a license key
+    raises ``LicenseError``.
 
-    By default this is a local demo gate: any caller can set a non-FREE tier
-    without a key (no anti-piracy). When ``QKDPY_LICENSE_ENFORCEMENT=1`` is set
-    in the environment, activating a non-FREE tier requires a valid HMAC-signed
-    ``license_key`` (``"<tier>:<hmac>"``) under ``QKDPY_LICENSE_SECRET``;
-    otherwise a ``LicenseError`` is raised.
+    In demo mode (default, ``QKDPY_LICENSE_ENFORCEMENT`` unset or ``0``) a
+    non-empty ``license_key`` is accepted as an unverified demo license — this
+    still forces the caller to acknowledge the license rather than flipping a
+    tier with nothing. When ``QKDPY_LICENSE_ENFORCEMENT=1`` is set, the key must
+    be a valid HMAC-signed ``"<tier>:<hmac>"`` under ``QKDPY_LICENSE_SECRET``;
+    any other value is rejected.
 
     Args:
         tier: The tier to activate.
-        license_key: Optional signed license key. Required for non-FREE tiers
-            when enforcement is enabled.
+        license_key: License key for the requested tier. Required for non-FREE
+            tiers. Ignored for FREE.
+
+    Raises:
+        LicenseError: If a non-FREE tier is requested without a valid license.
     """
-    if tier != ProductTier.FREE and _enforcement_enabled():
-        if not _verify_license_key(tier, license_key):
-            raise LicenseError(
-                f"Activating tier '{tier.value}' requires a valid license key. "
-                f"Set QKDPY_LICENSE_ENFORCEMENT=0 to disable enforcement (demo mode)."
-            )
     global _active_tier
+
+    if tier == ProductTier.FREE:
+        _active_tier = tier
+        return
+
+    # Non-FREE tier: a license key is mandatory — never silently pass.
+    if not isinstance(license_key, str) or not license_key.strip():
+        raise LicenseError(
+            f"Activating tier '{tier.value}' requires a license key. "
+            f"Provide a valid license_key; this tier switch is refused without one."
+        )
+
+    if _enforcement_enabled() and not _verify_license_key(tier, license_key):
+        raise LicenseError(
+            f"Activating tier '{tier.value}' requires a valid license key. "
+            f"Set QKDPY_LICENSE_ENFORCEMENT=0 for demo mode or supply a signed key."
+        )
+
     _active_tier = tier
 
 

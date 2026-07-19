@@ -1,5 +1,6 @@
 """Tests for enterprise compliance checking (ETSI, ISO, NIST, FIPS)."""
 
+import os
 import unittest
 
 from qkdpy.config import (
@@ -9,7 +10,8 @@ from qkdpy.config import (
     SecurityConfig,
     SecurityMode,
 )
-from qkdpy.enterprise.compliance import ComplianceChecker, ComplianceStandard
+from qkdpy.enterprise.compliance import ComplianceStandard, ConfigAudit
+from qkdpy.enterprise.hsm_interface import HSMProvider, _hsm_is_hardware_backed
 
 
 def _make_config(
@@ -43,13 +45,13 @@ class TestComplianceDefaultStandard(unittest.TestCase):
     """Default compliance standard should be ETSI GS QKD 014."""
 
     def test_default_standard_is_etsi_014(self):
-        """ComplianceChecker defaults to ETSI GS QKD 014."""
-        checker = ComplianceChecker()
+        """ConfigAudit defaults to ETSI GS QKD 014."""
+        checker = ConfigAudit()
         self.assertEqual(checker.standards, [ComplianceStandard.ETSI_GS_QKD_014])
 
     def test_default_report_checks_etsi_014(self):
         """Default compliance check runs ETSI 014 checks."""
-        checker = ComplianceChecker()
+        checker = ConfigAudit()
         report = checker.check_compliance()
         standards_value = [s.value for s in report.standards_checked]
         self.assertIn("ETSI GS QKD 014", standards_value)
@@ -59,7 +61,7 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
     """ETSI GS QKD 014 (KME-SA Interface) compliance checks."""
 
     def test_passing_all_checks(self):
-        """All ETSI 014 checks pass with a compliant config."""
+        """ETSI 014 checks pass except the hardware-HSM check on software sim."""
         config = _make_config(
             security_mode=SecurityMode.PRODUCTION,
             enable_hsm=True,
@@ -68,18 +70,23 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
             enable_key_rotation=True,
             rotation_interval=1800,
         )
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
         report = checker.check_compliance()
-        self.assertTrue(report.overall_compliant)
-        self.assertEqual(report.failed_checks, 0)
+        # With only a software HSM simulation, the KME-SA interface check
+        # (ETSI-014-001) must fail closed — enable_hsm is a request, not proof
+        # of hardware backing. The remaining (non-HSM) checks still pass.
+        kme = next(c for c in report.checks if c.check_id == "ETSI-014-001")
+        self.assertFalse(kme.passed)
+        self.assertFalse(report.overall_compliant)
+        self.assertTrue(all(c.passed for c in report.checks if c.check_id != "ETSI-014-001"))
 
     def test_kme_interface_fails_when_hsm_disabled(self):
         """ETSI-014-001: KME-SA interface fails when HSM is disabled."""
         config = _make_config(enable_hsm=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -91,7 +98,7 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
     def test_key_format_fails_when_key_too_short(self):
         """ETSI-014-002: Key format check fails when key length < 128."""
         config = _make_config(min_key_length=64)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -103,7 +110,7 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
     def test_identity_auth_fails_when_auth_disabled(self):
         """ETSI-014-003: Identity authentication fails when auth disabled."""
         config = _make_config(require_auth=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -118,7 +125,7 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
             enable_key_rotation=True,
             rotation_interval=7200,  # 2 hours, exceeds 1 hour limit
         )
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -130,7 +137,7 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
     def test_key_churn_fails_when_rotation_disabled(self):
         """ETSI-014-004: Key churn fails when key rotation is disabled."""
         config = _make_config(enable_key_rotation=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -141,7 +148,7 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
     def test_etsi_014_check_ids_present(self):
         """All four ETSI 014 check IDs are present in the report."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -153,7 +160,7 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
     def test_etsi_014_all_checks_have_recommendations(self):
         """Every ETSI 014 check has a non-empty recommendation."""
         config = _make_config(enable_hsm=False, min_key_length=64)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -175,7 +182,7 @@ class TestETSIGSQKD016Compliance(unittest.TestCase):
             require_auth=True,
             enable_audit=True,
         )
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_016],
             config=config,
         )
@@ -186,7 +193,7 @@ class TestETSIGSQKD016Compliance(unittest.TestCase):
     def test_security_target_fails_in_non_production(self):
         """ETSI-016-001: Security target fails when not in PRODUCTION mode."""
         config = _make_config(security_mode=SecurityMode.DEVELOPMENT)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_016],
             config=config,
         )
@@ -198,7 +205,7 @@ class TestETSIGSQKD016Compliance(unittest.TestCase):
     def test_auth_mechanisms_fails_when_auth_disabled(self):
         """ETSI-016-002: Authentication check fails when auth disabled."""
         config = _make_config(require_auth=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_016],
             config=config,
         )
@@ -210,7 +217,7 @@ class TestETSIGSQKD016Compliance(unittest.TestCase):
     def test_audit_logging_fails_when_audit_disabled(self):
         """ETSI-016-003: Audit logging check fails when audit disabled."""
         config = _make_config(enable_audit=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_016],
             config=config,
         )
@@ -222,7 +229,7 @@ class TestETSIGSQKD016Compliance(unittest.TestCase):
     def test_etsi_016_check_ids_present(self):
         """All three ETSI 016 check IDs are present in the report."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_016],
             config=config,
         )
@@ -243,7 +250,7 @@ class TestISO23837Compliance(unittest.TestCase):
             enable_key_rotation=True,
             enable_audit=True,
         )
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ISO_IEC_23837_1],
             config=config,
         )
@@ -254,7 +261,7 @@ class TestISO23837Compliance(unittest.TestCase):
     def test_security_req_fails_when_key_too_short(self):
         """ISO-23837-001: Security requirements fail when key length < 128."""
         config = _make_config(min_key_length=64)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ISO_IEC_23837_1],
             config=config,
         )
@@ -266,7 +273,7 @@ class TestISO23837Compliance(unittest.TestCase):
     def test_qber_threshold_fails_when_exceeded(self):
         """ISO-23837-002: QBER threshold fails when > 0.11."""
         config = _make_config(max_qber=0.15)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ISO_IEC_23837_2],
             config=config,
         )
@@ -278,7 +285,7 @@ class TestISO23837Compliance(unittest.TestCase):
     def test_key_distillation_fails_when_rotation_disabled(self):
         """ISO-23837-003: Key distillation fails when rotation disabled."""
         config = _make_config(enable_key_rotation=False, enable_audit=True)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ISO_IEC_23837_2],
             config=config,
         )
@@ -289,7 +296,7 @@ class TestISO23837Compliance(unittest.TestCase):
     def test_key_distillation_fails_when_audit_disabled(self):
         """ISO-23837-003: Key distillation fails when audit disabled."""
         config = _make_config(enable_key_rotation=True, enable_audit=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ISO_IEC_23837_2],
             config=config,
         )
@@ -300,11 +307,11 @@ class TestISO23837Compliance(unittest.TestCase):
     def test_iso_23837_standards_routed_to_same_method(self):
         """Both ISO/IEC 23837-1 and 23837-2 produce same checks."""
         config = _make_config()
-        checker1 = ComplianceChecker(
+        checker1 = ConfigAudit(
             standards=[ComplianceStandard.ISO_IEC_23837_1],
             config=config,
         )
-        checker2 = ComplianceChecker(
+        checker2 = ConfigAudit(
             standards=[ComplianceStandard.ISO_IEC_23837_2],
             config=config,
         )
@@ -322,7 +329,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_report_contains_all_checks(self):
         """Report includes all checks from requested standards."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[
                 ComplianceStandard.ETSI_GS_QKD_014,
                 ComplianceStandard.ETSI_GS_QKD_016,
@@ -336,7 +343,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_report_has_report_id(self):
         """Report has a non-empty report_id."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -347,7 +354,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_report_summary_contains_key_fields(self):
         """Report summary includes all expected fields."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -368,7 +375,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_get_failed_checks_returns_only_failures(self):
         """get_failed_checks() returns only non-passed checks."""
         config = _make_config(enable_hsm=False, min_key_length=64)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -380,7 +387,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_export_markdown_contains_basic_report_structure(self):
         """Markdown export contains report header and summary."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -394,7 +401,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_markdown_shows_failed_checks_section(self):
         """Markdown export includes failed checks section when failures exist."""
         config = _make_config(enable_hsm=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -405,7 +412,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_export_html_contains_basic_structure(self):
         """HTML export is a valid self-contained page."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -419,7 +426,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_export_html_shows_failed_section(self):
         """HTML export includes failed checks section when failures exist."""
         config = _make_config(enable_hsm=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -431,7 +438,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_export_html_is_valid_html_syntax(self):
         """HTML export at minimum opens and closes html tag."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -443,7 +450,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_export_html_shows_four_stat_cards(self):
         """HTML export contains four summary stat cards."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -456,7 +463,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
     def test_overall_non_compliant_when_critical_failure(self):
         """Overall compliant is False when a critical check fails."""
         config = _make_config(enable_hsm=False)
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ETSI_GS_QKD_014],
             config=config,
         )
@@ -489,7 +496,7 @@ class TestComplianceReportGeneration(unittest.TestCase):
         )
         # Use ETSI 014 — only check that would fail is ETSI-014-004 (key rotation, high severity)
         # Actually let's use ISO 27001 which has a medium severity check
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[ComplianceStandard.ISO_27001],
             config=dev_config,
         )
@@ -507,7 +514,7 @@ class TestMultipleStandards(unittest.TestCase):
     def test_multiple_standards_aggregate(self):
         """Multiple standards produce combined checks."""
         config = _make_config()
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[
                 ComplianceStandard.ETSI_GS_QKD_014,
                 ComplianceStandard.ISO_IEC_23837_1,
@@ -534,7 +541,7 @@ class TestMultipleStandards(unittest.TestCase):
             logging=LoggingConfig(redact_secrets=True),
             enterprise=EnterpriseConfig(enable_hsm=True),
         )
-        checker = ComplianceChecker(
+        checker = ConfigAudit(
             standards=[
                 ComplianceStandard.NIST_SP_800_57,
                 ComplianceStandard.FIPS_140_2,
@@ -543,12 +550,43 @@ class TestMultipleStandards(unittest.TestCase):
             config=config,
         )
         report = checker.check_compliance()
-        # All should pass with this hardened config
-        self.assertEqual(report.failed_checks, 0)
         standards = [s.value for s in report.standards_checked]
         self.assertIn("NIST SP 800-57", standards)
         self.assertIn("FIPS 140-2", standards)
         self.assertIn("ISO 27001", standards)
+        # FIPS 140-2 HSM check must NOT pass on a software-only simulation, even
+        # with enable_hsm=True. "enable_hsm" only requests HSM support; the only
+        # available provider is a software sim, so the hardware-backed requirement
+        # fails closed. This is the honest behavior — no silent "compliant".
+        fips_hsm = next(
+            c for c in report.checks if c.check_id == "FIPS-140-001"
+        )
+        self.assertFalse(fips_hsm.passed)
+        self.assertIn("hardware-backed", fips_hsm.details)
+
+
+class TestHSMHardwareBackedCheck(unittest.TestCase):
+    """The HSM hardware-backing check must fail closed, not lie."""
+
+    def test_software_provider_is_not_hardware_backed(self):
+        """The only available provider (SOFTWARE sim) is not hardware-backed."""
+        self.assertFalse(_hsm_is_hardware_backed(HSMProvider.SOFTWARE))
+
+    def test_unknown_provider_string_fails_closed(self):
+        """An unknown provider name must not report hardware backing."""
+        saved = os.environ.get("QKDPY_HSM_PROVIDER")
+        os.environ["QKDPY_HSM_PROVIDER"] = "totally-hardware-hsm"
+        try:
+            self.assertFalse(_hsm_is_hardware_backed())
+        finally:
+            if saved is None:
+                os.environ.pop("QKDPY_HSM_PROVIDER", None)
+            else:
+                os.environ["QKDPY_HSM_PROVIDER"] = saved
+
+    def test_no_provider_fails_closed(self):
+        """With no provider available, hardware backing is False."""
+        self.assertFalse(_hsm_is_hardware_backed(None))
 
 
 if __name__ == "__main__":

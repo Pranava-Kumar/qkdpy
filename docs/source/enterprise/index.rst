@@ -190,14 +190,14 @@ Comprehensive Example
    from qkdpy.enterprise import (
        HSMInterface,
        AuditLogger,
-       ComplianceChecker,
+       ConfigAudit,
        ComplianceStandard,
    )
 
    # Initialize enterprise components
    hsm = HSMInterface()
    logger = AuditLogger()
-   compliance = ComplianceChecker()
+   compliance = ConfigAudit()
 
    # Perform a compliance-checked key generation
    compliance.check(ComplianceStandard.FIPS_140_2)

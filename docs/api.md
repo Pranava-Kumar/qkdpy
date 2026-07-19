@@ -1067,10 +1067,10 @@ print(f"Total events: {stats['total_events']}")
 ### Compliance Checking
 
 ```python
-from qkdpy.enterprise import ComplianceChecker
+from qkdpy.enterprise import ConfigAudit
 
 # Check against specific standards
-checker = ComplianceChecker(
+checker = ConfigAudit(
     standards=["ETSI_GS_QKD_014", "NIST_SP_800_57", "FIPS_140_2"],
 )
 

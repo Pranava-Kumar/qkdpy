@@ -15,9 +15,9 @@ from .audit import (
     AuditLogger,
 )
 from .compliance import (
-    ComplianceChecker,
     ComplianceReport,
     ComplianceStandard,
+    ConfigAudit,
 )
 from .hsm_interface import (
     HSMInterface,
@@ -62,7 +62,7 @@ __all__ = [
     "AuditEvent",
     "AuditEventType",
     # Compliance
-    "ComplianceChecker",
+    "ConfigAudit",
     "ComplianceReport",
     "ComplianceStandard",
     # Licensing
