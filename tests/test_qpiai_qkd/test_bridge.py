@@ -8,7 +8,9 @@ import pytest
 from qkdpy.integrations.qpiai_qkd import QpiAIIntegration, qpiai_available
 from qkdpy.integrations.qpiai_qkd._compat import QpiAISDKError
 
-pytestmark = pytest.mark.skipif(not qpiai_available(), reason="qpiai_quantum SDK not installed")
+pytestmark = pytest.mark.skipif(
+    not qpiai_available(), reason="qpiai_quantum SDK not installed"
+)
 
 from qpiai_quantum import Statevector  # noqa: E402
 

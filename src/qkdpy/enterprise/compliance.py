@@ -35,7 +35,9 @@ logger = get_logger(__name__)
 # config-aware signature used by the checks below.
 def _hsm_is_hardware_backed_for_config(config: QKDConfig) -> bool:
     """Whether the configured HSM is actually hardware-backed."""
-    return _hsm_is_hardware_backed(HSMProvider.SOFTWARE if config.enterprise.enable_hsm else None)
+    return _hsm_is_hardware_backed(
+        HSMProvider.SOFTWARE if config.enterprise.enable_hsm else None
+    )
 
 
 class ComplianceStandard(Enum):

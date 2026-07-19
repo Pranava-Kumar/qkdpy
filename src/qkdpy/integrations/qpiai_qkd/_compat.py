@@ -25,7 +25,12 @@ from typing import Any
 import numpy as np
 
 try:  # The optional QpiAI Quantum SDK — may be absent at import time.
-    from qpiai_quantum import Circuit, DensityMatrix, JobManager, Statevector
+    from qpiai_quantum import (
+        Circuit,
+        DensityMatrix,
+        JobManager,
+        Statevector,
+    )
 
     _QPIAI_AVAILABLE = True
 except Exception:  # pragma: no cover - import guard

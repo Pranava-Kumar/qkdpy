@@ -81,7 +81,9 @@ class TestETSIGSQKD014Compliance(unittest.TestCase):
         kme = next(c for c in report.checks if c.check_id == "ETSI-014-001")
         self.assertFalse(kme.passed)
         self.assertFalse(report.overall_compliant)
-        self.assertTrue(all(c.passed for c in report.checks if c.check_id != "ETSI-014-001"))
+        self.assertTrue(
+            all(c.passed for c in report.checks if c.check_id != "ETSI-014-001")
+        )
 
     def test_kme_interface_fails_when_hsm_disabled(self):
         """ETSI-014-001: KME-SA interface fails when HSM is disabled."""
@@ -558,9 +560,7 @@ class TestMultipleStandards(unittest.TestCase):
         # with enable_hsm=True. "enable_hsm" only requests HSM support; the only
         # available provider is a software sim, so the hardware-backed requirement
         # fails closed. This is the honest behavior — no silent "compliant".
-        fips_hsm = next(
-            c for c in report.checks if c.check_id == "FIPS-140-001"
-        )
+        fips_hsm = next(c for c in report.checks if c.check_id == "FIPS-140-001")
         self.assertFalse(fips_hsm.passed)
         self.assertIn("hardware-backed", fips_hsm.details)
 

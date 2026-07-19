@@ -130,9 +130,7 @@ class QpiAIIntegration:
 
         return circuit
 
-    def create_entanglement_circuit(
-        self, state_type: str = "|Ψ+>"
-    ) -> tuple[Any, str]:
+    def create_entanglement_circuit(self, state_type: str = "|Ψ+>") -> tuple[Any, str]:
         """Create a circuit for a Bell state (entangled pair).
 
         Args:
@@ -238,7 +236,9 @@ class QpiAIIntegration:
                 # circuit (e.g. unresolved parameters), rather than crashing.
                 return {
                     "circuit": circuit,
-                    "num_qubits": getattr(getattr(circuit, "icr", None), "num_qubits", 0),
+                    "num_qubits": getattr(
+                        getattr(circuit, "icr", None), "num_qubits", 0
+                    ),
                     "note": f"Circuit simulation skipped: {exc}",
                 }
 
@@ -277,17 +277,13 @@ class QpiAIIntegration:
     # ------------------------------------------------------------------ #
     #  QKD metrics
     # ------------------------------------------------------------------ #
-    def calculate_qber(
-        self, alice_bits: list[int], bob_bits: list[int]
-    ) -> float:
+    def calculate_qber(self, alice_bits: list[int], bob_bits: list[int]) -> float:
         """Calculate Quantum Bit Error Rate between Alice's and Bob's bits."""
         if not alice_bits or not bob_bits:
             return 0.0
         if len(alice_bits) != len(bob_bits):
             raise ValueError("Alice and Bob bit lists must have equal length.")
-        errors = sum(
-            1 for a, b in zip(alice_bits, bob_bits, strict=True) if a != b
-        )
+        errors = sum(1 for a, b in zip(alice_bits, bob_bits, strict=True) if a != b)
         return errors / len(alice_bits)
 
     def compute_chsh_value(self, measurement_angles: list[float]) -> float:
@@ -303,12 +299,9 @@ class QpiAIIntegration:
         classical bound of 2.
         """
         if len(measurement_angles) != 4:
-            raise ValueError("CHSH requires exactly four measurement angles (a, a', b, b').")
+            raise ValueError(
+                "CHSH requires exactly four measurement angles (a, a', b, b')."
+            )
         a, ap, b, bp = (float(x) for x in measurement_angles)
-        s = (
-            np.cos(a - b)
-            + np.cos(a - bp)
-            + np.cos(ap - b)
-            - np.cos(ap - bp)
-        )
+        s = np.cos(a - b) + np.cos(a - bp) + np.cos(ap - b) - np.cos(ap - bp)
         return float(s)

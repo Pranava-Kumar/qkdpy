@@ -14,7 +14,9 @@ from qkdpy.integrations.qpiai_qkd import (
 )
 from qkdpy.integrations.qpiai_qkd._compat import qpiai_available
 
-pytestmark = pytest.mark.skipif(not qpiai_available(), reason="qpiai_quantum SDK not installed")
+pytestmark = pytest.mark.skipif(
+    not qpiai_available(), reason="qpiai_quantum SDK not installed"
+)
 
 
 def test_protocols_builder_returns_circuit():

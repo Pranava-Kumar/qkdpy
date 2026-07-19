@@ -91,7 +91,9 @@ def map_satellite_link(
         wind_speed=wind_speed,
         is_night=is_night,
     )
-    r0 = fried_parameter(path_cn2=cn2, wavelength_m=wavelength_m, path_length_m=path_length_m)
+    r0 = fried_parameter(
+        path_cn2=cn2, wavelength_m=wavelength_m, path_length_m=path_length_m
+    )
     sigma_r2 = rytov_variance(
         path_cn2=cn2, wavelength_m=wavelength_m, path_length_m=path_length_m
     )
@@ -100,7 +102,9 @@ def map_satellite_link(
     )
     transmit = modtran_band_transmittance(wavelength_nm)
     stray = background_stray_count_rate(wavelength_nm, is_night=is_night)
-    direction = link_direction_factor(link_direction=link_direction, elevation_angle_deg=90.0)
+    direction = link_direction_factor(
+        link_direction=link_direction, elevation_angle_deg=90.0
+    )
 
     # Diffraction-limited beam spreading penalty vs the aperture: a larger
     # aperture spreads the beam less, so a small aperture is a *loss*.

@@ -20,7 +20,11 @@ testing and tooling.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import (
+    asdict,
+    dataclass,
+    field,
+)
 from enum import StrEnum
 from typing import Any
 
@@ -156,7 +160,9 @@ class ProtocolExchange:
     @classmethod
     def from_json(cls, payload: str | dict[str, Any]) -> ProtocolExchange:
         data = payload if isinstance(payload, dict) else json.loads(payload)
-        data = _coerce(data, {"protocol": ProtocolType, "standard": InterchangeStandard})
+        data = _coerce(
+            data, {"protocol": ProtocolType, "standard": InterchangeStandard}
+        )
         return cls(**data)
 
 
