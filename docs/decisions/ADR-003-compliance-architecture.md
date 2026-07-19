@@ -1,7 +1,7 @@
-# ADR-003: Enterprise Compliance Architecture
+# ADR-003: Enterprise Config Audit Architecture
 
 ## Status
-Accepted
+Accepted (class renamed from `ComplianceChecker` → `ConfigAudit` post-hoc; the architecture is unchanged)
 
 ## Date
 2026-07-09
@@ -26,13 +26,13 @@ We need a compliance engine that:
 
 ## Decision
 
-Build a **pluggable compliance checker** with a `(standard) → list[checks]`
+Build a **pluggable config audit** with a `(standard) → list[checks]`
 dispatch pattern.
 
 ### Architecture
 
 ```
-ComplianceChecker
+ConfigAudit
 │
 ├─ _check_etsi_qkd_014()         → list[ComplianceCheck]
 ├─ _check_etsi_qkd_016()         → list[ComplianceCheck]
@@ -43,7 +43,7 @@ ComplianceChecker
 ```
 
 Each `_check_*` method is a pure function that takes config and returns a list
-of `ComplianceCheck` results.  The `ComplianceChecker.check_compliance()` method
+of `ComplianceCheck` results.  The `ConfigAudit.check_compliance()` method
 iterates the requested standards and dispatches via an ``if/elif`` chain to the
 appropriate method, aggregating results into a `ComplianceReport`.
 

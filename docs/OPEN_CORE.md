@@ -62,7 +62,7 @@ These capabilities ship in the same wheel but are gated behind `ProductTier.ENTE
 
 - `qkdpy.enterprise.HSMInterface` — PKCS#11 software / hardware HSM key generation and storage
 - `qkdpy.enterprise.AuditLogger` — tamper-evident audit trail
-- `qkdpy.enterprise.ComplianceChecker` — automated checks against **ETSI GS QKD 014**, **ETSI GS QKD 016**, **ISO/IEC 23837-1/2**, **NIST SP 800-57**, **FIPS 140-2/140-3**, **ISO 27001**
+- `qkdpy.enterprise.ConfigAudit` — automated config audit against **ETSI GS QKD 014**, **ETSI GS QKD 016**, **ISO/IEC 23837-1/2**, **NIST SP 800-57**, **FIPS 140-2/140-3**, **ISO 27001** (a local audit, not an external certification)
 - Compliance **markdown export** of reports
 - ML-based attack detection over protocol traces
 
@@ -164,4 +164,4 @@ The following are **not** in scope for v0.6.x. Each has a section in `NEXT_STEPS
 - `CHANGELOG.md` — version history
 - `docs/decisions/ADR-001-product-tier-licensing.md` — why this split exists
 - `docs/decisions/ADR-002-observability-and-instrumentation.md` — observability stance
-- `docs/decisions/ADR-003-compliance-architecture.md` — compliance checker design
+- `docs/decisions/ADR-003-compliance-architecture.md` — config audit design

@@ -2,7 +2,48 @@
 
 All notable changes to this project are documented here.
 
-## [0.6.2] - 2026-07-17
+## [0.6.6] - 2026-07-19
+
+### Added
+
+- **qpiai-qkd companion subpackage** (`qkdpy[qpiai]`) — standalone, pip-installable integration between qkdpy QKD protocols and the QpiAI Quantum SDK:
+  - `QpiAIIntegration` bridge: protocol↔SDK mapping (BB84, E91, entanglement, GHZ), Qubit/Statevector conversion, local simulation with graceful no-key fallback, cloud submission via real `JobManager.submit_and_wait_for_results_qasm`
+  - Wootters concurrence (`_compat.concurrence()`) computed from first principles (spin-flip formula) — does not rely on the SDK's absent `DensityMatrix.concurrence()`
+  - `QPIAI_API_KEY`→`API_KEY` context manager (`_SdkKeyContext`) for SDK credential compatibility
+  - IEC/ETSI-aligned interchange model: `KeyRequest`, `KeyDelivery` (ETSI GS QKD 014), `SAE2EStatus` (ETSI GS QKD 015), `ProtocolExchange` — all with `to_json()`/`from_json()`
+  - Satellite/atmospheric physics mapping (`LinkPhysics`, `map_satellite_link`) wrapping `SatelliteQKD`, `FreeSpaceOpticalChannel`, MODTRAN, and Hufnagel-Valley turbulence
+  - ML optimizer bridge (`OptimizerResult`, `optimize_protocol`, `detect_anomaly`) wrapping `QKDOptimizer`/`QKDAnomalyDetector`
+  - Companion README (`README.qpiai-qkd.md`): protocols, physics, bridge, optimizer, interchange, install — Product Tiers below the fold
+- **Enterprise hardening**:
+  - `licensing.set_active_tier()` now refuses tiers with no valid license key (raises `LicenseError` instead of silently passing)
+  - `ConfigAudit` (renamed from `ComplianceChecker`) — honest naming; the class does config auditing, not external compliance certification
+  - `_hsm_is_hardware_backed()` now implements a real capability check against `HSMProvider` instead of always returning `False`
+- `OptimizerResult`, `AnomalyReport`, and `ParameterHistoryEntry` TypedDicts for typed optimizer results
+- `COMMERCIAL_NOTICE.md` — extracted from LICENSE (Apache-2.0 now stands alone at clean 199 lines)
+
+### Fixed
+
+- `Statevector(circuit)` `ValueError` caught when `API_KEY` is unset — falls back to inspection metadata instead of crashing
+- `submit_to_cloud()` uses real `JobManager.submit_and_wait_for_results_qasm()` instead of the nonexistent `run_circuit`
+- CHSH correlation formula corrected to standard 4-angle form: `S = cos(a-b) + cos(a-b') + cos(a'-b) - cos(a'-b')`
+- QBER test assertion corrected from 0.5 to 0.25 (one mismatch in four bits)
+- `py.typed` marker shipped for the companion subpackage
+- Dependabot vulnerabilities and CodeQL alerts resolved
+- CodeQL taint flow broken for clear-text logging in example
+
+### Changed
+
+- `integrations/qpiai_integration.py` rewritten as thin shim importing from `qpiai_qkd.bridge`
+- Main README tagline: "Enterprise Compliance" → "config audit tooling"
+- Product Tiers section moved below the fold (after Quick Start + ADRs)
+- Enterprise feature descriptions in Features table amended with honesty qualifiers
+- `founder-plan.md` checkpoint items marked done for enterprise hardening tasks
+- ADR-003 title updated to "Enterprise Config Audit Architecture" with rename note
+- Type-check runner bumped to Python 3.12
+
+### Removed
+
+- Stale `ComplianceChecker` references replaced with `ConfigAudit` across docs, ADRs, and source
 
 ### Added
 

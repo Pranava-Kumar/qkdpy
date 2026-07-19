@@ -8,7 +8,7 @@
 [![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Documentation](https://github.com/Pranava-Kumar/qkdpy/actions/workflows/pages.yml/badge.svg)](https://pranava-kumar.github.io/qkdpy/)
 
-**A Python library for Quantum Key Distribution simulation at the intersection of Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**
+**A Python library for Quantum Key Distribution simulation at the intersection of Space Technology, Quantum Computing, AI/ML, and config audit tooling**
 
 > ⚠️ **This is a simulation / educational library, not a production cryptographic system.**
 > QKDpy models QKD protocols, channels, and attacks with *phenomenological*
@@ -253,76 +253,6 @@ record_protocol_execution(
 
 ---
 
-## 🏷️ Product Tiers
-
-QKDpy uses a cumulative three-tier licensing model. Each tier includes everything in the tiers below it.
-
-### Tier Comparison
-
-| Feature | FREE | ENTERPRISE | PREMIUM |
-|---------|:----:|:----------:|:-------:|
-| All QKD Protocols | ✅ | ✅ | ✅ |
-| Satellite QKD Simulation | ✅ | ✅ | ✅ |
-| ML Integration & Optimization | ✅ | ✅ | ✅ |
-| Advanced Visualization | ✅ | ✅ | ✅ |
-| **Compliance Reporting** (ETSI, NIST, FIPS, ISO) | — | ✅ | ✅ |
-| **HSM Integration** (PKCS#11) | — | ✅ | ✅ |
-| **Audit Logging** | — | ✅ | ✅ |
-| **ML-Based Attack Detection** | — | ✅ | ✅ |
-| **Key Escrow** | — | ✅ | ✅ |
-| **Compliance HTML Export** | — | ✅ | ✅ |
-| **Quantum-Safe Migration Toolkit** | — | — | ✅ |
-| **Crypto Inventory Assessment** | — | — | ✅ |
-| **Priority Support** | — | — | ✅ |
-
-### Enterprise Suite
-
-```python
-from qkdpy.enterprise import (
-    HSMInterface,
-    AuditLogger,
-    ComplianceChecker,
-    ComplianceStandard,
-)
-
-# Hardware Security Module integration
-hsm = get_hsm(provider=HSMProvider.SOFTWARE)  # or PKCS11
-key_handle = hsm.generate_key("session_key", key_length=256)
-
-# Tamper-evident audit logging
-audit = AuditLogger(storage_path="audit.log")
-audit.log_key_event(AuditEventType.KEY_GENERATED, "session_key")
-
-# Compliance checking (NIST, FIPS, ISO, ETSI)
-checker = ComplianceChecker([ComplianceStandard.NIST_SP_800_57])
-report = checker.check_compliance()
-print(report.export_markdown())
-print(report.export_html())  # Enterprise-gated feature
-```
-
-Set your product tier via environment or config:
-
-```python
-import os
-os.environ["QKDPY_PRODUCT_TIER"] = "enterprise"
-
-from qkdpy import set_config
-set_config(product_tier="enterprise")
-```
-
-### Compliance Standards Supported
-
-| Standard | Description |
-|----------|-------------|
-| **ETSI GS QKD 014** | KME-SA Interface (key delivery, authentication, status) |
-| **ETSI GS QKD 016** | Common Criteria Protection Profile (security target, audit) |
-| **ISO/IEC 23837-1/2** | QKD Security Requirements (key length, QBER thresholds) |
-| **NIST SP 800-57** | Key Management (key length, algorithm lifetime) |
-| **FIPS 140-2/140-3** | Cryptographic Module (approved algorithms, module integrity) |
-| **ISO 27001** | Information Security (access control, logging, crypto policy) |
-
----
-
 ## 🔐 Quantum-Safe Migration Toolkit
 
 **PREMIUM-tier** toolkit for assessing and planning migration to quantum-resistant cryptography:
@@ -372,9 +302,14 @@ for rec in report["recommendations"]:
 
 ### Enterprise
 
-- **Product Tier Licensing** — FREE/ENTERPRISE/PREMIUM with cumulative features
-- **Compliance Checking** — ETSI GS QKD 014/016, ISO/IEC 23837, NIST SP 800-57, FIPS 140-2, ISO 27001
-- **HSM Integration** — PKCS#11 interface with software fallback
+> **Honesty note:** The enterprise module provides *experimental* infrastructure
+> for config auditing, key escrow, and HSM integration. It is **not** a
+> production-grade security system — see [Product Tiers](#-product-tiers) for
+> the detailed scope and limitations.
+
+- **Product Tier Licensing** — FREE/ENTERPRISE/PREMIUM with cumulative features (tier gating is a demo mechanism; license-key verification added in v0.6.6)
+- **Config Audit** — ETSI GS QKD 014/016, ISO/IEC 23837, NIST SP 800-57, FIPS 140-2, ISO 27001 (*internal audit only*, no external certification)
+- **HSM Interface** — PKCS#11 interface with software simulation fallback
 - **Audit Logging** — Tamper-evident, structured event logging
 - **Quantum-Safe Migration** — Crypto inventory, risk assessment, phased migration roadmap
 - **Key Escrow** — Secure key recovery for enterprise deployments
@@ -445,7 +380,86 @@ Key technical decisions are captured as Architecture Decision Records (ADRs):
 |-----|----------|
 | [ADR-001](docs/decisions/ADR-001-product-tier-licensing.md) | Product Tier Licensing Model (FREE/ENTERPRISE/PREMIUM) |
 | [ADR-002](docs/decisions/ADR-002-observability-and-instrumentation.md) | Observability via structlog + OperationSpan |
-| [ADR-003](docs/decisions/ADR-003-compliance-architecture.md) | Pluggable Compliance Checker Architecture |
+| [ADR-003](docs/decisions/ADR-003-compliance-architecture.md) | Pluggable Config Audit Architecture |
+
+---
+
+## 🏷️ Product Tiers
+
+> **Honesty notice:** The enterprise tier is a *demo gate* — it gates access to experimental
+> modules but is **not** a production entitlement or anti-piracy system. Opt-in license-key
+> verification was added in v0.6.6. The "compliance standards" listed below are references
+> used by the config audit module, **not** external certifications.
+
+QKDpy uses a cumulative three-tier licensing model. Each tier includes everything in the tiers below it.
+
+### Tier Comparison
+
+| Feature | FREE | ENTERPRISE | PREMIUM |
+|---------|:----:|:----------:|:-------:|
+| All QKD Protocols | ✅ | ✅ | ✅ |
+| Satellite QKD Simulation | ✅ | ✅ | ✅ |
+| ML Integration & Optimization | ✅ | ✅ | ✅ |
+| Advanced Visualization | ✅ | ✅ | ✅ |
+| **Config Audit** (ETSI, NIST, FIPS, ISO) | — | ✅ | ✅ |
+| **HSM Interface** (PKCS#11 / software sim) | — | ✅ | ✅ |
+| **Audit Logging** | — | ✅ | ✅ |
+| **ML-Based Attack Detection** | — | ✅ | ✅ |
+| **Key Escrow** | — | ✅ | ✅ |
+| **Config Audit HTML Export** | — | ✅ | ✅ |
+| **Quantum-Safe Migration Toolkit** | — | — | ✅ |
+| **Crypto Inventory Assessment** | — | — | ✅ |
+| **Priority Support** | — | — | ✅ |
+
+### Enterprise Suite
+
+```python
+from qkdpy.enterprise import (
+    HSMInterface,
+    AuditLogger,
+    ConfigAudit,
+    ComplianceStandard,
+)
+
+# Hardware Security Module interface (software simulation by default)
+hsm = get_hsm(provider=HSMProvider.SOFTWARE)  # or PKCS11 (experimental)
+key_handle = hsm.generate_key("session_key", key_length=256)
+
+# Tamper-evident audit logging
+audit = AuditLogger(storage_path="audit.log")
+audit.log_key_event(AuditEventType.KEY_GENERATED, "session_key")
+
+# Config audit against standards (NIST, FIPS, ISO, ETSI) — a config audit, not
+# an external compliance certification.
+checker = ConfigAudit([ComplianceStandard.NIST_SP_800_57])
+report = checker.check_compliance()
+print(report.export_markdown())
+print(report.export_html())  # Enterprise-gated feature
+```
+
+Set your product tier via environment or config:
+
+```python
+import os
+os.environ["QKDPY_PRODUCT_TIER"] = "enterprise"
+
+from qkdpy import set_config
+set_config(product_tier="enterprise")
+```
+
+### Compliance Standards (config audit references)
+
+These standards are used by the config audit module for *internal* checking — they
+are **not** external certifications the library or its users have obtained.
+
+| Standard | Description |
+|----------|-------------|
+| **ETSI GS QKD 014** | KME-SA Interface (key delivery, authentication, status) |
+| **ETSI GS QKD 016** | Common Criteria Protection Profile (security target, audit) |
+| **ISO/IEC 23837-1/2** | QKD Security Requirements (key length, QBER thresholds) |
+| **NIST SP 800-57** | Key Management (key length, algorithm lifetime) |
+| **FIPS 140-2/140-3** | Cryptographic Module (approved algorithms, module integrity) |
+| **ISO 27001** | Information Security (access control, logging, crypto policy) |
 
 ---
 

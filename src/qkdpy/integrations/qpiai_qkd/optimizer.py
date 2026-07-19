@@ -12,7 +12,7 @@ claimed to be superior without being the one executed.
 from __future__ import annotations
 
 from collections.abc import Callable
-from typing import Any, TypedDict, cast
+from typing import TypedDict, cast
 
 from qkdpy.ml.qkd_optimizer import QKDAnomalyDetector, QKDOptimizer
 
