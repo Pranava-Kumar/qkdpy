@@ -265,7 +265,9 @@ class Circuit:
             state[0] = 1.0
         elif isinstance(initial_state, Qubit):
             if self.num_qubits != 1:
-                raise ValueError("Single qubit state provided but circuit has multiple qubits")
+                raise ValueError(
+                    "Single qubit state provided but circuit has multiple qubits"
+                )
             state = initial_state.state
         else:
             # Tensor product of multiple qubits
@@ -477,9 +479,7 @@ class Circuit:
     def _validate_qubit(self, qubit: int) -> None:
         """Validate qubit index."""
         if not 0 <= qubit < self.num_qubits:
-            raise ValueError(
-                f"Qubit index {qubit} out of range [0, {self.num_qubits})"
-            )
+            raise ValueError(f"Qubit index {qubit} out of range [0, {self.num_qubits})")
 
     def __repr__(self) -> str:
         return f"Circuit(num_qubits={self.num_qubits}, depth={self.depth()})"

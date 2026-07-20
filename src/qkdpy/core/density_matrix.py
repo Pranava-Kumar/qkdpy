@@ -215,7 +215,9 @@ class DensityMatrix:
         result = sum(K @ self.matrix @ K.conj().T for K in kraus_operators)
         return DensityMatrix(result)
 
-    def partial_trace(self, subsystem_dims: list[int], keep: list[int]) -> DensityMatrix:
+    def partial_trace(
+        self, subsystem_dims: list[int], keep: list[int]
+    ) -> DensityMatrix:
         """Trace out subsystems to get the reduced density matrix.
 
         For a bipartite system A⊗B, computing the partial trace over B
@@ -238,7 +240,9 @@ class DensityMatrix:
             )
 
         if not all(0 <= i < len(subsystem_dims) for i in keep):
-            raise ValueError(f"Keep indices must be in range [0, {len(subsystem_dims)})")
+            raise ValueError(
+                f"Keep indices must be in range [0, {len(subsystem_dims)})"
+            )
 
         # Reshape density matrix into tensor
         n = len(subsystem_dims)

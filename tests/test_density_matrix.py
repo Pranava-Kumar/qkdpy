@@ -212,7 +212,9 @@ class TestCPTPChannels:
         kraus = amplitude_damping_channel(1.0)
         rho_after = rho.apply_channel(kraus)
         # Full damping: |1⟩ → |0⟩
-        assert np.allclose(rho_after.matrix, DensityMatrix.from_pure(Qubit.zero()).matrix)
+        assert np.allclose(
+            rho_after.matrix, DensityMatrix.from_pure(Qubit.zero()).matrix
+        )
 
     def test_phase_damping_completeness(self):
         """Phase damping should satisfy completeness relation."""
@@ -240,7 +242,9 @@ class TestCPTPChannels:
         rho = DensityMatrix.from_pure(Qubit.zero())
         kraus = bit_flip_channel(1.0)
         rho_after = rho.apply_channel(kraus)
-        assert np.allclose(rho_after.matrix, DensityMatrix.from_pure(Qubit.one()).matrix)
+        assert np.allclose(
+            rho_after.matrix, DensityMatrix.from_pure(Qubit.one()).matrix
+        )
 
     def test_phase_flip_completeness(self):
         """Phase flip should satisfy completeness relation."""

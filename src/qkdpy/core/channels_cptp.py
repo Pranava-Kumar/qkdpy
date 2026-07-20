@@ -290,7 +290,9 @@ class DepolarizingChannel(CPTPChannel):
             K3 = np.sqrt(p / 4) * Z
             kraus = [K0, K1, K2, K3]
         else:
-            raise NotImplementedError("Depolarizing channel for d > 2 not yet implemented")
+            raise NotImplementedError(
+                "Depolarizing channel for d > 2 not yet implemented"
+            )
 
         super().__init__(kraus)
         self.probability = p

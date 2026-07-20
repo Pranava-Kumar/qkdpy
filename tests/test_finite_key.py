@@ -248,7 +248,9 @@ class TestFiniteKeyAnalysis:
         )
 
         comparison_large = FiniteKeyAnalysis.compare_asymptotic_vs_finite(params_large)
-        comparison_moderate = FiniteKeyAnalysis.compare_asymptotic_vs_finite(params_moderate)
+        comparison_moderate = FiniteKeyAnalysis.compare_asymptotic_vs_finite(
+            params_moderate
+        )
 
         # Larger pulse count should have smaller overhead (closer to asymptotic)
         assert comparison_large["overhead"] < comparison_moderate["overhead"]

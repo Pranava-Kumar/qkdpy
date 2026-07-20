@@ -194,8 +194,8 @@ class TestCircuit:
         """Test depth with mixed parallel and sequential gates."""
         qc = Circuit(3)
         qc.h(0).h(1)  # Depth 1 (parallel)
-        qc.cx(0, 1)   # Depth 2 (depends on both)
-        qc.h(2)        # Depth 2 (parallel with cx)
+        qc.cx(0, 1)  # Depth 2 (depends on both)
+        qc.h(2)  # Depth 2 (parallel with cx)
         assert qc.depth() == 2
 
     def test_count_ops_empty(self):

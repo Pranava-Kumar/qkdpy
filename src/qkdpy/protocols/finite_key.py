@@ -117,7 +117,9 @@ class FiniteKeyAnalysis:
 
             # Statistical deviation (finite-size effect)
             log_eps = math.log(1 / security_parameter)
-            delta = math.sqrt((2 * log_eps + math.log(2 / security_parameter)) / (n_pulses * q))
+            delta = math.sqrt(
+                (2 * log_eps + math.log(2 / security_parameter)) / (n_pulses * q)
+            )
 
             # Deviation-corrected QBER
             qber_dev = min(qber + delta, 0.5)
