@@ -370,6 +370,10 @@ class TestQpiAIIntegration(unittest.TestCase):
     def setUp(self):
         try:
             from qkdpy.integrations.qpiai_integration import QpiAIIntegration
+            from qkdpy.integrations.qpiai_qkd._compat import qpiai_available
+
+            if not qpiai_available():
+                self.skipTest("QpiAI Quantum SDK (qpiai_quantum) not installed")
 
             self.integration = QpiAIIntegration()
         except ImportError:

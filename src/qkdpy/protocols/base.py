@@ -8,7 +8,7 @@ from ..core import (
     Qubit,
     Qudit,
 )
-from ..core.secure_random import secure_bits
+from ..core.secure_random import secure_bits  # noqa: F401 — kept for subclass access
 
 
 class BaseProtocol(ABC):
@@ -240,6 +240,10 @@ class BaseProtocol(ABC):
     ) -> tuple[list[int], list[int]]:
         """Cascade error correction protocol.
 
+        Delegates to :meth:`ErrorCorrection.cascade` for a proper multi-pass
+        implementation with random permutations (rather than a simplified
+        single-pass version).
+
         Args:
             alice_key: Alice's sifted key
             bob_key: Bob's sifted key
@@ -248,51 +252,20 @@ class BaseProtocol(ABC):
             Tuple of corrected (alice_key, bob_key)
 
         """
-        # This is a simplified implementation of the Cascade protocol
-        # A full implementation would involve multiple passes with different block sizes
+        # Lazy import to avoid circular dependency at module level
+        from ..key_management.error_correction import (  # noqa: PLC0415
+            ErrorCorrection,
+        )
 
-        # Make copies of the keys
-        alice_corrected = alice_key.copy()
-        bob_corrected = bob_key.copy()
-
-        # Initial pass with a fixed block size
-        block_size = 4
-        num_blocks = len(alice_key) // block_size
-
-        for i in range(num_blocks):
-            start = i * block_size
-            end = start + block_size
-
-            # Calculate parity for the block
-            alice_parity = sum(alice_corrected[start:end]) % 2
-            bob_parity = sum(bob_corrected[start:end]) % 2
-
-            # If parities don't match, find and correct the error
-            if alice_parity != bob_parity:
-                # Binary search to find the error
-                left = start
-                right = end
-
-                while right - left > 1:
-                    mid = (left + right) // 2
-
-                    alice_parity_left = sum(alice_corrected[left:mid]) % 2
-                    bob_parity_left = sum(bob_corrected[left:mid]) % 2
-
-                    if alice_parity_left != bob_parity_left:
-                        right = mid
-                    else:
-                        left = mid
-
-                # Correct the error
-                bob_corrected[left] = 1 - bob_corrected[left]
-
-        return alice_corrected, bob_corrected
+        return ErrorCorrection.cascade(alice_key, bob_key)
 
     def _universal_hashing_privacy_amplification(
         self, key: list[int], leak: int
     ) -> list[int]:
         """Universal hashing for privacy amplification.
+
+        Delegates to :meth:`PrivacyAmplification.universal_hashing` for the
+        actual hash computation.
 
         Args:
             key: Key to be amplified
@@ -302,34 +275,23 @@ class BaseProtocol(ABC):
             Shortened, more secure key
 
         """
-        # Calculate the length of the final key
-        # We'll use the leftover hash lemma: r = n - s - leak
-        # where n is the original key length, s is a security parameter
+        # Lazy import to avoid circular dependency at module level
+        from ..key_management.privacy_amplification import (  # noqa: PLC0415
+            PrivacyAmplification,
+        )
+
+        # Calculate the length of the final key using the leftover hash lemma:
+        # r = n - s - leak, where n is the original key length and s is a
+        # security parameter.
         n = len(key)
         s = 10  # Security parameter
-
         r = max(1, n - s - leak)  # Ensure at least 1 bit remains
 
-        # Convert the key to a binary string
-        key_str = "".join(map(str, key))
+        # Clamp to the actual key length (universal_hashing requires output < input)
+        if r >= n:
+            r = max(1, n - 1)
 
-        # Use a simple universal hash function (Toeplitz matrix)
-        # In a real implementation, we would use a cryptographically secure hash function
-
-        # Generate a random seed for the hash function
-        # Generate a random seed for the hash function using CSPRNG
-        seed: list[list[int]] = []
-        for _ in range(r):
-            seed.append(secure_bits(n))
-
-        # Apply the hash function
-        result: list[int] = []
-        for i in range(r):
-            # Compute the dot product modulo 2
-            bit = int(sum(seed[i][j] * int(key_str[j]) for j in range(n)) % 2)
-            result.append(int(bit))
-
-        return result
+        return PrivacyAmplification.universal_hashing(key, r)
 
     def _estimate_eve_information(self, qber: float) -> float:
         """Estimate the upper bound on information Eve holds, given the QBER.

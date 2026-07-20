@@ -113,6 +113,9 @@ where = ["src"]  # Look in the src directory
 include = ["qkdpy", "qkdpy.*"]  # Include qkdpy and all its subpackages
 exclude = ["docs*", "tests*", "examples*"]  # Exclude these from packaging
 
+[tool.setuptools.package-data]
+qkdpy = ["py.typed"]
+
 # Rest of your tool configurations...
 [tool.ruff]
 line-length = 88

@@ -1,6 +1,5 @@
 """Extended quantum channels with additional noise models."""
 
-import random
 from collections.abc import Callable
 
 import numpy as np
@@ -12,7 +11,7 @@ from .gates import (
     PauliZ,
 )
 from .qubit import Qubit
-from .secure_random import secure_random
+from .secure_random import secure_choice, secure_random
 
 
 class ExtendedQuantumChannel:
@@ -97,7 +96,7 @@ class ExtendedQuantumChannel:
                 PauliY().matrix,
                 PauliZ().matrix,
             ]
-            gate = random.choice(gates)
+            gate = secure_choice(gates)
             if not np.array_equal(gate, Identity().matrix):
                 self.error_count += 1
             qubit.apply_gate(gate)
