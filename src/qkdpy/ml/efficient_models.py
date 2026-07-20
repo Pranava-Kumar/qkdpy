@@ -49,10 +49,10 @@ class EfficientQKDPredictor:
         # Per-instance RNG seeded from CSPRNG (or explicit seed) so that
         # weight initialisation and training shuffles are reproducible when
         # a seed is supplied, and independent across instances otherwise.
-        if seed is None:
-            import secrets
+        import secrets
 
-        seed = secrets.randbits(32)
+        if seed is None:
+            seed = secrets.randbits(32)
         self._seed = seed
         self._rng = np.random.default_rng(seed)
 

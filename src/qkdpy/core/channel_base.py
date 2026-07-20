@@ -82,8 +82,7 @@ class ChannelBase(ABC):
             results.append(self.transmit(qubit, timestamp))
         return results
 
-    @abstractmethod
-    def set_eavesdropper(
+    def set_eavesdropper(  # noqa: B027 — intentionally a no-op; subclasses override if needed
         self,
         eavesdropper: Callable[[Qubit | Qudit], tuple[Qubit | Qudit, bool]] | None,
     ) -> None:

@@ -8,7 +8,9 @@ from .decoy_state_bb84 import DecoyStateBB84
 from .di_qkd import DeviceIndependentQKD
 from .e91 import E91
 from .enhanced_cv_qkd import EnhancedCVQKD
+from .finite_key import FiniteKeyAnalysis, FiniteKeyParameters
 from .hd_qkd import HDQKD
+from .key_rate import ChannelParameters, DecoyStateParameters, SecretKeyRate
 from .mdi_qkd import MDIQKD
 from .sarg04 import SARG04
 from .twisted_pair import TwistedPairQKD
@@ -26,4 +28,9 @@ __all__ = [
     "TwistedPairQKD",
     "HDQKD",
     "MDIQKD",
+    "SecretKeyRate",
+    "ChannelParameters",
+    "DecoyStateParameters",
+    "FiniteKeyAnalysis",
+    "FiniteKeyParameters",
 ]

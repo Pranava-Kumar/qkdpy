@@ -12,6 +12,24 @@ from .atmospheric import (
 from .attacks import PNSAttack, photon_number_splitting_attack
 from .channel_base import ChannelBase
 from .channels import QuantumChannel
+from .channels_cptp import (
+    AmplitudeDampingChannel,
+    BitFlipChannel,
+    CPTPChannel,
+    DepolarizingChannel,
+    IdentityChannel,
+    PhaseDampingChannel,
+    PhaseFlipChannel,
+)
+from .circuit import Circuit
+from .density_matrix import (
+    DensityMatrix,
+    amplitude_damping_channel,
+    bit_flip_channel,
+    depolarizing_channel,
+    phase_damping_channel,
+    phase_flip_channel,
+)
 from .detector import DetectorArray, QuantumDetector
 from .extended_channels import ExtendedQuantumChannel
 from .gate_utils import GateUtils
@@ -60,6 +78,20 @@ from .timing import (
 __all__ = [
     "Qubit",
     "Qudit",
+    "DensityMatrix",
+    "Circuit",
+    "CPTPChannel",
+    "DepolarizingChannel",
+    "AmplitudeDampingChannel",
+    "PhaseDampingChannel",
+    "BitFlipChannel",
+    "PhaseFlipChannel",
+    "IdentityChannel",
+    "depolarizing_channel",
+    "amplitude_damping_channel",
+    "phase_damping_channel",
+    "bit_flip_channel",
+    "phase_flip_channel",
     "PNSAttack",
     "photon_number_splitting_attack",
     "AtmosphericTurbulenceChannel",

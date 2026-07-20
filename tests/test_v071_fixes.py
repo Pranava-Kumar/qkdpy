@@ -448,7 +448,7 @@ class TestVersionConsistency:
     def test_version_is_071(self):
         import qkdpy
 
-        assert qkdpy.__version__ == "0.7.1"
+        assert qkdpy.__version__ == "0.8.0"
 
     def test_pyproject_version_matches(self):
         """Check pyproject.toml version matches __version__."""

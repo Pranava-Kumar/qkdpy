@@ -4,7 +4,7 @@ QKDpy is a comprehensive library for Quantum Key Distribution (QKD) simulations,
 implementing various QKD protocols, quantum simulators, and cryptographic tools.
 """
 
-__version__ = "0.7.1"
+__version__ = "0.8.0"
 __author__ = "Pranava Kumar"
 __email__ = "pranavakumar.it@gmail.com"
 
@@ -35,21 +35,30 @@ from .core import (
     CNOT,
     CZ,
     SWAP,
+    AmplitudeDampingChannel,
     AtmosphericTurbulenceChannel,
     AttackType,
+    BitFlipChannel,
     ChannelBase,
+    Circuit,
+    CPTPChannel,
     DecoyStateSource,
+    DensityMatrix,
+    DepolarizingChannel,
     DetectorArray,
     ExtendedQuantumChannel,
     GateUtils,
     Hadamard,
     Identity,
+    IdentityChannel,
     Measurement,
     MultiQubitState,
     ParametricDownConversionSource,
     PauliX,
     PauliY,
     PauliZ,
+    PhaseDampingChannel,
+    PhaseFlipChannel,
     PhotonSource,
     PhotonSourceManager,
     PhotonTimingModel,
@@ -73,9 +82,14 @@ from .core import (
     TDag,
     TimingSynchronizer,
     WeakCoherentSource,
+    amplitude_damping_channel,
+    bit_flip_channel,
+    depolarizing_channel,
     fried_parameter,
     generate_phase_screen,
     hufnagel_valley_cn2,
+    phase_damping_channel,
+    phase_flip_channel,
     photon_number_splitting_attack,
     rytov_variance,
     scintillation_index,
@@ -131,7 +145,9 @@ from .exceptions import (
     ValidationError,
     wrap_exception,
 )
-from .exceptions import ConnectionError as QKDConnectionError
+from .exceptions import (
+    ConnectionError as QKDConnectionError,
+)
 from .integrations import __all__ as _integrations_all
 from .key_management import (
     AdvancedErrorCorrection,
@@ -176,9 +192,14 @@ from .protocols import (
     MDIQKD,
     SARG04,
     BaseProtocol,
+    ChannelParameters,
     DecoyStateBB84,
+    DecoyStateParameters,
     DeviceIndependentQKD,
     EnhancedCVQKD,
+    FiniteKeyAnalysis,
+    FiniteKeyParameters,
+    SecretKeyRate,
     TwistedPairQKD,
 )
 from .utils import (
@@ -251,6 +272,8 @@ __all__ = [
     "Qubit",
     "Qudit",
     "MultiQubitState",
+    "Circuit",
+    "DensityMatrix",
     "ChannelBase",
     "QuantumChannel",
     "ExtendedQuantumChannel",
@@ -296,6 +319,18 @@ __all__ = [
     "PhotonTimingModel",
     "QBERTimingAnalysis",
     "ProtocolTimingManager",
+    "depolarizing_channel",
+    "amplitude_damping_channel",
+    "phase_damping_channel",
+    "bit_flip_channel",
+    "phase_flip_channel",
+    "CPTPChannel",
+    "DepolarizingChannel",
+    "AmplitudeDampingChannel",
+    "PhaseDampingChannel",
+    "BitFlipChannel",
+    "PhaseFlipChannel",
+    "IdentityChannel",
     # Protocols
     "BaseProtocol",
     "BB84",
@@ -309,6 +344,11 @@ __all__ = [
     "TwistedPairQKD",
     "HDQKD",
     "MDIQKD",
+    "SecretKeyRate",
+    "ChannelParameters",
+    "DecoyStateParameters",
+    "FiniteKeyAnalysis",
+    "FiniteKeyParameters",
     # Crypto
     "OneTimePad",
     "QuantumAuth",
