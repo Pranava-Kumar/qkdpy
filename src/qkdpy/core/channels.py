@@ -458,9 +458,9 @@ class QuantumChannel(ChannelBase):
 
         """
         # Calculate drift based on time and drift rate
-        drift_angle = (
-            secure_normal(0, self.polarization_drift_rate) * timestamp
-        ) % (2 * np.pi)
+        drift_angle = (secure_normal(0, self.polarization_drift_rate) * timestamp) % (
+            2 * np.pi
+        )
 
         # Apply rotation to simulate polarization drift (Ry gate on Bloch sphere)
         # Ry(theta) = cos(theta/2) * I - i * sin(theta/2) * Y

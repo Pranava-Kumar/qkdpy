@@ -40,7 +40,7 @@ class MultiQubitState:
         self._state = state / norm
 
     @classmethod
-    def from_qubits(cls, qubits: list[Qubit]) -> "MultiQubitState":
+    def from_qubits(cls, qubits: list[Qubit]) -> MultiQubitState:
         """Create a multi-qubit state from individual qubits.
 
         Args:
@@ -62,7 +62,7 @@ class MultiQubitState:
         return cls(state)
 
     @classmethod
-    def zeros(cls, num_qubits: int) -> "MultiQubitState":
+    def zeros(cls, num_qubits: int) -> MultiQubitState:
         """Create a multi-qubit state ``|00...0>``.
 
         Args:
@@ -79,7 +79,7 @@ class MultiQubitState:
         return cls(state)
 
     @classmethod
-    def ghz(cls, num_qubits: int) -> "MultiQubitState":
+    def ghz(cls, num_qubits: int) -> MultiQubitState:
         """Create a GHZ (Greenberger-Horne-Zeilinger) state.
 
         The GHZ state is ``(|00...0> + |11...1>) / sqrt(2)``
@@ -99,7 +99,7 @@ class MultiQubitState:
         return cls(state)
 
     @classmethod
-    def w_state(cls, num_qubits: int) -> "MultiQubitState":
+    def w_state(cls, num_qubits: int) -> MultiQubitState:
         """Create a W state.
 
         The W state is ``(|100...0> + |010...0> + ... + |000...1>) / sqrt(n)``
@@ -242,7 +242,7 @@ class MultiQubitState:
         # Apply the gate (for single qubit case)
         self._state = full_gate @ self._state
 
-    def measure(self, target_qubit: int) -> tuple[int, "MultiQubitState" | None]:
+    def measure(self, target_qubit: int) -> tuple[int, MultiQubitState | None]:
         """Measure a specific qubit in the computational basis.
 
         Args:
@@ -369,7 +369,7 @@ class MultiQubitState:
 
         return float(entropy)
 
-    def fidelity(self, other: "MultiQubitState") -> float:
+    def fidelity(self, other: MultiQubitState) -> float:
         """Calculate the fidelity between this state and another state.
 
         Args:

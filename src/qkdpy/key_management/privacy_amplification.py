@@ -2,6 +2,8 @@
 
 import hashlib
 import random
+from collections.abc import Callable
+from typing import Any
 
 import numpy as np
 
@@ -158,6 +160,7 @@ class PrivacyAmplification:
         # Choose the hash function — only collision-resistant algorithms.
         # SHA-1 and MD5 are explicitly rejected for privacy amplification because
         # their known collision weaknesses undermine the leftover hash lemma.
+        hash_func: Callable[..., Any] = hashlib.sha256
         if hash_algorithm == "sha256":
             hash_func = hashlib.sha256
         elif hash_algorithm == "sha384":
