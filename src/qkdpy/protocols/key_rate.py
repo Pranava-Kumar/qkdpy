@@ -25,6 +25,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import exp, log2
+from typing import Any
 
 
 @dataclass
@@ -125,7 +126,7 @@ class SecretKeyRate:
         return -x * log2(x) - (1 - x) * log2(1 - x)
 
     @staticmethod
-    def bb84(params: ChannelParameters | None = None, **kwargs) -> float:
+    def bb84(params: ChannelParameters | None = None, **kwargs: Any) -> float:
         """Compute secret key rate for BB84 protocol.
 
         The asymptotic key rate for BB84 is:
@@ -164,7 +165,7 @@ class SecretKeyRate:
         return max(0.0, rate)
 
     @staticmethod
-    def decoy_bb84(params: DecoyStateParameters | None = None, **kwargs) -> float:
+    def decoy_bb84(params: DecoyStateParameters | None = None, **kwargs: Any) -> float:
         """Compute secret key rate for decoy-state BB84.
 
         Decoy-state protocols use multiple intensity levels to detect
@@ -223,7 +224,7 @@ class SecretKeyRate:
         return max(0.0, rate)
 
     @staticmethod
-    def e91(params: ChannelParameters | None = None, **kwargs) -> float:
+    def e91(params: ChannelParameters | None = None, **kwargs: Any) -> float:
         """Compute secret key rate for E91 (entanglement-based) protocol.
 
         The E91 protocol uses entangled photon pairs. The key rate is:
@@ -263,7 +264,7 @@ class SecretKeyRate:
         return max(0.0, rate)
 
     @staticmethod
-    def sarg04(params: ChannelParameters | None = None, **kwargs) -> float:
+    def sarg04(params: ChannelParameters | None = None, **kwargs: Any) -> float:
         """Compute secret key rate for SARG04 protocol.
 
         SARG04 is a variant of BB84 that uses different state preparation.
@@ -311,7 +312,7 @@ class SecretKeyRate:
         dark_count_prob: float = 1e-6,
         misalignment_error: float = 0.03,
         threshold_rate: float = 1e-10,
-        **kwargs,
+        **kwargs: Any,
     ) -> float:
         """Find maximum secure distance for a given protocol.
 

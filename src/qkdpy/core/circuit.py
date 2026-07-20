@@ -306,7 +306,8 @@ class Circuit:
             full_gate = ops[0]
             for op in ops[1:]:
                 full_gate = np.kron(full_gate, op)
-            return full_gate @ state
+            result: np.ndarray = full_gate @ state
+            return result
         else:
             # Multi-qubit gate: need to construct the full operator
             # This is more complex for non-adjacent qubits
@@ -338,9 +339,8 @@ class Circuit:
 
                     full_gate[j, i] += amplitude
 
-            return full_gate @ state
-
-    # --- Export ---
+            full_gate_result: np.ndarray = full_gate @ state
+            return full_gate_result
 
     def to_qasm(self) -> str:
         """Export circuit to OpenQASM 2.0 format.

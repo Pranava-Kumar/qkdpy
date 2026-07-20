@@ -123,7 +123,7 @@ class DensityMatrix:
             rho_i = cls.from_pure(state)
             matrices.append(prob * rho_i.matrix)
 
-        return cls(sum(matrices))
+        return cls(np.asarray(sum(matrices)))
 
     def purity(self) -> float:
         """Compute the purity Tr(ρ²).

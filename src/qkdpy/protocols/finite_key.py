@@ -21,6 +21,7 @@ from __future__ import annotations
 
 import math
 from dataclasses import dataclass
+from typing import Any
 
 
 @dataclass
@@ -136,7 +137,7 @@ class FiniteKeyAnalysis:
             return 1 - h_e
 
     @staticmethod
-    def key_length(params: FiniteKeyParameters | None = None, **kwargs) -> int:
+    def key_length(params: FiniteKeyParameters | None = None, **kwargs: Any) -> int:
         """Compute secure key length with finite-size effects.
 
         The secure key length is:
@@ -188,7 +189,7 @@ class FiniteKeyAnalysis:
         return max(0, int(key_length))
 
     @staticmethod
-    def pa_overhead(params: FiniteKeyParameters | None = None, **kwargs) -> float:
+    def pa_overhead(params: FiniteKeyParameters | None = None, **kwargs: Any) -> float:
         """Compute privacy amplification overhead.
 
         The overhead is the fraction of the raw key consumed by privacy
@@ -281,7 +282,7 @@ class FiniteKeyAnalysis:
 
     @staticmethod
     def compare_asymptotic_vs_finite(
-        params: FiniteKeyParameters | None = None, **kwargs
+        params: FiniteKeyParameters | None = None, **kwargs: Any
     ) -> dict[str, float]:
         """Compare asymptotic and finite-key secure key lengths.
 
