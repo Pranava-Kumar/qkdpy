@@ -4,7 +4,7 @@ QKDpy is a comprehensive library for Quantum Key Distribution (QKD) simulations,
 implementing various QKD protocols, quantum simulators, and cryptographic tools.
 """
 
-__version__ = "0.7.0"
+__version__ = "0.7.1"
 __author__ = "Pranava Kumar"
 __email__ = "pranavakumar.it@gmail.com"
 
@@ -131,9 +131,7 @@ from .exceptions import (
     ValidationError,
     wrap_exception,
 )
-from .exceptions import (
-    ConnectionError as QKDConnectionError,
-)
+from .exceptions import ConnectionError as QKDConnectionError
 from .integrations import __all__ as _integrations_all
 from .key_management import (
     AdvancedErrorCorrection,

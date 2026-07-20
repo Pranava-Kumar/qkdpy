@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented here.
 
+## [0.7.1] - 2026-07-20
+
+### Added
+
+- `ChannelBase` abstract base class in `core/channel_base.py` defining the contract (`transmit`, `get_statistics`, `reset_statistics`, `transmit_batch`, `set_eavesdropper`) for all channel implementations. `QuantumChannel` now inherits from it.
+- `py.typed` marker for PEP 561 compliance, enabling downstream type checkers.
+- Dedicated tests for `ChannelBase` ABC, `_require_sdk()` guard, MD5/SHA-1 rejection, and fidelity-based `entanglement_attack` detection.
+
+### Changed
+
+- **Star imports replaced** — `__init__.py` now uses explicit named imports from each subpackage instead of `from .X import *`, improving IDE navigation and static analysis.
+- `BaseProtocol._cascade_error_correction` now delegates to `ErrorCorrection.cascade()` (multi-pass with random permutations) instead of a simplified single-pass duplicate.
+- `BaseProtocol._universal_hashing_privacy_amplification` now delegates to `PrivacyAmplification.universal_hashing()`.
+- `PrivacyAmplification.toeplitz_hashing` now accepts an optional `seed` parameter for reproducible audit runs, matching `universal_hashing`'s API.
+- `EfficientQKDPredictor` uses a per-instance `np.random.Generator` (seeded from CSPRNG) instead of the global numpy RNG, making ML results reproducible.
+- `QuantumChannel` constructor now raises `ValueError` for unknown `noise_model` values instead of silently ignoring them.
+
+### Fixed
+
+- **Version mismatch** — `__init__.__version__` now matches `pyproject.toml` (`0.7.1`).
+- **QpiAI bridge crashes** — `Circuit`/`Statevector` methods now raise a clear `QpiAISDKError("Install with: pip install qkdpy[qpiai]")` instead of `TypeError: 'NoneType' object is not callable`.
+- **Insecure RNG in physics noise** — `channels.py` `_apply_polarization_drift` and `_apply_phase_fluctuations` now use `secure_normal()` instead of `np.random.normal`. `extended_channels.py` uses `secure_choice` instead of `random.choice`.
+- **Weak hash rejection** — `PrivacyAmplification.cryptographic_hash()` rejects `sha1` and `md5` with `ValueError` (collision vulnerabilities); added `sha384`, `blake2b`, `blake2s` as accepted algorithms.
+- **Entanglement attack detection** — `QuantumChannel.entanglement_attack()` detection probability is now computed from the physical fidelity between pre/post-attack states (`disturbance = 1 - fidelity`), matching the theoretical 25% BB84 error bound, instead of a random coin flip.
+- **Type annotation consistency** — `multiqubit.py` uses `from __future__ import annotations` and `X | None` syntax instead of `Optional[X]`.
+- **LDPC divide-by-zero warning** — `ErrorCorrection.ldpc()` now clamps the `arctanh` argument to `(-1+ε, 1-ε)`, eliminating the `RuntimeWarning: divide by zero encountered in arctanh`.
+- **PyPI classifier mismatch** — Removed `Programming Language :: Python :: 3.10` from classifiers (requires-python is `>=3.11`).
+- **mypy visualization overrides removed** — `visualization.py` and `advanced_visualization.py` now pass type checking; the `ignore_errors = true` overrides have been removed from `pyproject.toml`.
+
 ## [0.7.0] - 2026-07-20
 
 ### Added

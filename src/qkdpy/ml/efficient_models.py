@@ -28,6 +28,7 @@ class EfficientQKDPredictor:
         enable_quantization: bool = True,
         enable_pruning: bool = True,
         pruning_threshold: float = 0.01,
+        seed: int | None = None,
     ) -> None:
         """Initialize efficient predictor.
 
@@ -37,12 +38,23 @@ class EfficientQKDPredictor:
             enable_quantization: Whether to use INT8 quantization for inference
             enable_pruning: Whether to prune small weights
             pruning_threshold: Threshold for weight pruning
+            seed: Optional seed for reproducible weight initialization and training shuffles.  When ``None`` a cryptographically secure seed is derived from :mod:`secrets` so consecutive instances produce different results (avoids accidental correlation).
         """
         self.input_dim = input_dim
         self.max_memory_mb = max_memory_mb
         self.enable_quantization = enable_quantization
         self.enable_pruning = enable_pruning
         self.pruning_threshold = pruning_threshold
+
+        # Per-instance RNG seeded from CSPRNG (or explicit seed) so that
+        # weight initialisation and training shuffles are reproducible when
+        # a seed is supplied, and independent across instances otherwise.
+        if seed is None:
+            import secrets
+
+        seed = secrets.randbits(32)
+        self._seed = seed
+        self._rng = np.random.default_rng(seed)
 
         # Determine architecture based on memory budget
         self.hidden_layers = self._calculate_architecture()
@@ -111,14 +123,17 @@ class EfficientQKDPredictor:
             # Xavier initialization
             scale = np.sqrt(2.0 / (prev_size + hidden_size))
             self.weights.append(
-                np.random.randn(prev_size, hidden_size).astype(np.float32) * scale
+                self._rng.standard_normal((prev_size, hidden_size)).astype(np.float32)
+                * scale
             )
             self.biases.append(np.zeros(hidden_size, dtype=np.float32))
             prev_size = hidden_size
 
         # Output layer (single value)
         scale = np.sqrt(2.0 / (prev_size + 1))
-        self.weights.append(np.random.randn(prev_size, 1).astype(np.float32) * scale)
+        self.weights.append(
+            self._rng.standard_normal((prev_size, 1)).astype(np.float32) * scale
+        )
         self.biases.append(np.zeros(1, dtype=np.float32))
 
     def _relu(self, x: np.ndarray) -> np.ndarray:
@@ -200,7 +215,7 @@ class EfficientQKDPredictor:
         # Split data
         n_samples = len(X)
         n_val = int(n_samples * validation_split)
-        indices = np.random.permutation(n_samples)
+        indices = self._rng.permutation(n_samples)
 
         X_train = X_norm[indices[n_val:]]
         y_train = y_norm[indices[n_val:]]
@@ -219,7 +234,7 @@ class EfficientQKDPredictor:
 
         for epoch in range(epochs):
             # Shuffle training data
-            perm = np.random.permutation(len(X_train))
+            perm = self._rng.permutation(len(X_train))
             X_train = X_train[perm]
             y_train = y_train[perm]
 

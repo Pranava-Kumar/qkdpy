@@ -26,16 +26,12 @@ repos:
         # CI-only formatting loop. Keep excluded from all formatters.
         exclude: ^scripts/blackbox/.*\.py$
 
-      - id: isort
-        name: isort
-        entry: isort --profile black
-        language: system
-        types: [python]
-        # scripts/blackbox/*.py are 1700-line blackbox diagnostic scripts that
-        # place imports inside print / try blocks; isort+black disagree on the
-        # long-wrap and oscillate. Skip format on them; ruff still checks them
-        # via the per-file-ignores in pyproject.toml.
-        exclude: ^scripts/blackbox/.*\.py$
+  # - id: isort is disabled (ruff I001 handles import sorting)
+  #   name: isort
+  #   entry: isort --profile black
+  #   language: system
+  #   types: [python]
+  #   exclude: ^scripts/blackbox/.*\.py$
 
       - id: ruff
         name: ruff

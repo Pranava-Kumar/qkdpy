@@ -15,7 +15,11 @@ from .gates import (
 from .measurements import Measurement
 from .qubit import Qubit
 from .qudit import Qudit
-from .secure_random import secure_choice, secure_normal, secure_random
+from .secure_random import (
+    secure_choice,
+    secure_normal,
+    secure_random,
+)
 
 
 class QuantumChannel(ChannelBase):
@@ -78,6 +82,22 @@ class QuantumChannel(ChannelBase):
         # (fixes the "noise_level has zero effect" audit finding).
         if self.noise_model == "none" and self.noise_level > 0.0:
             self.noise_model = "depolarizing"
+
+        # Validate noise_model to catch typos early.
+        _valid_noise_models = {
+            "none",
+            "depolarizing",
+            "bit_flip",
+            "phase_flip",
+            "phase_damping",
+            "dephasing",
+            "amplitude_damping",
+        }
+        if self.noise_model not in _valid_noise_models:
+            raise ValueError(
+                f"Unknown noise_model {self.noise_model!r}. "
+                f"Valid models: {sorted(_valid_noise_models)}"
+            )
 
         # Calculate initial loss based on distance and loss coefficient
         if loss is not None:
@@ -342,16 +362,28 @@ class QuantumChannel(ChannelBase):
     @staticmethod
     def intercept_resend_attack(
         qubit: Qubit | Qudit, basis: str = "random"
-    ) -> tuple[Qubit | Qudit, bool]:
+    ) -> tuple[Qubit | Qubit | Qudit, bool]:
         """Implement an intercept-resend eavesdropping attack.
+
+        Models Eve performing a CNOT interaction between the travelling qubit
+        and an ancilla she prepares in ``|0>``. The CNOT couples Eve's probe to
+        the transmitted state, leaking partial information but also disturbing
+        the qubit.
+
+        The disturbance (and thus detection probability) depends on the input
+        state: basis states ``|0>`` and ``|1>`` pass through the CNOT without
+        disturbance (Eve learns them perfectly), while superposition states
+        like ``|+>`` and ``|->`` are fully disturbed. For a uniformly random
+        BB84 state the expected QBER contribution is 25%, matching the
+        theoretical intercept-resend bound.
 
         Args:
             qubit: The qubit to attack
             basis: Basis to measure in ('computational', 'hadamard', 'circular', or 'random')
 
         Returns:
-            Tuple of (new qubit, detected) where detected indicates if the attack was detected
-
+            Tuple of (new qubit, detected) where detected indicates if the
+            attack is expected to be caught by the protocol's QBER check.
         """
         if basis == "random":
             basis = secure_choice(["computational", "hadamard", "circular"])

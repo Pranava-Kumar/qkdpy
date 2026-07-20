@@ -354,9 +354,9 @@ class ErrorCorrection:
                                 product *= tanh_val
 
                         # Calculate check-to-variable message
-                        if abs(product) >= 1.0:
-                            product = np.sign(product) * 0.999  # Avoid numerical issues
-                        check_to_var[j, i] = 2.0 * np.arctanh(product)
+                        # Clamp argument to avoid arctanh(±1) → ±inf
+                        clamped = max(-1.0 + 1e-10, min(1.0 - 1e-10, product))
+                        check_to_var[j, i] = 2.0 * np.arctanh(clamped)
 
             # Update variable-to-check messages
             for i in range(n):
@@ -616,9 +616,10 @@ class ErrorCorrection:
                                 product *= np.tanh(v_to_c_messages[k, j] / 2.0)
 
                         # Compute the check to variable message
-                        c_to_v_messages[j, i] = 2.0 * np.arctanh(
-                            product * (1 - 2 * syndrome[j])
-                        )
+                        # Clamp argument to avoid arctanh(±1) → ±inf
+                        raw_arg = product * (1 - 2 * syndrome[j])
+                        clamped = max(-1.0 + 1e-10, min(1.0 - 1e-10, raw_arg))
+                        c_to_v_messages[j, i] = 2.0 * np.arctanh(clamped)
 
             # Update variable to check messages
             for i in range(n):

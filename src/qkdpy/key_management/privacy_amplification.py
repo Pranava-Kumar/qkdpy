@@ -83,7 +83,7 @@ class PrivacyAmplification:
         Args:
             key: Binary key to be amplified
             output_length: Desired length of the output key
-            seed: Seed for the random hash function
+            seed: Seed for the random hash function. When provided, the Toeplitz matrix entries are generated deterministically from ``seed`` so that identical ``(key, output_length, seed)`` inputs reproduce the same output (required for auditable reproducibility). When ``None`` a CSPRNG is used for full cryptographic randomness.
 
         Returns:
             Shortened, more secure key
@@ -98,11 +98,24 @@ class PrivacyAmplification:
         # Convert the key to a binary string
         key_str = "".join(map(str, key))
 
+        # Pick the randomness source: a seeded PRNG (for reproducible audit
+        # runs) or the CSPRNG (for production-grade entropy).
+        if seed is None:
+
+            def rand_bit() -> int:
+                return secure_randint(0, 2)
+
+        else:
+            rng = random.Random(seed)
+
+            def rand_bit() -> int:  # type: ignore[unused-ignore]
+                return rng.randint(0, 1)
+
         # Generate a random binary vector for the first row of the Toeplitz matrix
-        first_row = [secure_randint(0, 2) for _ in range(len(key))]
+        first_row = [rand_bit() for _ in range(len(key))]
 
         # Generate a random binary vector for the first column of the Toeplitz matrix (excluding the first element)
-        first_col = [secure_randint(0, 2) for _ in range(output_length)]
+        first_col = [rand_bit() for _ in range(output_length)]
 
         # Construct the Toeplitz matrix
         toeplitz = np.zeros((output_length, len(key)), dtype=int)

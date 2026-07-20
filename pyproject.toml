@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "qkdpy"
-version = "0.7.0"
+version = "0.7.1"
 description = "A Python Package for Quantum Key Distribution"
 readme = "README.md"
 license = "Apache-2.0"
@@ -38,7 +38,6 @@ classifiers = [
     "Intended Audience :: Education",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Physics",
@@ -205,14 +204,6 @@ warn_unused_ignores = true
 warn_no_return = true
 warn_unreachable = true
 strict_equality = true
-
-# Ignore specific files with visualization issues
-[[tool.mypy.overrides]]
-module = [
-    "qkdpy.utils.visualization",
-    "qkdpy.utils.advanced_visualization"
-]
-ignore_errors = true
 
 # Ignore missing imports for external libraries
 [[tool.mypy.overrides]]
