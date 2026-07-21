@@ -15,9 +15,7 @@ class SecureRandom:
 
     def __init__(self) -> None:
         """Initialize the secure random generator."""
-        # Create a numpy Generator with secure seed for numpy operations
-        secure_seed = secrets.randbits(128)
-        self._np_rng = np.random.Generator(np.random.PCG64(secure_seed))
+        pass
 
     def randint(self, low: int, high: int) -> int:
         """Generate a cryptographically secure random integer.

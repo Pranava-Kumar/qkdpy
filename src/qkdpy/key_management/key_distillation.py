@@ -90,8 +90,14 @@ class KeyDistillation:
             # We'll use the formula: r = n - s - t
             # where n is the corrected key length, s is a security parameter,
             # and t is an estimate of Eve's information
-            s = 10  # Security parameter
-            t = int(self.corrected_key_length * self.eve_information)
+            # s=128 gives ε = 2^(-64) ≈ 5.4×10^(-20), well within
+            # cryptographic requirements.  s=10 gave ε ≈ 0.03 (3% chance
+            # of insecure key), which is unacceptable for production use.
+            # The parameter is adaptive: capped at min(128, n // 4) so it
+            # works for both small test keys and production-length keys.
+            n = self.corrected_key_length
+            s = min(128, max(10, n // 4))  # Security parameter
+            t = int(n * self.eve_information)
             final_key_length = max(1, self.corrected_key_length - s - t)
 
         if self.privacy_amplification_method == "universal_hashing":

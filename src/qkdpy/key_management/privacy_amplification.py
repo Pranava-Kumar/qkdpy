@@ -230,7 +230,17 @@ class PrivacyAmplification:
         # where n is the original key length, s is a security parameter, and t is
         # an estimate of the information leaked to Eve
         n = len(key)
-        s = 10  # Security parameter
+        # Security parameter for the leftover hash lemma.
+        # s=128 gives ε = 2^(-64) ≈ 5.4×10^(-20), well within cryptographic
+        # requirements.  s=10 gave ε ≈ 0.03, which is unacceptable — a 3 %
+        # chance that the privacy-amplified key is distinguishable from
+        # uniform, leaking information to an eavesdropper.
+        #
+        # The parameter is capped adaptively: for keys shorter than 512 bits,
+        # s is reduced proportionally (s = n // 4) so the extraction formula
+        # r = n - s - t remains positive.  Full 128-bit security is achieved
+        # once the corrected key reaches 512 bits.
+        s = min(128, max(10, n // 4))  # Security parameter
         t = int(n * (error_rate + 0.1))  # Estimate of information leaked to Eve
 
         r = max(1, n - s - t)  # Ensure at least 1 bit remains

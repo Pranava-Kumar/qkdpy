@@ -1,11 +1,11 @@
 """Extended quantum channels with additional noise models."""
 
+import math
 from collections.abc import Callable
 
 import numpy as np
 
 from .gates import (
-    Identity,
     PauliX,
     PauliY,
     PauliZ,
@@ -89,16 +89,19 @@ class ExtendedQuantumChannel:
     def _depolarizing_noise(self, qubit: Qubit) -> Qubit:
         """Apply depolarizing noise to a qubit."""
         if secure_random() < self.noise_level:
-            # Apply a random Pauli operator
+            # Apply a random non-trivial Pauli operator (X, Y, or Z).
+            # Identity is deliberately excluded — the whole point of
+            # depolarizing noise is *errors*, not "do nothing".  Including
+            # Identity would make the effective noise rate 3/4 of the
+            # configured level and produced false security estimates in
+            # earlier versions (see commit aaa60d4).
             gates = [
-                Identity().matrix,
                 PauliX().matrix,
                 PauliY().matrix,
                 PauliZ().matrix,
             ]
             gate = secure_choice(gates)
-            if not np.array_equal(gate, Identity().matrix):
-                self.error_count += 1
+            self.error_count += 1
             qubit.apply_gate(gate)
         return qubit
 
@@ -117,13 +120,36 @@ class ExtendedQuantumChannel:
         return qubit
 
     def _amplitude_damping_noise(self, qubit: Qubit) -> Qubit:
-        """Apply amplitude damping noise to a qubit."""
-        if secure_random() < self.noise_level:
-            gamma = self.noise_level
-            if qubit.probabilities[1] > 0 and secure_random() < gamma:
-                # Simulate amplitude damping by collapsing to |0> with probability gamma
-                qubit._state = np.array([1, 0], dtype=complex)
-                self.error_count += 1
+        """Apply amplitude damping noise to a qubit.
+
+        Models energy decay from |1⟩ → |0⟩ at rate γ using the quantum
+        trajectory method (stochastic Kraus operator unraveling).
+
+        Kraus operators:
+            K₀ = |0⟩⟨0| + √(1-γ) |1⟩⟨1|   (no-jump evolution)
+            K₁ = √γ |0⟩⟨1|                 (quantum jump)
+
+        The jump probability is ⟨ψ|K₁†K₁|ψ⟩ = γ|β|² and when no jump occurs
+        the |1⟩ amplitude is damped by √(1-γ) with renormalisation.
+        """
+        gamma = self.noise_level
+        if gamma <= 0.0:
+            return qubit
+
+        alpha, beta = qubit.state[0], qubit.state[1]
+        prob_1 = abs(beta) ** 2
+
+        if prob_1 > 0 and secure_random() < gamma:
+            # Quantum jump: |1⟩ → |0⟩ (photon emission / energy decay)
+            qubit._state = np.array([1.0 + 0.0j, 0.0 + 0.0j])
+            self.error_count += 1
+        elif gamma > 0 and prob_1 > 0:
+            # No-jump evolution: damp |1⟩ amplitude by √(1-γ)
+            scale = math.sqrt(1.0 - gamma)
+            new_beta = scale * beta
+            norm = math.sqrt(abs(alpha) ** 2 + abs(new_beta) ** 2)
+            if norm > 0:
+                qubit._state = np.array([alpha / norm, new_beta / norm])
         return qubit
 
     def _phase_damping_noise(self, qubit: Qubit) -> Qubit:
@@ -137,20 +163,59 @@ class ExtendedQuantumChannel:
         return qubit
 
     def _generalized_amplitude_damping_noise(self, qubit: Qubit) -> Qubit:
-        """Apply generalized amplitude damping noise to a qubit."""
-        if secure_random() < self.noise_level:
-            # This combines amplitude damping with a thermal environment
-            # We'll model this as a combination of amplitude damping and bit flip
-            if secure_random() < 0.5:
-                # Apply amplitude damping
-                gamma = self.noise_level
-                if qubit.probabilities[1] > 0 and secure_random() < gamma:
-                    qubit._state = np.array([1, 0], dtype=complex)
-                    self.error_count += 1
-            else:
-                # Apply bit flip
-                qubit.apply_gate(PauliX().matrix)
+        """Apply generalized amplitude damping noise to a qubit.
+
+        Models energy decay and thermal excitation at rate γ with temperature
+        parameter p (p=1 → T=0, p=0.5 → infinite temperature).
+
+        Uses the quantum trajectory stochastic unraveling.
+
+        Kraus operators (p = temperature parameter, γ = damping rate):
+            K₀ = √p  [|0⟩⟨0| + √(1-γ) |1⟩⟨1|]   (no-jump, decay)
+            K₁ = √p  √γ |0⟩⟨1|                    (jump, decay)
+            K₂ = √(1-p) [√(1-γ)|0⟩⟨0| + |1⟩⟨1|]  (no-jump, excitation)
+            K₃ = √(1-p) √γ |1⟩⟨0|                 (jump, excitation)
+
+        The temperature parameter p is fixed at 0.5 (infinite temperature
+        / maximally mixed steady state unless explicitly overridden).
+        """
+        gamma = self.noise_level
+        if gamma <= 0.0:
+            return qubit
+
+        p = getattr(self, "temperature", 0.5)
+        alpha, beta = qubit.state[0], qubit.state[1]
+        prob_0 = abs(alpha) ** 2
+        prob_1 = abs(beta) ** 2
+
+        # Random choice between decay (branch 0) and excitation (branch 1)
+        r = secure_random()
+        if r < p:
+            # Decay branch (zero-temperature-like)
+            if prob_1 > 0 and secure_random() < gamma:
+                # Jump: |1⟩ → |0⟩
+                qubit._state = np.array([1.0 + 0.0j, 0.0 + 0.0j])
                 self.error_count += 1
+            elif gamma > 0 and prob_1 > 0:
+                # No-jump: damp |1⟩ amplitude
+                scale = math.sqrt(1.0 - gamma)
+                new_beta = scale * beta
+                norm = math.sqrt(abs(alpha) ** 2 + abs(new_beta) ** 2)
+                if norm > 0:
+                    qubit._state = np.array([alpha / norm, new_beta / norm])
+        else:
+            # Excitation branch (thermal)
+            if prob_0 > 0 and secure_random() < gamma:
+                # Jump: |0⟩ → |1⟩
+                qubit._state = np.array([0.0 + 0.0j, 1.0 + 0.0j])
+                self.error_count += 1
+            elif gamma > 0 and prob_0 > 0:
+                # No-jump: damp |0⟩ amplitude
+                scale = math.sqrt(1.0 - gamma)
+                new_alpha = scale * alpha
+                norm = math.sqrt(abs(new_alpha) ** 2 + abs(beta) ** 2)
+                if norm > 0:
+                    qubit._state = np.array([new_alpha / norm, beta / norm])
         return qubit
 
     def get_statistics(self) -> dict:

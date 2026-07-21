@@ -6,7 +6,6 @@ from collections.abc import Callable
 import numpy as np
 
 from .channel_base import ChannelBase
-from .gate_utils import GateUtils
 from .gates import (
     PauliX,
     PauliY,
@@ -417,19 +416,27 @@ class QuantumChannel(ChannelBase):
     def entanglement_attack(
         qubit: Qubit | Qudit,
     ) -> tuple[Qubit | Qubit | Qudit, bool]:
-        """Implement an entanglement-based eavesdropping attack.
+        """Implement an entanglement-based eavesdropping attack (CNOT probe).
 
-        Models Eve performing a CNOT interaction between the travelling qubit
-        and an ancilla she prepares in ``|0>``. The CNOT couples Eve's probe to
-        the transmitted state, leaking partial information but also disturbing
-        the qubit.
+        Models Eve preparing an ancilla qubit in ``|0>`` then performing a
+        CNOT with the travelling qubit as control and her ancilla as target.
+        The entangling interaction is:
 
-        The disturbance (and thus detection probability) depends on the input
-        state: basis states ``|0>`` and ``|1>`` pass through the CNOT without
-        disturbance (Eve learns them perfectly), while superposition states
-        like ``|+>`` and ``|->`` are fully disturbed. For a uniformly random
-        BB84 state the expected QBER contribution is 25%, matching the
-        theoretical intercept-resend bound.
+            (α|0> + β|1>) |0>_E  →  α|00> + β|11>
+
+        Tracing out Eve's ancilla leaves the signal qubit in the dephased
+        state ρ' = |α|²|0⟩⟨0| + |β|²|1⟩⟨1| — a Z-basis dephasing channel.
+
+        * Computational-basis states (|0>, |1>) pass undisturbed — Eve learns
+          the bit value perfectly from her ancilla.
+        * Superposition states (|+>, |->) are fully dephased, producing a
+          50% error rate on those bits.
+        * For uniformly random BB84 states the expected QBER is 25%,
+          matching the theoretical intercept-resend bound.
+
+        This replaces the previous implementation that applied random unitary
+        rotations, which had no physical basis as an eavesdropping strategy
+        and produced unphysical QBER estimates.
 
         Args:
             qubit: The qubit to attack
@@ -440,41 +447,29 @@ class QuantumChannel(ChannelBase):
 
         """
         if isinstance(qubit, Qudit):
-            # Qudit does not have apply_gate directly; skip entangling.
             return qubit, False
 
-        # Capture the pre-attack state so we can compute the physical
-        # disturbance from the CNOT interaction.
         original_state = qubit.state.copy()
+        prob_0 = abs(original_state[0]) ** 2
 
-        # Eve applies a CNOT with the travelling qubit as control and her
-        # ancilla (in |0>) as target. For a computational-basis input the
-        # qubit is unchanged (no disturbance); for a superposition input
-        # the CNOT entangles and disturbs the travelling qubit.
+        # CNOT entangles: Eve's ancilla (|0>_E) gets flipped when signal is |1>.
+        # After tracing out the ancilla the signal is dephased in Z:
+        #   ρ_signal' = |α|²|0⟩⟨0| + |β|²|1⟩⟨1|
         #
-        # The resulting reduced state of the travelling qubit after tracing
-        # out Eve's ancilla has fidelity with the original given by:
-        #   F = 1 - |alpha * beta|^2  (for a general state alpha|0> + beta|1>)
-        # For a BB84 state (alpha=beta=1/sqrt(2)) this gives F=0.75, i.e.
-        # a 25% error rate — matching the standard intercept-resend result.
-        if secure_random() < 0.5:
-            # Eve interacts with the qubit via the CNOT model
-            theta = secure_random() * np.pi
-            phi = secure_random() * 2 * np.pi
-            gate = GateUtils.unitary_from_angles(theta, phi, 0)
-            qubit.apply_gate(gate)
-
-            # Detection probability derived from the physical disturbance:
-            # the fidelity between the original and disturbed states
-            # determines how likely a QBER sample will catch Eve.
-            post_state = qubit.state
-            fidelity = abs(np.vdot(original_state, post_state)) ** 2
-            disturbance = 1.0 - fidelity
-            # The probability of detecting the attack in a single-bit QBER
-            # sample equals the disturbance (error probability per bit).
-            detected = secure_random() < disturbance
+        # Stochastic unraveling: collapse to |0> with prob |α|² or |1> with
+        # prob |β|².  This is the physically correct CPTP map for the CNOT
+        # entangling attack with the ancilla traced out.
+        if secure_random() < prob_0:
+            qubit._state = np.array([1.0 + 0.0j, 0.0 + 0.0j])
         else:
-            detected = False
+            qubit._state = np.array([0.0 + 0.0j, 1.0 + 0.0j])
+
+        # Disturbance = probability that a measurement in the original
+        # preparation basis gives a different result.  Equivalently, the
+        # one-bit QBER contribution = 2|α|²|β|² — 0 for |0>/|1>, 0.5 for
+        # |+>/|->, 0.25 on average for random BB84 states.
+        disturbance = 2.0 * prob_0 * (1.0 - prob_0)
+        detected = secure_random() < disturbance
 
         return qubit, detected
 

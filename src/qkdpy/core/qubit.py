@@ -1,6 +1,7 @@
 """Qubit class for representing and manipulating quantum bits."""
 
 import math
+import numbers
 
 import numpy as np
 
@@ -23,15 +24,28 @@ class Qubit:
             beta: Amplitude for ``|1>`` state
 
         Raises:
-            ValueError: If the state is not normalized
+            TypeError: If alpha or beta are not numeric types.
+            ValueError: If the state has zero norm.
 
         """
-        # Normalize the state
-        norm = math.sqrt(abs(alpha) ** 2 + abs(beta) ** 2)
-        if norm == 0:
-            raise ValueError("Cannot create a qubit with zero norm")
+        if not isinstance(alpha, numbers.Number) or not isinstance(
+            beta, numbers.Number
+        ):
+            raise TypeError(
+                f"Qubit amplitudes must be numeric, got {type(alpha).__name__}, "
+                f"{type(beta).__name__}"
+            )
+        alpha_c = complex(alpha)
+        beta_c = complex(beta)
 
-        self._state = np.array([alpha / norm, beta / norm], dtype=complex)
+        norm = math.sqrt(abs(alpha_c) ** 2 + abs(beta_c) ** 2)
+        if norm == 0:
+            raise ValueError(
+                "Cannot create a qubit with zero norm"
+                f" (alpha={alpha_c}, beta={beta_c})"
+            )
+
+        self._state = np.array([alpha_c / norm, beta_c / norm], dtype=complex)
 
     @classmethod
     def zero(cls) -> "Qubit":

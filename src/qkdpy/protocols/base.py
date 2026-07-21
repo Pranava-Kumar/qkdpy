@@ -163,8 +163,14 @@ class BaseProtocol(ABC):
             # Step 4: Sift keys based on matching bases
             alice_sifted, bob_sifted = self.sift_keys()
 
-            # Step 5: Estimate QBER
-            qber = self.estimate_qber()
+            # Step 5: Estimate QBER via random sampling
+            # In real QKD the sifted key is split: a random subset is publicly
+            # compared to estimate the QBER and then discarded; the remaining
+            # bits go into error correction / privacy amplification.
+            # Using the entire sifted key for estimation would consume all bits.
+            qber, alice_sifted, bob_sifted = self._estimate_qber_with_sampling(
+                alice_sifted, bob_sifted
+            )
             record_qber_diagnostic(
                 protocol=self.__class__.__name__,
                 qber=qber,
@@ -222,6 +228,60 @@ class BaseProtocol(ABC):
                 channel_stats=self.channel.get_statistics(),
             )
             return result
+
+    def _estimate_qber_with_sampling(
+        self,
+        alice_key: list[int],
+        bob_key: list[int],
+    ) -> tuple[float, list[int], list[int]]:
+        """Estimate QBER on a random subset of the sifted key.
+
+        A random fraction (default 20 %) of the key is compared publicly to
+        estimate the QBER, then discarded.  The remaining bits are returned
+        for key distillation.  This matches real QKD practice, where the
+        full sifted key cannot be used for both estimation and key material.
+
+        Args:
+            alice_key: Alice's sifted key.
+            bob_key: Bob's sifted key.
+
+        Returns:
+            Tuple of (estimated QBER, remaining alice key, remaining bob key).
+
+        """
+        if not alice_key:
+            return 1.0, [], []
+
+        # Use a secure random sample of the key for estimation
+        n = len(alice_key)
+        sample_size = max(1, n // 5)  # 20 % sample, at least 1 bit
+
+        # Randomly select indices for the estimation sample
+        from ..core.secure_random import secure_randint
+
+        indices = list(range(n))
+        # Shuffle using secure randomness (Fisher-Yates on first sample_size)
+        for i in range(sample_size):
+            j = secure_randint(i, n)
+            indices[i], indices[j] = indices[j], indices[i]
+        sample_indices = set(indices[:sample_size])
+
+        # Build the estimation sample and remaining key
+        est_a, est_b = [], []
+        keep_a, keep_b = [], []
+        for i in range(n):
+            if i in sample_indices:
+                est_a.append(alice_key[i])
+                est_b.append(bob_key[i])
+            else:
+                keep_a.append(alice_key[i])
+                keep_b.append(bob_key[i])
+
+        # Compute QBER on the sample only
+        errors = sum(1 for a, b in zip(est_a, est_b, strict=False) if a != b)
+        qber = errors / len(est_a) if est_a else 0.0
+
+        return qber, keep_a, keep_b
 
     def reset(self) -> None:
         """Reset the protocol state."""
@@ -284,7 +344,7 @@ class BaseProtocol(ABC):
         # r = n - s - leak, where n is the original key length and s is a
         # security parameter.
         n = len(key)
-        s = 10  # Security parameter
+        s = min(128, max(10, n // 4))  # Security parameter — adaptive
         r = max(1, n - s - leak)  # Ensure at least 1 bit remains
 
         # Clamp to the actual key length (universal_hashing requires output < input)

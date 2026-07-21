@@ -214,28 +214,29 @@ class TestEntanglementAttackFidelity:
 
     def test_detection_is_not_random_coin_flip(self):
         """The detection probability should be fidelity-based, not a random
-        coin flip. The model applies random unitaries 50% of the time, and
-        the average disturbance from a random unitary is ~50%, giving an
-        overall detection rate of ~25% (not 50% as a coin flip would)."""
+        coin flip. The CNOT entangling attack dephases superposition states
+        but leaves Z-basis eigenstates undisturbed. For |+⟩ the detection
+        rate is ~50% (not 50% from a coin flip — it's deterministic from the
+        physics of the CNOT interaction)."""
         from qkdpy.core.channels import QuantumChannel
         from qkdpy.core.qubit import Qubit
 
         detections = 0
         trials = 1000
         for _ in range(trials):
-            q = Qubit.zero()
+            q = Qubit.plus()
             _, detected = QuantumChannel.entanglement_attack(q)
             if detected:
                 detections += 1
 
         detection_rate = detections / trials
 
-        # The detection rate should be ~25% (50% Eve acts * 50% avg disturbance).
-        # A coin flip would give ~50%. We check it's in the range [0.20, 0.30].
-        assert 0.20 <= detection_rate <= 0.30, (
-            f"Detection rate {detection_rate:.3f} is outside expected range [0.20, 0.30]. "
-            "Expected ~25% (50% Eve interaction * 50% avg disturbance), "
-            "not 50% as a coin flip would give."
+        # For |+⟩ the CNOT attack produces disturbance = 2·|α|²·|β|² = 0.5
+        # The detection rate should cluster around 50%.
+        assert 0.40 <= detection_rate <= 0.60, (
+            f"Detection rate {detection_rate:.3f} is outside expected range [0.40, 0.60]. "
+            "Expected ~50% for |+⟩ under CNOT entanglement attack "
+            "(disturbance = 2|α|²|β|² = 0.5)."
         )
 
     def test_detection_is_state_dependent(self):
