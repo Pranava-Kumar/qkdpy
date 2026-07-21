@@ -9,14 +9,14 @@ This example demonstrates the major new features in version 0.8.0:
 """
 
 import numpy as np
+
 from qkdpy import (
-    Circuit,
-    DensityMatrix,
-    SecretKeyRate,
     ChannelParameters,
+    Circuit,
     DecoyStateParameters,
+    DensityMatrix,
     Qubit,
-    Qudit,
+    SecretKeyRate,
 )
 
 
@@ -44,8 +44,7 @@ def demo_density_matrix():
     # Mixed state from probabilities
     print("\n3. Mixed State from Ensemble:")
     rho_mixed_ensemble = DensityMatrix.from_probabilities(
-        states=[Qubit.zero(), Qubit.one()],
-        probabilities=[0.7, 0.3]
+        states=[Qubit.zero(), Qubit.one()], probabilities=[0.7, 0.3]
     )
     print(f"   0.7|0⟩⟨0| + 0.3|1⟩⟨1| purity: {rho_mixed_ensemble.purity():.4f}")
     print(f"   Expected: 0.7² + 0.3² = {0.7**2 + 0.3**2:.4f}")
@@ -53,29 +52,28 @@ def demo_density_matrix():
     # Quantum channels
     print("\n4. Quantum Channels (CPTP Maps):")
     from qkdpy.core import (
-        depolarizing_channel,
         amplitude_damping_channel,
+        depolarizing_channel,
         phase_damping_channel,
-        bit_flip_channel,
     )
 
     # Depolarizing channel
     kraus_depol = depolarizing_channel(0.3)
     rho_after_depol = rho_plus.apply_channel(kraus_depol)
-    print(f"   After depolarizing (p=0.3):")
+    print("   After depolarizing (p=0.3):")
     print(f"     Purity: {rho_after_depol.purity():.4f} (decreased from 1.0)")
 
     # Amplitude damping
     kraus_amp = amplitude_damping_channel(0.2)
     rho_after_amp = rho_1.apply_channel(kraus_amp)
-    print(f"   After amplitude damping (γ=0.2):")
+    print("   After amplitude damping (γ=0.2):")
     print(f"     ρ[0,0] = {rho_after_amp.matrix[0,0].real:.4f} (|0⟩ population)")
     print(f"     ρ[1,1] = {rho_after_amp.matrix[1,1].real:.4f} (|1⟩ population)")
 
     # Phase damping
     kraus_phase = phase_damping_channel(0.4)
     rho_after_phase = rho_plus.apply_channel(kraus_phase)
-    print(f"   After phase damping (γ=0.4):")
+    print("   After phase damping (γ=0.4):")
     print(f"     Coherence ρ[0,1]: {rho_after_phase.matrix[0,1].real:.4f}")
 
     # Fidelity and trace distance
@@ -98,7 +96,7 @@ def demo_density_matrix():
 
     # Trace out second qubit
     rho_reduced = rho_bell.partial_trace([2, 2], keep=[0])
-    print(f"   Reduced state (after tracing qubit 1):")
+    print("   Reduced state (after tracing qubit 1):")
     print(f"     Purity: {rho_reduced.purity():.4f} (should be 0.5 = maximally mixed)")
     print(f"     Entropy: {rho_reduced.entropy():.4f} bits (should be 1.0)")
 
@@ -138,14 +136,11 @@ def demo_circuit():
     # Custom gates
     print("\n3. Custom Gates:")
     custom_circuit = Circuit(2)
-    custom_gate = np.array([
-        [1, 0, 0, 0],
-        [0, 1, 0, 0],
-        [0, 0, 0, 1],
-        [0, 0, 1, 0]
-    ], dtype=complex)
+    custom_gate = np.array(
+        [[1, 0, 0, 0], [0, 1, 0, 0], [0, 0, 0, 1], [0, 0, 1, 0]], dtype=complex
+    )
     custom_circuit.custom_gate(custom_gate, [0, 1])
-    print(f"   Applied custom CNOT gate")
+    print("   Applied custom CNOT gate")
     print(f"   Operations: {custom_circuit.count_ops()}")
 
     # Circuit composition
@@ -170,7 +165,7 @@ def demo_circuit():
 
     qasm = qasm_circuit.to_qasm()
     print(f"   Generated {len(qasm.splitlines())} lines of QASM code")
-    print(f"   First few lines:")
+    print("   First few lines:")
     for line in qasm.splitlines()[:5]:
         print(f"     {line}")
 
@@ -188,7 +183,7 @@ def demo_secret_key_rate():
         channel_loss_db_km=0.2,
         detector_efficiency=0.6,
         dark_count_prob=1e-6,
-        misalignment_error=0.02
+        misalignment_error=0.02,
     )
 
     rate_bb84 = SecretKeyRate.bb84(params)
@@ -209,7 +204,7 @@ def demo_secret_key_rate():
         mean_photon_number=0.5,
         fraction_signal=0.5,
         fraction_decoy=0.5,
-        decoy_intensity=0.1
+        decoy_intensity=0.1,
     )
 
     rate_decoy = SecretKeyRate.decoy_bb84(decoy_params)
@@ -219,9 +214,9 @@ def demo_secret_key_rate():
     # Compare protocols
     print("\n3. Protocol Comparison at 50 km:")
     protocols = {
-        'BB84': SecretKeyRate.bb84,
-        'E91': SecretKeyRate.e91,
-        'SARG04': SecretKeyRate.sarg04,
+        "BB84": SecretKeyRate.bb84,
+        "E91": SecretKeyRate.e91,
+        "SARG04": SecretKeyRate.sarg04,
     }
 
     for name, rate_func in protocols.items():
@@ -241,14 +236,14 @@ def demo_secret_key_rate():
     # Maximum secure distance
     print("\n5. Maximum Secure Distance:")
     max_dist = SecretKeyRate.max_distance(
-        protocol='bb84',
+        protocol="bb84",
         channel_loss_db_km=0.2,
         detector_efficiency=0.6,
         dark_count_prob=1e-6,
-        threshold_rate=1e-6
+        threshold_rate=1e-6,
     )
-    print(f"   Protocol: BB84")
-    print(f"   Threshold rate: 1e-6 bits/pulse")
+    print("   Protocol: BB84")
+    print("   Threshold rate: 1e-6 bits/pulse")
     print(f"   Maximum distance: {max_dist:.1f} km")
 
 
@@ -273,16 +268,17 @@ def demo_integration():
 
     # Apply noise
     from qkdpy.core import depolarizing_channel
+
     kraus = depolarizing_channel(0.1)
     rho_noisy = rho.apply_channel(kraus)
-    print(f"   After depolarizing noise (p=0.1):")
+    print("   After depolarizing noise (p=0.1):")
     print(f"     Purity: {rho_noisy.purity():.4f}")
     print(f"     Fidelity with original: {rho.fidelity(rho_noisy):.4f}")
 
     # Connection to key rate
     print("\n2. Connection to Key Rate:")
     print(f"   QBER due to noise: {1 - rho.fidelity(rho_noisy):.4f}")
-    print(f"   This QBER would reduce the secure key rate")
+    print("   This QBER would reduce the secure key rate")
 
 
 def main():
@@ -313,6 +309,7 @@ def main():
     except Exception as e:
         print(f"\nError during demonstration: {e}")
         import traceback
+
         traceback.print_exc()
 
 
