@@ -56,6 +56,9 @@ pip install qkdpy[cirq]
 # PennyLane quantum computing framework integration
 pip install qkdpy[pennylane]
 
+# QpiAI Quantum SDK integration
+pip install qkdpy[qpiai]
+
 # All extras
 pip install qkdpy[all]
 ```

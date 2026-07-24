@@ -36,6 +36,34 @@ q_zero.apply_gate(PauliX().matrix) # Apply Pauli-X gate
 print(f"Qubit state after X gate: {q_zero.state}")
 ```
 
+## Density Matrix & Circuit
+
+```python
+# Density matrix: mixed state simulation
+from qkdpy.core.density_matrix import DensityMatrix
+
+# Create a maximally mixed state
+rho = DensityMatrix.maximally_mixed(2)
+print(f"Purity: {rho.purity():.4f}")          # 0.5 for maximally mixed
+print(f"Entropy: {rho.entropy():.4f}")        # 1.0 for maximally mixed
+
+# Apply a depolarizing channel
+depolarized = DensityMatrix.depolarizing(rho, p=0.1)
+
+# Compute fidelity with an ideal state
+fidelity = DensityMatrix.fidelity(depolarized, rho)
+
+# Circuit composition
+from qkdpy.core.circuit import Circuit
+
+qc = Circuit(2)
+qc.h(0).cx(0, 1)  # Create Bell state
+qc.measure_all()
+state = qc.simulate()
+print(f"Circuit depth: {qc.depth()}")
+print(f"Gate count: {qc.count_ops()}")
+```
+
 For High-Dimensional QKD:
 
 ```python

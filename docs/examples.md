@@ -45,6 +45,81 @@ parameter_space = {
 }
 ```
 
+## Density Matrix & Circuit
+
+QKDpy provides a full density matrix simulation stack and quantum circuit composer for mixed-state simulations:
+
+```python
+from qkdpy.core.density_matrix import DensityMatrix, CPTPChannel
+
+# Create a maximally mixed state of 2 qubits
+rho = DensityMatrix.maximally_mixed(2)
+print(f"Purity: {rho.purity():.4f}")          # 0.5 for maximally mixed
+print(f"Entropy: {rho.entropy():.4f}")        # 1.0 for maximally mixed
+
+# Partial trace: trace out the second qubit
+reduced = DensityMatrix.partial_trace(rho, keep=[0], dims=[2, 2])
+print(f"Reduced density matrix shape: {reduced.shape}")
+
+# Apply a depolarizing channel
+depolarized = DensityMatrix.depolarizing(rho, p=0.1)
+
+# Apply an amplitude damping channel
+amp_damped = DensityMatrix.amplitude_damping(rho, gamma=0.2)
+
+# Fidelity comparison between two density matrices
+fidelity = DensityMatrix.fidelity(depolarized, amp_damped)
+print(f"Fidelity: {fidelity:.4f}")
+
+# CPTP channel creation and composition
+from qkdpy.core.cptp import KrausChannel
+
+# Create a depolarizing channel via Kraus operators
+kraus_ops = [
+    [[1, 0], [0, 1]],    # Identity (probability 1-p)
+    [[0, 1], [1, 0]],    # Pauli X
+    [[0, -1j], [1j, 0]], # Pauli Y
+    [[1, 0], [0, -1]],   # Pauli Z
+]
+channel = KrausChannel(kraus_ops)
+
+# Compose channels: depolarizing then amplitude damping
+composed = channel.compose(KrausChannel.from_kraus(...))
+
+# Circuit composition and simulation
+from qkdpy.core.circuit import Circuit
+
+qc = Circuit(2)
+qc.h(0).cx(0, 1)  # Create Bell state |00⟩ + |11⟩
+qc.measure_all()
+state = qc.simulate()
+print(f"Circuit depth: {qc.depth()}")
+print(f"Gate count: {qc.count_ops()}")
+
+# Export circuit to OpenQASM 2.0
+qasm_str = qc.to_qasm()
+print(qasm_str)
+```
+
+## Secret Key Rate Computation
+
+```python
+from qkdpy.core.key_rate import SecretKeyRate
+
+# Compute asymptotic secret key rate for BB84
+skr = SecretKeyRate.bb84_asymptotic(qber=0.025)
+print(f"Secret key rate: {skr:.4f} bits per signal")
+
+# Compute with finite-size corrections
+skr_finite = SecretKeyRate.bb84_finite_key(
+    qber=0.025,
+    n_signals=1_000_000,
+    epsilon_sec=1e-9,
+    epsilon_cor=1e-15,
+)
+print(f"Finite-key rate: {skr_finite:.4f} bits per signal")
+```
+
 ## Observability & Instrumentation
 
 Protocol executions are automatically instrumented with structured telemetry. You can also add custom instrumentation:

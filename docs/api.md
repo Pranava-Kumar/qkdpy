@@ -59,7 +59,8 @@ stats = channel.get_statistics()
 
 ## Protocols
 
-QKDpy ships 11 QKD protocols. Every protocol follows the same
+QKDpy ships 12 QKD protocols plus finite-key and secret-key-rate
+analyzers. Every protocol follows the same
 lifecycle: construct → `execute()` → inspect result.
 
 ### BB84 — Standard Prepare-and-Measure
@@ -299,6 +300,141 @@ factor of 2 for enhanced noise tolerance.
 
 ---
 
+## SecretKeyRate — Key Rate Calculator
+
+The `SecretKeyRate` class computes asymptotic secret key rates for
+QKD protocols using information-theoretic security proofs (Shor-Preskill,
+Devetak-Winter, Gottesman-Lo-Lutkenhaus).
+
+```python
+from qkdpy.protocols import SecretKeyRate, ChannelParameters, DecoyStateParameters
+
+# BB84 secret key rate (Shor-Preskill bound)
+params = ChannelParameters(
+    distance_km=50,
+    channel_loss_db_km=0.2,
+    detector_efficiency=0.6,
+    dark_count_prob=1e-6,
+    misalignment_error=0.03,
+)
+rate_bb84 = SecretKeyRate.bb84(params)
+print(f"BB84 key rate:       {rate_bb84:.2e} bits/pulse")
+
+# Decoy-state BB84 (PNS-resistant)
+decoy_params = DecoyStateParameters(
+    distance_km=50,
+    mean_photon_number=0.5,
+    decoy_intensity=0.1,
+)
+rate_decoy = SecretKeyRate.decoy_bb84(decoy_params)
+print(f"Decoy BB84 key rate: {rate_decoy:.2e} bits/pulse")
+
+# E91 (entanglement-based)
+rate_e91 = SecretKeyRate.e91(params)
+print(f"E91 key rate:        {rate_e91:.2e} bits/pulse")
+
+# SARG04
+rate_sarg = SecretKeyRate.sarg04(params)
+print(f"SARG04 key rate:     {rate_sarg:.2e} bits/pulse")
+
+# Maximum secure distance via binary search
+max_km = SecretKeyRate.max_distance(
+    protocol="bb84",
+    channel_loss_db_km=0.2,
+    detector_efficiency=0.6,
+    threshold_rate=1e-10,
+)
+print(f"BB84 max secure distance: {max_km:.1f} km")
+
+# Sweep distances to observe rate decay
+for km in [0, 25, 50, 75, 100]:
+    p = ChannelParameters(distance_km=km)
+    print(f"  {km:3d} km: {SecretKeyRate.bb84(p):.2e}")
+```
+
+### ChannelParameters
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `distance_km` | (required) | Fiber distance (km) |
+| `channel_loss_db_km` | `0.2` | Fiber attenuation (dB/km) |
+| `detector_efficiency` | `0.6` | Detector quantum efficiency |
+| `dark_count_prob` | `1e-6` | Dark count probability per pulse |
+| `misalignment_error` | `0.03` | Optical misalignment error |
+| `internal_loss` | `0.0` | Internal optical loss |
+
+### DecoyStateParameters
+
+Inherits all `ChannelParameters` fields, plus:
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `mean_photon_number` | `0.5` | Mean photon number of signal state |
+| `decoy_intensity` | `0.1` | Mean photon number of decoy state |
+
+---
+
+## Finite Key Analysis
+
+Real QKD operates on finite blocks, where statistical fluctuations
+dominate. The `FiniteKeyAnalysis` class computes secure key lengths
+with composable security parameters, using the framework of
+Tomamichel et al. (2012) and Leverrier et al. (2013).
+
+```python
+from qkdpy.protocols import FiniteKeyAnalysis, FiniteKeyParameters
+
+# Finite-key analysis for BB84 with 10⁸ pulses
+params = FiniteKeyParameters(
+    n_pulses=10**8,
+    observed_qber=0.035,
+    security_parameter=1e-10,
+    protocol="BB84",
+)
+
+# Secure key length with finite-size corrections
+key_len = FiniteKeyAnalysis.key_length(params)
+print(f"Secure key length:   {key_len} bits")
+
+# Privacy amplification overhead fraction
+overhead = FiniteKeyAnalysis.pa_overhead(params)
+print(f"PA overhead:         {overhead:.2%}")
+
+# Compare asymptotic vs finite length
+comparison = FiniteKeyAnalysis.compare_asymptotic_vs_finite(params)
+print(f"Asymptotic key:       {comparison['asymptotic']} bits")
+print(f"Finite key:           {comparison['finite']} bits")
+print(f"Finite/asymptotic:    {comparison['ratio']:.2%}")
+
+# Max secure distance with finite-size effects
+max_km = FiniteKeyAnalysis.max_secure_distance(
+    protocol="BB84",
+    n_pulses=10**8,
+    security_parameter=1e-10,
+)
+print(f"Max finite-key distance: {max_km:.1f} km")
+
+# Finite-size overhead grows with QBER
+for qber in [0.01, 0.03, 0.05, 0.07]:
+    fp = FiniteKeyParameters(n_pulses=10**7, observed_qber=qber)
+    kl = FiniteKeyAnalysis.key_length(fp)
+    print(f"  QBER={qber:.0%}: {kl} bits")
+```
+
+### FiniteKeyParameters
+
+| Attribute | Default | Description |
+|-----------|---------|-------------|
+| `n_pulses` | (required) | Total transmitted pulses |
+| `observed_qber` | (required) | Observed quantum bit error rate |
+| `security_parameter` | `1e-10` | Desired failure probability epsiv; |
+| `protocol` | `"BB84"` | Protocol name |
+| `basis_efficiency` | `0.5` | Basis reconciliation efficiency |
+| `error_correction_efficiency` | `1.16` | Error correction efficiency f |
+| `smooth_min_entropy_rate` | `None` | Manual override (auto-computed if None) |
+
+---
+
 ## Core Quantum Stack
 
 The `qkdpy.core` module provides the simulation primitives. These
@@ -357,6 +493,174 @@ print(f"Fidelity with self: {qs.fidelity(qs):.2f}")
 tensor = qd.tensor_product(qs)
 reduced = tensor.partial_trace(subsystem=0, sub_dim=5)
 print(f"Reduced state dim: {reduced.shape}")
+```
+
+### DensityMatrix
+
+A density matrix represents a quantum state (pure or mixed) as a
+positive semidefinite, trace-1 operator. Pure states satisfy
+&rho; = |&psi;&rang;&lang;&psi;| and Tr(&rho;&sup2;) = 1; mixed states
+have Tr(&rho;&sup2;) &lt; 1.
+
+```python
+import numpy as np
+from qkdpy.core.density_matrix import DensityMatrix
+from qkdpy.core.density_matrix import (
+    depolarizing_channel,
+    amplitude_damping_channel,
+    phase_damping_channel,
+    bit_flip_channel,
+    phase_flip_channel,
+)
+
+# From a pure state
+rho = DensityMatrix.from_pure(Qubit.plus())
+print(f"Purity: {rho.purity():.4f}")          # 1.0 for pure
+
+# Maximally mixed state
+mixed = DensityMatrix.maximally_mixed(dimension=2)
+print(f"Mixed purity: {mixed.purity():.4f}") # 0.5 for qubit
+
+# From probability distribution
+states = [Qubit.zero(), Qubit.one()]
+rho_ensemble = DensityMatrix.from_probabilities(states, [0.75, 0.25])
+print(f"Ensemble entropy: {rho_ensemble.entropy():.3f} bits")
+
+# Apply a CPTP channel (depolarizing)
+kraus_ops = depolarizing_channel(p=0.1)
+rho_noisy = rho.apply_channel(kraus_ops)
+print(f"Post-channel purity: {rho_noisy.purity():.4f}")
+
+# Partial trace of an entangled state
+ghz = MultiQubitState.ghz(2)                # (|00⟩ + |11⟩) / √2
+rho_ghz = DensityMatrix.from_pure(ghz.state)
+rho_a = rho_ghz.partial_trace(
+    subsystem_dims=[2, 2], keep=[0],
+)
+print(f"Reduced-state purity: {rho_a.purity():.4f}")  # 0.5 for Bell pair
+
+# Metrics
+rho_a = DensityMatrix.from_pure(Qubit.zero())
+rho_b = DensityMatrix.from_pure(Qubit.plus())
+print(f"Fidelity:         {rho_a.fidelity(rho_b):.4f}")
+print(f"Trace distance:   {rho_a.trace_distance(rho_b):.4f}")
+
+# Standard noise channels
+amp_damp = amplitude_damping_channel(gamma=0.3)
+phase_damp = phase_damping_channel(gamma=0.2)
+bit_flip = bit_flip_channel(p=0.1)
+```
+
+### Circuit
+
+A `Circuit` represents a sequence of quantum gates and measurements
+applied to a register of qubits. Method chaining keeps construction
+concise.
+
+```python
+from qkdpy.core.circuit import Circuit
+
+# Bell state: |Φ⁺⟩ = (|00⟩ + |11⟩) / √2
+qc = Circuit(2)
+qc.h(0).cx(0, 1).measure_all()
+state = qc.simulate()
+print(f"State shape:         {state.shape}")
+print(f"Circuit depth:       {qc.depth()}")
+
+# Gate reference
+qc2 = Circuit(2)
+qc2.x(0).y(1).z(0)                  # Pauli gates
+qc2.s(0).t(1)                        # Phase gates
+qc2.rx(0, np.pi / 4)                 # Rotation gates
+qc2.ry(1, np.pi / 2)
+qc2.rz(0, np.pi)
+qc2.cz(0, 1).swap(0, 1)             # Two-qubit gates
+
+# Density-matrix simulation
+dm = qc2.simulate(use_density_matrix=True)
+print(f"Output purity: {dm.purity():.4f}")
+
+# Gate count breakdown
+ops = qc2.count_ops()
+print(f"Gate counts: {ops}")
+
+# OpenQASM 2.0 export
+qc3 = Circuit(2)
+qc3.h(0).cx(0, 1)
+print(qc3.to_qasm())
+# OPENQASM 2.0;
+# include "qelib1.inc";
+# qreg q[2];
+# creg c[2];
+# h q[0];
+# cx q[0], q[1];
+
+# Custom unitary gate
+custom = np.array([[1, 0], [0, np.exp(1j * np.pi / 4)]])
+qc4 = Circuit(1)
+qc4.custom_gate(custom, qubits=[0])
+print(f"Custom depth: {qc4.depth()}")
+
+# Circuit composition (qc_a then qc_b)
+qc_a = Circuit(2); qc_a.h(0).cx(0, 1)
+qc_b = Circuit(2); qc_b.measure_all()
+qc_combined = qc_a.compose(qc_b)
+# Also via + operator: qc_a + qc_b
+print(f"Composed depth: {qc_combined.depth()}")
+```
+
+### CPTP Channels
+
+The `CPTPChannel` class provides a formal abstraction for completely
+positive trace-preserving quantum channels, with Kraus operator
+verification, Choi matrix representation, and diamond norm distance.
+
+```python
+import numpy as np
+from qkdpy.core.channels_cptp import (
+    CPTPChannel, DepolarizingChannel, AmplitudeDampingChannel,
+    PhaseDampingChannel, BitFlipChannel, PhaseFlipChannel,
+)
+
+# Depolarizing channel (p = noise strength)
+depol = DepolarizingChannel(p=0.1)
+rho_out = depol.apply(DensityMatrix.from_pure(Qubit.plus()))
+print(f"Purity after depolarizing: {rho_out.purity():.4f}")
+
+# Channel composition: amp-damp ∘ depolarizing
+amp_damp = AmplitudeDampingChannel(gamma=0.2)
+combined = amp_damp.compose(depol)       # amp_damp after depol
+# Also via @: combined = amp_damp @ depol
+
+# Choi matrix (d² × d²)
+choi = combined.choi_matrix()
+print(f"Choi matrix shape: {choi.shape}")
+
+# Diamond norm distance from identity
+dist_id = combined.diamond_norm()
+print(f"Diamond distance from I: {dist_id:.4f}")
+
+# Distance between two channels
+ch_a = DepolarizingChannel(p=0.1)
+ch_b = DepolarizingChannel(p=0.2)
+dist_ab = ch_a.diamond_norm(ch_b)
+print(f"Diamond distance ch_a - ch_b: {dist_ab:.4f}")
+
+# Standard channel library
+channels = {
+    "bit_flip":      BitFlipChannel(p=0.1),
+    "phase_flip":    PhaseFlipChannel(p=0.1),
+    "phase_damping": PhaseDampingChannel(gamma=0.2),
+}
+for name, ch in channels.items():
+    out = ch.apply(DensityMatrix.from_pure(Qubit.plus()))
+    print(f"{name:16s}  purity={out.purity():.4f}")
+
+# Manual Kraus construction
+K0 = np.array([[1, 0], [0, np.sqrt(1 - 0.3)]], dtype=complex)
+K1 = np.array([[0, np.sqrt(0.3)], [0, 0]], dtype=complex)
+custom_ch = CPTPChannel([K0, K1])
+print(f"Custom channel dimension: {custom_ch.dimension}")
 ```
 
 ### QuantumGate

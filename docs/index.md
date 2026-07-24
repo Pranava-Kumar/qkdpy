@@ -15,6 +15,9 @@ Welcome to the documentation for **QKDpy**, a Python library for **Quantum Key D
 |--------|----------|
 | **Satellite QKD** | Satellite-ground links, free-space optical channels, orbital mechanics, atmospheric modeling |
 | **QKD Protocols** | 10+ protocols (BB84, E91, CV-QKD, HD-QKD, B92, SARG04, SixState, DI-QKD) |
+| **Density Matrix** | Mixed-state simulation, partial trace, fidelity, entropy, purity, CPTP channels (depolarizing, amplitude damping, Kraus channel composition) |
+| **Circuit Composer** | Quantum circuit construction, gate composition, Bell state preparation, OpenQASM 2.0 export, simulation |
+| **Secret Key Rate** | Asymptotic and finite-size secret key rate computation for BB84 and other protocols |
 | **AI/ML** | Bayesian optimization, neural network predictors, anomaly detection, adaptive protocols |
 | **Enterprise** | Three-tier licensing (FREE/ENTERPRISE/PREMIUM), compliance checking, HSM integration, audit logging |
 | **Observability** | Structured instrumentation via `OperationSpan`, `@instrument` decorator, domain-specific events |
@@ -34,6 +37,22 @@ adr_public/ADR-Public-01-product-tiers
 adr_public/ADR-Public-02-observability
 adr_public/ROADMAP-Public
 ```
+
+## Architecture Decision Records
+
+Design rationale for major architectural choices is captured in
+[Architecture Decision Records](decisions/). Internal ADRs (not
+compiled into the public site) document decisions that are primarily
+relevant to maintainers and contributors.
+
+| ADR | Subject |
+|-----|---------|
+| [ADR-001](decisions/ADR-001-product-tier-licensing.md) | Product tier licensing model |
+| [ADR-002](decisions/ADR-002-observability-and-instrumentation.md) | Observability and instrumentation |
+| [ADR-003](decisions/ADR-003-compliance-architecture.md) | Enterprise config audit architecture |
+| [ADR-004](decisions/ADR-004-enterprise-hsm-is-software-simulation.md) | HSM is a software simulation |
+| [ADR-005](decisions/ADR-005-core-quantum-simulation-stack.md) | Core quantum simulation stack |
+| [ADR-006](decisions/ADR-006-protocol-execution-model.md) | Protocol execution model (template method) |
 
 ## Architecture & Diagrams
 

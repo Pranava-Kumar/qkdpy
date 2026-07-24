@@ -5,7 +5,8 @@
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![Tests](https://img.shields.io/badge/tests-610_passing-brightgreen.svg)](#-quick-start)
-[![Code Style](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Code Style](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
+[![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/Pranava-Kumar/qkdpy/releases)
 [![Documentation](https://github.com/Pranava-Kumar/qkdpy/actions/workflows/pages.yml/badge.svg)](https://pranava-kumar.github.io/qkdpy/)
 
 **A Python library for Quantum Key Distribution simulation at the intersection of Space Technology, Quantum Computing, AI/ML, and config audit tooling**
@@ -63,8 +64,11 @@ All QKD protocols follow a template-method pattern defined in `BaseProtocol.exec
 |-----------|------|
 | `Qubit` | Single qubit statevector `[α, β]` with gate application, measurement, Bloch sphere |
 | `Qudit` | d-dimensional quantum system with unitary operations and partial trace |
+| `DensityMatrix` | Mixed-state representation via density operator ρ — CPTP maps, von Neumann entropy, Uhlmann fidelity, partial trace *(new in v0.8.0)* |
+| `Circuit` | Gate-sequence composition with method-chaining API, `simulate()`, OpenQASM 2.0 export *(new in v0.8.0)* |
 | `MultiQubitState` | n-qubit statevector with entanglement entropy, GHZ/W-state preparation |
 | `QuantumGate` | 18 gate implementations: Pauli, Hadamard, rotation, CNOT, CZ, SWAP, etc. |
+| `CPTPChannel` | Completely Positive Trace-Preserving channel framework via Kraus operators, Choi matrix, diamond norm *(new in v0.8.0)* |
 | `QuantumChannel` | Physical channel with loss, noise, eavesdropping, and atmospheric effects |
 | `Measurement` | Basis measurement, tomography, fidelity, purity, entanglement witnesses |
 
@@ -135,8 +139,8 @@ QKDpy is **not** suitable for:
 - Relying on the LDPC error-correction path for a hardened, standards-compliant
   codec (it uses a simplified belief-propagation path with fallbacks)
 - Treating the enterprise licensing as an anti-piracy / entitlement system (it
-  is a demo gate; opt-in key verification was added in v0.6.6 but is not a full
-  license server)
+  is a demo gate; opt-in key verification is a demonstration mechanism, not a
+  full license server)
 
 Known-limitation tracking lives in [docs/OPEN_CORE.md](docs/OPEN_CORE.md) and
 the release notes ([CHANGELOG.md](CHANGELOG.md)).
@@ -146,8 +150,8 @@ the release notes ([CHANGELOG.md](CHANGELOG.md)).
 | Domain                   | Capabilities                                                                               |
 | ------------------------ | ------------------------------------------------------------------------------------------ |
 | **🚀 Space Technology**  | Satellite-ground QKD, free-space optical channels, orbital mechanics, atmospheric modeling |
-| **⚛️ Quantum Computing** | 10+ QKD protocols (BB84, E91, CV-QKD, HD-QKD), qubit/qudit simulation, entanglement        |
-| **🤖 AI/ML**             | Bayesian optimization, neural network predictors, anomaly detection, adaptive protocols    |
+| **⚛️ Quantum Computing** | 12+ QKD protocols (BB84, E91, CV-QKD, HD-QKD, MDI-QKD, DI-QKD), density-matrix simulation, circuit composition, CPTP channel framework |
+| **🤖 AI/ML**             | Bayesian optimization, neural network predictors, anomaly detection, adaptive protocols |
 
 ---
 
@@ -294,11 +298,22 @@ for rec in report["recommendations"]:
 ### Protocols
 
 - **BB84** (Standard + Decoy-State)
-- **E91** (Entanglement-based)
-- **B92**, **SARG04**
-- **CV-QKD** (Continuous-Variable)
-- **Device-Independent QKD**
+- **E91** (Entanglement-based, CHSH test)
+- **B92**, **SARG04**, **SixState**
+- **CV-QKD** (Continuous-Variable, with enhanced security analysis)
+- **Device-Independent QKD** (DI-QKD)
 - **HD-QKD** (High-Dimensional)
+- **MDI-QKD** (Measurement-Device-Independent)
+- **TwistedPairQKD** (Three-basis protocol)
+- **FiniteKeyAnalysis** (Finite-key security bounds)
+- **SecretKeyRate** calculator (key rates for BB84, decoy BB84, E91, SARG04, CV-QKD)
+
+### Core Quantum Stack
+
+- **DensityMatrix** — Mixed-state simulation via density operator ρ, CPTP maps, von Neumann entropy, Uhlmann fidelity, partial trace
+- **Circuit** — Quantum circuit composition with method chaining, `simulate()`, OpenQASM 2.0 export
+- **CPTPChannel** — Kraus-operator channel framework, Choi matrix, diamond norm, standard noise channels
+- **Key Distillation Pipeline** — Cascade, Winnow, LDPC error correction; universal/Toeplitz hashing privacy amplification
 
 ### Enterprise
 
@@ -336,6 +351,8 @@ for rec in report["recommendations"]:
 - Structured logging with `structlog`
 - Input validation decorators
 - Type-safe (strict `mypy`)
+- Density-matrix simulation engine (exact CPTP maps, no Monte Carlo approximation)
+- Secure CSPRNG throughout (audited, no numpy global RNG)
 
 ---
 
@@ -370,6 +387,32 @@ print(f"QBER: {results['qber']:.2%}")
 print(f"Secure: {results['is_secure']}")
 ```
 
+Density-matrix simulation for mixed states and noise analysis:
+
+```python
+from qkdpy.core.density_matrix import DensityMatrix
+
+# Create a maximally mixed single-qubit state
+rho = DensityMatrix.maximally_mixed(2)
+print(f"Purity: {rho.purity():.4f}")    # 0.5
+print(f"Entropy: {rho.entropy():.4f}")  # 1.0
+
+# Apply a depolarizing channel
+depolarized = rho.apply_channel(DensityMatrix.depolarizing(1, p=0.1))
+
+# Compute fidelity with reference state
+ideal = DensityMatrix.from_pure([1.0, 0.0])
+print(f"Fidelity: {DensityMatrix.fidelity(depolarized, ideal):.4f}")
+
+# Quantum circuit composition (v0.8.0)
+from qkdpy.core.circuit import Circuit
+
+qc = Circuit(2)
+qc.h(0).cx(0, 1).measure_all()  # Bell state
+print(f"Depth: {qc.depth()}, Ops: {qc.count_ops()}")
+print(qc.to_qasm())              # OpenQASM 2.0 export
+```
+
 ---
 
 ## 📐 Architecture Decisions
@@ -381,6 +424,9 @@ Key technical decisions are captured as Architecture Decision Records (ADRs):
 | [ADR-001](docs/decisions/ADR-001-product-tier-licensing.md) | Product Tier Licensing Model (FREE/ENTERPRISE/PREMIUM) |
 | [ADR-002](docs/decisions/ADR-002-observability-and-instrumentation.md) | Observability via structlog + OperationSpan |
 | [ADR-003](docs/decisions/ADR-003-compliance-architecture.md) | Pluggable Config Audit Architecture |
+| [ADR-004](docs/decisions/ADR-004-enterprise-hsm-is-software-simulation.md) | HSM is a software simulation (honesty fix) |
+| [ADR-005](docs/decisions/ADR-005-core-quantum-simulation-stack.md) | Core quantum simulation stack (DensityMatrix + Circuit) |
+| [ADR-006](docs/decisions/ADR-006-protocol-execution-model.md) | Protocol execution model (template method) |
 
 ---
 

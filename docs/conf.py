@@ -15,8 +15,8 @@ sys.path.insert(0, os.path.abspath("../src"))
 project = "QKDpy"
 copyright = "2024-2026, Pranava-Kumar"
 author = "Pranava-Kumar"
-release = "0.6.6"
-version = "0.6.6"
+release = "0.8.0"
+version = "0.8.0"
 language = "en"
 
 # -- General configuration ---------------------------------------------------
@@ -57,7 +57,7 @@ exclude_patterns = [
 # -- Options for HTML output -------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#options-for-html-output
 
-html_title = "QKDpy v0.6.6 — Quantum Key Distribution library"
+html_title = "QKDpy v0.8.0 — Quantum Key Distribution library"
 html_theme = "sphinx_rtd_theme"
 html_static_path = ["_static"]
 html_show_sourcelink = False
