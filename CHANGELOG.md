@@ -4,6 +4,10 @@ All notable changes to this project are documented here.
 
 ## [Unreleased]
 
+### Security
+
+- Bumped locked dependencies past all open Dependabot advisories: `black` 26.10.1, `certifi` 2026.10.23, `cryptography` 50.0.2, `filelock` 4.2.7, `pillow` 13.0.0, `pyasn1` 0.6.5, `setuptools` 84.2.1, `tornado` 6.6, `urllib3` 2.8.0, `virtualenv` 21.15.2 (`packaging` and `python-discovery` moved with them).
+
 ### Fixed
 
 - QpiAI SDK 0.7.5 local simulation now installs the `SDKUser` context required by `Statevector(circuit)` instead of failing with "Authentication required" when only `API_KEY` was set.
