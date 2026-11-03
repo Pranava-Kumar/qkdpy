@@ -8,8 +8,8 @@ Accepted
 
 ## Context
 
-QKDpy implements 12+ QKD protocols (BB84, E91, CV-QKD, decoy-state BB84,
-DI-QKD, HD-QKD, MDI-QKD, SARG04, B92, Six-State, twisted-pair, enhanced CV-QKD).
+QKDpy implements 11 QKD protocols (BB84, E91, CV-QKD, decoy-state BB84,
+DI-QKD, HD-QKD, MDI-QKD, SARG04, B92, twisted-pair, enhanced CV-QKD).
 These protocols share a common high-level flow but differ in every detail:
 
 | Phase | BB84 | E91 | CV-QKD |

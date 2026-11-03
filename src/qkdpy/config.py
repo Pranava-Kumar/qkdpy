@@ -153,7 +153,10 @@ def set_config(config: QKDConfig) -> None:
     try:
         from .enterprise.licensing import ProductTier, set_active_tier  # noqa: PLC0415
 
-        set_active_tier(ProductTier(tier_str))
+        set_active_tier(
+            ProductTier(tier_str),
+            license_key=config.enterprise.license_key,
+        )
     except (ImportError, ValueError):
         pass  # licensing module unavailable or unknown tier — use default
 

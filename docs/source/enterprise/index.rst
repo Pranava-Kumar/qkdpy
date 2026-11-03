@@ -83,8 +83,9 @@ Licensing
 The licensing module provides runtime feature gating via the
 :func:`~qkdpy.enterprise.licensing.require_feature` decorator and
 :func:`~qkdpy.enterprise.licensing.feature_available` function.
-The active tier is configured via the ``QKDPY_PRODUCT_TIER`` environment
-variable or the :func:`qkdpy.config.set_config` function.
+The active tier is configured through :func:`qkdpy.enterprise.set_active_tier`
+(or :func:`qkdpy.config.set_config`, which reads the tier and license key from
+a :class:`qkdpy.config.QKDConfig`). Non-FREE tiers require a license key.
 
 Usage:
 

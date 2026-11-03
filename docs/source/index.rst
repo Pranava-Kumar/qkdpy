@@ -1,8 +1,8 @@
 QKDpy Documentation
 ===================
 
-A production-grade Python library for Quantum Key Distribution at the intersection of
-**Space Technology, Quantum Computing, AI/ML, and Enterprise Compliance**.
+A research and educational Python library for Quantum Key Distribution simulation at
+the intersection of **Space Technology, Quantum Computing, AI/ML, and config audit tooling**.
 
 .. note::
 

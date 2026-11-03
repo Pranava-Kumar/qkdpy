@@ -33,8 +33,8 @@ network.add_node("Bob")
 network.add_connection("Alice", "Bob", channel)
 key = network.establish_key_between_nodes("Alice", "Bob", 128)
 
-# High-dimensional QKD
-hd_qkd = HDQKD(channel, key_length=100, dimension=4)
+# High-dimensional QKD (prime dimensions have full MUB security)
+hd_qkd = HDQKD(channel, key_length=100, dimension=5)
 hd_results = hd_qkd.execute()
 
 # ML-based QKD optimization
@@ -50,41 +50,40 @@ parameter_space = {
 QKDpy provides a full density matrix simulation stack and quantum circuit composer for mixed-state simulations:
 
 ```python
-from qkdpy.core.density_matrix import DensityMatrix, CPTPChannel
+import numpy as np
+
+from qkdpy.core import (
+    AmplitudeDampingChannel,
+    DensityMatrix,
+    DepolarizingChannel,
+    amplitude_damping_channel,
+    depolarizing_channel,
+)
 
 # Create a maximally mixed state of 2 qubits
-rho = DensityMatrix.maximally_mixed(2)
-print(f"Purity: {rho.purity():.4f}")          # 0.5 for maximally mixed
-print(f"Entropy: {rho.entropy():.4f}")        # 1.0 for maximally mixed
+rho = DensityMatrix.maximally_mixed(4)
+print(f"Purity: {rho.purity():.4f}")
+print(f"Entropy: {rho.entropy():.4f}")
 
-# Partial trace: trace out the second qubit
-reduced = DensityMatrix.partial_trace(rho, keep=[0], dims=[2, 2])
-print(f"Reduced density matrix shape: {reduced.shape}")
+# Partial trace: trace out the second qubit of a Bell state
+bell = np.array([1, 0, 0, 1], dtype=complex) / np.sqrt(2)
+bell_rho = DensityMatrix.from_pure(bell)
+reduced = bell_rho.partial_trace([2, 2], [0])
+print(f"Reduced density matrix dimension: {reduced.dimension}")
 
 # Apply a depolarizing channel
-depolarized = DensityMatrix.depolarizing(rho, p=0.1)
+depolarized = rho.apply_channel(depolarizing_channel(p=0.1))
 
 # Apply an amplitude damping channel
-amp_damped = DensityMatrix.amplitude_damping(rho, gamma=0.2)
+amp_damped = rho.apply_channel(amplitude_damping_channel(gamma=0.2))
 
 # Fidelity comparison between two density matrices
 fidelity = DensityMatrix.fidelity(depolarized, amp_damped)
 print(f"Fidelity: {fidelity:.4f}")
 
 # CPTP channel creation and composition
-from qkdpy.core.cptp import KrausChannel
-
-# Create a depolarizing channel via Kraus operators
-kraus_ops = [
-    [[1, 0], [0, 1]],    # Identity (probability 1-p)
-    [[0, 1], [1, 0]],    # Pauli X
-    [[0, -1j], [1j, 0]], # Pauli Y
-    [[1, 0], [0, -1]],   # Pauli Z
-]
-channel = KrausChannel(kraus_ops)
-
-# Compose channels: depolarizing then amplitude damping
-composed = channel.compose(KrausChannel.from_kraus(...))
+channel = DepolarizingChannel(p=0.1).compose(AmplitudeDampingChannel(gamma=0.2))
+composed_rho = rho.apply_channel(channel.kraus_ops)
 
 # Circuit composition and simulation
 from qkdpy.core.circuit import Circuit
@@ -104,20 +103,19 @@ print(qasm_str)
 ## Secret Key Rate Computation
 
 ```python
-from qkdpy.core.key_rate import SecretKeyRate
+from qkdpy.protocols import FiniteKeyAnalysis, SecretKeyRate
 
-# Compute asymptotic secret key rate for BB84
-skr = SecretKeyRate.bb84_asymptotic(qber=0.025)
-print(f"Secret key rate: {skr:.4f} bits per signal")
+# Compute asymptotic secret key rate for BB84 at 50 km
+skr = SecretKeyRate.bb84(distance_km=50)
+print(f"Secret key rate: {skr:.4e} bits per pulse")
 
-# Compute with finite-size corrections
-skr_finite = SecretKeyRate.bb84_finite_key(
-    qber=0.025,
-    n_signals=1_000_000,
-    epsilon_sec=1e-9,
-    epsilon_cor=1e-15,
+# Compute a finite-key length with finite-size corrections
+secure_bits = FiniteKeyAnalysis.key_length(
+    n_pulses=1_000_000,
+    observed_qber=0.025,
+    security_parameter=1e-9,
 )
-print(f"Finite-key rate: {skr_finite:.4f} bits per signal")
+print(f"Finite-key secure length: {secure_bits} bits")
 ```
 
 ## Observability & Instrumentation
@@ -163,30 +161,30 @@ record_ml_training(
 
 ## Enterprise Compliance Checking
 
-Requires ENTERPRISE tier:
+Tier gating is a demo mechanism; activate the ENTERPRISE tier if you want
+`get_active_tier()` to report it:
 
 ```python
-import os
-os.environ["QKDPY_PRODUCT_TIER"] = "enterprise"
-
 from qkdpy.enterprise import (
-    ConfigAudit,
     ComplianceStandard,
+    ConfigAudit,
+    ProductTier,
+    set_active_tier,
 )
 
-# Initialize config audit
-checker = ConfigAudit()
+set_active_tier(ProductTier.ENTERPRISE, license_key="demo-key")
 
 # Run checks against multiple standards
-report = checker.check_compliance([
+checker = ConfigAudit([
     ComplianceStandard.ETSI_GS_QKD_014,
     ComplianceStandard.NIST_SP_800_57,
     ComplianceStandard.FIPS_140_2,
 ])
+report = checker.check_compliance()
 
 # Export reports in multiple formats
 print(report.export_markdown())
-html = report.export_html()  # Enterprise-gated feature
+html = report.export_html()  # self-contained HTML report
 
 # Analyze results
 print(f"Overall compliant: {report.overall_compliant}")
@@ -199,20 +197,21 @@ for check in report.get_failed_checks():
 
 ## Quantum-Safe Migration Toolkit
 
-Requires PREMIUM tier:
+Activate the PREMIUM tier first (tier gating is a demo mechanism):
 
 ```python
-import os
-os.environ["QKDPY_PRODUCT_TIER"] = "premium"
-
+from qkdpy.enterprise import ProductTier, set_active_tier
 from qkdpy.enterprise.quantum_safe import (
+    CryptoAlgorithmType,
+    CryptoAsset,
+    CryptoInventoryReport,
+    QuantumResistance,
+    QuantumSafeAssessment,
     classic_enterprise_profile,
     generate_roadmap,
-    QuantumSafeAssessment,
-    CryptoAsset,
-    CryptoAlgorithmType,
-    QuantumResistance,
 )
+
+set_active_tier(ProductTier.PREMIUM, license_key="demo-key")
 
 # Use the preset classic enterprise profile
 inventory = classic_enterprise_profile()

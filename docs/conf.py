@@ -24,7 +24,6 @@ language = "en"
 
 extensions = [
     "sphinx.ext.napoleon",
-    "sphinx.ext.intersphinx",
     "myst_parser",
 ]
 
@@ -51,6 +50,7 @@ exclude_patterns = [
     # compiled into the public-facing Pages site.
     "OPEN_CORE.md",
     "NEXT_STEPS.md",
+    "founder-plan.md",
     "decisions/*",
 ]
 
@@ -66,13 +66,4 @@ html_theme_options = {
     "collapse_navigation": False,
     "navigation_depth": 4,
     "prev_next_buttons_location": "bottom",
-}
-
-# -- Autodoc configuration ---------------------------------------------------
-autodoc_default_options = {
-    "members": True,
-    "member-order": "bysource",
-    "special-members": "__init__",
-    "undoc-members": True,
-    "exclude-members": "__weakref__",
 }

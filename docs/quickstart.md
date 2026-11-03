@@ -20,14 +20,12 @@ print(f"Generated key: {results['final_key']}")
 print(f"QBER: {results['qber']:.4f}")
 print(f"Is secure: {results['is_secure']}")
 
-# Example of flexible qubit measurement and collapse
+# Measurement collapses the qubit state to the measured outcome
 q = Qubit.plus() # Qubit in superposition
 print(f"Qubit state before measurement: {q.state}")
-measurement_result = q.measure("hadamard") # Measure without collapsing internal state
+measurement_result = q.measure("hadamard") # Collapses the internal state
 print(f"Measurement result: {measurement_result}")
-print(f"Qubit state after measurement (still in superposition): {q.state}")
-q.collapse_state(measurement_result, "hadamard") # Explicitly collapse the state
-print(f"Qubit state after explicit collapse: {q.state}")
+print(f"Qubit state after measurement (collapsed): {q.state}")
 
 # Example of applying a gate
 q_zero = Qubit.zero()
@@ -40,7 +38,7 @@ print(f"Qubit state after X gate: {q_zero.state}")
 
 ```python
 # Density matrix: mixed state simulation
-from qkdpy.core.density_matrix import DensityMatrix
+from qkdpy.core.density_matrix import DensityMatrix, depolarizing_channel
 
 # Create a maximally mixed state
 rho = DensityMatrix.maximally_mixed(2)
@@ -48,7 +46,7 @@ print(f"Purity: {rho.purity():.4f}")          # 0.5 for maximally mixed
 print(f"Entropy: {rho.entropy():.4f}")        # 1.0 for maximally mixed
 
 # Apply a depolarizing channel
-depolarized = DensityMatrix.depolarizing(rho, p=0.1)
+depolarized = rho.apply_channel(depolarizing_channel(p=0.1))
 
 # Compute fidelity with an ideal state
 fidelity = DensityMatrix.fidelity(depolarized, rho)
@@ -59,7 +57,8 @@ from qkdpy.core.circuit import Circuit
 qc = Circuit(2)
 qc.h(0).cx(0, 1)  # Create Bell state
 qc.measure_all()
-state = qc.simulate()
+state = qc.simulate()  # statevector before measurement; measurements are skipped
+print(f"State: {state}")
 print(f"Circuit depth: {qc.depth()}")
 print(f"Gate count: {qc.count_ops()}")
 ```
@@ -72,8 +71,9 @@ from qkdpy import HDQKD, QuantumChannel
 # Create a quantum channel with some noise
 channel = QuantumChannel(loss=0.1, noise_model='depolarizing', noise_level=0.05)
 
-# Create an HD-QKD protocol instance with 4-dimensional qudits
-hd_qkd = HDQKD(channel, key_length=100, dimension=4)
+# Create an HD-QKD protocol instance with 5-dimensional qudits.
+# Full mutually-unbiased-basis security holds for prime dimensions.
+hd_qkd = HDQKD(channel, key_length=100, dimension=5)
 
 # Execute the protocol
 results = hd_qkd.execute()
@@ -91,22 +91,20 @@ print(f"Is secure: {results['is_secure']}")
 
 ## Enterprise Quick Start
 
-To use enterprise features (requires ENTERPRISE or PREMIUM tier):
+To use enterprise features:
 
 ```bash
-pip install qkdpy[enterprise]
-export QKDPY_PRODUCT_TIER=enterprise
+pip install "qkdpy[enterprise]"
 ```
 
 ```python
 from qkdpy.enterprise import ConfigAudit, ComplianceStandard
 
 # Run a config audit against industry standards
-checker = ConfigAudit()
-report = checker.check_compliance(
-    [ComplianceStandard.ETSI_GS_QKD_014,
-     ComplianceStandard.NIST_SP_800_57]
+checker = ConfigAudit(
+    [ComplianceStandard.ETSI_GS_QKD_014, ComplianceStandard.NIST_SP_800_57]
 )
+report = checker.check_compliance()
 
 print(report.export_markdown())
 

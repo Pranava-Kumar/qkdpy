@@ -24,7 +24,8 @@ from qkdpy.key_management.advanced_privacy_amplification import (
 
 @pytest.fixture(scope="module")
 def qpiai() -> QpiAIIntegration:
-    """Return a fully initialized QpiAIIntegration (qpiai_quantum IS installed)."""
+    """Return a fully initialized QpiAIIntegration (requires the qpiai extra)."""
+    pytest.importorskip("qpiai_quantum")
     return QpiAIIntegration()
 
 
@@ -175,6 +176,10 @@ class TestQuantumMeasures:
 
 
 class TestSimulate:
+    @pytest.fixture(autouse=True)
+    def _require_sdk(self) -> None:
+        pytest.importorskip("qpiai_quantum")
+
     def test_simulate_without_key(self, monkeypatch: pytest.MonkeyPatch) -> None:
         """No API_KEY -> returns circuit metadata dict."""
         monkeypatch.delenv("API_KEY", raising=False)

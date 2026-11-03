@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=77.0", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -69,6 +69,7 @@ dev = [
     "pre-commit>=3.0.0",
     "sphinx>=6.0.0",
     "sphinx-rtd-theme>=1.2.0",
+    "myst-parser>=1.0.0,<6",
     "twine>=4.0.0",
     "build>=0.10.0",
 ]
@@ -220,7 +221,6 @@ module = [
     "cirq.*",
     "networkx.*",
     "qpiai_quantum.*",
-    "pkcs11",
     "psutil",
 ]
 ignore_missing_imports = true

@@ -59,7 +59,7 @@ stats = channel.get_statistics()
 
 ## Protocols
 
-QKDpy ships 12 QKD protocols plus finite-key and secret-key-rate
+QKDpy ships 11 QKD protocols plus finite-key and secret-key-rate
 analyzers. Every protocol follows the same
 lifecycle: construct → `execute()` → inspect result.
 
@@ -139,17 +139,6 @@ sift_eff = sarg.get_sifting_efficiency()
 print(f"Sifting efficiency: {sift_eff:.2f}")  # ~0.33 vs BB84's ~0.5
 ```
 
-### Six-State — Three-Basis Protocol
-
-```python
-from qkdpy.protocols import SixState
-
-ss = SixState(channel, key_length=128, security_threshold=0.126)
-result = ss.execute()
-print(f"QBER: {result['qber']:.2%}  Secure: {result['is_secure']}")
-# Tighter QBER bound (~12.6 %) than BB84 (~11 %)
-```
-
 ### Decoy-State BB84 — PNS-Resistant
 
 ```python
@@ -166,13 +155,17 @@ result = ds.execute()
 
 # Decoy-state analysis provides detailed gain/yield breakdown
 analysis = ds.analyze_decoy_states()
-print(f"Signal gain:         {analysis['signal_gain']:.4e}")
-print(f"Decoy gain:          {analysis['decoy_gain']:.4e}")
-print(f"Signal yield:        {analysis['signal_yield']:.4e}")
-print(f"Decoy yield:         {analysis['decoy_yield']:.4e}")
+print(f"Vacuum yield Y0:     {analysis['y0']:.4e}")
+print(f"Single-photon Y1:    {analysis['y1']:.4e}")
+print(f"Two-photon yield Y2: {analysis['y2']:.4e}")
+print(f"Single-photon QBER:  {analysis['e1']:.4e}")
+print(f"Signal pulses:       {analysis['signal_pulses']}")
 
 # Secure key rate with error-correction efficiency
-skr = ds.calculate_secure_key_rate(f=1.2, eps=1e-10)
+skr = ds.calculate_secure_key_rate(
+    error_correction_efficiency=1.2,
+    eps_security=1e-10,
+)
 print(f"Secure key rate:     {skr:.4e}")
 print(f"Secure key length:   {ds.secure_key_length()}")
 ```
@@ -267,9 +260,9 @@ own independent channel.
 ### DI-QKD — Device-Independent (Self-Testing)
 
 ```python
-from qkdpy.protocols import DIQKD
+from qkdpy.protocols import DeviceIndependentQKD
 
-di = DIQKD(channel, key_length=128, security_threshold=2.0)
+di = DeviceIndependentQKD(channel, key_length=128, security_threshold=2.0)
 result = di.execute()
 
 bell = result["bell_test"]
@@ -481,18 +474,18 @@ import numpy as np
 from qkdpy import Qudit
 
 # Computational basis state |3⟩ in dimension 5
-qd = Qudit.computational_basis(level=3, dim=5)
+qd = Qudit.computational_basis(level=3, dimension=5)
 print(f"State: {qd.state}")  # [0, 0, 0, 1, 0]
 
 # Uniform superposition over d levels
-qs = Qudit.uniform_superposition(dim=4)
+qs = Qudit.uniform_superposition(dimension=4)
 print(f"State:   {qs.state}")
 print(f"Fidelity with self: {qs.fidelity(qs):.2f}")
 
 # Partial trace over a subsystem
 tensor = qd.tensor_product(qs)
-reduced = tensor.partial_trace(subsystem=0, sub_dim=5)
-print(f"Reduced state dim: {reduced.shape}")
+reduced = tensor.partial_trace(subsystem_index=0, subsystem_dimension=5)
+print(f"Reduced state dim: {reduced.state.shape}")
 ```
 
 ### DensityMatrix
@@ -790,14 +783,14 @@ ca, cb, iters = ErrorCorrection.low_density_parity_check(
 print(f"LDPC converged in {iters} iterations")
 
 # Reed-Solomon (good for burst errors)
-ca, cb, success = ErrorCorrection.reed_solomon(
-    alice_key, bob_key, n=15, k=9, error_probability=0.1
+corrected, parity, success = ErrorCorrection.reed_solomon(
+    bob_key, n=15, k=9, error_probability=0.1
 )
 print(f"Reed-Solomon success: {success}")
 
 # BCH codes
-ca, cb, success = ErrorCorrection.bch(
-    alice_key, bob_key, n=15, k=11, t=1, error_probability=0.1
+corrected, parity, success = ErrorCorrection.bch(
+    bob_key, n=15, k=11, t=1, error_probability=0.1
 )
 
 # Helpers
@@ -868,16 +861,17 @@ from qkdpy import QuantumKeyManager, QuantumChannel
 qkm = QuantumKeyManager(channel)
 
 # Generate a key via the manager
-key_id, key_data = qkm.generate_key(
+key_id = qkm.generate_key(
     session_id="session-001",
     key_length=256,
     protocol="BB84",
 )
 print(f"Key ID: {key_id}")
-print(f"Key hex: {key_data[:32]}")
+print(f"Key hex: {qkm.get_key(key_id)[:32]}")
 
-# Retrieve a key (with optional hash verification)
-retrieved, hash_val = qkm.get_key(key_id, return_hash=True)
+# Retrieve a key (or a SHA-256 fingerprint of it)
+retrieved = qkm.get_key(key_id)
+hash_val = qkm.get_key(key_id, return_hash=True)
 print(f"Retrieved: {retrieved[:32]}")
 print(f"Hash:      {hash_val}")
 
@@ -886,7 +880,7 @@ keys = qkm.get_session_keys("session-001")
 print(f"Keys in session: {len(keys)}")
 
 # Rotate (generate a fresh key for an existing session)
-new_key_id, new_key = qkm.rotate_session_key("session-001", key_length=256)
+new_key_id = qkm.rotate_session_key("session-001", key_length=256)
 
 # Export / import key store
 qkm.export_key_store("key_store.json")
@@ -906,26 +900,22 @@ qkm.delete_key(key_id)
 ### Quantum Error Correction (QEC)
 
 ```python
-from qkdpy.key_management import (
-    ShorCode, SteaneCode, FiveQubitCode,
-    detect_and_correct_error,
-    simulate_error_correction_performance,
-)
+from qkdpy.key_management import QuantumErrorCorrection
 
 # Encode a qubit with the Shor 9-qubit code
-encoded = ShorCode.encode(Qubit.zero())
-print(f"Encoded state shape: {encoded.shape}")
+encoded = QuantumErrorCorrection.shor_code_encode(Qubit.zero())
+print(f"Encoded qubit count: {len(encoded)}")
 
 # Encode with Steane 7-qubit code
-encoded_steane = SteaneCode.encode(Qubit.plus())
+encoded_steane = QuantumErrorCorrection.steane_code_encode(Qubit.plus())
 
 # Simulate error correction performance
-results = simulate_error_correction_performance(
+results = QuantumErrorCorrection.simulate_error_correction_performance(
     num_trials=1000,
     code_type="steane",
     error_probability=0.05,
 )
-print(f"Logical error rate: {results['logical_error_rate']:.4f}")
+print(f"Success rate: {results['success_rate']:.4f}")
 ```
 
 ---
@@ -964,9 +954,9 @@ report = sat.simulate_pass(
     atmosphere=atmosphere,
 )
 
-print(f"Key yield:  {report.get('key_yield', 'N/A')}")
-print(f"QBER range: {report.get('qber_range', 'N/A')}")
-print(f"Pass duration: {report.get('pass_duration_s', 'N/A')} s")
+print(f"Total key bits: {report.get('total_key_bits', 0):,.0f}")
+print(f"Peak elevation: {max(report.get('elevation_angles', [0.0])):.1f}°")
+print(f"Mean QBER:      {sum(report.get('qber_values', [0.0])) / len(report['qber_values']):.4f}")
 
 # Predict key yield for a given peak elevation
 yield_pred = sat.predict_key_yield(atmosphere, peak_elevation=80.0)
@@ -993,7 +983,7 @@ geo = SatelliteQKD(orbit_type=OrbitType.GEO, altitude_km=35786)
 
 for s in [leo, meo, geo]:
     r = s.simulate_pass(duration_seconds=300)
-    print(f"{s.orbit_type.value}: key_yield={r.get('key_yield', 'N/A')}")
+    print(f"{s.orbit_type.value}: total_key_bits={r['total_key_bits']:,.0f}")
 ```
 
 ### FreeSpaceOpticalChannel — Satellite-Ground Link
@@ -1037,6 +1027,8 @@ print(f"Stray count rate:       {metrics['stray_count_rate']:.1f} /s")
 from qkdpy.network import (
     modtran_band_transmittance,
     background_stray_count_rate,
+)
+from qkdpy.core import (
     hufnagel_valley_cn2,
     von_karman_spectrum,
     fried_parameter,
@@ -1055,11 +1047,11 @@ print(f"Night stray rate: {night:.1f} /s")
 print(f"Day stray rate:   {day:.1f} /s")
 
 # Turbulence profiling
-cn2 = hufnagel_valley_cn2(altitude_m=1000, wind_speed_ms=21.0)
+cn2 = hufnagel_valley_cn2(altitude_m=1000, wind_speed=21.0)
 print(f"CN² at 1 km: {cn2:.2e}")
 
-r0 = fried_parameter(wavelength_nm=850.0, cn2=1e-14)
-print(f"Fried parameter: {r0:.2f} cm")
+r0_m = fried_parameter(path_cn2=1e-14, wavelength_m=850e-9)
+print(f"Fried parameter: {r0_m * 100:.2f} cm")
 ```
 
 ### QuantumNetwork — Multi-Node Topologies
@@ -1070,10 +1062,10 @@ from qkdpy import QuantumChannel
 
 net = QuantumNetwork(name="City-scale QKD", topology_type="custom")
 
-# Add nodes
-net.add_node(node_id="alice", protocol="BB84")
-net.add_node(node_id="bob", protocol="BB84")
-net.add_node(node_id="charlie", protocol="BB84")
+# Add nodes (each defaults to a BB84 protocol)
+net.add_node(node_id="alice")
+net.add_node(node_id="bob")
+net.add_node(node_id="charlie")
 
 # Add connections (channels between nodes)
 net.add_connection("alice", "bob", channel=QuantumChannel(distance=10.0), distance=10.0)
@@ -1110,20 +1102,23 @@ perf = net.simulate_network_performance(
 ### Multi-Party QKD
 
 ```python
-from qkdpy.network import conference_key_agreement, quantum_secret_sharing, reconstruct_secret
+from qkdpy.network import MultiPartyQKD
 
-# Three-party conference key
-ck = conference_key_agreement(net, participants=["alice", "bob", "charlie"], key_length=128)
-print(f"Conference key: {ck[:32]}")
+# Three-party conference key (returns one key share per participant)
+ck = MultiPartyQKD.conference_key_agreement(
+    net, participants=["alice", "bob", "charlie"], key_length=128
+)
+print(f"Participants with shares: {list(ck)}")
+print(f"Alice's share: {ck['alice'][:32]}")
 
-# Quantum secret sharing
-secret = 0b10110101
-shares = quantum_secret_sharing(secret, num_shares=5, threshold=3)
-print(f"Shares: {shares}")
+# Quantum secret sharing (simplified all-shares XOR scheme)
+secret = [1, 0, 1, 1, 0, 1, 0, 1]
+shares = MultiPartyQKD.quantum_secret_sharing(secret, num_shares=3, threshold=3)
+print(f"Shares: {len(shares)}")
 
-# Reconstruct from threshold subset
-reconstructed = reconstruct_secret(shares[:3])
-print(f"Reconstructed: {bin(reconstructed)}")
+# Reconstruct from all shares
+reconstructed = MultiPartyQKD.reconstruct_secret(shares)
+print(f"Reconstructed: {reconstructed}")
 assert reconstructed == secret
 ```
 
@@ -1219,7 +1214,7 @@ history = predictor.fit(
     early_stopping_patience=10,
     validation_split=0.1,
 )
-print(f"Training history: {history['loss'][-1]:.4f} final loss")
+print(f"Training history: {history['final_train_loss']:.4f} final loss")
 
 # Predict
 X_test = np.random.rand(10, 5)
@@ -1291,16 +1286,14 @@ if feature_available(Feature.HSM_INTEGRATION):
 ### HSM Interface
 
 ```python
-from qkdpy.enterprise import get_hsm, HSMProvider
+from qkdpy.enterprise import HSMProvider
+from qkdpy.enterprise.hsm_interface import get_hsm
 
 # Get the software HSM (simulated — not for production)
 hsm = get_hsm(provider=HSMProvider.SOFTWARE)
 
-# Initialize
-hsm.initialize()
-
 # Generate a key
-key_handle = hsm.generate_key(key_type="AES-256", label="qkd-key-001")
+key_handle = hsm.generate_key(key_id="qkd-key-001", key_length=256)
 print(f"Key ID: {key_handle.key_id}")
 
 # Encrypt/decrypt
@@ -1310,8 +1303,15 @@ decrypted = hsm.decrypt(key_handle.key_id, ciphertext)
 assert decrypted == plaintext
 
 # Wrap (export) and unwrap (import) keys
-wrapped = hsm.wrap_key(key_handle.key_id, target_key_id="transport-key")
-new_handle = hsm.unwrap_key(wrapped, key_type="AES-256")
+wrapped = hsm.wrap_key(
+    wrapping_key_id=key_handle.key_id,
+    key_to_wrap=b"transport-key-material",
+)
+new_handle = hsm.unwrap_key(
+    wrapping_key_id=key_handle.key_id,
+    wrapped_key=wrapped,
+    new_key_id="imported-key-001",
+)
 print(f"Unwrapped key ID: {new_handle.key_id}")
 
 # List all keys
@@ -1331,6 +1331,7 @@ logger = AuditLogger(storage_path="audit.json", enable_chain_verification=True)
 # Log various event types
 logger.log_event(
     event_type=AuditEventType.KEY_GENERATED,
+    action="Generated session key",
     actor="alice",
     resource="session-001",
     result="success",
@@ -1338,11 +1339,12 @@ logger.log_event(
 )
 
 logger.log_security_event(
+    event_type=AuditEventType.QBER_THRESHOLD_EXCEEDED,
+    description="High QBER detected",
     actor="system",
     resource="channel-1",
-    result="blocked",
-    details={"threat": "high_qber", "qber": 0.15},
     severity="high",
+    qber=0.15,
 )
 
 # Chain integrity verification
@@ -1412,10 +1414,10 @@ print(f"Risk score:       {summary['risk_score']:.2f}")
 # Generate phased migration roadmap
 roadmap = generate_roadmap(inventory=inventory)
 for step in roadmap.steps:
-    print(f"Phase {step.phase}: {step.description} (by {step.target_date})")
+    print(f"{step.phase}: {step.title} ({step.estimated_effort})")
 
-# Create an assessment from the inventory
-assessment = QuantumSafeAssessment(inventory=inventory)
+# Create a full assessment from the inventory and roadmap
+assessment = QuantumSafeAssessment(inventory=inventory, roadmap=roadmap)
 assessment_dict = assessment.to_dict()
 ```
 
@@ -1440,7 +1442,7 @@ with OperationSpan("protocol.execute", protocol="BB84") as span:
 ```python
 from qkdpy.utils import instrument
 
-@instrument(span_name="key_distillation")
+@instrument("key_distillation")
 def distill(sifted_key, qber):
     # Function call is automatically timed and logged
     return manager.distill(sifted_key, qber)
@@ -1469,12 +1471,12 @@ record_protocol_execution(
 # ML training event
 record_ml_training(
     model_name="EfficientQKDPredictor",
-    epochs=50,
+    protocol="BB84",
+    input_dim=5,
+    training_samples=1000,
+    training_time_ms=1250.0,
     final_loss=0.012,
-    accuracy=0.98,
-    learning_rate=0.01,
-    dataset_size=1000,
-    features=5,
+    convergence_iterations=50,
 )
 
 # QBER diagnostic
@@ -1496,7 +1498,6 @@ from qkdpy.utils import configure_logging, get_logger, QKDLogger
 configure_logging(
     level="INFO",
     json_output=True,
-    redact_secrets=True,
 )
 
 # Get a domain-specific logger
@@ -1693,7 +1694,7 @@ print(f"Production: {is_production_mode()}")
 
 # Modify configuration
 cfg.security.default_key_length = 256
-cfg.enterprise.enforcement = False
+cfg.enterprise.product_tier = "free"
 cfg.logging.level = "DEBUG"
 set_config(cfg)
 

@@ -12,7 +12,7 @@ pytestmark = pytest.mark.skipif(
     not qpiai_available(), reason="qpiai_quantum SDK not installed"
 )
 
-from qpiai_quantum import Statevector  # noqa: E402
+Statevector = pytest.importorskip("qpiai_quantum").Statevector
 
 
 def _bell_dm() -> np.ndarray:

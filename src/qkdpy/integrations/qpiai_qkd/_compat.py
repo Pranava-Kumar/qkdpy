@@ -20,6 +20,8 @@ instead of masking them.
 from __future__ import annotations
 
 import os
+from collections.abc import Iterator
+from contextlib import contextmanager
 from typing import Any
 
 import numpy as np
@@ -81,6 +83,40 @@ def _with_sdk_key(api_key: str | None) -> _SdkKeyContext:
     return _SdkKeyContext(api_key)
 
 
+@contextmanager
+def _sdk_user(api_key: str) -> Iterator[None]:
+    """Temporarily install the SDK user context required by local simulation.
+
+    SDK 0.7.5 gates ``Statevector(circuit)`` on an active ``SDKUser`` with a
+    non-empty name/email. ``QpiAIQuantumAuth.login`` validates the key against
+    the cloud, so it cannot be used for offline local simulation. Install a
+    placeholder identity for the duration of the call and restore the previous
+    one afterwards.
+    """
+    from qpiai_quantum.authentication.user import (
+        SDKUser,
+        clear_user,
+        get_user,
+        set_user,
+    )
+
+    previous = get_user()
+    set_user(
+        SDKUser(
+            name="qkdpy-local-simulator",
+            email="qkdpy-local@invalid",
+            api_key=api_key,
+        )
+    )
+    try:
+        yield
+    finally:
+        if previous is None:
+            clear_user()
+        else:
+            set_user(previous)
+
+
 def local_statevector(circuit: Any, shots: int = 1024) -> dict[str, Any]:
     """Run a circuit on the SDK's local statevector simulator.
 
@@ -98,7 +134,7 @@ def local_statevector(circuit: Any, shots: int = 1024) -> dict[str, Any]:
             "No QpiAI API key found. Set QPIAI_API_KEY (or API_KEY) to run the "
             "QpiAI local simulator / submit to the cloud."
         )
-    with _with_sdk_key(None):
+    with _with_sdk_key(None), _sdk_user(key):
         try:
             sv = Statevector(circuit)
         except (ValueError, TypeError) as exc:  # E.g. missing API_KEY inside SDK.
@@ -151,7 +187,7 @@ def submit_to_cloud(
         # SDK in case it reads the env var rather than the kwarg.
         qasm = getattr(circuit, "qasm", None)
         qasm_str = qasm() if callable(qasm) else str(circuit)
-        with _with_sdk_key(api_key):
+        with _with_sdk_key(api_key), _sdk_user(key):
             result = manager.submit_and_wait_for_results_qasm(
                 qasm_str,
                 device_name=device_name,

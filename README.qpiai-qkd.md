@@ -42,6 +42,7 @@ run:
 - **Purity** — `compute_purity(state)` (`Tr(ρ²)`; 1.0 = pure)
 
 ```python
+import numpy as np
 from qkdpy.integrations.qpiai_qkd import QpiAIIntegration, Protocols
 
 qi = QpiAIIntegration()
@@ -50,7 +51,12 @@ result = qi.simulate(circuit)            # needs QPIAI_API_KEY
 
 p = Protocols(qi)
 bell, desc = p.bell("|Φ+>")
-print(desc, "concurrence:", p.concurrence(bell_over_dm))
+print(desc)
+
+# 2-qubit |Φ+> state and its density matrix
+psi = np.array([1, 0, 0, 1], dtype=complex) / np.sqrt(2)
+bell_over_dm = np.outer(psi, psi.conj())
+print("concurrence:", p.concurrence(bell_over_dm))
 print("CHSH S:", p.chsh([0, np.pi/4, np.pi/8, 3*np.pi/8]))
 ```
 
@@ -134,7 +140,7 @@ res = optimize_protocol(
 print(res["best_params"], res["method"])
 ```
 
-`detect_anomaly(metrics, history, threshold)` flags anomalous link behaviour via
+`detect_anomaly(metrics)` flags anomalous link behaviour via
 `QKDAnomalyDetector` (Z-score against a baseline).
 
 ---

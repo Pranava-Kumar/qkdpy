@@ -4,7 +4,7 @@
 
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
 [![Python](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
-[![Tests](https://img.shields.io/badge/tests-610_passing-brightgreen.svg)](#-quick-start)
+[![Tests](https://img.shields.io/badge/tests-1200%2B_passing-brightgreen.svg)](#-quick-start)
 [![Code Style](https://img.shields.io/badge/code%20style-ruff-000000.svg)](https://github.com/astral-sh/ruff)
 [![Version](https://img.shields.io/badge/version-0.8.0-blue.svg)](https://github.com/Pranava-Kumar/qkdpy/releases)
 [![Documentation](https://github.com/Pranava-Kumar/qkdpy/actions/workflows/pages.yml/badge.svg)](https://pranava-kumar.github.io/qkdpy/)
@@ -67,7 +67,7 @@ All QKD protocols follow a template-method pattern defined in `BaseProtocol.exec
 | `DensityMatrix` | Mixed-state representation via density operator ρ — CPTP maps, von Neumann entropy, Uhlmann fidelity, partial trace *(new in v0.8.0)* |
 | `Circuit` | Gate-sequence composition with method-chaining API, `simulate()`, OpenQASM 2.0 export *(new in v0.8.0)* |
 | `MultiQubitState` | n-qubit statevector with entanglement entropy, GHZ/W-state preparation |
-| `QuantumGate` | 18 gate implementations: Pauli, Hadamard, rotation, CNOT, CZ, SWAP, etc. |
+| `QuantumGate` | 15 gate implementations: Pauli, Hadamard, rotation, CNOT, CZ, SWAP, etc. |
 | `CPTPChannel` | Completely Positive Trace-Preserving channel framework via Kraus operators, Choi matrix, diamond norm *(new in v0.8.0)* |
 | `QuantumChannel` | Physical channel with loss, noise, eavesdropping, and atmospheric effects |
 | `Measurement` | Basis measurement, tomography, fidelity, purity, entanglement witnesses |
@@ -150,7 +150,7 @@ the release notes ([CHANGELOG.md](CHANGELOG.md)).
 | Domain                   | Capabilities                                                                               |
 | ------------------------ | ------------------------------------------------------------------------------------------ |
 | **🚀 Space Technology**  | Satellite-ground QKD, free-space optical channels, orbital mechanics, atmospheric modeling |
-| **⚛️ Quantum Computing** | 12+ QKD protocols (BB84, E91, CV-QKD, HD-QKD, MDI-QKD, DI-QKD), density-matrix simulation, circuit composition, CPTP channel framework |
+| **⚛️ Quantum Computing** | 11 QKD protocols (BB84, E91, CV-QKD, HD-QKD, MDI-QKD, DI-QKD), density-matrix simulation, circuit composition, CPTP channel framework |
 | **🤖 AI/ML**             | Bayesian optimization, neural network predictors, anomaly detection, adaptive protocols |
 
 ---
@@ -204,6 +204,11 @@ from qkdpy import QKDOptimizer, EfficientQKDPredictor
 
 # Bayesian optimization for protocol parameters
 optimizer = QKDOptimizer("BB84")
+
+def objective_function(params):
+    """Higher is better; here we minimize channel noise."""
+    return 1.0 - params["noise_level"]
+
 results = optimizer.optimize_channel_parameters(
     {"loss": (0.0, 0.5), "noise_level": (0.0, 0.1)},
     objective_function,
@@ -226,12 +231,16 @@ predictor = EfficientQKDPredictor(
 QKDpy includes built-in structured observability for debugging, performance analysis, and operations telemetry:
 
 ```python
+from qkdpy import BB84, QuantumChannel
 from qkdpy.utils import OperationSpan, instrument, record_protocol_execution
+
+channel = QuantumChannel(loss=0.1, noise_model="depolarizing", noise_level=0.02)
+bb84 = BB84(channel, key_length=256)
 
 # Context manager for timing any block
 with OperationSpan("protocol.execute", protocol="BB84") as span:
-    result = protocol.run()
-    span.set_metadata(qber=result.qber)
+    result = bb84.execute()
+    span.set_metadata(qber=result["qber"])
 
 # Decorator for automatic instrumentation
 @instrument("ml.train")
@@ -299,14 +308,14 @@ for rec in report["recommendations"]:
 
 - **BB84** (Standard + Decoy-State)
 - **E91** (Entanglement-based, CHSH test)
-- **B92**, **SARG04**, **SixState**
+- **B92**, **SARG04**
 - **CV-QKD** (Continuous-Variable, with enhanced security analysis)
 - **Device-Independent QKD** (DI-QKD)
 - **HD-QKD** (High-Dimensional)
 - **MDI-QKD** (Measurement-Device-Independent)
 - **TwistedPairQKD** (Three-basis protocol)
 - **FiniteKeyAnalysis** (Finite-key security bounds)
-- **SecretKeyRate** calculator (key rates for BB84, decoy BB84, E91, SARG04, CV-QKD)
+- **SecretKeyRate** calculator (key rates for BB84, decoy BB84, E91, SARG04)
 
 ### Core Quantum Stack
 
@@ -322,9 +331,9 @@ for rec in report["recommendations"]:
 > production-grade security system — see [Product Tiers](#-product-tiers) for
 > the detailed scope and limitations.
 
-- **Product Tier Licensing** — FREE/ENTERPRISE/PREMIUM with cumulative features (tier gating is a demo mechanism; license-key verification added in v0.6.6)
+- **Product Tier Licensing** — FREE/ENTERPRISE/PREMIUM with cumulative features (tier gating is a demo mechanism; opt-in HMAC license verification via `QKDPY_LICENSE_ENFORCEMENT`)
 - **Config Audit** — ETSI GS QKD 014/016, ISO/IEC 23837, NIST SP 800-57, FIPS 140-2, ISO 27001 (*internal audit only*, no external certification)
-- **HSM Interface** — PKCS#11 interface with software simulation fallback
+- **HSM Interface** — software-simulation HSM (hardware-backed PKCS#11 is not implemented)
 - **Audit Logging** — Tamper-evident, structured event logging
 - **Quantum-Safe Migration** — Crypto inventory, risk assessment, phased migration roadmap
 - **Key Escrow** — Secure key recovery for enterprise deployments
@@ -359,18 +368,23 @@ for rec in report["recommendations"]:
 ## 🚀 Quick Start
 
 ```bash
-# Install with uv (recommended)
-pip install uv
+# Install with pip
+pip install qkdpy
+
+# Or inside a uv-managed virtual environment
+uv venv
 uv pip install qkdpy
 
-# Or with optional features
-uv pip install qkdpy[ml]           # ML optimization
-uv pip install qkdpy[enterprise]   # Enterprise features
-uv pip install qkdpy[cirq]         # Cirq framework integration
-uv pip install qkdpy[pennylane]    # PennyLane ML integration
-uv pip install qkdpy[qiskit]       # Qiskit integration (noise models, transpilation)
-uv pip install qkdpy[qpiai]        # QpiAI Quantum SDK integration
-uv pip install qkdpy[all]          # Everything
+# With optional features
+pip install "qkdpy[ml]"           # ML optimization
+pip install "qkdpy[enterprise]"   # Enterprise features
+pip install "qkdpy[cirq]"         # Cirq framework integration
+pip install "qkdpy[pennylane]"    # PennyLane ML integration
+pip install "qkdpy[qiskit]"       # Qiskit integration (noise models, transpilation)
+pip install "qkdpy[qpiai]"        # QpiAI Quantum SDK integration
+
+# Everything except the optional quantum SDKs
+pip install "qkdpy[ml,viz,enterprise]"
 ```
 
 ```python
@@ -390,7 +404,7 @@ print(f"Secure: {results['is_secure']}")
 Density-matrix simulation for mixed states and noise analysis:
 
 ```python
-from qkdpy.core.density_matrix import DensityMatrix
+from qkdpy.core.density_matrix import DensityMatrix, depolarizing_channel
 
 # Create a maximally mixed single-qubit state
 rho = DensityMatrix.maximally_mixed(2)
@@ -398,7 +412,7 @@ print(f"Purity: {rho.purity():.4f}")    # 0.5
 print(f"Entropy: {rho.entropy():.4f}")  # 1.0
 
 # Apply a depolarizing channel
-depolarized = rho.apply_channel(DensityMatrix.depolarizing(1, p=0.1))
+depolarized = rho.apply_channel(depolarizing_channel(p=0.1))
 
 # Compute fidelity with reference state
 ideal = DensityMatrix.from_pure([1.0, 0.0])
@@ -433,8 +447,8 @@ Key technical decisions are captured as Architecture Decision Records (ADRs):
 ## 🏷️ Product Tiers
 
 > **Honesty notice:** The enterprise tier is a *demo gate* — it gates access to experimental
-> modules but is **not** a production entitlement or anti-piracy system. Opt-in license-key
-> verification was added in v0.6.6. The "compliance standards" listed below are references
+> modules but is **not** a production entitlement or anti-piracy system. Opt-in HMAC
+> license verification is available via `QKDPY_LICENSE_ENFORCEMENT=1`. The "compliance standards" listed below are references
 > used by the config audit module, **not** external certifications.
 
 QKDpy uses a cumulative three-tier licensing model. Each tier includes everything in the tiers below it.
@@ -448,7 +462,7 @@ QKDpy uses a cumulative three-tier licensing model. Each tier includes everythin
 | ML Integration & Optimization | ✅ | ✅ | ✅ |
 | Advanced Visualization | ✅ | ✅ | ✅ |
 | **Config Audit** (ETSI, NIST, FIPS, ISO) | — | ✅ | ✅ |
-| **HSM Interface** (PKCS#11 / software sim) | — | ✅ | ✅ |
+| **HSM Interface** (software simulation) | — | ✅ | ✅ |
 | **Audit Logging** | — | ✅ | ✅ |
 | **ML-Based Attack Detection** | — | ✅ | ✅ |
 | **Key Escrow** | — | ✅ | ✅ |
@@ -461,14 +475,16 @@ QKDpy uses a cumulative three-tier licensing model. Each tier includes everythin
 
 ```python
 from qkdpy.enterprise import (
-    HSMInterface,
+    AuditEventType,
     AuditLogger,
-    ConfigAudit,
     ComplianceStandard,
+    ConfigAudit,
+    HSMProvider,
 )
+from qkdpy.enterprise.hsm_interface import get_hsm
 
-# Hardware Security Module interface (software simulation by default)
-hsm = get_hsm(provider=HSMProvider.SOFTWARE)  # or PKCS11 (experimental)
+# Hardware Security Module interface (software simulation only in this build)
+hsm = get_hsm(provider=HSMProvider.SOFTWARE)
 key_handle = hsm.generate_key("session_key", key_length=256)
 
 # Tamper-evident audit logging
@@ -480,18 +496,24 @@ audit.log_key_event(AuditEventType.KEY_GENERATED, "session_key")
 checker = ConfigAudit([ComplianceStandard.NIST_SP_800_57])
 report = checker.check_compliance()
 print(report.export_markdown())
-print(report.export_html())  # Enterprise-gated feature
+print(report.export_html())  # self-contained HTML report
 ```
 
 Set your product tier via environment or config:
 
 ```python
-import os
-os.environ["QKDPY_PRODUCT_TIER"] = "enterprise"
+from qkdpy import QKDConfig, set_config
 
-from qkdpy import set_config
-set_config(product_tier="enterprise")
+config = QKDConfig()
+config.enterprise.product_tier = "enterprise"
+config.enterprise.license_key = "demo-key"  # required for non-FREE tiers
+set_config(config)
 ```
+
+The environment variable `QKDPY_PRODUCT_TIER` is read into
+`config.enterprise.product_tier` when the configuration is loaded; call
+`set_config(get_config())` afterwards to activate that tier in the licensing
+module.
 
 ### Compliance Standards (config audit references)
 

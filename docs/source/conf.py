@@ -8,7 +8,8 @@ sys.path.insert(0, os.path.abspath("../../src"))
 project = "QKDpy"
 copyright = "2026, Pranava Kumar"
 author = "Pranava Kumar"
-release = "0.4.0"
+release = "0.8.0"
+version = "0.8.0"
 
 extensions = [
     "sphinx.ext.autodoc",

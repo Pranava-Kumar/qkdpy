@@ -1,5 +1,8 @@
 # Release Notes
 
+> Latest release notes: see [CHANGELOG.md](CHANGELOG.md) and
+> [RELEASE_v080.md](RELEASE_v080.md). This file is a historical archive.
+
 ## v0.6.2 — 2026-07-17
 
 ### Highlights

@@ -1,7 +1,6 @@
 # Next Steps — Production-Grade QKD Simulator Roadmap
 
-> **Status:** Planning document. **Not** in scope for the current v0.6.x
-> release. The deployed library is a research / educational simulator and is
+> **Status:** Planning document. **Not** in scope for the current release. The deployed library is a research / educational simulator and is
 > explicitly not production-grade (see [`OPEN_CORE.md`](OPEN_CORE.md) § 2.4 and
 > the README's *Status & Scope* section).
 >
@@ -148,13 +147,13 @@
 
 - Tier-gated features remain gated, but the **license verification
   path** moves from a demo-gate by default to **Moshi-policy** style
-  signed-license files with revocation lists. The opt-in HMAC path
-  introduced in v0.6.6 stays for low-friction deployments.
+  signed-license files with revocation lists. The opt-in HMAC path for
+  low-friction deployments stays available.
 - Each tier's runtime error semantics change: a missing license raises
   `LicenseError` with a remediation hint (`contact@qkdpy.org`), not a
   silent demo.
 - **Long-term support branches.** A production-grade distribution
-  needs `0.7.x` LTS, not just the rolling `main`. Plan an LTS branch
+  needs `0.8.x` LTS, not just the rolling `main`. Plan an LTS branch
   alongside the feature branch.
 
 ---
@@ -200,7 +199,7 @@ cryptographic module. The following are explicitly out:
 - Legal or regulatory attestation. Compliance templates help engineers
   reason; they do not replace auditors.
 
-See `OPEN_CORE.md § 2.4` for the current v0.6.x version of this caveat.
+See `OPEN_CORE.md § 2.4` for the current version of this caveat.
 
 ---
 

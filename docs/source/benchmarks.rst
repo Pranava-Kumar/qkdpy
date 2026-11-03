@@ -36,13 +36,13 @@ To generate benchmark results for your specific setup:
 
 .. code-block:: python
 
+   from qkdpy import QuantumChannel
    from qkdpy.protocols import BB84, CVQKD, DecoyStateBB84
-   from qkdpy.utils.helpers import calculate_qber
 
    # Run a protocol simulation
-   bb84 = BB84()
-   results = bb84.simulate(distance_km=50, num_signals=10000)
-   qber = calculate_qber(results.sent_key, results.received_key)
+   channel = QuantumChannel(distance=50.0, noise_level=0.02)
+   bb84 = BB84(channel, key_length=10000)
+   results = bb84.execute()
 
-   print(f"QBER: {qber:.4f}")
-   print(f"Key Rate: {results.key_rate:.2e} bps")
+   print(f"QBER: {results['qber']:.4f}")
+   print(f"Key rate: {bb84.get_key_rate():.2e} bps")

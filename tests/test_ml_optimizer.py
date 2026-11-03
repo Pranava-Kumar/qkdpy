@@ -1,3 +1,5 @@
+import numpy as np
+
 from qkdpy.ml.qkd_optimizer import QKDOptimizer
 
 
@@ -10,6 +12,7 @@ def objective_function(params):
 
 def test_bayesian_optimization():
     """Test Bayesian optimization."""
+    np.random.seed(0)
     optimizer = QKDOptimizer("TestProtocol")
 
     param_space = {"x": (0.0, 5.0), "y": (0.0, 5.0)}
@@ -30,6 +33,7 @@ def test_bayesian_optimization():
 
 def test_neural_optimization():
     """Test Neural Network optimization."""
+    np.random.seed(0)
     optimizer = QKDOptimizer("TestProtocol")
 
     param_space = {"x": (0.0, 5.0), "y": (0.0, 5.0)}

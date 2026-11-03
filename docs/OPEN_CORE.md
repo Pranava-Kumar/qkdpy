@@ -16,7 +16,7 @@ The library is intentionally split into a permissive-licensed free core and a co
 | **ENTERPRISE** | Companies running internal QKD modeling, compliance teams, labs | Commercial license (contact) |
 | **PREMIUM** | Vendors, large-scale research consortia | Commercial license + service-level agreement |
 
-The default tier when the library is imported is `FREE`. Activation of non-FREE tiers is purely a *runtime demo gate* by default; opt-in key verification is available via `QKDPY_LICENSE_ENFORCEMENT=1` + `QKDPY_LICENSE_SECRET` (see v0.6.6 changelog).
+The default tier when the library is imported is `FREE`. Activation of non-FREE tiers is purely a *runtime demo gate* by default; opt-in key verification is available via `QKDPY_LICENSE_ENFORCEMENT=1` + `QKDPY_LICENSE_SECRET` (see `enterprise/licensing.py`).
 
 ### 1.2 What lands where — feature matrix
 
@@ -29,17 +29,17 @@ Based on the `Feature` enum and the modules in `src/qkdpy/`:
   - Atmospheric / satellite helpers (`hufnagel_valley_cn2`, `von_karman_spectrum`, `fried_parameter`, `rytov_variance`, `scintillation_index`, `modtran_band_transmittance`, `background_stray_count_rate`, `link_direction_factor`)
   - PNS attack simulator (`core/attacks/pns_attack.py`)
 - **All 11 QKD protocols** (`qkdpy.protocols`)
-  - `BB84`, `B92`, `E91`, `SARG04`, `DecoyStateBB84`, `MDIQKD`, `CVQKD`, `EnhancedCVQKD`, `HDQKD`, `DIQKD`, `TwistedPair`
+  - `BB84`, `B92`, `E91`, `SARG04`, `DecoyStateBB84`, `MDIQKD`, `CVQKD`, `EnhancedCVQKD`, `HDQKD`, `DeviceIndependentQKD`, `TwistedPairQKD`
 - **Crypto** (`qkdpy.crypto`)
-  - `QuantumRandomNumberGenerator`, `OneTimePad`, `QuantumAuth`, `QuantumSideChannelProtection`, `QuantumHash`, `ZeroKnowledgeProof`
+  - `QuantumRandomNumberGenerator`, `OneTimePad`, `QuantumAuth`, `QuantumSideChannelProtection`, `QuantumHash`, `QuantumZeroKnowledge`
 - **Key management** (`qkdpy.key_management`)
   - `ErrorCorrection` (Cascade, Winnow, LDPC, BCH, Reed-Solomon, LDPC blind, blind fallback chain)
-  - `PrivacyAmplification` (Universal hashing seedable, Toeplitz, cryptographic hash, Bennett-Brassard, AES)
+  - `PrivacyAmplification` (Universal hashing seedable, Toeplitz, cryptographic hash, Bennett-Brassard) and `AdvancedPrivacyAmplification` (xor/AES/universal extraction)
   - `KeyDistillation`, `QuantumKeyManager`
 - **Network** (`qkdpy.network`)
   - `SatelliteQKD` with LEO/MEO/GEO orbits, atmospheric profile, pass simulation, link budget helpers
-  - `NetworkNode`, `MultiPartyNetwork`, `QuantumRouter` — routing and multi-party relay primitives
-  - `AtmosphericChannel` (visibility, turbulence, aerosols)
+  - `QuantumNode`, `MultiPartyQKD`, `MultiPartyQKDNetwork`, `QuantumNetwork` — routing and multi-party relay primitives
+  - `FreeSpaceOpticalChannel` (satellite link loss, turbulence, atmospheric profile)
 - **Visualization** (`qkdpy.utils.visualization`) — Bloch sphere, key-rate/QBER curves, network topology, satellite pass plots
 - **Framework integrations** (`qkdpy.integrations`)
   - **Qiskit** — circuit transpilation, `AerSimulator` noise models
@@ -100,7 +100,7 @@ When enforcement is on, gated features raise a `LicenseError` if no valid key is
 
 ## 2. Manual repository audit
 
-This section records what the repository *actually contains* today, what is being deleted in the OPEN_CORE cleanup, and what still lives in the planning docs but is **not** shipped as part of v0.6.x. Sections 1 (above) and this audit are kept in sync: anything listed here as "kept" should map to a tier in §1, and anything listed as "deferred" should appear in [`docs/NEXT_STEPS.md`](NEXT_STEPS.md).
+This section records what the repository *actually contains* today, what is being deleted in the OPEN_CORE cleanup, and what still lives in the planning docs but is **not** shipped as part of v0.8.x. Sections 1 (above) and this audit are kept in sync: anything listed here as "kept" should map to a tier in §1, and anything listed as "deferred" should appear in [`docs/NEXT_STEPS.md`](NEXT_STEPS.md).
 
 ### 2.1 Methodology
 - Walked `src/qkdpy/` top-down to enumerate shipped modules
@@ -114,7 +114,7 @@ This section records what the repository *actually contains* today, what is bein
 | Path | Purpose | Tier |
 |------|---------|------|
 | `src/qkdpy/` | Library source (see §1.2) | mixed |
-| `tests/` | pytest suite (~610 tests) | FREE-only behavior, ENTERPRISE-gated behavior is gated but exercised in CI |
+| `tests/` | pytest suite (1,200+ passing tests) | FREE-only behavior, ENTERPRISE-gated behavior is gated but exercised in CI |
 | `docs/` | Architecture diagrams, ADRs, this `OPEN_CORE.md`, `NEXT_STEPS.md` | n/a |
 | `benchmarks/` | Throughput / latency benchmark scripts | FREE (allows reproducing reported numbers) |
 | `examples/` | Runnable examples per protocol tier | FREE |
@@ -136,7 +136,7 @@ The replacement for the deleted forward-looking material is `docs/NEXT_STEPS.md`
 
 ### 2.4 Known limitations (carried over by design)
 
-These are *intentional* in v0.6.x and **not** bugs to be fixed quietly. They are tracked here so maintainers can defend scope decisions:
+These are *intentional* in this release and **not** bugs to be fixed quietly. They are tracked here so maintainers can defend scope decisions:
 
 - **Phenomenological channel models.** Atmospheric / satellite / depolarizing channels are approximated, not quantum-optics solvers.
 - **LDPC error correction.** Belief-propagation path is simplified; the BCH / Reed-Solomon and "blind fallback" chains are there to keep QBER recovery alive in adversarial CI but are not a hardened codec.
@@ -146,7 +146,7 @@ These are *intentional* in v0.6.x and **not** bugs to be fixed quietly. They are
 
 ### 2.5 Deferred to `docs/NEXT_STEPS.md`
 
-The following are **not** in scope for v0.6.x. Each has a section in `NEXT_STEPS.md` so it doesn't get lost:
+The following are **not** in scope for v0.8.x. Each has a section in `NEXT_STEPS.md` so it doesn't get lost:
 
 - Photon-number-resolving (PNR) detector simulation
 - Decoy-state finite-key analysis with composable security bounds

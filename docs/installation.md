@@ -47,35 +47,43 @@ pip install qkdpy[docs]
 # Visualization extras (seaborn)
 pip install qkdpy[viz]
 
-# Enterprise features (cryptography, PKCS#11, compliance)
-pip install qkdpy[enterprise]
+# Enterprise features (compliance, audit, software-simulation HSM)
+pip install "qkdpy[enterprise]"
 
 # Cirq quantum computing framework integration
-pip install qkdpy[cirq]
+pip install "qkdpy[cirq]"
 
 # PennyLane quantum computing framework integration
-pip install qkdpy[pennylane]
+pip install "qkdpy[pennylane]"
+
+# Qiskit integration (noise models, transpilation)
+pip install "qkdpy[qiskit]"
 
 # QpiAI Quantum SDK integration
-pip install qkdpy[qpiai]
+pip install "qkdpy[qpiai]"
 
-# All extras
-pip install qkdpy[all]
+# Common optional features (no external quantum SDKs)
+pip install "qkdpy[ml,viz,enterprise]"
 ```
 
 ## Product Tiers
 
 QKDpy uses a cumulative three-tier licensing model. By default, the FREE tier is active, which includes all QKD protocols, satellite simulation, ML integration, and advanced visualization.
 
-To activate higher tiers:
+To activate higher tiers, provide a license key (any non-empty string in demo
+mode; signed keys are required when `QKDPY_LICENSE_ENFORCEMENT=1`):
 
-```bash
-# Set via environment variable
-export QKDPY_PRODUCT_TIER=enterprise   # or premium
+```python
+from qkdpy import QKDConfig, set_config
 
-# Or set programmatically
-python -c "from qkdpy import set_config; set_config(product_tier='enterprise')"
+config = QKDConfig()
+config.enterprise.product_tier = "enterprise"  # or "premium"
+config.enterprise.license_key = "demo-key"
+set_config(config)
 ```
+
+You can also set `QKDPY_PRODUCT_TIER` / `QKDPY_LICENSE_KEY` in the environment
+and then call `set_config(get_config())` to apply them.
 
 See the [Product Tiers section in the README](https://github.com/Pranava-Kumar/qkdpy#-product-tiers) for a full feature comparison.
 

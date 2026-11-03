@@ -2,6 +2,35 @@
 
 All notable changes to this project are documented here.
 
+## [Unreleased]
+
+### Fixed
+
+- QpiAI SDK 0.7.5 local simulation now installs the `SDKUser` context required by `Statevector(circuit)` instead of failing with "Authentication required" when only `API_KEY` was set.
+- Optional `qpiai_quantum` tests now skip cleanly at collection time when the SDK is absent.
+- `set_config()` now forwards `enterprise.license_key` when activating a non-FREE tier.
+- Deterministic ML optimizer tests (seeded) to remove rare Bayesian-optimization flakiness.
+
+### Changed
+
+- Documentation corrected to match the shipped API (density-matrix channels, config audit signatures, QpiAI auth, protocol names/counts, install extras, example links).
+
+## [0.8.0] - 2026-07-20
+
+### Added
+
+- Density-matrix simulation stack: `DensityMatrix`, CPTP channels, purity/entropy/fidelity/trace distance, partial trace.
+- Quantum circuit model: `Circuit` with method chaining, simulation, depth/gate statistics, and OpenQASM 2.0 export.
+- Secret key rate calculator (`SecretKeyRate`) and finite-key analysis helpers.
+- New protocol modules: HD-QKD, MDI-QKD, DI-QKD, decoy-state BB84, enhanced CV-QKD, twisted-pair.
+- QpiAI Quantum SDK integration (`qkdpy[qpiai]`).
+- Expanded test suite and type annotations across the public API.
+
+### Fixed
+
+- Critical security-audit fixes across core and protocol modules.
+- mypy type errors in the v0.8.0 modules.
+
 ## [0.7.1] - 2026-07-20
 
 ### Added
@@ -49,6 +78,10 @@ All notable changes to this project are documented here.
   - `_hsm_is_hardware_backed()` now implements a real capability check against `HSMProvider` instead of always returning `False`
 - `OptimizerResult`, `AnomalyReport`, and `ParameterHistoryEntry` TypedDicts for typed optimizer results
 - `COMMERCIAL_NOTICE.md` — extracted from LICENSE (Apache-2.0 now stands alone at clean 199 lines)
+- Raised test coverage from 73% to 85%: 325+ new tests across 10+ test files
+- Coverage tests for timing (17 tests, 32%→85%), crypto (20 tests, ~40%→90%+), extended_channels (12 tests, 59%→94%), gate_utils, helpers, qudit, measurements, network_core_extended (78 tests), qpiai_privacy (56 tests)
+- `colorama>=0.4.6` as a Windows dependency to fix an import crash with structlog's `ConsoleRenderer(colors=True)`
+- `qiskit` and `qpiai` optional extras in `pyproject.toml`
 
 ### Fixed
 
@@ -59,6 +92,10 @@ All notable changes to this project are documented here.
 - `py.typed` marker shipped for the companion subpackage
 - Dependabot vulnerabilities and CodeQL alerts resolved
 - CodeQL taint flow broken for clear-text logging in example
+- Windows import crash: `colorama.init()` now called before structlog `ConsoleRenderer` initialization
+- PennyLane integration: replaced the noise no-op with a real `qml.NoiseModel` + `DepolarizingChannel` on `default.mixed`
+- QpiAI `simulate()`: performs full statevector → probability → bitstring sampling when an API key is present
+- Pre-commit: widened the exclude pattern for `scripts/blackbox/` diagnostic scripts
 
 ### Changed
 
@@ -73,24 +110,6 @@ All notable changes to this project are documented here.
 ### Removed
 
 - Stale `ComplianceChecker` references replaced with `ConfigAudit` across docs, ADRs, and source
-
-### Added
-
-- Raised test coverage from 73% to 85%: 325+ new tests across 10+ test files
-- Added coverage tests for timing (17 tests, 32%→85%), crypto (20 tests, ~40%→90%+), extended_channels (12 tests, 59%→94%), gate_utils, helpers, qudit, measurements, network_core_extended (78 tests), qpiai_privacy (56 tests)
-- Added `colorama>=0.4.6` as Windows dependency to fix import crash with structlog's `ConsoleRenderer(colors=True)`
-- Added `qiskit` and `qpiai` optional extras to `pyproject.toml`
-- `CHANGELOG.md`: initial Keep-a-Changelog format
-
-### Fixed
-
-- Windows import crash: `colorama.init()` now called before structlog `ConsoleRenderer` initialization
-- PennyLane integration: replaced noise no-op with real `qml.NoiseModel` + `DepolarizingChannel` on `default.mixed`
-- QpiAI `simulate()`: now performs full statevector → probability → bitstring sampling when API key is present
-- Pre-commit: widened exclude pattern for `scripts/blackbox/` diagnostic scripts
-
-### Removed
-
 - Orphaned root-level diagnostic artifacts: `benchmarks/ml_vs_bruteforce.py`, `compile_comprehensive_report.py`, `compile_results.py`
 
 ## [0.6.1] - 2026-07-16
